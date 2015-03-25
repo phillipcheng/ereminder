@@ -1,0 +1,1041 @@
+/* ------ Toolbar Layout ----------------*/
+#ppw_toolbar {
+	margin: 0 !important;
+	padding: 0 !important;
+	z-index: 10000;
+	width: 210px !important;
+	height: 100% !important;
+	font: normal normal normal 12px verdana, arial, sans-serif !important;
+
+
+	/* Prevent css bleed */
+	cursor: auto;
+	border: none !important;
+	display: block !important;
+	outline: none !important;
+
+	background: #F2F2F2 !important;
+	cursor: auto !important;
+
+	clear: none !important;
+	float: none !important;
+	max-height: none !important;
+	max-width: none !important;
+	min-height: 0 !important;
+	min-width: 0 !important;
+	visibility: visible !important;
+
+	bottom: auto !important;
+	clip: auto !important;
+	left: auto !important;
+	position: static !important;
+	right: auto !important;
+	top: auto !important;
+	vertical-align: top !important;
+
+	color: #000 !important;
+	direction: ltr !important;
+	font-size-adjust: none !important;
+	font-stretch: normal !important;
+	letter-spacing: normal !important;
+	list-style: none !important;
+	text-align: left !important;
+	text-decoration: none !important;
+	text-indent: 0 !important;
+	text-shadow: none !important;
+	text-transform: none !important;
+	unicode-bidi: normal;
+	white-space: normal !important;
+	word-spacing: normal !important;
+
+	border-collapse: collapse !important;
+	border-spacing: 0 !important;
+	caption-side: left !important;
+	empty-cells: hide !important;
+	table-layout: auto !important;
+}
+
+#ppw_toolbar a, #ppw_toolbar a:visited {
+	color:#239CFF !important;
+	text-decoration: none !important;
+	border: 0px !important;
+	font-weight: normal !important;
+}
+#ppw_toolbar a:hover, #ppw_toolbar a:active {
+	color: white !important;
+	background-color: #239CFF !important;
+	text-decoration: none !important;
+	border: 0px !important;
+	font-weight: normal !important;
+}
+
+/* style the toolbar */
+#ppw_toolbar #ppw_toolbar_content {
+}
+
+#ppw_toolbar .ppw_toolbar_content {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 210px;
+	height: 100%;
+	z-index: 10020;
+	border-right: 2px solid black;
+	overflow: auto;
+	margin: 0px;
+	padding: 0px;
+	background-color: #F2F2F2 !important;
+}
+
+#ppw_toolbar #ppw_toolbar_content #ppw_logo_box {
+	padding: 0 0px;
+}
+
+
+#ppw_toolbar #ppw_toolbar_content #ppw_logo_box #ppw_logo {
+	padding: 1px 0 1px 0px;
+	text-align: center;
+}
+
+#ppw_toolbar #ppw_toolbar_content #ppw_logo_box #ppw_logo a img {
+	border-width: 0;
+}
+
+#ppw_toolbar #ppw_toolbar_content #ppw_logo_box #ppw_logo a, #ppw_toolbar #ppw_toolbar_content #ppw_logo_box #ppw_logo a:visited,
+#ppw_toolbar #ppw_toolbar_content #ppw_bookmark a, #ppw_toolbar #ppw_toolbar_content #ppw_bookmark a:visited {
+	text-decoration: none !important;
+}
+#ppw_toolbar #ppw_toolbar_content #ppw_logo_box #ppw_logo a:hover, #ppw_toolbar #ppw_toolbar_content #ppw_logo_box #ppw_logo a:active,
+#ppw_toolbar #ppw_toolbar_content #ppw_bookmark a:hover, #ppw_toolbar #ppw_toolbar_content #ppw_bookmark a:active {
+	background-color: transparent !important;
+	text-decoration: none !important;
+}
+
+#ppw_toolbar #ppw_toolbar_content #ppw_logo_info {
+	line-height: 18px;
+	margin: 0 auto 5px auto;
+	float: left;
+	/*border: 1px dotted red;*/
+}
+
+#ppw_toolbar #ppw_toolbar_content #ppw_logo_info a {
+	display: block;
+}
+
+#ppw_toolbar #ppw_toolbar_content #ppw_logo_info #ppw_links_left {
+	width: 85px;
+	text-align: right;
+	float: left;
+	border-right: 2px dashed #cccccc;
+	padding-right: 10px;
+	/*border: 1px dotted blue;*/
+}
+
+#ppw_toolbar #ppw_toolbar_content #ppw_logo_info #ppw_links_right {
+	width: 85px;
+	text-align: left;
+	float: left;
+	/*border: 1px dotted yellow;*/
+	padding-left: 10px;
+}
+	
+
+#ppw_save_as a, #ppw_save_as a:link, #ppw_save_as a:visited, #ppw_save_as a:hover, #ppw_save_as a:active {
+	display: block;
+	padding: 0px 10px;
+}
+
+#ppw_save_as .disabled a, #ppw_save_as .disabled a:link, #ppw_save_as .disabled a:visited, #ppw_save_as .disabled a:hover, #ppw_save_as  .disabled a:active {
+	color: #C0C0C0 !important;
+	background-color: #F2F2F2 !important;
+}
+
+#ppw_toolbar #ppw_toolbar_content #ppw_bookmark {
+	float: left;
+	width: 100%;
+	display: block;
+	margin-top: 7px;
+	text-align: center;
+}
+
+#ppw_toolbar #ppw_toolbar_content #ppw_buttons {
+}
+
+#ppw_toolbar #ppw_toolbar_content fieldset {
+	width: 185px;
+	display: block;
+	margin: 10px auto;
+	padding: 2px; /* incase someone tries to override padding */
+	text-align: center;
+	font-size: 11px !important;
+	border: 1px solid #696969 !important;
+	background: #ffffff !important; 
+}
+
+#ppw_toolbar #ppw_toolbar_content fieldset legend {
+	color: #696969 !important;
+	/* to prevent other sites from overriding */
+	font-size: 10px !important;
+	font-weight: normal !important;
+	margin: 0 !important;
+	padding: 0 5px !important;
+}
+
+#ppw_toolbar .ppw_fancy_button {
+	cursor: pointer !important;
+	border: 1px outset #808080 !important;
+	margin: 3px 1px !important;
+	font-size: 10px !important;
+	height: auto !important;
+	padding: 3px 3px !important;
+	background:transparent url(/editor/img/button_unhover2.jpeg) repeat-x scroll 0px 0px !important;
+	text-align: center;
+	float: none !important;
+	/* stupid hack for a stupid browser */
+	width:auto;
+	overflow:visible;
+}
+
+#ppw_toolbar button.ppw_fancy_button, #ppw_toolbar button.ppw_double_button, #ppw_selection_commands .ppw_selection_button {
+	border-radius: 0 !important;
+	color: black;
+}
+
+#ppw_toolbar button.ppw_fancy_button[disabled], #ppw_toolbar button.ppw_double_button[disabled], #ppw_selection_commands .ppw_selection_button {
+	color: rgb(128, 128, 128) !important;
+}
+
+#ppw_toolbar .ppw_fancy_select {
+	border: 1px outset #808080 !important;
+	margin: 3px 1px !important;
+	font-size: 11px !important;
+	height: auto !important;
+}
+
+#ppw_toolbar #ppw_toolbar_content select {
+	padding: 3px 0px !important;
+}
+
+#ppw_toolbar .ppw_panel_submit_button {
+	float: left;
+	width: auto !important;
+}
+
+#ppw_toolbar .ppw_fancy_submit_button {
+	border: 1px outset #808080;
+	margin: 0px 5px;
+	background:transparent url(/editor/img/button_unhover2.jpeg) repeat-x scroll 0px 0px;
+}
+
+#ppw_toolbar .ppw_full_width_button {
+	width: 150px;
+}
+
+#ppw_toolbar .ppw_double_button {
+	font-size: 11px !important;
+	cursor: pointer !important;
+	height: auto !important;
+	background:transparent url(/editor/img/button_unhover2.jpeg) repeat-x scroll 0px 0px !important;
+	float: none !important;
+	display: inline;
+	text-align: center;
+	/* stupid hack for a stupid browser */
+	width:auto;
+ 	overflow:visible;
+}
+
+#ppw_undo_button {
+	padding: 3px !important;
+	margin: 3px 0px 3px 1px !important;
+	border-left: 1px outset #808080 !important;
+	border-right: 1px solid gray !important;
+	border-top: 1px outset #808080 !important;
+	border-bottom: 1px outset #808080 !important;
+}
+
+#ppw_toolbar #ppw_undo_select_button {
+	padding: 3px 0px !important;
+	margin: 3px 1px 3px 0px !important;
+	border-left: 0px !important;
+	border-right: 1px outset #808080 !important;
+	border-top: 1px outset #808080 !important;
+	border-bottom: 1px outset #808080 !important;
+}
+
+#ppw_toolbar .ppw_button_onhover {
+	background:transparent url(/editor/img/button_hover1.jpeg) repeat-x scroll 0px 0px !important;
+}
+
+#ppw_toolbar .ppw_button_onclick {
+	border: 1px inset #808080 !important;
+}
+
+#ppw_undo_list a, #ppw_undo_list a:link, #ppw_undo_list a:visited, #ppw_undo_list a:hover, #ppw_undo_list a:active {
+	display: block;
+	width: 180px;
+	padding: 0px 10px;
+}
+
+#ppw_toolbar .ppw_button_group {
+	width: 91px;
+	float: left;
+	/*border: 1px dotted red;*/
+}
+#ppw_toolbar .ppw_button_group.left-cell {padding-right: 5px; text-align: right;/*border-right: 2px dotted red;*/}
+#ppw_toolbar .ppw_button_group.right-cell {padding-left: 5px; text-align: left;}
+#ppw_toolbar .ppw_button_group button.ppw_button_fixed { width: 75px;}
+
+#ppw_toolbar #ppw_apply_change_set {
+	text-align: center;
+	padding: 5px 0;
+}
+
+#ppw_toolbar .ppw_text_size {
+	width: 25px;
+}
+
+
+#ppw_toolbar a img {
+	border: none !important;
+}
+
+#ppw_toolbar table#ppw_page_properties {
+	margin: 10px 0 0 10px;
+	padding: 0;
+}
+
+#ppw_toolbar #ppw_page_properties td.ppw_page_prop_label {
+	text-align: right;
+	font-size: 11px !important;
+}
+
+#ppw_toolbar #ppw_page_properties td.ppw_page_prop {
+	text-align: left;
+	font-size: 11px !important;
+}
+
+#ppw_toolbar #ppw_page_properties label {
+	display: inline !important;
+	font-weight: normal !important;
+	font-size: 11px !important;
+}
+
+#ppw_toolbar #ppw_page_properties input {
+	padding: 0;
+	margin: 0;
+	width: auto !important;
+}
+
+#ppw_toolbar #ppw_page_properties td.ppw_radio_buttons {
+	padding-bottom: 5px;
+}
+
+	#ppw_toolbar #ppw_page_properties td.ppw_radio_buttons span {
+		white-space: nowrap;
+	}
+	
+/* TODO add icons to toolbar buttons
+ * The trick is to set the button's background as the background in a wrapper div, and set the button background to the icon
+ * see http://developer.yahoo.com/yui/examples/button/btn_example01_clean.html
+#ppw_toolbar #ppw_toolbar_content #ppw_picture_button_wrapper {
+	border: 1px solid #808080;
+	padding: 5px 5px;
+	padding-left: 2em;
+	background:transparent url(http://yui.yahooapis.com/2.5.2/build/assets/skins/sam/sprite.png) repeat-x scroll 0pt 0pt;
+}
+ */
+
+#ppw_toolbar #ppw_toolbar_content #ppw_messages {
+	display: none;
+	clear: both;
+	float: left;
+	text-align: center;
+	margin: 5px;
+	padding: 5px;
+	/*background-color: #24B602;*/
+	border: 1px solid #FF0000;
+}
+
+#ppw_toolbar #ppw_toolbar_content #ppw_messages .ppw_message {
+	display: none; /* all messages start hidden */	
+}
+
+#ppw_toolbar #ppw_close_toolbar {
+	display: none;
+	float: right;
+	padding: 3px;
+}
+
+
+
+/* ------------------- Page Stuff ----------------*/
+
+/* Require padding-top here because of onclick */
+#ppw_page_top {
+	/* width set dynamically */
+	position: absolute;
+	top: 0;
+	left: 212px;
+	padding-left: 0px;
+	min-height: 100%;
+	height: 100%;
+	/*border: 1px dotted red;*/
+}
+
+#ppw_page_top * {
+	cursor: default !important;
+}
+
+#ppw_page_body {
+	width: 100%;
+	/*border: 2px dashed yellow;	*/
+}
+
+
+/* ------ Selection ----------------*/
+.ppw_hover_border {
+	visibility: hidden;
+	overflow: hidden;
+	position: absolute;
+	height: 2px; /* default height, width */
+	width: 2px;
+	background-color: red !important;
+	z-index: 9960;
+}
+
+#ppw_hover_border_drag {
+	display: none;
+	overflow: hidden;
+	position: absolute;
+	border: 2px solid red;
+	background-color: transparent;
+	z-index: 9960;
+}
+
+/* select - the * selects all subelements- make sure we color the background of all subelements */
+.ppw_select, .ppw_select * {
+	background-color: #FFFF00 !important; /* !important prevents remove background command from overriding */
+	/*border: 1px dashed red !important;*/
+	color: #000000 !important;
+	filter: alpha(opacity=40); /* for IE */
+	opacity: 0.4; /* CSS3 standard */
+	z-index: 9920;
+}
+
+.ppw_select_box {
+	overflow: hidden;
+	position: absolute;
+	background: #ff0 !important; /* !important prevents remove background command from overriding */
+	filter: alpha(opacity=30); /* for IE */
+	opacity: 0.3; /* CSS3 standard */
+	z-index: 9920;
+}
+
+/* zIndex must be less than zIndex of toolbar- hover border is bound by toolbar zIndex */
+.ppw_select_box_border {
+	overflow: hidden;
+	position: absolute;
+	border: 1px dashed red !important;
+	z-index: 9940;	
+}
+
+
+/* ------ Selection Commands ----------------*/
+#ppw_selection_commands {
+	visibility: hidden;
+	position: absolute;
+	margin: 0px;
+	padding: 0px 5px;
+	border: 1px solid #000000;
+	background: #eeeeee;
+	z-index: 10080;
+	white-space: nowrap;
+}
+
+	#ppw_selection_commands #ppw_selection_commands_drag {
+		vertical-align: middle;
+		display: inline;
+		cursor: move;
+	}
+
+	#ppw_selection_commands .ppw_selection_button {
+		cursor: pointer !important;
+		border: 1px outset #808080 !important;
+		margin: 3px 2px !important;
+		font-size: 10px !important;
+		height: auto !important;
+		padding: 3px !important;
+		background:transparent url(/editor/img/button_unhover2.jpeg) repeat-x scroll 0px 0px !important;
+		color: black !important;
+		/* stupid hack for a stupid browser */
+		width:auto;
+		overflow:visible;
+	}
+
+
+/* ------ Template Bar ----------------*/
+#ppw_apply_template {
+	display: none;
+}
+#ppw_template_applied {
+	display: none;
+}
+
+
+/* ------ Cover Boxes ----------------*/
+#ppw_cover_div {
+	visibility: hidden;
+	/* IE requires a background - otherwise clicks will go through */
+	/* Use white for browsers like IE6 which cant handle opacity */
+	background-color: #FFFFFF !important;
+	filter: alpha(opacity=0);  /* for IE */
+	opacity: 0;  /* CSS3 standard */
+	position: absolute;
+	overflow: hidden;
+	z-index: 9900;
+	/* Testing */
+	/*opacity: .4;
+	background-color: #FF0000 !important;*/
+}
+
+#ppw_lightbox {
+	position: absolute;
+	top: 0;
+	z-index: 10100;
+	filter: alpha(opacity=40); /* for IE */
+	opacity: 0.4; /* CSS3 standard */
+	background-color: black;
+	display: none;
+}
+
+
+/* ---------- Panels ---------------*/
+.ppw_panel {
+	display: none;
+	border: 1px solid #808080;
+	background-color:#F2F2F2;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 800px;
+	z-index: 10060;
+}
+
+.ppw_panel_bd {
+	padding: 10px;
+}
+
+.ppw_panel_bd form {
+	margin: 0;
+}
+
+.ppw_message_panel {
+	z-index: 10120; /* make sure message panels appear above lightbox */
+}
+
+.ppw_panel_hd {
+	background:transparent url(/lib/yui/assets/skins/sam/sprite.png) repeat-x scroll 0 -200px;
+	font-size:93%;
+	font-weight:bold;
+	line-height:2;
+	padding:0 10px;
+	border-bottom:1px solid #CCCCCC;
+}
+
+
+.ppw_panel_close {
+	background: transparent url(/lib/yui/assets/skins/sam/sprite.png) no-repeat scroll 0 -300px;
+	cursor: pointer;
+	height: 15px;
+	width: 25px;
+	overflow: hidden;
+	border: 0px outset #000000;
+	margin: 0 0 0 10px;
+	float: right;
+}
+
+.ppw_panel_hd .ppw_panel_close {
+	margin-top: 5px;
+}
+
+.ppw_panel iframe {
+	width: 798px;
+	padding: 0;
+	margin: 0;
+	border: 1px solid black;
+}
+
+#ppw_info_panel {
+	/* position: fixed not supported on  IE strict */
+	position: fixed;
+	top: 0;
+	left: 15px;
+	z-index: 10040;
+}
+
+#ppw_info_panel .ppw_info_message {
+	border: 1px solid #808080;
+	background-color: #FFFF57;
+	padding: 5px 40px;
+	/* in case multiple info messages are displayed */
+	margin-right: 10px;
+	float: left;
+	white-space: nowrap;
+}
+
+
+/* ---------- Help ---------------*/
+.ppw_toolbar_help .ppw_panel_bd {
+	height:340px;
+	width: 780px;
+	overflow:auto;
+}
+
+.question {
+	font-size: 1.1em;
+	color: #F4003B;
+	font-weight: bolder;
+}
+
+#ppw_toolbar fieldset legend a {
+	font-size: 1.1em !important;
+	font-weight: bold !important;
+}
+
+
+/*-------- Panel Formatting -----------*/
+#ppw_toolbar .ppw_css_table {
+	width: 800px;
+}
+#ppw_toolbar .ppw_css_table div {
+	width: 98%;
+}
+#ppw_toolbar .ppw_css_table span {
+	width: 20%;
+	float: left;
+}
+#ppw_toolbar .ppw_css_table .ppw_odd {
+	background-color: #FFFF99;
+}
+
+#ppw_toolbar .ppw_panel_text_input_field {
+	width: 700px;
+	float: left;
+}
+
+#ppw_toolbar .ppw_panel h3 {
+	color: #719A11;
+	font-size: 1.1em;
+	padding-top: 10px;
+	margin: 0;
+}
+
+#ppw_toolbar .ppw_panel li {
+	padding: 3px 0;
+}
+
+
+/* ------ Pro Toolbar Layout ----------------*/
+#ppw_toolbar #ppw_pro_toolbar_content {
+	width: 210px;
+	border-left: 2px solid black;
+	border-right: 0;
+	padding-top: 7px;
+}
+
+#ppw_toolbar #ppw_pro_toolbar_content h3 {margin: 0px; text-align: center; font-family: Verdana, sans-serif !important; font-size: 1.5em !important; color: #719a11 !important;}
+#ppw_toolbar #ppw_pro_toolbar_content h4 {margin: 0px; text-align: center; font-family: Verdana, sans-serif !important; font-size: 1.3em !important; color: #719a11 !important;}
+#ppw_toolbar #ppw_pro_toolbar_content hr {
+	background-color: #696969 !important;
+	color: #696969 !important;
+	height:1px !important;
+	border: 0px !important;
+}
+#ppw_toolbar #ppw_pro_toolbar_content form {margin-left: 10px;}
+#ppw_toolbar #ppw_pro_toolbar_content ul li {margin-left: 15px; list-style-type: disc; font-weight: bold; color: #67b3d3;}
+#ppw_toolbar #ppw_pro_toolbar_content ul li span {font-weight: normal; color: black;}
+
+/*--- Changeset Editor ---*/
+#ppw_pro_toolbar_content .field_label {
+	font-weight: bold;
+	margin-top: 20px;
+}
+
+
+/*--- Clips Editor ---*/
+#ppw_clips {
+	overflow: auto;
+	width: 190px;
+	height: 100%;
+	margin: 0 auto;
+}
+
+.ppw_clip {
+	margin-bottom: 5px; 
+	text-align: center;
+	padding: 0 5px;
+}
+
+.ppw_clip img {
+	border: 2px solid #A9A9A9;	
+}
+
+fieldset.ppw_account {
+	width:425px;
+	background-color:#F1F5FA;
+	border-color:#666666;
+	border-style:solid none none;
+	border-width:1px 0 0;
+	margin:0 0 15px;
+	padding:15px;
+}
+
+fieldset.ppw_account legend  {
+	font-size:1.5em;
+	font-weight:bold;
+	padding:0 5px;
+}
+
+fieldset.ppw_account input  {
+	margin-bottom: 5px;
+}
+
+fieldset.ppw_account_final {
+	background-color:#E8FCEA;
+	border:5px solid #67b3d3;
+}
+
+fieldset.ppw_account_final legend {
+	color:#67b3d3;
+}
+
+fieldset.ppw_account_final hr {
+	color:#67b3d3;
+	margin: 10px;
+	height: 3px;
+}
+
+
+/*--- Bookmarklet Login Panel ---*/
+#ppw_bookmark_login_form {
+	background-color: white;
+}
+
+#ppw_bookmark_login_form * {
+	color: #666666;
+}
+
+#ppw_bookmark_login_form  h1 {
+	color: #67B3D3;
+	font-size: 2em;
+	font-weight: bold;
+}
+
+#ppw_bookmark_login_form  h3#ppw_bookmark_login_form_subheader {
+	font-size: 1.4em;
+	font-weight: normal;
+	padding: 5px 0;
+	color: #666666;
+}
+
+#ppw_bookmark_login_form  a:link, #ppw_bookmark_login_form  a:visited {
+	color: #719A11 !important;
+}
+
+#ppw_bookmarklet_login_success {
+	display: none;
+}
+
+#ppw_bookmarklet_login_failure {
+	display: none;
+	color: red;
+	margin-bottom: 10px;
+}
+
+#ppw_bookmarklet_login_new_wait {
+	display: none;
+	text-align: center;
+}
+
+
+/*-------- Ads -----------*/
+#ppw_ad_toolbar_anchor {
+	text-align: center;
+}
+
+#ppw_completion_message_panel .ppw_completion_message_panel_message {
+	display: none;
+	padding: 10px 0;
+	text-align: center;
+	font-size: larger;
+	border-bottom: 1px solid black;
+	background-color: #FFFFA3;
+}
+#ppw_completion_message_panel .ppw_completion_message_panel_close {
+	margin: 10px;
+	cursor: pointer;
+	border: 0px outset #000000;
+	margin: 5px;
+	float: right;
+}
+#ppw_toolbar iframe.ppw_ad_iframe, #ppw_completion_message_panel_ad1, #ppw_completion_message_panel_ad2 {
+	overflow: hidden;
+	margin-top: 5px;
+	margin-bottom: 5px;
+	border-width: 0px;
+}
+
+/*-------------- Clearfix! --------------*/
+.clearfix:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+
+/*
+ * Cleanslate (github.com/premasagar/cleanslate)
+ * Used to block page css from interfering with the toolbar css
+*/
+/*!
+* CleanSlate
+*   github.com/premasagar/cleanslate
+*
+*//*
+    An extreme CSS reset stylesheet, for normalising the styling of a container element and its children.
+
+    by Premasagar Rose
+        dharmafly.com
+
+    license
+        opensource.org/licenses/mit-license.php
+
+    **
+        
+    v0.9.2
+        
+*/
+
+/* == BLANKET RESET RULES == */
+
+/* HTML 4.01 */
+.cleanslate, .cleanslate h1, .cleanslate h2, .cleanslate h3, .cleanslate h4, .cleanslate h5, .cleanslate h6, .cleanslate p, .cleanslate td, .cleanslate dl, .cleanslate tr, .cleanslate dt, .cleanslate ol, .cleanslate form, .cleanslate select, .cleanslate option, .cleanslate pre, .cleanslate div, .cleanslate table,  .cleanslate th, .cleanslate tbody, .cleanslate tfoot, .cleanslate caption, .cleanslate thead, .cleanslate ul, .cleanslate li, .cleanslate address, .cleanslate blockquote, .cleanslate dd, .cleanslate fieldset, .cleanslate li, .cleanslate iframe, .cleanslate strong, .cleanslate legend, .cleanslate em, .cleanslate s, .cleanslate cite, .cleanslate span, .cleanslate input, .cleanslate sup, .cleanslate label, .cleanslate dfn, .cleanslate object, .cleanslate big, .cleanslate q, .cleanslate font, .cleanslate samp, .cleanslate acronym, .cleanslate small, .cleanslate img, .cleanslate strike, .cleanslate code, .cleanslate sub, .cleanslate ins, .cleanslate textarea, .cleanslate var, .cleanslate a, .cleanslate abbr, .cleanslate applet, .cleanslate del, .cleanslate kbd, .cleanslate tt, .cleanslate b, .cleanslate i, .cleanslate hr,
+
+/* HTML5 */
+.cleanslate article, .cleanslate aside, .cleanslate dialog, .cleanslate figure, .cleanslate footer, .cleanslate header, .cleanslate hgroup, .cleanslate menu, .cleanslate nav, .cleanslate section, .cleanslate time, .cleanslate mark, .cleanslate audio, .cleanslate video,
+
+/* Added by me 3/25/14 - continue adding here*/
+.cleanslate button, .cleanslate button[disabled]
+{
+	background-attachment:scroll;
+	background-color:transparent;
+	background-image:none; /* This rule affects the use of pngfix JavaScript http://dillerdesign.com/experiment/DD_BelatedPNG for IE6, which is used to force the browser to recognise alpha-transparent PNGs files that replace the IE6 lack of PNG transparency. (The rule overrides the VML image that is used to replace the given CSS background-image). If you don't know what that means, then you probably haven't used the pngfix script, and this comment may be ignored :) */
+	background-position:0 0;
+	background-repeat:repeat;
+	border-color:black;
+	border-color:currentColor; /* `border-color` should match font color. Modern browsers (incl. IE9) allow the use of "currentColor" to match the current font 'color' value <http://www.w3.org/TR/css3-color/#currentcolor>. For older browsers, a default of 'black' is given before this rule. Guideline to support older browsers: if you haven't already declared a border-color for an element, be sure to do so, e.g. when you first declare the border-width. */
+	border-radius:0;
+	border-style:none;
+	border-width:medium;
+	bottom:auto;
+	clear:none;
+	clip:auto;
+	color:inherit;
+	counter-increment:none;
+	counter-reset:none;
+	cursor:auto;
+	direction:inherit;
+	/*display:inline;*/
+	float:none;
+	/* As with other inherit values, this needs to be set on the root container element */
+	font-family: inherit; 
+	font-size: inherit;
+	font-style:inherit;
+	font-variant:normal;
+	font-weight:inherit;
+	height:auto;
+	left:auto;
+	letter-spacing:normal;
+	line-height:inherit;
+	list-style-type: inherit; /* Could set list-style-type to none */
+	list-style-position: outside;
+	list-style-image: none;
+	margin:0;
+	max-height:none;
+	max-width:none;
+	min-height:0;
+	min-width:0;
+	opacity:1;
+	outline:invert none medium;
+	overflow:visible;
+	padding:0;
+	position:static;
+	quotes: "" "";
+	right:auto;
+	table-layout:auto;
+	text-align:inherit;
+	text-decoration:inherit;
+	text-indent:0;
+	text-transform:none;
+	top:auto;
+	unicode-bidi:normal;
+	vertical-align:baseline;
+	visibility:inherit;
+	white-space:normal;
+	width:auto;
+	word-spacing:normal;
+	/*z-index:auto;*/
+	
+	/* Proprietary and draft rules */
+    /* This section needs extending */
+	-moz-border-radius:0;
+	-webkit-border-radius:0;
+	border-radius:0;
+
+/*
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	box-sizing: border-box;
+	*/
+	text-shadow: none;
+	box-shadow: none;
+
+	/* Added by Me */
+	transition: none;
+	font-weight: normal;
+	opacity: 1;
+}
+
+/* == BLOCK-LEVEL == */
+/* Actually, some of these should be inline-block and other values, but block works fine (TODO: rigorously verify this) */
+/* HTML 4.01 */
+/* HTML5 new elements */
+/* Me - actually no it doesn't */
+/*.cleanslate, .cleanslate h3, .cleanslate h5, .cleanslate p, .cleanslate h1, .cleanslate dl, .cleanslate dt, .cleanslate h6, .cleanslate ol, .cleanslate form, .cleanslate select, .cleanslate option, .cleanslate pre, .cleanslate div, .cleanslate h2, .cleanslate caption, .cleanslate h4, .cleanslate ul, .cleanslate address, .cleanslate blockquote, .cleanslate dd, .cleanslate fieldset, .cleanslate textarea, .cleanslate hr,
+.cleanslate article, .cleanslate aside, .cleanslate dialog, .cleanslate figure, .cleanslate footer, .cleanslate header, .cleanslate hgroup, .cleanslate menu, .cleanslate nav, .cleanslate section {
+    display:block; 
+}*/
+.cleanslate table {
+    display: table;
+}
+.cleanslate thead {
+    display: table-header-group;
+}
+.cleanslate tbody {
+    display: table-row-group;
+}
+.cleanslate tfoot {
+    display: table-footer-group;
+}
+.cleanslate tr {
+    display: table-row;
+}
+.cleanslate th, .cleanslate td {
+    display: table-cell;
+}
+/* == SPECIFIC ELEMENTS == */
+/* Some of these are browser defaults; some are just useful resets */
+
+.cleanslate nav ul, .cleanslate nav ol {
+	list-style-type:none;
+}
+.cleanslate ul, .cleanslate menu {
+	list-style-type:disc;
+}
+.cleanslate ol {
+	list-style-type:decimal;
+}
+.cleanslate ol ul, .cleanslate ul ul, .cleanslate menu ul, .cleanslate ol menu, .cleanslate ul menu, .cleanslate menu menu {
+	list-style-type:circle;
+}
+.cleanslate ol ol ul, .cleanslate ol ul ul, .cleanslate ol menu ul, .cleanslate ol ol menu, .cleanslate ol ul menu, .cleanslate ol menu menu, .cleanslate ul ol ul, .cleanslate ul ul ul, .cleanslate ul menu ul, .cleanslate ul ol menu, .cleanslate ul ul menu, .cleanslate ul menu menu, .cleanslate menu ol ul, .cleanslate menu ul ul, .cleanslate menu menu ul, .cleanslate menu ol menu, .cleanslate menu ul menu, .cleanslate menu menu menu {
+	list-style-type:square;
+}
+.cleanslate li {	
+	display:list-item;
+	/* Fixes IE7 issue with positioning of nested bullets */
+	min-height:auto;
+	min-width:auto;
+}
+.cleanslate strong {
+	font-weight:bold;
+}
+.cleanslate em {
+	font-style:italic;
+}
+.cleanslate kbd, .cleanslate samp, .cleanslate code {
+  font-family:monospace;
+}
+.cleanslate a, .cleanslate a *, .cleanslate input[type=submit], .cleanslate input[type=radio], .cleanslate input[type=checkbox], .cleanslate select {
+	cursor:pointer;
+}
+.cleanslate a:hover {
+	text-decoration:underline;
+}
+.cleanslate button, .cleanslate input[type=submit] {
+  text-align: center;
+}
+.cleanslate input[type=hidden] {
+	display:none;
+}
+.cleanslate abbr[title], .cleanslate acronym[title], .cleanslate dfn[title] {
+	cursor:help;
+    border-bottom-width:1px;
+	border-bottom-style:dotted;
+}
+.cleanslate ins {
+	background-color:#ff9;
+	color:black;
+}
+.cleanslate del {
+	text-decoration: line-through;
+}
+.cleanslate blockquote, .cleanslate q  {
+	quotes:none; /* HTML5 */
+}
+.cleanslate blockquote:before, .cleanslate blockquote:after, .cleanslate q:before, .cleanslate q:after, .cleanslate li:before, .cleanslate li:after  {
+	content:"";
+}
+.cleanslate input, .cleanslate select {
+	vertical-align:middle;
+}
+.cleanslate select, .cleanslate textarea, .cleanslate input {
+	border:1px solid #ccc;
+}
+.cleanslate table {
+	/*border-collapse:collapse;*/
+	/*border-spacing:0;*/
+}
+.cleanslate hr {
+	display:block;
+	height:1px;
+	border:0;
+	border-top:1px solid #ccc;
+	margin:1em 0;
+}
+.cleanslate *[dir=rtl] {
+	direction: rtl;
+}
+.cleanslate mark {
+	background-color:#ff9;
+	color:black;
+	font-style:italic;
+	font-weight:bold;
+}
+
+
+
+/* == ROOT CONTAINER ELEMENT == */
+/* This contains default values for child elements to inherit  */
+.cleanslate {
+	font-size: medium;
+	line-height: 1;
+	direction:ltr;
+	text-align:left;
+	font: normal normal normal 12px verdana, arial, sans-serif !important;
+	color: black;
+	font-style:normal;
+	font-weight:normal;
+	text-decoration:none;
+	list-style-type:disc;
+}

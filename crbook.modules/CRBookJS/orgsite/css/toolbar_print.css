@@ -1,0 +1,13 @@
+#ppw_toolbar {
+	display: none;
+}
+#ppw_print_button {
+	display: none;
+}
+#ppw_page_top, #ppw_page_body {
+	padding: 0;
+	margin: 0;
+	/* on load, width is manually set by js to extend from edge of toolbar to the screen edge
+	 * on print override this - width of top should be 100% */
+	width: 100% !important;
+}

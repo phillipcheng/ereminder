@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
+    <wb-module deploy-name="cld-webconf">
+        <wb-resource deploy-path="/WEB-INF/web.xml" source-path="/src/main/webapp/WEB-INF/web.xml"/>
+        <wb-resource deploy-path="/" source-path="/target/m2e-wtp/web-resources"/>
+        <wb-resource deploy-path="/" source-path="/src/main/webapp" tag="defaultRootSource"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/java"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/resources"/>
+        <dependent-module archiveName="cld-shopping-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-shopping/cld-shopping">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="cld-taskmgr-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-taskmgr/cld-taskmgr">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="cld-datastore-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-datastore/cld-datastore">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="cld-datacrawl-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-datacrawl/cld-datacrawl">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="cld-datacrawl.impl-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-datacrawl.impl/cld-datacrawl.impl">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="cld-util-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-util/cld-util">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="cld-action-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-action/cld-action">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="cy-common-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/crbook-common/crbook-common">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="crbook-persist-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/crbook-persist/crbook-persist">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="cld-stock-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-stock/cld-stock">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <property name="context-root" value="cldwebconf"/>
+        <property name="java-output-path" value="/cld-webconf/target/classes"/>
+    </wb-module>
+</project-modules>

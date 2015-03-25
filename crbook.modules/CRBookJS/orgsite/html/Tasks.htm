@@ -1,0 +1,2246 @@
+<html>
+    
+    <head>
+        <meta content="www.datamech.com" name="GENERATOR">
+        <title>Tasks</title>
+        <style type="text/css">
+            body {
+                margin-top: 0;
+                padding-top:0;
+            }
+            div#menuForm {
+                overflow: hidden;
+                background-color: #FFFFC6;
+                border: 2px solid yellow;
+                position: fixed;
+                padding: 2px;
+                Z-index: 1000;
+                height: 45px;
+                left: 0;
+                right: 0;
+            }
+            div#xmlForm {
+                padding: 10px 10px 0 10px;
+                width: 100%;
+                padding-top: 55px;
+                left: 5px;
+                right: 5px;
+            }
+            @media print {
+                div#menuForm {
+                    display:none;
+                }
+                div#xmlForm {
+                    padding-top: 0;
+                }
+                input#submitButton {
+                    display:none;
+                }
+            }
+        </style>
+        <style type="text/css">
+            .XMLattribute {
+                margin-left: 10px;
+                font-style: italic;
+            }
+        </style>
+    </head>
+    
+    <body onload="editorSetup();" onhelp="helpSelected();">
+        <script type="text/javaScript" src="../js/datamech/moreEdit5.js"></script>
+        <script type="text/javaScript" src="../js/datamech/utility.js"></script>
+        <script type="text/javaScript" src="../js/datamech/schema.js"></script>
+        <script type="text/javaScript" src="../js/datamech/makeme.js"></script>
+        <script type="text/javaScript" src="../js/datamech/tagmenu.js"></script>
+        <script type="text/javaScript" src="../js/datamech/checkdata.js"></script>
+        <script id="schemaScript" type="text/javascript">
+            <!--
+            function setUpPreference() {
+                var preference = document.preference;
+                // begin preference
+                preference.radioIndex = 1;
+                preference.breaktag = 0;
+                preference.isLargeSchema = true;
+                preference.checkSchema = false;
+                preference.obeySchema = false;
+                preference.scriptLoc = "server";
+                // end preference
+            }
+
+            function setUpSchemaInfo() {
+                // begin schema
+                setSchema('complexType,ClickStreamType,link', {
+                    '#dt': 'NameValueType',
+                    '#ph': 'complexType,NameValueType,',
+                    '#dc': 'usually Value Type is page, and name will be used in later expression',
+                    '#cm': '(<@name>)(<value>)'
+                });
+                setSchema('complexType,BrowseDetailType,firstPageClickStream', {
+                    '#dt': 'ClickStreamType',
+                    '#ph': 'complexType,ClickStreamType,',
+                    '#dc': 'the click stream to the 1st page of the book',
+                    '#cm': '(<link>)+(<finishCondition>)?'
+                });
+                setSchema('complexType,SubListType,@isLeaf', {
+                    '#df': 'true',
+                    '#dt': '#boolean'
+                });
+                setSchema('complexType,BrowseCatType,baseBrowseTask', {
+                    '#dt': 'BrowseTaskType',
+                    '#ph': 'complexType,BrowseTaskType,',
+                    '#cm': '(<@taskName>)(<@itemType>)(<@isStart>)(<@rerunInterim>)(<@enableJS>)(<@startUrl>)(<@skipJS>)(<@highMem>)(<userAttribute>)*(<idUrlMapping>)(<idUrlMappingFirstPage>)?(<itemName>)?(<sampleUrl>)*'
+                });
+                setSchema('complexType,ValueType,@fromType', {
+                    '#dt': {
+                        '#dt': '#string',
+                        '#em': ['string', 'xpath']
+                    },
+                    '#em': ['string', 'xpath'],
+                    '#dc': 'the value\'s input type, default to xpath'
+                });
+                setSchema('complexType,BinaryBoolOp,@lhs', {
+                    '#dt': '#string'
+                });
+                setSchema('complexType,BrowseTaskType,idUrlMappingFirstPage', {
+                    '#dt': 'RegExpType',
+                    '#ph': 'complexType,RegExpType,',
+                    '#cm': '(<Token>)+'
+                });
+                setSchema('complexType,ValueType,@toType', {
+                    '#dt': {
+                        '#dt': '#string',
+                        '#em': ['string', 'date', 'int', 'page', 'list']
+                    },
+                    '#em': ['string', 'date', 'int', 'page', 'list']
+                });
+                setSchema('complexType,BinaryBoolOp,@rhs', {
+                    '#dt': '#string'
+                });
+                setSchema('complexType,RegExpType,Token', {
+                    '#dt': 'TokenType',
+                    '#ph': 'complexType,TokenType,',
+                    '#cm': '(<@name>)(<@value>)(<@regExp>)'
+                });
+                setSchema('complexType,ValueType,@format', {
+                    '#dt': '#string',
+                    '#dc': 'used with toType=date'
+                });
+                setSchema('complexType,BrowseDetailType,directPages', {
+                    '#dt': 'ValueType',
+                    '#ph': 'complexType,ValueType,',
+                    '#cm': '(<@fromType>)(<@value>)(<@toType>)(<@basePage>)(<@enableJS>)(<@format>)(<strPreprocess>)?'
+                });
+                setSchema('complexType,ValueType,@enableJS', {
+                    '#dt': '#boolean',
+                    '#dc': 'used with toType=page, if null, reusing previous wc setting'
+                });
+                setSchema('complexType,SubListType,@nextPage', {
+                    '#dt': '#string'
+                });
+                setSchema('complexType,BrowseTaskType,itemName', {
+                    '#dt': 'ValueType',
+                    '#ph': 'complexType,ValueType,',
+                    '#cm': '(<@fromType>)(<@value>)(<@toType>)(<@basePage>)(<@enableJS>)(<@format>)(<strPreprocess>)?'
+                });
+                setSchema('complexType,BrowseCatType,itemPerPage', {
+                    '#dt': 'ValueType',
+                    '#ph': 'complexType,ValueType,',
+                    '#cm': '(<@fromType>)(<@value>)(<@toType>)(<@basePage>)(<@enableJS>)(<@format>)(<strPreprocess>)?'
+                });
+                setSchema('Tasks', {
+                    'skipUrl': {
+                        '#dt': '#string'
+                    },
+                        '@rootVolume': {
+                        '#dt': '#string'
+                    },
+                        'PrdTask': {
+                        '#dt': 'BrowseDetailType',
+                        '#ph': 'complexType,BrowseDetailType,',
+                        '#cm': '(<@imagePath>)(<@nextPage>)(<baseBrowseTask>)(<lastPageCondition>)?(<firstPageClickStream>)?(<totalPage>)?(<directPages>)?'
+                    },
+                        'CatTask': {
+                        '#dt': 'BrowseTaskType',
+                        '#ph': 'complexType,BrowseTaskType,',
+                        '#cm': '(<@taskName>)(<@itemType>)(<@isStart>)(<@rerunInterim>)(<@enableJS>)(<@startUrl>)(<@skipJS>)(<@highMem>)(<userAttribute>)*(<idUrlMapping>)(<idUrlMappingFirstPage>)?(<itemName>)?(<sampleUrl>)*'
+                    },
+                        '@storeId': {
+                        '#dt': '#string'
+                    },
+                    '#cm': '(<@storeId>)(<@rootVolume>)(<CatTask>)+(<PrdTask>)(<skipUrl>)*'
+                });
+                setSchema('complexType,BrowseTaskType,idUrlMapping', {
+                    '#dt': 'RegExpType',
+                    '#ph': 'complexType,RegExpType,',
+                    '#dc': 'for bdt, this is uni-directional, from url to id',
+                    '#cm': '(<Token>)+'
+                });
+                setSchema('complexType,SubListType,userAttribute', {
+                    '#dt': 'NameValueType',
+                    '#ph': 'complexType,NameValueType,',
+                    '#cm': '(<@name>)(<value>)'
+                });
+                setSchema('complexType,BrowseTaskType,@highMem', {
+                    '#df': 'false',
+                    '#dt': '#boolean'
+                });
+                setSchema('complexType,SubListType,name', {
+                    '#dt': 'ValueType',
+                    '#ph': 'complexType,ValueType,',
+                    '#cm': '(<@fromType>)(<@value>)(<@toType>)(<@basePage>)(<@enableJS>)(<@format>)(<strPreprocess>)?'
+                });
+                setSchema('complexType,TokenType,@value', {
+                    '#dt': '#string'
+                });
+                setSchema('complexType,BinaryBoolOp,@operator', {
+                    '#dt': {
+                        '#dt': '#string',
+                        '#em': ['=', '!=']
+                    },
+                    '#em': ['=', '!=']
+                });
+                setSchema('complexType,BrowseTaskType,@enableJS', {
+                    '#dt': '#boolean'
+                });
+                setSchema('complexType,BrowseTaskType,@itemType', {
+                    '#dt': '#string'
+                });
+                setSchema('complexType,NameValueType,@name', {
+                    '#dt': '#string'
+                });
+                setSchema('complexType,BrowseTaskType,userAttribute', {
+                    '#dt': 'NameValueType',
+                    '#ph': 'complexType,NameValueType,',
+                    '#cm': '(<@name>)(<value>)'
+                });
+                setSchema('complexType,NameValueType,value', {
+                    '#dt': 'ValueType',
+                    '#ph': 'complexType,ValueType,',
+                    '#cm': '(<@fromType>)(<@value>)(<@toType>)(<@basePage>)(<@enableJS>)(<@format>)(<strPreprocess>)?'
+                });
+                setSchema('complexType,BrowseCatType,totalItemNum', {
+                    '#dt': 'ValueType',
+                    '#ph': 'complexType,ValueType,',
+                    '#cm': '(<@fromType>)(<@value>)(<@toType>)(<@basePage>)(<@enableJS>)(<@format>)(<strPreprocess>)?'
+                });
+                setSchema('complexType,SubListType,lastPageCondition', {
+                    '#dt': 'BinaryBoolOp',
+                    '#ph': 'complexType,BinaryBoolOp,',
+                    '#cm': '(<@lhs>)(<@rhs>)(<@operator>)'
+                });
+                setSchema('complexType,BrowseTaskType,@skipJS', {
+                    '#dt': '#string'
+                });
+                setSchema('complexType,ValueType,strPreprocess,@trimPost', {
+                    '#dt': '#string'
+                });
+                setSchema('complexType,ValueType,strPreprocess', {
+                    '#ph': 'complexType,ValueType,strPreprocess,',
+                    '#cm': '(<@trimPre>)(<@trimPost>)'
+                });
+                setSchema('complexType,BrowseCatType,subItemList', {
+                    '#dt': 'SubListType',
+                    '#ph': 'complexType,SubListType,',
+                    '#cm': '(<@itemList>)(<@itemFullUrl>)(<@nextPage>)(<@isLeaf>)(<@lastItem>)(<userAttribute>)*(<lastPageCondition>)?(<name>)?'
+                });
+                setSchema('complexType,BrowseDetailType,@nextPage', {
+                    '#dt': '#string'
+                });
+                setSchema('complexType,TokenType,@regExp', {
+                    '#df': 'false',
+                    '#dt': '#boolean',
+                    '#dc': 'optional, if missing means false, if true means the value is regExp, does not need to quote. if false or not set, it will be quoted'
+                });
+                setSchema('complexType,BrowseCatType,@isLeaf', {
+                    '#dt': '#boolean'
+                });
+                setSchema('complexType,BrowseDetailType,baseBrowseTask', {
+                    '#dt': 'BrowseTaskType',
+                    '#ph': 'complexType,BrowseTaskType,',
+                    '#cm': '(<@taskName>)(<@itemType>)(<@isStart>)(<@rerunInterim>)(<@enableJS>)(<@startUrl>)(<@skipJS>)(<@highMem>)(<userAttribute>)*(<idUrlMapping>)(<idUrlMappingFirstPage>)?(<itemName>)?(<sampleUrl>)*'
+                });
+                setSchema('complexType,ValueType,strPreprocess,@trimPre', {
+                    '#dt': '#string'
+                });
+                setSchema('complexType,BrowseTaskType,@taskName', {
+                    '#dt': '#string'
+                });
+                setSchema('complexType,SubListType,@itemFullUrl', {
+                    '#dt': '#string'
+                });
+                setSchema('complexType,BrowseDetailType,totalPage', {
+                    '#dt': 'ValueType',
+                    '#ph': 'complexType,ValueType,',
+                    '#cm': '(<@fromType>)(<@value>)(<@toType>)(<@basePage>)(<@enableJS>)(<@format>)(<strPreprocess>)?'
+                });
+                setSchema('complexType,ClickStreamType,finishCondition', {
+                    '#dt': 'BinaryBoolOp',
+                    '#ph': 'complexType,BinaryBoolOp,',
+                    '#dc': 'if specified, the last link will be clicked till finish condition, if true reach the first page of the book',
+                    '#cm': '(<@lhs>)(<@rhs>)(<@operator>)'
+                });
+                setSchema('complexType,SubListType,@lastItem', {
+                    '#dt': '#string'
+                });
+                setSchema('complexType,BrowseDetailType,@imagePath', {
+                    '#dt': '#string'
+                });
+                setSchema('complexType,ValueType,@value', {
+                    '#dt': '#string'
+                });
+                setSchema('complexType,BrowseTaskType,@startUrl', {
+                    '#dt': '#string',
+                    '#dc': 'if isStart is true, then this is needed.'
+                });
+                setSchema('complexType,BrowseTaskType,@rerunInterim', {
+                    '#dt': '#int',
+                    '#dc': 'if missing, means run only, else specify number of seconds before rerun'
+                });
+                setSchema('complexType,BrowseDetailType,lastPageCondition', {
+                    '#dt': 'BinaryBoolOp',
+                    '#ph': 'complexType,BinaryBoolOp,',
+                    '#dc': 'if true reach the end of the book',
+                    '#cm': '(<@lhs>)(<@rhs>)(<@operator>)'
+                });
+                setSchema('complexType,ValueType,@basePage', {
+                    '#dt': '#string',
+                    '#dc': 'based on which page, to eval this xpath'
+                });
+                setSchema('complexType,TokenType,@name', {
+                    '#dt': '#string'
+                });
+                setSchema('complexType,SubListType,@itemList', {
+                    '#dt': '#string',
+                    '#dc': 'xpath to list of item, usually of type html anchor'
+                });
+                setSchema('complexType,BrowseCatType,totalPageNum', {
+                    '#dt': 'ValueType',
+                    '#ph': 'complexType,ValueType,',
+                    '#dc': 'means how many pages of childitems we have, each page will be split in one task. \nif not set, but itemPerPage and totalItemNum set, this can be calculated.\nif also not set, then 1 task browsing all items will be generated.',
+                    '#cm': '(<@fromType>)(<@value>)(<@toType>)(<@basePage>)(<@enableJS>)(<@format>)(<strPreprocess>)?'
+                });
+                setSchema('complexType,BrowseTaskType,@isStart', {
+                    '#dt': '#boolean'
+                });
+                setSchema('complexType,BrowseTaskType,sampleUrl', {
+                    '#dt': '#string'
+                });
+                setTypeDef('TokenType', {
+                    '#ph': 'complexType,TokenType,',
+                    '#dc': 'used for Id-Url mapping'
+                });
+                setTypeDef('ClickStreamType', {
+                    '#ph': 'complexType,ClickStreamType,',
+                    '#dc': 'each link is an xpath expression, will evaluaged to a href, it will be clicked and  return a page.'
+                });
+                // end schema
+            }
+            -->
+        </script>
+        <div id="menuForm">
+            <form name="menuForm" onclick="clickFormBody(this, event);" action="">
+                <select name="edit" size="1" onchange="menuChosen(this);">
+                    <option selected="selected" value="">Edit</option>
+                    <option value="-" disabled="disabled">--------------------</option>
+                    <option value="undo">Undo/Redo</option>
+                    <option value="-" disabled="disabled">--------------------</option>
+                    <option value="cutSelected">Cut</option>
+                    <option value="copySelected">Copy</option>
+                    <option value="pasteReplaceSelected">Paste</option>
+                    <option value="pasteBeforeSelected">Paste Before Selected</option>
+                    <option value="pasteAfterSelected">Paste After Selected</option>
+                    <option value="pasteIntoSelected">Paste Into Selected</option>
+                    <option value="-" disabled="disabled">--------------------</option>
+                    <option value="deleteSelected">Delete</option>
+                    <option value="duplicateSelected">Duplicate</option>
+                    <option value="clearSelected">Clear Selected Fields</option>
+                    <option value="nilSelected">Nil</option>
+                    <option value="-" disabled="disabled">--------------------</option>
+                    <option value="snapShot">Take Snap Shot</option>
+                    <option value="makeXML">Generate XML</option>
+                    <option value="-" disabled="disabled">--------------------</option>
+                    <option value="showPreference">Preferences...</option>
+                    <!-- <option value="showSchema">Schema...</option>
+-->
+                </select>
+                <select name="operation" size="1" onchange="menuChosen(this);">
+                    <option selected="selected" value="">Operate on Selection</option>
+                    <option value="-" disabled="disabled">--------------------</option>
+                    <option value="expandSelected">Expand</option>
+                    <option value="collapseSelected">Collapse</option>
+                    <option value="-" disabled="disabled">--------------------</option>
+                    <option value="sortSelectedKey">Use as Key and Sort</option>
+                    <option value="verifySelected">Verify Against Schema</option>
+                    <option value="aboutSelected">Help</option>
+                    <option value="-" disabled="disabled">--------------------</option>
+                    <option value="becomeTextarea">Use Text Area for Input</option>
+                    <option value="becomeTextfield">Use Text Field for Input</option>
+                    <option value="becomeSelectList">Use Select List for Input</option>
+                    <option value="becomeRadioButton">Use Radio Buttons for Input</option>
+                    <!-- <option value="test">test</option>
+  <option value="test1">test1</option>
+-->
+                </select>
+                <select name="elementsMenu" size="1" class="formMenu" onchange="makeElementChosen(this);">
+                    <option selected="selected" value="">Make Element in Scrap</option>
+                    <option value="-" disabled="disabled">--------------------</option>
+                    <option value="XMLComplexContent">New Complex Element</option>
+                    <option value="-" disabled="disabled">--------------------</option>
+                    <option value="#directPages">directPages</option>
+                    <option value="#subItemList">subItemList</option>
+                    <option value="#userAttribute">userAttribute</option>
+                    <option value="#Token">Token</option>
+                    <option value="#PrdTask">PrdTask</option>
+                    <option value="#lastPageCondition">lastPageCondition</option>
+                    <option value="#idUrlMappingFirstPage">idUrlMappingFirstPage</option>
+                    <option value="#itemPerPage">itemPerPage</option>
+                    <option value="#link">link</option>
+                    <option value="#Tasks">Tasks</option>
+                    <option value="#totalItemNum">totalItemNum</option>
+                    <option value="#value">value</option>
+                    <option value="#name">name</option>
+                    <option value="#totalPage">totalPage</option>
+                    <option value="#baseBrowseTask">baseBrowseTask</option>
+                    <option value="#itemName">itemName</option>
+                    <option value="#finishCondition">finishCondition</option>
+                    <option value="#CatTask">CatTask</option>
+                    <option value="#idUrlMapping">idUrlMapping</option>
+                    <option value="#firstPageClickStream">firstPageClickStream</option>
+                    <option value="#strPreprocess">strPreprocess</option>
+                    <option value="#totalPageNum">totalPageNum</option>
+                    <option value="-" disabled="disabled">--------------------</option>
+                    <option value="XMLSimpleContent">New Simple Element</option>
+                    <option value="-" disabled="disabled">--------------------</option>
+                    <option value="XMLAnonymous">Unnamed Text Node</option>
+                    <option value="!skipUrl">skipUrl</option>
+                    <option value="!sampleUrl">sampleUrl</option>
+                    <option value="-" disabled="disabled">--------------------</option>
+                    <option value="XMLAttribute">New Attribute;</option>
+                    <option value="-">--------------------</option>
+                    <option value="@nextPage">nextPage</option>
+                    <option value="@itemList">itemList</option>
+                    <option value="@trimPre">trimPre</option>
+                    <option value="@rhs">rhs</option>
+                    <option value="@rerunInterim">rerunInterim</option>
+                    <option value="@fromType">fromType</option>
+                    <option value="@imagePath">imagePath</option>
+                    <option value="@rootVolume">rootVolume</option>
+                    <option value="@operator">operator</option>
+                    <option value="@basePage">basePage</option>
+                    <option value="@regExp">regExp</option>
+                    <option value="@skipJS">skipJS</option>
+                    <option value="@isLeaf">isLeaf</option>
+                    <option value="@startUrl">startUrl</option>
+                    <option value="@toType">toType</option>
+                    <option value="@taskName">taskName</option>
+                    <option value="@lhs">lhs</option>
+                    <option value="@value">value</option>
+                    <option value="@name">name</option>
+                    <option value="@storeId">storeId</option>
+                    <option value="@trimPost">trimPost</option>
+                    <option value="@format">format</option>
+                    <option value="@lastItem">lastItem</option>
+                    <option value="@enableJS">enableJS</option>
+                    <option value="@highMem">highMem</option>
+                    <option value="@isStart">isStart</option>
+                    <option value="@itemFullUrl">itemFullUrl</option>
+                    <option value="@itemType">itemType</option>
+                </select>
+                <br>
+                <input type="checkbox" name="multiple" value="multiple">repeat operation</form>
+        </div>
+        <div id="xmlForm">
+            <form name="xmlForm" action="http://www.datamech.com/XMLForm/formXML0200a.pl?.df=html" target="_blank" onclick="clickFormBody(this, event);" method="post">
+                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                    <fieldset class="Tasks">
+                        <legend>- Tasks</legend>
+                        <input type="hidden" value="Tasks" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="rootVolume">
+<label>rootVolume: </label>
+<input type="text" class="rootVolume" name="@rootVolume" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                        <br>
+                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="storeId">
+<label>storeId: </label>
+<input type="text" class="storeId" name="@storeId" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                        <br>
+                        </span>
+                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                            <fieldset class="CatTask">
+                                <legend>- CatTask</legend>
+                                <input type="hidden" value="CatTask" name=".tg" style="display: block;">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);" style="display: block;">
+<span class="startUrl">
+<label>startUrl: </label>
+<input type="text" class="startUrl" name="@startUrl" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);" style="display: block;">
+<span class="taskName">
+<label>taskName: </label>
+<input type="text" class="taskName" name="@taskName" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);" style="display: block;">
+<span class="rerunInterim">
+<label>rerunInterim: </label>
+<input type="text" class="rerunInterim" name="@rerunInterim" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);" style="display: block;">
+<span class="enableJS">
+<label>enableJS: </label>
+<input type="text" class="enableJS" name="@enableJS" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);" style="display: block;">
+<span class="skipJS">
+<label>skipJS: </label>
+<input type="text" class="skipJS" name="@skipJS" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);" style="display: block;">
+<span class="highMem">
+<label>highMem: </label>
+<input type="text" class="highMem" name="@highMem" value="false" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);" style="display: block;">
+<span class="isStart">
+<label>isStart: </label>
+<input type="text" class="isStart" name="@isStart" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);" style="display: block;">
+<span class="itemType">
+<label>itemType: </label>
+<input type="text" class="itemType" name="@itemType" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);" style="display: block;">
+                                    <fieldset class="userAttribute">
+                                        <legend>- userAttribute</legend>
+                                        <input type="hidden" value="userAttribute" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="name">
+<label>name: </label>
+<input type="text" class="name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="value">
+                                                <legend>- value</legend>
+                                                <input type="hidden" value="value" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="basePage">
+<label>basePage: </label>
+<input type="text" class="basePage" name="@basePage" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="toType">
+<label>toType: </label>
+<select name="@toType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string">string</option>
+<option value="date">date</option>
+<option value="int">int</option>
+<option value="page">page</option>
+<option value="list" selected="selected">list</option>
+</select>
+</span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="format">
+<label>format: </label>
+<input type="text" class="format" name="@format" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="enableJS">
+<label>enableJS: </label>
+<input type="text" class="enableJS" name="@enableJS" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="fromType">
+<label>fromType: </label>
+<select name="@fromType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string" selected="selected">string</option>
+<option value="xpath">xpath</option>
+</select>
+</span>
+
+                                                <br>
+                                                </span>
+                                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                                    <fieldset class="strPreprocess">
+                                                        <legend>- strPreprocess</legend>
+                                                        <input type="hidden" value="strPreprocess" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPost">
+<label>trimPost: </label>
+<input type="text" class="trimPost" name="@trimPost" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPre">
+<label>trimPre: </label>
+<input type="text" class="trimPre" name="@trimPre" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+                                                        <input type="hidden" value="/strPreprocess" name=".tg">
+                                                    </fieldset>
+                                                </div>
+                                                <input type="hidden" value="/value" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <input type="hidden" value="/userAttribute" name=".tg">
+                                    </fieldset>
+                                </div>
+                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);" style="display: block;">
+                                    <fieldset class="idUrlMapping">
+                                        <legend>- idUrlMapping</legend>
+                                        <input type="hidden" value="idUrlMapping" name=".tg">
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="Token">
+                                                <legend>- Token</legend>
+                                                <input type="hidden" value="Token" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="regExp">
+<label>regExp: </label>
+<input type="text" class="regExp" name="@regExp" value="false" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="name">
+<label>name: </label>
+<input type="text" class="name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+                                                <input type="hidden" value="/Token" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="Token">
+                                                <legend>- Token</legend>
+                                                <input type="hidden" value="Token" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="regExp">
+<label>regExp: </label>
+<input type="text" class="regExp" name="@regExp" value="false" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="name">
+<label>name: </label>
+<input type="text" class="name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+                                                <input type="hidden" value="/Token" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <input type="hidden" value="/idUrlMapping" name=".tg">
+                                    </fieldset>
+                                </div>
+                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);" style="display: block;">
+                                    <fieldset class="idUrlMappingFirstPage">
+                                        <legend>- idUrlMappingFirstPage</legend>
+                                        <input type="hidden" value="idUrlMappingFirstPage" name=".tg">
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="Token">
+                                                <legend>- Token</legend>
+                                                <input type="hidden" value="Token" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="regExp">
+<label>regExp: </label>
+<input type="text" class="regExp" name="@regExp" value="false" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="name">
+<label>name: </label>
+<input type="text" class="name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+                                                <input type="hidden" value="/Token" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="Token">
+                                                <legend>- Token</legend>
+                                                <input type="hidden" value="Token" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="regExp">
+<label>regExp: </label>
+<input type="text" class="regExp" name="@regExp" value="false" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="name">
+<label>name: </label>
+<input type="text" class="name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+                                                <input type="hidden" value="/Token" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <input type="hidden" value="/idUrlMappingFirstPage" name=".tg">
+                                    </fieldset>
+                                </div>
+                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);" style="display: block;">
+                                    <fieldset class="itemName">
+                                        <legend>- itemName</legend>
+                                        <input type="hidden" value="itemName" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="basePage">
+<label>basePage: </label>
+<input type="text" class="basePage" name="@basePage" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="toType">
+<label>toType: </label>
+<select name="@toType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string">string</option>
+<option value="date" selected="selected">date</option>
+<option value="int">int</option>
+<option value="page">page</option>
+<option value="list">list</option>
+</select>
+</span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="format">
+<label>format: </label>
+<input type="text" class="format" name="@format" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="enableJS">
+<label>enableJS: </label>
+<input type="text" class="enableJS" name="@enableJS" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="fromType">
+<label>fromType: </label>
+<select name="@fromType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string" selected="selected">string</option>
+<option value="xpath">xpath</option>
+</select>
+</span>
+
+                                        <br>
+                                        </span>
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="strPreprocess">
+                                                <legend>- strPreprocess</legend>
+                                                <input type="hidden" value="strPreprocess" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPost">
+<label>trimPost: </label>
+<input type="text" class="trimPost" name="@trimPost" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPre">
+<label>trimPre: </label>
+<input type="text" class="trimPre" name="@trimPre" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+                                                <input type="hidden" value="/strPreprocess" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <input type="hidden" value="/itemName" name=".tg">
+                                    </fieldset>
+                                </div>
+<span class="XMLSimpleType" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);" style="display: block;">
+<span class="sampleUrl">
+<label>sampleUrl: </label>
+<input type="text" class="sampleUrl" name="sampleUrl" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+                                <input type="hidden" value="/CatTask" name=".tg" style="display: block;">
+                            </fieldset>
+                        </div>
+                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                            <fieldset class="CatTask">
+                                <legend>- CatTask</legend>
+                                <input type="hidden" value="CatTask" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="startUrl">
+<label>startUrl: </label>
+<input type="text" class="startUrl" name="@startUrl" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="taskName">
+<label>taskName: </label>
+<input type="text" class="taskName" name="@taskName" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="rerunInterim">
+<label>rerunInterim: </label>
+<input type="text" class="rerunInterim" name="@rerunInterim" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="enableJS">
+<label>enableJS: </label>
+<input type="text" class="enableJS" name="@enableJS" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="skipJS">
+<label>skipJS: </label>
+<input type="text" class="skipJS" name="@skipJS" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="highMem">
+<label>highMem: </label>
+<input type="text" class="highMem" name="@highMem" value="false" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="isStart">
+<label>isStart: </label>
+<input type="text" class="isStart" name="@isStart" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="itemType">
+<label>itemType: </label>
+<input type="text" class="itemType" name="@itemType" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                    <fieldset class="userAttribute">
+                                        <legend>- userAttribute</legend>
+                                        <input type="hidden" value="userAttribute" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="name">
+<label>name: </label>
+<input type="text" class="name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="value">
+                                                <legend>- value</legend>
+                                                <input type="hidden" value="value" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="basePage">
+<label>basePage: </label>
+<input type="text" class="basePage" name="@basePage" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="toType">
+<label>toType: </label>
+<select name="@toType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string" selected="selected">string</option>
+<option value="date">date</option>
+<option value="int">int</option>
+<option value="page">page</option>
+<option value="list">list</option>
+</select>
+</span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="format">
+<label>format: </label>
+<input type="text" class="format" name="@format" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="enableJS">
+<label>enableJS: </label>
+<input type="text" class="enableJS" name="@enableJS" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="fromType">
+<label>fromType: </label>
+<select name="@fromType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string">string</option>
+<option value="xpath" selected="selected">xpath</option>
+</select>
+</span>
+
+                                                <br>
+                                                </span>
+                                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                                    <fieldset class="strPreprocess">
+                                                        <legend>- strPreprocess</legend>
+                                                        <input type="hidden" value="strPreprocess" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPost">
+<label>trimPost: </label>
+<input type="text" class="trimPost" name="@trimPost" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPre">
+<label>trimPre: </label>
+<input type="text" class="trimPre" name="@trimPre" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+                                                        <input type="hidden" value="/strPreprocess" name=".tg">
+                                                    </fieldset>
+                                                </div>
+                                                <input type="hidden" value="/value" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <input type="hidden" value="/userAttribute" name=".tg">
+                                    </fieldset>
+                                </div>
+                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                    <fieldset class="idUrlMapping">
+                                        <legend>- idUrlMapping</legend>
+                                        <input type="hidden" value="idUrlMapping" name=".tg">
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="Token">
+                                                <legend>- Token</legend>
+                                                <input type="hidden" value="Token" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="regExp">
+<label>regExp: </label>
+<input type="text" class="regExp" name="@regExp" value="false" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="name">
+<label>name: </label>
+<input type="text" class="name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+                                                <input type="hidden" value="/Token" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="Token">
+                                                <legend>- Token</legend>
+                                                <input type="hidden" value="Token" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="regExp">
+<label>regExp: </label>
+<input type="text" class="regExp" name="@regExp" value="false" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="name">
+<label>name: </label>
+<input type="text" class="name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+                                                <input type="hidden" value="/Token" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <input type="hidden" value="/idUrlMapping" name=".tg">
+                                    </fieldset>
+                                </div>
+                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                    <fieldset class="idUrlMappingFirstPage">
+                                        <legend>- idUrlMappingFirstPage</legend>
+                                        <input type="hidden" value="idUrlMappingFirstPage" name=".tg">
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="Token">
+                                                <legend>- Token</legend>
+                                                <input type="hidden" value="Token" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="regExp">
+<label>regExp: </label>
+<input type="text" class="regExp" name="@regExp" value="false" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="name">
+<label>name: </label>
+<input type="text" class="name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+                                                <input type="hidden" value="/Token" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="Token">
+                                                <legend>- Token</legend>
+                                                <input type="hidden" value="Token" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="regExp">
+<label>regExp: </label>
+<input type="text" class="regExp" name="@regExp" value="false" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="name">
+<label>name: </label>
+<input type="text" class="name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+                                                <input type="hidden" value="/Token" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <input type="hidden" value="/idUrlMappingFirstPage" name=".tg">
+                                    </fieldset>
+                                </div>
+                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                    <fieldset class="itemName">
+                                        <legend>- itemName</legend>
+                                        <input type="hidden" value="itemName" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="basePage">
+<label>basePage: </label>
+<input type="text" class="basePage" name="@basePage" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="toType">
+<label>toType: </label>
+<select name="@toType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string">string</option>
+<option value="date">date</option>
+<option value="int" selected="selected">int</option>
+<option value="page">page</option>
+<option value="list">list</option>
+</select>
+</span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="format">
+<label>format: </label>
+<input type="text" class="format" name="@format" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="enableJS">
+<label>enableJS: </label>
+<input type="text" class="enableJS" name="@enableJS" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="fromType">
+<label>fromType: </label>
+<select name="@fromType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string" selected="selected">string</option>
+<option value="xpath">xpath</option>
+</select>
+</span>
+
+                                        <br>
+                                        </span>
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="strPreprocess">
+                                                <legend>- strPreprocess</legend>
+                                                <input type="hidden" value="strPreprocess" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPost">
+<label>trimPost: </label>
+<input type="text" class="trimPost" name="@trimPost" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPre">
+<label>trimPre: </label>
+<input type="text" class="trimPre" name="@trimPre" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+                                                <input type="hidden" value="/strPreprocess" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <input type="hidden" value="/itemName" name=".tg">
+                                    </fieldset>
+                                </div>
+<span class="XMLSimpleType" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="sampleUrl">
+<label>sampleUrl: </label>
+<input type="text" class="sampleUrl" name="sampleUrl" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+                                <input type="hidden" value="/CatTask" name=".tg">
+                            </fieldset>
+                        </div>
+                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                            <fieldset class="PrdTask">
+                                <legend>- PrdTask</legend>
+                                <input type="hidden" value="PrdTask" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="nextPage">
+<label>nextPage: </label>
+<input type="text" class="nextPage" name="@nextPage" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="imagePath">
+<label>imagePath: </label>
+<input type="text" class="imagePath" name="@imagePath" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                <br>
+                                </span>
+                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                    <fieldset class="baseBrowseTask">
+                                        <legend>- baseBrowseTask</legend>
+                                        <input type="hidden" value="baseBrowseTask" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="startUrl">
+<label>startUrl: </label>
+<input type="text" class="startUrl" name="@startUrl" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="taskName">
+<label>taskName: </label>
+<input type="text" class="taskName" name="@taskName" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="rerunInterim">
+<label>rerunInterim: </label>
+<input type="text" class="rerunInterim" name="@rerunInterim" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="enableJS">
+<label>enableJS: </label>
+<input type="text" class="enableJS" name="@enableJS" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="skipJS">
+<label>skipJS: </label>
+<input type="text" class="skipJS" name="@skipJS" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="highMem">
+<label>highMem: </label>
+<input type="text" class="highMem" name="@highMem" value="false" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="isStart">
+<label>isStart: </label>
+<input type="text" class="isStart" name="@isStart" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="itemType">
+<label>itemType: </label>
+<input type="text" class="itemType" name="@itemType" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="userAttribute">
+                                                <legend>- userAttribute</legend>
+                                                <input type="hidden" value="userAttribute" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="name">
+<label>name: </label>
+<input type="text" class="name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+                                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                                    <fieldset class="value">
+                                                        <legend>- value</legend>
+                                                        <input type="hidden" value="value" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="basePage">
+<label>basePage: </label>
+<input type="text" class="basePage" name="@basePage" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="toType">
+<label>toType: </label>
+<select name="@toType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string">string</option>
+<option value="date" selected="selected">date</option>
+<option value="int">int</option>
+<option value="page">page</option>
+<option value="list">list</option>
+</select>
+</span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="format">
+<label>format: </label>
+<input type="text" class="format" name="@format" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="enableJS">
+<label>enableJS: </label>
+<input type="text" class="enableJS" name="@enableJS" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="fromType">
+<label>fromType: </label>
+<select name="@fromType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string" selected="selected">string</option>
+<option value="xpath">xpath</option>
+</select>
+</span>
+
+                                                        <br>
+                                                        </span>
+                                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                                            <fieldset class="strPreprocess">
+                                                                <legend>- strPreprocess</legend>
+                                                                <input type="hidden" value="strPreprocess" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPost">
+<label>trimPost: </label>
+<input type="text" class="trimPost" name="@trimPost" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                                <br>
+                                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPre">
+<label>trimPre: </label>
+<input type="text" class="trimPre" name="@trimPre" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                                <br>
+                                                                </span>
+                                                                <input type="hidden" value="/strPreprocess" name=".tg">
+                                                            </fieldset>
+                                                        </div>
+                                                        <input type="hidden" value="/value" name=".tg">
+                                                    </fieldset>
+                                                </div>
+                                                <input type="hidden" value="/userAttribute" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="idUrlMapping">
+                                                <legend>- idUrlMapping</legend>
+                                                <input type="hidden" value="idUrlMapping" name=".tg">
+                                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                                    <fieldset class="Token">
+                                                        <legend>- Token</legend>
+                                                        <input type="hidden" value="Token" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="regExp">
+<label>regExp: </label>
+<input type="text" class="regExp" name="@regExp" value="false" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="name">
+<label>name: </label>
+<input type="text" class="name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+                                                        <input type="hidden" value="/Token" name=".tg">
+                                                    </fieldset>
+                                                </div>
+                                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                                    <fieldset class="Token">
+                                                        <legend>- Token</legend>
+                                                        <input type="hidden" value="Token" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="regExp">
+<label>regExp: </label>
+<input type="text" class="regExp" name="@regExp" value="false" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="name">
+<label>name: </label>
+<input type="text" class="name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+                                                        <input type="hidden" value="/Token" name=".tg">
+                                                    </fieldset>
+                                                </div>
+                                                <input type="hidden" value="/idUrlMapping" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="idUrlMappingFirstPage">
+                                                <legend>- idUrlMappingFirstPage</legend>
+                                                <input type="hidden" value="idUrlMappingFirstPage" name=".tg">
+                                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                                    <fieldset class="Token">
+                                                        <legend>- Token</legend>
+                                                        <input type="hidden" value="Token" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="regExp">
+<label>regExp: </label>
+<input type="text" class="regExp" name="@regExp" value="false" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="name">
+<label>name: </label>
+<input type="text" class="name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+                                                        <input type="hidden" value="/Token" name=".tg">
+                                                    </fieldset>
+                                                </div>
+                                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                                    <fieldset class="Token">
+                                                        <legend>- Token</legend>
+                                                        <input type="hidden" value="Token" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="regExp">
+<label>regExp: </label>
+<input type="text" class="regExp" name="@regExp" value="false" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="name">
+<label>name: </label>
+<input type="text" class="name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+                                                        <input type="hidden" value="/Token" name=".tg">
+                                                    </fieldset>
+                                                </div>
+                                                <input type="hidden" value="/idUrlMappingFirstPage" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="itemName">
+                                                <legend>- itemName</legend>
+                                                <input type="hidden" value="itemName" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="basePage">
+<label>basePage: </label>
+<input type="text" class="basePage" name="@basePage" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="toType">
+<label>toType: </label>
+<select name="@toType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string" selected="selected">string</option>
+<option value="date">date</option>
+<option value="int">int</option>
+<option value="page">page</option>
+<option value="list">list</option>
+</select>
+</span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="format">
+<label>format: </label>
+<input type="text" class="format" name="@format" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="enableJS">
+<label>enableJS: </label>
+<input type="text" class="enableJS" name="@enableJS" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="fromType">
+<label>fromType: </label>
+<select name="@fromType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string">string</option>
+<option value="xpath" selected="selected">xpath</option>
+</select>
+</span>
+
+                                                <br>
+                                                </span>
+                                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                                    <fieldset class="strPreprocess">
+                                                        <legend>- strPreprocess</legend>
+                                                        <input type="hidden" value="strPreprocess" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPost">
+<label>trimPost: </label>
+<input type="text" class="trimPost" name="@trimPost" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPre">
+<label>trimPre: </label>
+<input type="text" class="trimPre" name="@trimPre" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+                                                        <input type="hidden" value="/strPreprocess" name=".tg">
+                                                    </fieldset>
+                                                </div>
+                                                <input type="hidden" value="/itemName" name=".tg">
+                                            </fieldset>
+                                        </div>
+<span class="XMLSimpleType" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="sampleUrl">
+<label>sampleUrl: </label>
+<input type="text" class="sampleUrl" name="sampleUrl" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+                                        <input type="hidden" value="/baseBrowseTask" name=".tg">
+                                    </fieldset>
+                                </div>
+                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                    <fieldset class="lastPageCondition">
+                                        <legend>- lastPageCondition</legend>
+                                        <input type="hidden" value="lastPageCondition" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="operator">
+<label>operator: </label>
+<select name="@operator" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="=">=</option>
+<option value="!=" selected="selected">!=</option>
+</select>
+</span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="rhs">
+<label>rhs: </label>
+<input type="text" class="rhs" name="@rhs" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="lhs">
+<label>lhs: </label>
+<input type="text" class="lhs" name="@lhs" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+                                        <input type="hidden" value="/lastPageCondition" name=".tg">
+                                    </fieldset>
+                                </div>
+                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                    <fieldset class="firstPageClickStream">
+                                        <legend>- firstPageClickStream</legend>
+                                        <input type="hidden" value="firstPageClickStream" name=".tg">
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="link">
+                                                <legend>- link</legend>
+                                                <input type="hidden" value="link" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="name">
+<label>name: </label>
+<input type="text" class="name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+                                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                                    <fieldset class="value">
+                                                        <legend>- value</legend>
+                                                        <input type="hidden" value="value" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="basePage">
+<label>basePage: </label>
+<input type="text" class="basePage" name="@basePage" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="toType">
+<label>toType: </label>
+<select name="@toType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string">string</option>
+<option value="date">date</option>
+<option value="int" selected="selected">int</option>
+<option value="page">page</option>
+<option value="list">list</option>
+</select>
+</span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="format">
+<label>format: </label>
+<input type="text" class="format" name="@format" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="enableJS">
+<label>enableJS: </label>
+<input type="text" class="enableJS" name="@enableJS" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="fromType">
+<label>fromType: </label>
+<select name="@fromType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string" selected="selected">string</option>
+<option value="xpath">xpath</option>
+</select>
+</span>
+
+                                                        <br>
+                                                        </span>
+                                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                                            <fieldset class="strPreprocess">
+                                                                <legend>- strPreprocess</legend>
+                                                                <input type="hidden" value="strPreprocess" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPost">
+<label>trimPost: </label>
+<input type="text" class="trimPost" name="@trimPost" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                                <br>
+                                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPre">
+<label>trimPre: </label>
+<input type="text" class="trimPre" name="@trimPre" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                                <br>
+                                                                </span>
+                                                                <input type="hidden" value="/strPreprocess" name=".tg">
+                                                            </fieldset>
+                                                        </div>
+                                                        <input type="hidden" value="/value" name=".tg">
+                                                    </fieldset>
+                                                </div>
+                                                <input type="hidden" value="/link" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="link">
+                                                <legend>- link</legend>
+                                                <input type="hidden" value="link" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="name">
+<label>name: </label>
+<input type="text" class="name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+                                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                                    <fieldset class="value">
+                                                        <legend>- value</legend>
+                                                        <input type="hidden" value="value" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="basePage">
+<label>basePage: </label>
+<input type="text" class="basePage" name="@basePage" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="toType">
+<label>toType: </label>
+<select name="@toType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string">string</option>
+<option value="date">date</option>
+<option value="int">int</option>
+<option value="page" selected="selected">page</option>
+<option value="list">list</option>
+</select>
+</span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="format">
+<label>format: </label>
+<input type="text" class="format" name="@format" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="enableJS">
+<label>enableJS: </label>
+<input type="text" class="enableJS" name="@enableJS" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                        <br>
+                                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="fromType">
+<label>fromType: </label>
+<select name="@fromType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string" selected="selected">string</option>
+<option value="xpath">xpath</option>
+</select>
+</span>
+
+                                                        <br>
+                                                        </span>
+                                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                                            <fieldset class="strPreprocess">
+                                                                <legend>- strPreprocess</legend>
+                                                                <input type="hidden" value="strPreprocess" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPost">
+<label>trimPost: </label>
+<input type="text" class="trimPost" name="@trimPost" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                                <br>
+                                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPre">
+<label>trimPre: </label>
+<input type="text" class="trimPre" name="@trimPre" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                                <br>
+                                                                </span>
+                                                                <input type="hidden" value="/strPreprocess" name=".tg">
+                                                            </fieldset>
+                                                        </div>
+                                                        <input type="hidden" value="/value" name=".tg">
+                                                    </fieldset>
+                                                </div>
+                                                <input type="hidden" value="/link" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="finishCondition">
+                                                <legend>- finishCondition</legend>
+                                                <input type="hidden" value="finishCondition" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="operator">
+<label>operator: </label>
+<select name="@operator" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="=" selected="selected">=</option>
+<option value="!=">!=</option>
+</select>
+</span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="rhs">
+<label>rhs: </label>
+<input type="text" class="rhs" name="@rhs" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="lhs">
+<label>lhs: </label>
+<input type="text" class="lhs" name="@lhs" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+                                                <input type="hidden" value="/finishCondition" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <input type="hidden" value="/firstPageClickStream" name=".tg">
+                                    </fieldset>
+                                </div>
+                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                    <fieldset class="totalPage">
+                                        <legend>- totalPage</legend>
+                                        <input type="hidden" value="totalPage" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="basePage">
+<label>basePage: </label>
+<input type="text" class="basePage" name="@basePage" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="toType">
+<label>toType: </label>
+<select name="@toType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string">string</option>
+<option value="date" selected="selected">date</option>
+<option value="int">int</option>
+<option value="page">page</option>
+<option value="list">list</option>
+</select>
+</span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="format">
+<label>format: </label>
+<input type="text" class="format" name="@format" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="enableJS">
+<label>enableJS: </label>
+<input type="text" class="enableJS" name="@enableJS" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="fromType">
+<label>fromType: </label>
+<select name="@fromType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string">string</option>
+<option value="xpath" selected="selected">xpath</option>
+</select>
+</span>
+
+                                        <br>
+                                        </span>
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="strPreprocess">
+                                                <legend>- strPreprocess</legend>
+                                                <input type="hidden" value="strPreprocess" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPost">
+<label>trimPost: </label>
+<input type="text" class="trimPost" name="@trimPost" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPre">
+<label>trimPre: </label>
+<input type="text" class="trimPre" name="@trimPre" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+                                                <input type="hidden" value="/strPreprocess" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <input type="hidden" value="/totalPage" name=".tg">
+                                    </fieldset>
+                                </div>
+                                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                    <fieldset class="directPages">
+                                        <legend>- directPages</legend>
+                                        <input type="hidden" value="directPages" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="basePage">
+<label>basePage: </label>
+<input type="text" class="basePage" name="@basePage" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="toType">
+<label>toType: </label>
+<select name="@toType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string">string</option>
+<option value="date">date</option>
+<option value="int" selected="selected">int</option>
+<option value="page">page</option>
+<option value="list">list</option>
+</select>
+</span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="format">
+<label>format: </label>
+<input type="text" class="format" name="@format" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="enableJS">
+<label>enableJS: </label>
+<input type="text" class="enableJS" name="@enableJS" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="value">
+<label>value: </label>
+<input type="text" class="value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                        <br>
+                                        </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="fromType">
+<label>fromType: </label>
+<select name="@fromType" size="1" onchange="noUndefined(this);" onfocus="focusGained(this);">
+<option value="string" selected="selected">string</option>
+<option value="xpath">xpath</option>
+</select>
+</span>
+
+                                        <br>
+                                        </span>
+                                        <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                                            <fieldset class="strPreprocess">
+                                                <legend>- strPreprocess</legend>
+                                                <input type="hidden" value="strPreprocess" name=".tg">
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPost">
+<label>trimPost: </label>
+<input type="text" class="trimPost" name="@trimPost" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="trimPre">
+<label>trimPre: </label>
+<input type="text" class="trimPre" name="@trimPre" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                                                <br>
+                                                </span>
+                                                <input type="hidden" value="/strPreprocess" name=".tg">
+                                            </fieldset>
+                                        </div>
+                                        <input type="hidden" value="/directPages" name=".tg">
+                                    </fieldset>
+                                </div>
+                                <input type="hidden" value="/PrdTask" name=".tg">
+                            </fieldset>
+                        </div>
+<span class="XMLSimpleType" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+<span class="skipUrl">
+<label>skipUrl: </label>
+<input type="text" class="skipUrl" name="skipUrl" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+
+                        <br>
+                        </span>
+                        <input type="hidden" value="/Tasks" name=".tg">
+                    </fieldset>
+                </div>
+                <p>
+                    <input id="submitButton" type="submit" value="Generate XML">
+                </p>
+                <input type="hidden" name=".schema" value="<?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>
+<!-- &amp;#34987;2012 () &amp;#20351;&amp;#29992;XMLSpy v&amp;#32534;&amp;#36753;&amp;#30340; (http://www.altova.com) by -->
+<xs:schema xmlns:xs=&quot;http://www.w3.org/2001/XMLSchema&quot; elementFormDefault=&quot;qualified&quot; attributeFormDefault=&quot;unqualified&quot;>
+	<xs:element name=&quot;Tasks&quot;>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name=&quot;CatTask&quot; type=&quot;BrowseTaskType&quot; maxOccurs=&quot;unbounded&quot;/>
+				<xs:element name=&quot;PrdTask&quot; type=&quot;BrowseDetailType&quot;/>
+				<xs:element name=&quot;skipUrl&quot; type=&quot;xs:string&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;unbounded&quot;/>
+			</xs:sequence>
+			<xs:attribute name=&quot;storeId&quot; type=&quot;xs:string&quot; use=&quot;required&quot;/>
+			<xs:attribute name=&quot;rootVolume&quot; type=&quot;xs:string&quot; use=&quot;required&quot;/>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name=&quot;BrowseTaskType&quot;>
+		<xs:sequence>
+			<xs:element name=&quot;userAttribute&quot; type=&quot;NameValueType&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;unbounded&quot;/>
+			<xs:element name=&quot;idUrlMapping&quot; type=&quot;RegExpType&quot;>
+				<xs:annotation>
+					<xs:documentation>for bdt, this is uni-directional, from url to id</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name=&quot;idUrlMappingFirstPage&quot; type=&quot;RegExpType&quot; minOccurs=&quot;0&quot;/>
+			<xs:element name=&quot;itemName&quot; type=&quot;ValueType&quot; minOccurs=&quot;0&quot;/>
+			<xs:element name=&quot;sampleUrl&quot; type=&quot;xs:string&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;unbounded&quot;/>
+		</xs:sequence>
+		<xs:attribute name=&quot;taskName&quot; type=&quot;xs:string&quot; use=&quot;required&quot;/>
+		<xs:attribute name=&quot;itemType&quot; type=&quot;xs:string&quot; use=&quot;required&quot;/>
+		<xs:attribute name=&quot;isStart&quot; type=&quot;xs:boolean&quot; use=&quot;optional&quot;/>
+		<xs:attribute name=&quot;rerunInterim&quot; type=&quot;xs:int&quot; use=&quot;optional&quot;>
+			<xs:annotation>
+				<xs:documentation>if missing, means run only, else specify number of seconds before rerun</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name=&quot;enableJS&quot; type=&quot;xs:boolean&quot; use=&quot;required&quot;/>
+		<xs:attribute name=&quot;startUrl&quot; type=&quot;xs:string&quot; use=&quot;optional&quot;>
+			<xs:annotation>
+				<xs:documentation>if isStart is true, then this is needed.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name=&quot;skipJS&quot; type=&quot;xs:string&quot; use=&quot;optional&quot;/>
+		<xs:attribute name=&quot;highMem&quot; type=&quot;xs:boolean&quot; use=&quot;optional&quot; default=&quot;false&quot;/>
+	</xs:complexType>
+	<xs:complexType name=&quot;BrowseCatType&quot;>
+		<xs:sequence>
+			<xs:element name=&quot;baseBrowseTask&quot; type=&quot;BrowseTaskType&quot;/>
+			<xs:element name=&quot;subItemList&quot; type=&quot;SubListType&quot;/>
+			<xs:element name=&quot;totalPageNum&quot; type=&quot;ValueType&quot; minOccurs=&quot;0&quot;>
+				<xs:annotation>
+					<xs:documentation>means how many pages of childitems we have, each page will be split in one task. 
+if not set, but itemPerPage and totalItemNum set, this can be calculated.
+if also not set, then 1 task browsing all items will be generated.
+</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name=&quot;itemPerPage&quot; type=&quot;ValueType&quot; minOccurs=&quot;0&quot;/>
+			<xs:element name=&quot;totalItemNum&quot; type=&quot;ValueType&quot; minOccurs=&quot;0&quot;/>
+		</xs:sequence>
+		<xs:attribute name=&quot;isLeaf&quot; type=&quot;xs:boolean&quot; use=&quot;required&quot;/>
+	</xs:complexType>
+	<xs:complexType name=&quot;BrowseDetailType&quot;>
+		<xs:sequence>
+			<xs:element name=&quot;baseBrowseTask&quot; type=&quot;BrowseTaskType&quot;/>
+			<xs:element name=&quot;lastPageCondition&quot; type=&quot;BinaryBoolOp&quot; minOccurs=&quot;0&quot;>
+				<xs:annotation>
+					<xs:documentation>if true reach the end of the book</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name=&quot;firstPageClickStream&quot; type=&quot;ClickStreamType&quot; minOccurs=&quot;0&quot;>
+				<xs:annotation>
+					<xs:documentation>the click stream to the 1st page of the book</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name=&quot;totalPage&quot; type=&quot;ValueType&quot; minOccurs=&quot;0&quot;/>
+			<xs:element name=&quot;directPages&quot; type=&quot;ValueType&quot; minOccurs=&quot;0&quot;/>
+		</xs:sequence>
+		<xs:attribute name=&quot;imagePath&quot; type=&quot;xs:string&quot; use=&quot;optional&quot;/>
+		<xs:attribute name=&quot;nextPage&quot; type=&quot;xs:string&quot;/>
+	</xs:complexType>
+	<xs:complexType name=&quot;SubListType&quot;>
+		<xs:sequence>
+			<xs:element name=&quot;userAttribute&quot; type=&quot;NameValueType&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;unbounded&quot;/>
+			<xs:element name=&quot;lastPageCondition&quot; type=&quot;BinaryBoolOp&quot; minOccurs=&quot;0&quot;/>
+			<xs:element name=&quot;name&quot; type=&quot;ValueType&quot; minOccurs=&quot;0&quot;/>
+		</xs:sequence>
+		<xs:attribute name=&quot;itemList&quot; type=&quot;xs:string&quot; use=&quot;required&quot;>
+			<xs:annotation>
+				<xs:documentation>xpath to list of item, usually of type html anchor</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name=&quot;itemFullUrl&quot; type=&quot;xs:string&quot; use=&quot;optional&quot;/>
+		<xs:attribute name=&quot;nextPage&quot; type=&quot;xs:string&quot; use=&quot;optional&quot;/>
+		<xs:attribute name=&quot;isLeaf&quot; type=&quot;xs:boolean&quot; use=&quot;optional&quot; default=&quot;true&quot;/>
+		<xs:attribute name=&quot;lastItem&quot; type=&quot;xs:string&quot; use=&quot;optional&quot;/>
+	</xs:complexType>
+	<xs:complexType name=&quot;NameValueType&quot;>
+		<xs:sequence>
+			<xs:element name=&quot;value&quot; type=&quot;ValueType&quot;/>
+		</xs:sequence>
+		<xs:attribute name=&quot;name&quot; type=&quot;xs:string&quot; use=&quot;required&quot;/>
+	</xs:complexType>
+	<xs:complexType name=&quot;RegExpType&quot;>
+		<xs:sequence>
+			<xs:element name=&quot;Token&quot; type=&quot;TokenType&quot; maxOccurs=&quot;unbounded&quot;/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name=&quot;BinaryBoolOp&quot;>
+		<xs:attribute name=&quot;lhs&quot; type=&quot;xs:string&quot;/>
+		<xs:attribute name=&quot;rhs&quot; type=&quot;xs:string&quot;/>
+		<xs:attribute name=&quot;operator&quot;>
+			<xs:simpleType>
+				<xs:restriction base=&quot;xs:string&quot;>
+					<xs:enumeration value=&quot;=&quot;/>
+					<xs:enumeration value=&quot;!=&quot;/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+	</xs:complexType>
+	<xs:complexType name=&quot;TokenType&quot;>
+		<xs:annotation>
+			<xs:documentation>used for Id-Url mapping</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name=&quot;name&quot; type=&quot;xs:string&quot;/>
+		<xs:attribute name=&quot;value&quot; type=&quot;xs:string&quot;/>
+		<xs:attribute name=&quot;regExp&quot; type=&quot;xs:boolean&quot; default=&quot;false&quot;>
+			<xs:annotation>
+				<xs:documentation>optional, if missing means false, if true means the value is regExp, does not need to quote. if false or not set, it will be quoted</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<xs:complexType name=&quot;ValueType&quot;>
+		<xs:sequence>
+			<xs:element name=&quot;strPreprocess&quot; minOccurs=&quot;0&quot;>
+				<xs:complexType>
+					<xs:attribute name=&quot;trimPre&quot; type=&quot;xs:string&quot;/>
+					<xs:attribute name=&quot;trimPost&quot; type=&quot;xs:string&quot;/>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+		<xs:attribute name=&quot;fromType&quot; use=&quot;optional&quot;>
+			<xs:annotation>
+				<xs:documentation>the value's input type, default to xpath</xs:documentation>
+			</xs:annotation>
+			<xs:simpleType>
+				<xs:restriction base=&quot;xs:string&quot;>
+					<xs:enumeration value=&quot;string&quot;/>
+					<xs:enumeration value=&quot;xpath&quot;/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name=&quot;value&quot; type=&quot;xs:string&quot; use=&quot;required&quot;/>
+		<xs:attribute name=&quot;toType&quot; use=&quot;optional&quot;>
+			<xs:simpleType>
+				<xs:restriction base=&quot;xs:string&quot;>
+					<xs:enumeration value=&quot;string&quot;/>
+					<xs:enumeration value=&quot;date&quot;/>
+					<xs:enumeration value=&quot;int&quot;/>
+					<xs:enumeration value=&quot;page&quot;/>
+					<xs:enumeration value=&quot;list&quot;/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name=&quot;basePage&quot; type=&quot;xs:string&quot; use=&quot;optional&quot;>
+			<xs:annotation>
+				<xs:documentation>based on which page, to eval this xpath</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name=&quot;enableJS&quot; type=&quot;xs:boolean&quot;>
+			<xs:annotation>
+				<xs:documentation>used with toType=page, if null, reusing previous wc setting</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name=&quot;format&quot; type=&quot;xs:string&quot; use=&quot;optional&quot;>
+			<xs:annotation>
+				<xs:documentation>used with toType=date</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<xs:complexType name=&quot;ClickStreamType&quot;>
+		<xs:annotation>
+			<xs:documentation>each link is an xpath expression, will evaluaged to a href, it will be clicked and  return a page.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name=&quot;link&quot; type=&quot;NameValueType&quot; maxOccurs=&quot;unbounded&quot;>
+				<xs:annotation>
+					<xs:documentation>usually Value Type is page, and name will be used in later expression</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name=&quot;finishCondition&quot; type=&quot;BinaryBoolOp&quot; minOccurs=&quot;0&quot;>
+				<xs:annotation>
+					<xs:documentation>if specified, the last link will be clicked till finish condition, if true reach the first page of the book</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>
+">
+            </form>
+        </div>
+    </body>
+
+</html>

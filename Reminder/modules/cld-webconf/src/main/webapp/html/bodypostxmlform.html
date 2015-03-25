@@ -1,0 +1,38 @@
+                <p>
+                    <input id="userid" type="hidden" name="userid" value="USER_ID">
+                    <input id="siteconfid" type="hidden" name="siteconfid" value="SITECONF_ID">
+                    <input id="reloadurl" type="hidden" name="reloadurl" value="">
+                    <input id="enableJS" type="hidden" name="enableJS" value="false">
+                </p>
+                <input type="hidden" name=".schema" value="">
+            </form>
+        </div>
+
+	</div> <!-- /toolbar_content -->
+	
+	<div id="ppw_selection_commands" class="cleanslate" style="visibility: hidden; left: 951px; top: 369px;">
+		<!-- formatted in this crazy way b/c these are inline elems and linebreaks here will appear on the page -->
+		<img id="ppw_selection_commands_drag" src="" border="0"></button>
+		<button onclick="ppw.util.cursorWrapper('ppw.commands.remove()')" title="Remove Selected Elements - Del" class="ppw_selection_button" id="ppw_remove_link">Remove</button>
+		<button onclick="ppw.commands.selectXPath()" title="Select XPath" class="ppw_selection_button" id="ppw_selectxpath_link">XPath</button>
+		<button onclick="ppw.commands.goUrl()" title="Goto URL" class="ppw_selection_button" id="ppw_selecturl_link">Go</button>
+		<button onclick="ppw.commands.goUrlJS()" title="Goto URL With JS Enabled" class="ppw_selection_button" id="ppw_selecturl_link">GoJS</button>
+		<button onclick="ppw.editor.expandSelection()" title="Select Bigger Area - M" id="ppw_expand_link" class="ppw_selection_button">Select More</button>
+		<button onclick="ppw.editor.narrowSelection()" title="Select Smaller Area - L" id="ppw_narrow_link" class="ppw_selection_button" style="display: none;">Select Less</button>
+	</div>
+	
+	<div id="ppw_hover_border_top" class="ppw_hover_border" style="visibility: visible; left: 481px; top: 45px; width: 72px;"></div>
+	<div id="ppw_hover_border_bottom" class="ppw_hover_border" style="visibility: visible; left: 481px; top: 55px; width: 72px;"></div>
+	<div id="ppw_hover_border_left" class="ppw_hover_border" style="visibility: visible; left: 481px; top: 45px; height: 12px;"></div>
+	<div id="ppw_hover_border_right" class="ppw_hover_border" style="visibility: visible; left: 551px; top: 45px; height: 12px;"></div>
+
+	<div id="ppw_hover_border_drag"></div>
+	<div id="ppw_cover_div" style="width: 960px; height: 90px; left: 300px; top: 124px; visibility: hidden;"></div>
+	<div id="ppw_lightbox"></div>
+
+	<div id="ppw_undo_list" class="ppw_panel" style="width: 200px">
+	</div>
+</div>
+
+	<div id="ppw_page_top" style="width: 1137px;">
+		    <div id="ppw_page_body" class="ppw_base yui-skin-sam" style="background-color: rgb(255, 255, 255);">

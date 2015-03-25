@@ -1,0 +1,35 @@
+<%@ page import="org.cld.datastore.entity.Category" %>
+<%@ page import="org.cld.webconf.ServletUtil" %>
+<%@ page import="org.cld.webconf.ConfServlet" %>
+	
+	<!-- catlist -->
+	<div>
+	Category
+		<table border=1 cellpadding=5>
+		   	<tr>
+		        <th>StoreId</th>
+		        <th>CatId</th>
+		        <th>PrdNum</th>
+		        <th>SubcatNum</th>
+		        <th>Name</th>
+		        <th>Parent</th>
+		        <th>PageNum</th>
+		        <th>FullUrl</th>
+			</tr>
+		<% for (Category cat : catlist){ %>
+			<tr>
+			   <td><%= cat.getId().getStoreId()%></td>
+		       <td>
+		       	<a href=<%=ServletUtil.genViewCatUrl(cat.getId().getStoreId(), cat.getId().getId()) %>><%= cat.getId().getId() %></a>
+		       </td>
+		       <td><%=ConfServlet.getCConf().getDsm().getProductCount(cat.getId().getStoreId(), cat.getId().getId()) %></td>
+		       <td><%=ConfServlet.getCConf().getDsm().getCategoryCount(cat.getId().getStoreId(), cat.getId().getId()) %></td>
+		       <td><%= cat.getName()%></td>
+		       <td><%= cat.getParentCatId()%></td>
+		       <td><%= cat.getPageNum() %></td>
+		       <td><a href="<%=cat.getFullUrl()%>"><%= cat.getFullUrl() %></a>
+		       </td>
+		   </tr>
+		<%}%>
+		</table>
+	</div>

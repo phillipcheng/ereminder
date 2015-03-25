@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\reminder\maven.1411262641248\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" storeId="wx114" rootVolume="999996" maxThread="1">
+	<CatTask isLeaf="false">
+		<baseBrowseTask enableJS="false" startUrl="http://www.wx114.cc/">
+			<idUrlMapping>
+				<Token name="prefix" value="http://www."/>
+				<Token name="id" value="wx114"/>
+				<Token name="suffix" value=".cc/"/>
+			</idUrlMapping>
+		</baseBrowseTask>
+		<subItemList>
+			<itemList value="//*[@id=&quot;book_header&quot;]/div[2]/ul/li/a"/>
+			<name value="./text()"/>
+		</subItemList>
+	</CatTask>
+	<CatTask isLeaf="true">
+		<baseBrowseTask enableJS="false" startUrl="http://www.wx114.cc/mulu/1.html">
+			<sampleUrl>http://www.wx114.cc/mulu/10.html</sampleUrl>
+			<idUrlMapping>
+				<Token name="prefix" value="http://www.wx114.cc/mulu/" type="string"/>
+				<Token name="id" value="[0-9]+" type="regexp"/>
+				<Token name="suffix" value=".html" type="string"/>
+			</idUrlMapping>
+		</baseBrowseTask>
+		<subItemList itemFullUrl="./div[1]/a" lastItem="./div[2]/h3[1]/a/text()">
+			<itemList value="//div[@id=&quot;content&quot;]/div/div[2]/div"/>
+			<userAttribute name="author">
+				<value value="./div[2]/h2[1]/text()"/>
+			</userAttribute>
+			<name value="./div[2]/h1[1]/a/text()"/>
+		</subItemList>
+		<totalPageNum value="//*[@id=&quot;pagelink&quot;]/a[last()]"/>
+	</CatTask>
+	<PrdTask imagePath="//*[@id=&quot;content&quot;]">
+		<baseBrowseTask enableJS="false" startUrl="http://www.wx114.cc/13/13649/">
+			<idUrlMapping>
+				<Token name="prefix" value="http://www.wx114.cc/" type="string"/>
+				<Token name="id" value="[0-9]+/[0-9]+" type="regexp"/>
+				<Token name="suffix" value="/" type="string"/>
+			</idUrlMapping>
+		</baseBrowseTask>
+		<directPages value="//*[@id=&quot;chapterlist&quot;]/li/a" toType="list"/>
+	</PrdTask>
+</Tasks>

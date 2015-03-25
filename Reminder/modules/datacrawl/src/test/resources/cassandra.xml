@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<clientProperties>
+	<datastores>
+		<dataStore>
+			<name>cassandra</name>
+			<connection>
+				<properties>
+					<property name="cql.version" value="3.0.0"></property>
+				</properties>
+			</connection>
+			<schemas>
+				<schema>
+					<name>reminder</name>
+					<properties>
+						<property name="strategy.class" value="SimpleStrategy" />
+						<property name="replcation.factor" value="2" />
+						<property name="durable.writes" value="false" />
+						<property name="inverted.indexing.enabled" value="false" />
+					</properties>
+
+					<tables>
+						<table>
+							<name>Counter</name>
+							<properties>
+								<property name="default.validation.class" value="CounterColumnType"></property>
+								<property name="key.validation.class" value="UTF8Type"></property>
+								<property name="comparator.type" value="UTF8Type"></property>
+							</properties>
+						</table>
+						<table>
+							<name>DataSource</name>
+							<properties>
+								<property name="default.validation.class" value="UTF8Type"></property>
+								<property name="key.validation.class" value="UTF8Type"></property>
+								<property name="comparator.type" value="UTF8Type"></property>
+							</properties>
+						</table>
+						<table>
+							<name>Price</name>
+							<properties>
+								<property name="default.validation.class" value="UTF8Type"></property>
+								<property name="key.validation.class" value="UTF8Type"></property>
+								<property name="comparator.type" value="UTF8Type"></property>
+							</properties>
+						</table>
+						<table>
+							<name>Category</name>
+							<properties>
+								<property name="default.validation.class" value="UTF8Type"></property>
+								<property name="key.validation.class" value="UTF8Type"></property>
+								<property name="comparator.type" value="UTF8Type"></property>
+							</properties>
+						</table>
+						<table>
+							<name>Product</name>
+							<properties>
+								<property name="default.validation.class" value="UTF8Type"></property>
+								<property name="key.validation.class" value="UTF8Type"></property>
+								<property name="comparator.type" value="UTF8Type"></property>
+							</properties>
+						</table>
+						<table>
+							<name>ProductPromotion</name>
+							<properties>
+								<property name="default.validation.class" value="UTF8Type"></property>
+								<property name="key.validation.class" value="UTF8Type"></property>
+								<property name="comparator.type" value="UTF8Type"></property>
+							</properties>
+						</table>
+						<table>
+							<name>Promotion</name>
+							<properties>
+								<property name="default.validation.class" value="UTF8Type"></property>
+								<property name="key.validation.class" value="UTF8Type"></property>
+								<property name="comparator.type" value="UTF8Type"></property>
+							</properties>
+						</table>
+						<table>
+							<name>TagProduct</name>
+							<properties>
+								<property name="default.validation.class" value="UTF8Type"></property>
+								<property name="key.validation.class" value="UTF8Type"></property>
+								<property name="comparator.type" value="UTF8Type"></property>
+							</properties>
+						</table>
+					</tables>
+				</schema>
+			</schemas>
+		</dataStore>
+	</datastores>
+</clientProperties>

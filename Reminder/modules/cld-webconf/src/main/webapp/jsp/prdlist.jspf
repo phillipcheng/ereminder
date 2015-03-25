@@ -1,0 +1,36 @@
+<%@ page import="org.cld.datastore.entity.Product" %>
+<%@ page import="org.cld.webconf.ConfServlet" %>
+<%@ page import="java.net.URLEncoder" %>
+	
+	<!-- prdlist -->
+	<div>
+	Product
+		<table border=1 cellpadding=5>
+	   	<tr>
+	        <th>StoreId</th>
+	        <th>PrdId</th>
+	        <th>Name</th>
+	        <th>Parent</th>
+	        <th>FullUrl</th>
+	        <th>Data</th>
+		</tr>
+<% for (Product prd : prdlist){
+%>
+		<tr>
+		   <td><%= prd.getId().getStoreId() %></td>
+	       <td>
+	       <form name="product" method="post" action="<%=ConfServlet.bookWebAppRoot%>/jsp/displayBook.jsp">
+	       		<input hidden name="bookjsondata" value=<%=URLEncoder.encode(prd.getParamData(), "UTF-8")%> >
+	       		<input hidden name="siteconfid" value=<%=prd.getId().getStoreId()%> >
+	       		<input type="submit" value=<%= prd.getId().getId() %>>
+	       	</form>
+	       </td>
+	       <td><%= prd.getName()%></td>
+	       <td><%= prd.getCatlist()%></td>
+	       <td><a href="<%= prd.getFullUrl() %>"><%= prd.getFullUrl() %></a>
+	       </td>
+	       <td><%= prd.getParamData() %></td>
+		</tr>
+<%}%>
+		</table>
+	</div>

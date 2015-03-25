@@ -1,0 +1,23 @@
+<%@ page import="org.cld.datastore.entity.Logs" %>
+
+<div>
+Logs
+<table border=1 cellpadding=5>
+   	<tr>
+        <th>Timestamp</th>
+        <th>logger</th>
+        <th>level</th>
+        <th>message</th>
+        <th>throwable</th>
+	</tr>
+<% for (Logs logs : loglist){ %>
+	<tr>
+	   <td><%= logs.getStrDated() %></td>
+       <td><%= logs.getLogger() %></td>
+       <td><%= logs.getLevel() %></td>
+       <td><%= logs.getMessage() %></td>
+       <td><%= logs.getThrowable() %></td>
+   </tr>
+<%}%>
+</table>
+</div>

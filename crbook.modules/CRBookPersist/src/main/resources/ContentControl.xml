@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<sites>
+	<site>
+		<name>dmzj</name>
+		<!-- <allowedAuthor>藤子·F·不二雄</allowedAuthor>-->
+		<!-- <allowedAuthor>青山刚昌</allowedAuthor>-->
+		<allowedAuthor>蔡志忠</allowedAuthor>
+		<!--<allowedAuthor>井上雄彦</allowedAuthor>-->
+		<!--<allowedAuthor>小川悦司</allowedAuthor>-->
+		<!--<allowedAuthor>高桥阳一</allowedAuthor>-->
+		<!--<allowedAuthor>岸本齐史</allowedAuthor>-->
+		<!-- <allowedAuthor>高桥留美子</allowedAuthor>-->
+		<!-- <allowedAuthor>CLAMP</allowedAuthor>-->
+	</site>
+</sites>

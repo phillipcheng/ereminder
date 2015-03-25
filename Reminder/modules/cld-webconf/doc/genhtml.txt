@@ -1,0 +1,27 @@
+XMLAttribute
+
+<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);"">
+		<span class="rootVolume">
+		<label>rootVolume: </label>
+		<input type="text" class="rootVolume" name="@rootVolume" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span>
+<br>
+</span>
+
+XMLSimpleType
+<span class="XMLSimpleType" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);" style="background-color: rgb(4, 105, 179);">
+		<span class="skipUrl">
+		<label>skipUrl: </label>
+		<input type="text" class="skipUrl" name="skipUrl" value="" onfocus="focusGained(this)" onchange="textChanged(this)">
+		</span>
+<br>
+</span>
+
+XMLComplexContent
+<div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+	<fieldset class="Token">
+		<legend>- Token</legend>
+		<input type="hidden" value="Token" name=".tg">
++ DIV of XMLComplextContent or span of XMLAttribute/XMLSimpleType
+		<input type="hidden" value="/Token" name=".tg">
+	</fieldset>
+</div>

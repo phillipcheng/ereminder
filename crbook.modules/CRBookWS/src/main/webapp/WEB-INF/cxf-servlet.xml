@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+  xmlns:jaxws="http://cxf.apache.org/jaxws"
+  xmlns:util="http://www.springframework.org/schema/util"
+  xsi:schemaLocation="
+http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans.xsd
+http://cxf.apache.org/jaxrs
+http://cxf.apache.org/schemas/jaxrs.xsd
+http://cxf.apache.org/jaxws
+http://cxf.apache.org/schemas/jaxws.xsd">
+ 
+  <import resource="classpath:META-INF/cxf/cxf.xml" />
+  <import resource="classpath:META-INF/cxf/cxf-servlet.xml" />
+    
+    <bean id="dsPool" class="org.cld.util.jdbc.DataSourcePool" factory-method="getDataSource">
+    </bean>
+    
+    <bean id="jdbcService" class="cy.crbook.persist.JDBCPersistService">
+    	<constructor-arg><ref bean="dsPool"/></constructor-arg>
+    </bean>
+    
+    <bean id="crbookServiceImpl" class="cy.crbook.wsserver.CRBookWSImpl">
+    	<constructor-arg><ref bean="jdbcService"/></constructor-arg>
+    </bean>
+    
+    <jaxws:endpoint id="crbookService" implementor="#crbookServiceImpl" address="/crbook"/>
+    
+    <bean id="jaxbProvider" class="org.apache.cxf.jaxrs.provider.json.JSONProvider">
+	</bean>
+	
+    <jaxrs:server id="crbook" address="/crbookrs">
+        <jaxrs:serviceBeans>
+            <ref bean="crbookServiceImpl"/>
+        </jaxrs:serviceBeans>
+    </jaxrs:server>
+</beans>

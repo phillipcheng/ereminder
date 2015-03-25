@@ -1,0 +1,196 @@
+/* ------ Toolbar Layout ----------------*/
+#ppw_toolbar {
+	z-index: 10000;
+	width: 250px !important;
+	height: 100% !important;
+}
+/* style the toolbar */
+#ppw_toolbar .ppw_toolbar_content {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 250px;
+	height: 100%;
+	z-index: 10020;
+	border-right: 2px solid black;
+	overflow: auto;
+	margin: 0px;
+	padding: 0px;
+}
+
+#ppw_toolbar .xml_menu {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 250px;
+	z-index: 10020;
+	overflow: auto;
+	margin: 0px;
+	background-color: #FFFFC6 !important;
+    border: 2px solid yellow;
+    padding: 2px;
+}
+#ppw_toolbar .XMLAttribute {
+	margin-left: 10px;
+	font-style: italic;
+	text-align: left;
+	font-size: 9px;
+}
+#ppw_toolbar .XMLComplexContent {
+	text-align: left;
+	border: 1px solid;
+	display: block;
+}
+
+/* for text area under xml_form*/
+#ppw_toolbar .cy-textarea-container {
+  position: relative;
+  width: 70%;
+}
+#ppw_toolbar textarea,.cy-textarea-size{
+  min-height: 20px;
+  font-family: sans-serif;
+  font-size: 14px;
+  box-sizing: border-box;
+  padding: 1px;
+  border: 1px solid;
+  overflow: hidden;
+  width: 185px;
+}
+#ppw_toolbar textarea {
+  height: 100%;
+  position: absolute;
+  resize:none;
+  white-space: normal;
+  vertical-align: top;
+}
+#ppw_toolbar .cy-textarea-size {
+  visibility: hidden;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+#ppw_toolbar .xml_form {
+	position:absolute;
+	top: 50px;
+	left: 0;
+	width: 250px;
+	z-index: 10000;
+	/*border-right: 2px solid black;*/
+	overflow: auto;
+	margin: 0px;
+	padding: 1px !important;
+}
+
+#ppw_toolbar #ppw_toolbar_content fieldset {
+	display: block;
+	margin: 1px auto;
+	padding: 1px; /* incase someone tries to override padding */
+	font-size: 11px !important;
+}
+
+
+/* ------------------- Page Stuff ----------------*/
+
+/* Require padding-top here because of onclick */
+#ppw_page_top {
+	/* width set dynamically */
+	position: absolute;
+	top: 0;
+	left: 252px;
+	padding-left: 0px;
+	min-height: 100%;
+	height: 100%;
+	/*border: 1px dotted red;*/
+}
+
+#ppw_page_top * {
+	cursor: default !important;
+}
+
+#ppw_page_body {
+	width: 100%;
+	z-index: 9000;
+	/*border: 2px dashed yellow;	*/
+}
+
+
+/* ------ Selection ----------------*/
+.ppw_hover_border {
+	visibility: hidden;
+	overflow: hidden;
+	position: absolute;
+	height: 2px; /* default height, width */
+	width: 2px;
+	background-color: red !important;
+	z-index: 9960;
+}
+
+#ppw_hover_border_drag {
+	display: none;
+	overflow: hidden;
+	position: absolute;
+	border: 2px solid red;
+	background-color: transparent;
+	z-index: 9960;
+}
+
+/* select - the * selects all subelements- make sure we color the background of all subelements */
+.ppw_select, .ppw_select * {
+	background-color: #FFFF00 !important; /* !important prevents remove background command from overriding */
+	/*border: 1px dashed red !important;*/
+	color: #000000 !important;
+	filter: alpha(opacity=40); /* for IE */
+	opacity: 0.4; /* CSS3 standard */
+	z-index: 9920;
+}
+
+.ppw_select_box {
+	overflow: hidden;
+	position: absolute;
+	background: #ff0 !important; /* !important prevents remove background command from overriding */
+	filter: alpha(opacity=30); /* for IE */
+	opacity: 0.3; /* CSS3 standard */
+	z-index: 9920;
+}
+
+/* zIndex must be less than zIndex of toolbar- hover border is bound by toolbar zIndex */
+.ppw_select_box_border {
+	overflow: hidden;
+	position: absolute;
+	border: 1px dashed red !important;
+	z-index: 9940;	
+}
+
+
+/* ------ Selection Commands ----------------*/
+#ppw_selection_commands {
+	visibility: hidden;
+	position: absolute;
+	margin: 0px;
+	padding: 0px 5px;
+	border: 1px solid #000000;
+	background: #eeeeee;
+	z-index: 10080;
+	white-space: nowrap;
+}
+
+#ppw_selection_commands #ppw_selection_commands_drag {
+	vertical-align: middle;
+	display: inline;
+	cursor: move;
+}
+
+#ppw_selection_commands .ppw_selection_button {
+	cursor: pointer !important;
+	border: 1px outset #808080 !important;
+	margin: 3px 2px !important;
+	font-size: 10px !important;
+	height: auto !important;
+	padding: 3px !important;
+	color: black !important;
+	/* stupid hack for a stupid browser */
+	width:auto;
+	overflow:visible;
+}

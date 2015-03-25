@@ -1,0 +1,82 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.cld.taskmgr</groupId>
+	<artifactId>cld-taskmgr</artifactId>
+	<packaging>jar</packaging>
+	<name>task manager</name>
+	
+	<parent>
+		<artifactId>env</artifactId>
+		<groupId>org.cld.build</groupId>
+		<version>1.0.0</version>
+	</parent>
+	
+	<dependencies>  
+		<dependency>
+	    	<groupId>org.apache.logging.log4j</groupId>
+	    	<artifactId>log4j-api</artifactId>
+  		</dependency>
+ 		<dependency>
+    		<groupId>org.apache.logging.log4j</groupId>
+    		<artifactId>log4j-core</artifactId>
+ 		</dependency>          
+  		<dependency>
+			<groupId>commons-configuration</groupId>
+			<artifactId>commons-configuration</artifactId>
+		</dependency>
+		<dependency>
+				<groupId>commons-io</groupId>
+				<artifactId>commons-io</artifactId>
+			</dependency>	
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-core</artifactId>
+		</dependency>
+		<dependency>
+	        <groupId>org.hibernate</groupId>
+	        <artifactId>hibernate-validator</artifactId>
+      	</dependency>
+  		<dependency>
+  			<groupId>org.cld.datastore</groupId>
+  			<artifactId>cld-datastore</artifactId>
+  			<version>1.0.0</version>
+  			<type>jar</type>
+  		</dependency>
+  		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<version>1.4.181</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+		<dependency>
+	      <groupId>org.apache.hadoop</groupId>
+	      <artifactId>hadoop-common</artifactId>
+	    </dependency>
+	    <dependency>
+	      <groupId>org.apache.hadoop</groupId>
+	      <artifactId>hadoop-hdfs</artifactId>
+	    </dependency>
+	    <dependency>
+	       <groupId>org.apache.hadoop</groupId>
+	       <artifactId>hadoop-mapreduce-client-app</artifactId>
+	     </dependency>
+	     <dependency>
+	       <groupId>org.apache.hadoop</groupId>
+	       <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+	     </dependency>
+	</dependencies>
+	
+	<properties>
+		<jboss.deploy.name>taskmgr.sar</jboss.deploy.name>
+	</properties>
+	
+
+</project>

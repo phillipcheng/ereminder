@@ -1,0 +1,35 @@
+<%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ page import="cy.common.entity.Book" %>
+<%@ page import="java.net.URLEncoder" %>
+<div>
+Books
+	<table border=1 cellpadding=5>
+	   	<tr>
+	        <th>Id</th>
+	        <th>Name</th>
+	        <th>Cat</th>
+	        <th>totalPage</th>
+	        <th>utime</th>
+	        <th>author</th>
+		</tr>
+	<% for (Book book : bookList){
+			String id = book.getId();
+			String storeId = id.substring(0, id.indexOf("."));
+	%>
+		<tr>
+		   <td><%=id%></td>
+	       <td>
+	       		<form name="product" method="post" action="displayBook.jsp">
+	       			<input hidden name="bookjsondata" value=<%=URLEncoder.encode(book.toTopJSONString(),"UTF-8")%> >
+	       			<input hidden name="siteconfid" value=<%=storeId%> >
+	       			<input type="submit" value="<%=book.getName()%>">
+	       		</form>
+	       </td>
+	       <td><%=book.getCat()%></td>
+	       <td><%=book.getTotalPage()%></td>
+	       <td><%=book.getStrUtime()%></td>
+	       <td><%=book.getAuthor()%></td>
+	   </tr>
+	<%}%>
+	</table>
+</div>

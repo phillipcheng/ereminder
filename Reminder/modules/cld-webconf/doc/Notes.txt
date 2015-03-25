@@ -1,0 +1,12 @@
+9/13/2014 07:47:51
+
+for enumeration type attribute (simple type not yet supported) 
+	generate option list (in js and java init)
+	java specific generation code can be change to reuse the js code
+for input type  attribute, simple type
+	generate textarea (in js, java init, during java init also invoke js to auto change the line number of text area) 
+	java specific generation code can be change to reuse the js code
+for user enriched ui, like adding button to url
+	should be done only in js, java init call user js 
+	
+	

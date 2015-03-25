@@ -1,0 +1,62 @@
+/* ------ Page Layout ----------------*/
+html, body {
+	margin: 0 !important;
+	padding: 0 !important;
+	/* no decoration here */
+	border-width: 0 !important;
+	border-style: none !important;
+	width: 100% !important; /* on sites with body width, text goes off edge of page on print*/
+	text-align: left !important; /* IE messes up sites with text-align: center on body tag */
+	width: 100% !important; /* on sites with body width, text goes off edge of page on print*/
+}
+
+.ppw_clear {
+	clear: both;
+	height: 0;
+}
+
+/*------------ Dynamic Classes -------------*/
+.ppw_page_divider {
+	width: 100%;
+	height: 0px;
+	border: 1px solid #A9A9A9;
+	clear: both;
+	display: block;
+}
+
+/*------------ Remove Background -------------*/
+.ppw_clear_bg, .ppw_clear_bg * {
+	background-color: white !important;
+	background-image: none !important;
+	color: black !important;
+}
+
+.ppw_clear_bg, .ppw_clear_bg *:not(td) {
+	border-width: 0 !important;
+}
+
+.ppw_remove_bg {
+	background-color: white !important;
+	background-image: none !important;
+}
+
+/*------------ Remove Images -------------*/
+.ppw_remove_images img, .ppw_remove_images object, .ppw_remove_images embed, .ppw_remove_images applet {
+	display: none !important;
+}
+
+.ppw_remove_images, .ppw_remove_images * {
+	background-image: none !important;
+}
+
+/* required so we don't remove images on toolbar */
+.ppw_remove_images_body {
+	background-image: none !important;	
+}
+
+/*------------ Remove Margin -------------*/
+.ppw_remove_margin, .ppw_remove_margin * {
+	margin: 0 !important;
+	padding: 0 !important;
+	line-height: 1 !important;
+}

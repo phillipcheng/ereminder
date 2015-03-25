@@ -1,0 +1,71 @@
+<div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+    <fieldset class="Tasks">
+    <legend>- Tasks</legend>
+    <input type="hidden" value="Tasks" name=".tg">
+    
+	    <span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+			<span class="rootVolume">
+			<label>rootVolume: </label>
+			<input type="text" class="rootVolume" name="@rootVolume" value="" onfocus="focusGained(this)" onchange="textChanged(this)">
+			</span>
+			<br>
+			</span>
+			
+			<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+			<span class="storeId">
+			<label>storeId: </label>
+			<input type="text" class="storeId" name="@storeId" value="" onfocus="focusGained(this)" onchange="textChanged(this)">
+			</span>
+			<br>
+			</span>
+			                        
+                <div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                	<fieldset class="CatTask">
+                	<legend>- CatTask</legend>
+                	<input type="hidden" value="CatTask" name=".tg">
+                	
+                	<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                	<span class="@isLeaf">
+                	<label>isLeaf: </label>
+                	<input type="text" class="@isLeaf" name="@isLeaf" value="" onfocus="focusGained(this)" onchange="textChanged(this)">
+                	</span>
+                	<br>
+                	</span>
+                	
+                	<div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+                	<fieldset class="baseBrowseTask">
+                	<legend>- baseBrowseTask</legend>
+                	<input type="hidden" value="baseBrowseTask" name=".tg">
+	                	<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+		                	<span class="@taskName">
+		                		<label>taskName: </label>
+		                		<input type="text" class="@taskName" name="@taskName" value="" onfocus="focusGained(this)" onchange="textChanged(this)">
+		                	</span>
+	                		<br>
+	                	</span>
+	                	
+	                	<span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+		                	<span class="@itemType">
+			                	<label>itemType: </label>
+			                	<input type="text" class="@itemType" name="@itemType" value="" onfocus="focusGained(this)" onchange="textChanged(this)">
+		                	</span>
+	                	<br>
+	                	</span>
+	                	
+	                	<span class="XMLAttribute"onclick="selectelm(this, event);" ondblclick="selectelm(this, event);">
+	                	<span class="@isStart">
+	                	<label>isStart: </label>
+	                	<input type="text" class="@isStart" name="@isStart" value="" onfocus="focusGained(this)" onchange="textChanged(this)">
+	                	</span>
+	                	<br>
+	                	</span>
+	                	
+	                	<div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);"><fieldset class="idUrlMapping"><legend>- idUrlMapping</legend><input type="hidden" value="idUrlMapping" name=".tg"><div class="XMLComplexContent" onclick="selectelm(this, event);"ondblclick="selectelm(this, event);"><fieldsetclass="Token"><legend>- Token</legend><input type="hidden" value="Token" name=".tg"><span class="XMLAttribute" onclick="selectelm(this, event);"ondblclick="selectelm(this,event);"><span class="@name"><label>name: </label><input type="text" class="@name" name="@name" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span><br></span><span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);"><span class="@value"><label>value: </label><input type="text" class="@value" name="@value" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span><br></span><span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);"><span class="@regExp"><label>regExp: </label><input type="text" class="@regExp" name="@regExp" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span><br></span><input type="hidden"value="/Token" name=".tg"></fieldset></div><input type="hidden" value="/idUrlMapping" name=".tg"></fieldset></div><input type="hidden" value="/baseBrowseTask" name=".tg"></fieldset></div><div class="XMLComplexContent" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);"><fieldset class="subItemList"><legend>- subItemList</legend><input type="hidden" value="subItemList" name=".tg"><span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);"><span class="@itemList"><label>itemList: </label><input type="text" class="@itemList" name="@itemList" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span><br></span><spanclass="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);"><span class="@itemFullUrl"><label>itemFullUrl: </label><input type="text" class="@itemFullUrl" name="@itemFullUrl" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span><br></span><span class="XMLAttribute" onclick="selectelm(this, event);"ondblclick="selectelm(this, event);"><span class="@nextPage"><label>nextPage: </label><input type="text" class="@nextPage" name="@nextPage" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span><br></span><span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);"><span class="@isLeaf"><label>isLeaf: </label><input type="text" class="@isLeaf" name="@isLeaf"value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span><br></span><span class="XMLAttribute" onclick="selectelm(this, event);" ondblclick="selectelm(this, event);"><span class="@lastItem"><label>lastItem: </label><input type="text" class="@lastItem" name="@lastItem" value="" onfocus="focusGained(this)" onchange="textChanged(this)"></span><br></span><input type="hidden" value="/subItemList" name=".tg"></fieldset></div>
+                	
+                	<input type="hidden" value="/CatTask" name=".tg">
+                	</fieldset>
+                </div>
+		                        
+        <input type="hidden" value="/Tasks" name=".tg">
+    </fieldset>
+</div>

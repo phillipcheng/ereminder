@@ -1,0 +1,109 @@
+<body class="index">
+	<div id="ppw_toolbar">
+	<div id="ppw_toolbar_content" class="ppw_toolbar_content">
+		<div id="menuForm" class="xml_menu">
+            <form name="menuForm" onclick="clickFormBody(this, event);" action="">
+                <select name="edit" size="1" onchange="menuChosen(this);">
+                    <option selected="selected" value="">Edit</option>
+                    <option value="-" disabled="disabled">--------------------</option>
+                    <option value="undo">Undo/Redo</option>
+                    <option value="-" disabled="disabled">--------------------</option>
+                    <option value="cutSelected">Cut</option>
+                    <option value="copySelected">Copy</option>
+                    <option value="pasteReplaceSelected">Paste</option>
+                    <option value="pasteBeforeSelected">Paste Before Selected</option>
+                    <option value="pasteAfterSelected">Paste After Selected</option>
+                    <option value="pasteIntoSelected">Paste Into Selected</option>
+                    <option value="-" disabled="disabled">--------------------</option>
+                    <option value="deleteSelected">Delete</option>
+                    <option value="duplicateSelected">Duplicate</option>
+                    <option value="clearSelected">Clear Selected Fields</option>
+                    <option value="nilSelected">Nil</option>
+                </select>
+    <select name="elementsMenu" size="1" class="formMenu" onchange="makeElementChosen(this);">
+      <option selected="selected" value="">Make Element in Scrap</option>
+      <option value="-" disabled="disabled">--------------------</option>
+      <option value="XMLComplexContent">New Complex Element</option>
+      <option value="-" disabled="disabled">--------------------</option>
+      <option value="#paramList">paramList</option>
+      <option value="#directPages">directPages</option>
+      <option value="#input">input</option>
+      <option value="#itemList">itemList</option>
+      <option value="#invokeTask">invokeTask</option>
+      <option value="#subItemList">subItemList</option>
+      <option value="#Token">Token</option>
+      <option value="#userAttribute">userAttribute</option>
+      <option value="#PrdTask">PrdTask</option>
+      <option value="#lastPageCondition">lastPageCondition</option>
+      <option value="#idUrlMappingFirstPage">idUrlMappingFirstPage</option>
+      <option value="#itemPerPage">itemPerPage</option>
+      <option value="#param">param</option>
+      <option value="#Tasks">Tasks</option>
+      <option value="#link">link</option>
+      <option value="#totalItemNum">totalItemNum</option>
+      <option value="#value">value</option>
+      <option value="#name">name</option>
+      <option value="#totalPage">totalPage</option>
+      <option value="#baseBrowseTask">baseBrowseTask</option>
+      <option value="#itemName">itemName</option>
+      <option value="#finishCondition">finishCondition</option>
+      <option value="#CatTask">CatTask</option>
+      <option value="#idUrlMapping">idUrlMapping</option>
+      <option value="#firstPageClickStream">firstPageClickStream</option>
+      <option value="#strPreprocess">strPreprocess</option>
+      <option value="#nextpage">nextpage</option>
+      <option value="#totalPageNum">totalPageNum</option>
+      <option value="-" disabled="disabled">--------------------</option>
+      <option value="XMLSimpleContent">New Simple Element</option>
+      <option value="-" disabled="disabled">--------------------</option>
+      <option value="XMLAnonymous">Unnamed Text Node</option>
+      <option value="!skipUrl">skipUrl</option>
+      <option value="!sampleUrl">sampleUrl</option>
+      <option value="-" disabled="disabled">--------------------</option>
+      <option value="XMLAttribute">New Attribute;</option>
+      <option value="-">--------------------</option>
+      <option value="@nextPage">nextPage</option>
+      <option value="@fromType">fromType</option>
+      <option value="@imagePath">imagePath</option>
+      <option value="@basePage">basePage</option>
+      <option value="@nameType">nameType</option>
+      <option value="@skipJS">skipJS</option>
+      <option value="@maxThread">maxThread</option>
+      <option value="@startUrl">startUrl</option>
+      <option value="@toType">toType</option>
+      <option value="@taskName">taskName</option>
+      <option value="@value">value</option>
+      <option value="@name">name</option>
+      <option value="@paramName">paramName</option>
+      <option value="@storeId">storeId</option>
+      <option value="@highMem">highMem</option>
+      <option value="@isStart">isStart</option>
+      <option value="@myTaskName">myTaskName</option>
+      <option value="@type">type</option>
+      <option value="@trimPre">trimPre</option>
+      <option value="@rhs">rhs</option>
+      <option value="@rerunInterim">rerunInterim</option>
+      <option value="@toCallTaskName">toCallTaskName</option>
+      <option value="@operator">operator</option>
+      <option value="@rootVolume">rootVolume</option>
+      <option value="@isLeaf">isLeaf</option>
+      <option value="@lhs">lhs</option>
+      <option value="@trimPost">trimPost</option>
+      <option value="@format">format</option>
+      <option value="@enableJS">enableJS</option>
+      <option value="@lastItem">lastItem</option>
+      <option value="@itemFullUrl">itemFullUrl</option>
+      <option value="@itemType">itemType</option>
+    </select>
+            </form>
+       	</div>
+        <div id="xmlForm" class="xml_form" selectedXPath="">
+            <form name="xmlForm" action="APP_ROOT/CrawlConf" method="post">
+            <input type="text" id="currenturl" name="currenturl" value="CURRENT_URL" size=50 readonly/>
+            <br>
+            <input id="submitButton" type="submit" name="command" value="saveconf" onclick="submitXmlForm();">
+            <input id="backButton" type="submit" name="command" value="back" onclick="document.xmlForm.submit();">
+            <button type="button" onclick="toggleHighlightPage();">Highlight</button>
+               <!-- fillin the generated html based on the TasksType -->
+               
+                

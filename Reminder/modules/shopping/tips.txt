@@ -1,0 +1,3 @@
+check memory
+1. jps find pid
+2. jmap 

@@ -1,0 +1,41 @@
+2012y12m16d
+1)
+Thread-4-2012-12-13 16:16:20,011 ERROR [org.cld.shopping.ListBrowseThread] - list browsing thread 4 got error, continue:
+java.lang.NullPointerException
+	at org.cld.shopping.pagea.BookListAnalyze.readList(BookListAnalyze.java:122)
+	at org.cld.shopping.pagea.BookListAnalyze.readTopLink(BookListAnalyze.java:159)
+	at org.cld.shopping.ListBrowseThread.run(ListBrowseThread.java:94)
+	
+2)
+Thread-11-2012-12-13 16:05:37,393 ERROR [org.cld.shopping.pagea.BookAnalyze] - no price_d found in: 
+<li class="clearfix">
+  <div class="listitem pic" id="22870948_img" name="Pic">
+    <a href="http://product.dangdang.com/product.aspx?product_id=22870948" title="小学责任教育主题活动设计（万千教育）" target="_blank" onclick="s('click','','01.43.54.01.00.00','','1064_4_25','','','22870948_22_1_p','','','');">
+      <img src="http://img38.ddimg.cn/67/27/22870948-1_l.jpg" alt="小学责任教育主题活动设计（万千教育）" name="Pic"/>
+    </a>
+    <span class="label pic_tag">
+      <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=9,0,28,0" width="50" height="50">
+        <param name="movie" value="http://img31.ddimg.cn/files/38/3/11000621.swf"/>
+        <param name="quality" value="high"/>
+        <param name="wmode" value="transparent"/>
+   
+  </div>
+</li>
+
+3) D_TITLE_NOJS not found
+Thread-5-2012-12-13 16:22:53,826 ERROR [org.cld.shopping.ListBrowseThread] - list browsing thread 5 got error, continue:
+java.lang.NullPointerException
+	at org.cld.shopping.pagea.BookAnalyze.readDetails(BookAnalyze.java:93)
+	at org.cld.shopping.pagea.BookAnalyze.readItem(BookAnalyze.java:342)
+	at org.cld.shopping.mgr.DefaultListPageProcess.process(DefaultListPageProcess.java:29)
+	at org.cld.shopping.pagea.BookListAnalyze.readList(BookListAnalyze.java:130)
+	at org.cld.shopping.pagea.BookListAnalyze.readTopLink(BookListAnalyze.java:161)
+	at org.cld.shopping.ListBrowseThread.run(ListBrowseThread.java:94)
+	
+2012y12m17d
+
+1) getFirstByXPath and getByXPath differs
+Thread-0-2012-12-17 12:23:38,438 FATAL [org.cld.shopping.pagea.BookListAnalyze] - next page link not found in:http://category.dangdang.com/all/?category_path=01.36.04.09.00.00&page_index=24
+2) bl == null means next, bl!=null means first
+Thread-5-2012-12-17 13:18:58,260 FATAL [org.cld.shopping.pagea.BookListAnalyze] - totalPageNum tag can't be found in:http://category.dangdang.com/all/?category_path=01.19.24.00.00.00
+3) add book and price (adding final check)

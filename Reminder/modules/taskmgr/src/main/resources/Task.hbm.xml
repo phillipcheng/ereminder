@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping package="org.cld.taskmgr.entity">
+    
+    <query name="getTaskById">
+        <![CDATA[from Task t where t.id = :tid]]>
+    </query>
+    
+    <query name="getAllTask">
+        <![CDATA[from Task t order by t.lastUpdateDate asc]]>
+    </query>
+    
+    <query name="getMyTasks">
+        <![CDATA[from Task t where t.nodeId=:nodeId order by t.lastUpdateDate asc]]>
+    </query>
+    
+    <query name="getMyDistributableTasks">
+        <![CDATA[from Task t where t.nodeId=:nodeId and t.ttype =:taskType order by t.lastUpdateDate asc]]>
+    </query>
+    
+    <query name="getMyTaskIds">
+        <![CDATA[select id from Task t where t.nodeId=:nodeId order by t.lastUpdateDate asc]]>
+    </query>
+    
+    <query name="moveTasks">
+        <![CDATA[UPDATE Task t set t.nodeId = :toNodeId where t.id in (:tidList)]]>
+    </query>
+    
+    <query name="removeMyTasks">
+        <![CDATA[DELETE FROM Task t where t.nodeId=:nodeId]]>
+    </query>
+    
+    <query name="removeAllTasks">
+        <![CDATA[DELETE FROM Task t]]>
+    </query>
+
+</hibernate-mapping>

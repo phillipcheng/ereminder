@@ -1,0 +1,12 @@
+<!-- 被2012 () 使用XMLSpy v编辑的 (http://www.altova.com) by -->
+<jaxb:bindings xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" version="2.1">
+	<jaxb:globalBindings fixedAttributeAsConstantProperty="true"/>
+	<jaxb:bindings schemaLocation="Task_2_0.xsd">
+		<jaxb:bindings node="//xs:simpleType[@name='OpType']/xs:restriction/xs:enumeration[@value='=']">
+			<jaxb:typesafeEnumMember name="EQUALS"/>
+		</jaxb:bindings>
+		<jaxb:bindings node="//xs:simpleType[@name='OpType']/xs:restriction/xs:enumeration[@value='!=']">
+			<jaxb:typesafeEnumMember name="NOTEQUALS"/>
+		</jaxb:bindings>
+	</jaxb:bindings>
+</jaxb:bindings>

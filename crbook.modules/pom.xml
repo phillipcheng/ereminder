@@ -1,0 +1,126 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>crbook</groupId>
+	<artifactId>crbook.modules</artifactId>
+	<packaging>pom</packaging>
+	<name>crbook</name>
+	<version>1.0.0</version>
+	
+	<parent>
+		<artifactId>env</artifactId>
+		<groupId>org.cld.build</groupId>
+		<version>1.0.0</version>
+	</parent>
+	
+	<build>
+		<pluginManagement>
+			<plugins>
+			</plugins>
+		</pluginManagement>
+	</build>
+	
+	<dependencyManagement>
+		<dependencies>
+		    <dependency>
+				<groupId>mysql</groupId>
+				<artifactId>mysql-connector-java</artifactId>
+				<version>5.1.33</version>
+			</dependency>
+    		<dependency>
+				<groupId>org.json</groupId>
+				<artifactId>json</artifactId>
+				<version>20140107</version>
+			</dependency>        
+			<dependency>
+				<groupId>javax.ws.rs</groupId>
+				<artifactId>jsr311-api</artifactId>
+				<version>1.1.1</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	
+	<repositories>
+		<repository>
+	      <id>maven central 1</id>
+	      <name>Maven Central 1</name>
+	      <url>http://repo1.maven.org/maven2/</url>
+	      <layout>default</layout>
+	      <releases>
+	        <enabled>true</enabled>
+	        <updatePolicy>never</updatePolicy>
+	      </releases>
+	      <snapshots>
+	        <enabled>false</enabled>
+	      </snapshots>
+  		</repository>
+  		
+      <repository>
+        <id>jboss-public-repository-group</id>
+        <name>JBoss Public Maven Repository Group</name>
+        <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
+        <layout>default</layout>
+        <releases>
+          <enabled>true</enabled>
+          <updatePolicy>never</updatePolicy>
+        </releases>
+        <snapshots>
+          <enabled>true</enabled>
+          <updatePolicy>never</updatePolicy>
+        </snapshots>
+      </repository>
+      
+      <repository>
+	      <id>jboss-deprecated</id>
+	      <name>JBoss Deprecated</name>
+	      <url>https://repository.jboss.org/nexus/content/repositories/deprecated/</url>
+	      <layout>default</layout>
+	      <releases>
+	        <enabled>true</enabled>
+	        <updatePolicy>never</updatePolicy>
+	      </releases>
+	      <snapshots>
+	        <enabled>false</enabled>
+	      </snapshots>
+  		</repository>
+	</repositories>
+	
+  <pluginRepositories>
+    	<pluginRepository>
+        <id>maven central 1</id>
+        <name>maven central 1</name>
+        <url>http://repo1.maven.org/maven2/</url>
+        <layout>default</layout>
+        <releases>
+          <enabled>true</enabled>
+          <updatePolicy>never</updatePolicy>
+        </releases>
+        <snapshots>
+          <enabled>true</enabled>
+          <updatePolicy>never</updatePolicy>
+        </snapshots>
+      </pluginRepository>
+      
+      <pluginRepository>
+        <id>jboss-public-repository-group</id>
+        <name>JBoss Public Maven Repository Group</name>
+        <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
+        <layout>default</layout>
+        <releases>
+          <enabled>true</enabled>
+          <updatePolicy>never</updatePolicy>
+        </releases>
+        <snapshots>
+          <enabled>true</enabled>
+          <updatePolicy>never</updatePolicy>
+        </snapshots>
+      </pluginRepository>
+  </pluginRepositories>
+
+	<modules>
+		<module>CRBookCommon</module>
+		<module>CRBookPersist</module>
+		<module>CRBookWS</module>		
+	</modules>
+
+</project>

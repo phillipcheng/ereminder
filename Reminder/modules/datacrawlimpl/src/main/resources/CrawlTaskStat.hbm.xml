@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+
+    <subclass name="org.cld.datacrawl.task.BrsCatStat" extends="org.cld.taskmgr.entity.TaskStat" discriminator-value="browse_cat">
+        <property name="brokenCatNum" type="integer" column="BCat"/>
+        <property name="catBrowsed" type="integer" column="catBrs"/>
+    </subclass>
+    
+    <subclass name="org.cld.datacrawl.task.BrsDetailStat" extends="org.cld.taskmgr.entity.TaskStat" discriminator-value="browse_detail">
+        <property name="brokenListPageNum" type="integer" column="BList"/>
+        <property name="brokenDetailedPageNum" type="integer" column="BDetail"/>
+        <property name="brokenPromoPageNum" type="integer" column="BProm"/>
+        <property name="pageBrowsed" type="integer" column="pageBrs"/>
+        <property name="productBrowsed" type="integer" column="prdBrs"/>
+        <property name="promoBrowsed" type="integer" column="promBrs"/>
+        <property name="productScanned" type="integer" column="prdS"/>
+        <property name="productAdded" type="integer" column="prdA"/>
+        <property name="productAddFailed" type="integer" column="prdAF"/>
+        <property name="priceAdded" type="integer" column="priceA"/>
+        <property name="priceAddFailed" type="integer" column="priceAF"/>
+        <property name="promoteAdded" type="integer" column="promoteA"/>
+        <property name="promoteAddFailed" type="integer" column="promoteAF"/>
+    </subclass>
+</hibernate-mapping>

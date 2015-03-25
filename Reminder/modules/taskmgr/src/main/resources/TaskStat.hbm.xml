@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping package="org.cld.taskmgr.entity">
+    
+     <class name="BrokenPage" table="BROKENPAGE">
+        <id name="url" type="string" column="URL" length="350"></id>
+        <property name="type" type="integer" column="TYPE"/>
+        <property name="count" type="integer" column="COUNT"/>
+        <property name="lastUpdateTime" type="timestamp" column="LASTUPDATETIME"/>
+    </class>
+    
+    <query name="getStatByID">
+        <![CDATA[from TaskStat ts where ts.tsKey.tid =:tid and ts.tsKey.runRound=:runRound]]>
+    </query>
+    
+    <query name="getLatestStatByID">
+        <![CDATA[from TaskStat ts where ts.tsKey.tid =:tid order by ts.tsKey.runRound desc]]>
+    </query>
+    
+    <query name="getLastestStatByKeyList">
+        <![CDATA[from TaskStat ts where ts.tsKey.tid in (:tidList) and ts.latest = true]]>
+    </query>
+        
+    <query name="getBPByURL">
+        <![CDATA[from BrokenPage bp where bp.url = :URL]]>
+    </query>
+    
+    <query name="removeAllTS">
+        <![CDATA[DELETE FROM TaskStat ts]]>
+    </query>
+</hibernate-mapping>

@@ -1,0 +1,22 @@
+//create crbook db scripts
+drop table books;
+drop table volumes;
+CREATE TABLE books (id TEXT, name TEXT, type integer, totalpage INTEGER, lastpage INTEGER, utime TIMESTAMP, data TEXT, cat TEXT, indexpage integer, author TEXT, status integer, primary key(id(100)));
+CREATE TABLE volumes (id TEXT, name TEXT, type integer, utime TIMESTAMP, data TEXT, pcat TEXT, author TEXT, booknum INTEGER, primary key(id(100)));
+
+create index book_name_idx on books (name(100));
+create index book_cat_idx on books (cat(100));
+create index book_author_idx on books (author(100));
+create index book_status_idx on books (status);
+create index book_utime_idx on books (utime);
+create index book_type_idx on books (type);
+
+create index vol_name_idx on volumes (name(100));
+create index vol_pcat_idx on volumes (pcat(100));
+create index vol_author_idx on volumes (author(100));
+create index vol_type_idx on volumes (type);
+
+CREATE TABLE boards (id TEXT, pagenum INTEGER, data TEXT, utime TIMESTAMP, primary key(id(100), pagenum));
+CREATE TABLE sessions (id TEXT, device TEXT, userid TEXT, stime TIMESTAMP, etime TIMESTAMP, primary key(id(100)));
+create table users (userid text, pass text, utime TIMESTAMP, primary key(userid(100)));
+create table myreadings (userid text, rid text, primary key(userid(100), rid(100)));
