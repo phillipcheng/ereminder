@@ -1,53 +1,68 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\reminder\maven.1411262641248\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" 
-	rootVolume="999990" storeId="linkedin-company" productType="default">
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="linkedin-company" productType="default">
+	<loginInfo>
+		<click>
+			<link>
+				<input name="//input[@id='session_key-login']">
+					<value value="phillipchengyia@gmail.com"/>
+				</input>
+				<input name="//input[@id='session_password-login']">
+					<value value="testtest"/>
+				</input>
+				<nextpage name="homepage">
+					<value value="//input[@id='btn-primary']"/>
+				</nextpage>
+			</link>
+		</click>
+		<url>https://www.linkedin.com/uas/login</url>
+		<url>https://www.linkedin.com/reg/join</url>
+		<url>https://www.linkedin.com/start/join</url>
+	</loginInfo>
 	<CatTask isLeaf="true" splitTaskType="page">
-		<baseBrowseTask enableJS="true" startUrl="http://www.szse.cn/main/marketdata/jypz/colist/">
-			<userAttribute name="currentPageNum">
-				<value value="//form[@name='frmtab1']/table[last()]/tbody/tr/td/text()">
-					<strPreprocess trimPre="第" trimPost="页"/>
-				</value>
-			</userAttribute>
+		<baseBrowseTask enableJS="true" startUrl="https://www.linkedin.com/vsearch/c?f_CCR=us%3A84&amp;f_I=4&amp;f_CS=C&amp;page_num=1">
 			<idUrlMapping>
-				<Token value="http://www.szse.cn/main/marketdata/jypz/colist/" name="id" type="string"/>
+				<Token value="https://www.linkedin.com/vsearch/c?f_CCR=us%3A84&amp;f_I=4&amp;f_CS=C&amp;page_num=" name="id" type="string"/>
+				<Token value="[0-9]+" name="pageNum" type="regexp"/>
 			</idUrlMapping>
 		</baseBrowseTask>
-		<subItemList nextPage="//input[@class='cls-navigate-next']">
-			<itemList value="//table[@id='REPORTID_tab1']/tbody/tr[position()>1]"/>
-			<taskInvokes>
-				<param paramName="symbal" value="code" scope="attribute"/>
-				<param paramName="periodId" value="GB0110,GB0310,GB0510,GB0710" scope="const" type="list"/>
-				<param paramName="startyear" value="2010" scope="const" type="string"/>
-			</taskInvokes>
-			<userAttribute name="code">
-				<value value="td[1]/a//text()"/>
-			</userAttribute>
+		<subItemList nextPage="//ul[@class='pagination']/li[@class='next']/a" itemFullUrl="./a[1]">
+			<itemList value="//ol[@id='results']/li"/>
 			<lastPageCondition lhs="$currentPageNum" rhs="$totalPageNum" operator="="/>
 		</subItemList>
-		<totalPageNum value="//form[@name='frmtab1']/table[last()]/tbody/tr/td/text()">
-			<strPreprocess trimPre="共" trimPost="页"/>
-		</totalPageNum>
+		<itemPerPage value="10"/>
+		<totalItemNum value="//div[@id='results_count']/div[1]/p[1]/strong"/>
+		<maxPageNum value="1"/>
 	</CatTask>
 	<PrdTask>
-		<baseBrowseTask startUrl="http://xbrl.cninfo.com.cn/XBRL/allinfo.jsp?stkid=[symbal]&amp;getyear=[startyear]&amp;reportType=[periodId]" enableJS="true" taskName="szsePrd">
-			<param name="symbal" type="string"/>
-			<param name="periodId" type="list"/>
-			<param name="startyear" type="string"/>
-			<userAttribute name="basic">
-				<value value="/html/body/table[2]/tbody/tr[2]/td[2]/table[1]/tbody/tr/td/table[2]//a" toType="page"/>
+		<baseBrowseTask enableJS="true" taskName="companyPrd">
+			<userAttribute name="textinfo">
+				<value value="//dd[@class='basic-info-description']//p/text()"/>
 			</userAttribute>
-			<userAttribute name="tabs">
-				<value value="/html/body/table[2]/tbody/tr[2]/td[2]/table[1]/tbody/tr/td/table[position()>2]//a" toType="pagelist"/>
+			<userAttribute name="speciality">
+				<value value="//div[@id='content']/dl[1]/dd[2]/div[@class='specialties']/p/text()"/>
 			</userAttribute>
-			<userAttribute name="basicInfo">
-				<value value="/html/body/form//table[@class='tbl']/tbody/tr[count(td)=2]/td//text()" basePage="basic" toType="list"/>
+			<userAttribute name="website">
+				<value value="//div[@id='content']/dl[1]/dd[2]/ul/li[@class='website']/p/a/text()"/>
 			</userAttribute>
-			<userAttribute name="otherinfo">
-				<value value="//table[@class='tbl']/tbody/tr[count(td)=6]/td//text()" basePage="tabs" toType="list"/>
+			<userAttribute name="industry">
+				<value value="//div[@id='content']/dl[1]/dd[2]/ul/li[@class='industry']/p/text()"/>
+			</userAttribute>
+			<userAttribute name="type">
+				<value value="//div[@id='content']/dl[1]/dd[2]/ul/li[@class='type']/p/text()"/>
+			</userAttribute>
+			<userAttribute name="Headquarters">
+				<value value="//div[@id='content']/dl[1]/dd[2]/ul/li[@class='vcard hq']/p"/>
+			</userAttribute>
+			<userAttribute name="company-size">
+				<value value="//div[@id='content']/dl[1]/dd[2]/ul/li[@class='company-size']/p/text()"/>
+			</userAttribute>
+			<userAttribute name="founded-time">
+				<value value="//div[@id='content']/dl[1]/dd[2]/ul/li[@class='founded']/p/text()"/>
 			</userAttribute>
 			<idUrlMapping>
-				<Token value="http://xbrl.cninfo.com.cn/XBRL/allinfo.jsp?stkid=" name="prefix" type="string"/>
-				<Token value=".*" name="id" type="regexp"/>
+				<Token value="https://www.linkedin.com/company/" name="prefix" type="string"/>
+				<Token value="[0-9]+" name="id" type="regexp"/>
+				<Token value="\?.*" name="postfix" type="regexp"/>
 			</idUrlMapping>
 		</baseBrowseTask>
 	</PrdTask>

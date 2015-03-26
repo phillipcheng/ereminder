@@ -40,5 +40,5 @@ public interface IProductAnalyze {
 	 * @throws InterruptedException
 	 */
 	public Price readPrice(WebClient wc, String url, String prdId, String storeId, Price summaryPrice,
-			Task task) throws InterruptedException;
+			Task task, ParsedBrowsePrd taskDef) throws InterruptedException;
 }

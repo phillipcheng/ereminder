@@ -40,11 +40,6 @@
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
-			<groupId>org.cld.datacrawl.impl</groupId>
-			<artifactId>cld-datacrawl.impl</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-		<dependency>
 			<groupId>org.cld.utils</groupId>
 			<artifactId>cld-util</artifactId>
 			<version>1.0.0</version>

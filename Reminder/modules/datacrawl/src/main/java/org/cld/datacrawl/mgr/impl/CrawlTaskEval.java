@@ -1,0 +1,488 @@
+package org.cld.datacrawl.mgr.impl;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.cld.datacrawl.CrawlConf;
+import org.cld.datacrawl.NextPage;
+import org.cld.datacrawl.util.HtmlPageResult;
+import org.cld.datacrawl.util.HtmlUnitUtil;
+import org.cld.datacrawl.util.VerifyPageByXPath;
+import org.cld.taskmgr.NodeConf;
+import org.cld.taskmgr.ScriptEngineUtil;
+import org.cld.util.DownloadUtil;
+import org.cld.util.PatternIO;
+import org.cld.util.PatternUtil;
+import org.cld.util.SafeSimpleDateFormat;
+import org.cld.util.StringUtil;
+import org.xml.mytaskdef.ConfKey;
+import org.xml.taskdef.AttributeType;
+import org.xml.taskdef.PageVerifyType;
+import org.xml.taskdef.ScopeType;
+import org.xml.taskdef.ValueType;
+import org.xml.taskdef.VarType;
+
+import com.gargoylesoftware.htmlunit.html.DomNamespaceNode;
+import com.gargoylesoftware.htmlunit.html.DomNode;
+import com.gargoylesoftware.htmlunit.html.DomText;
+import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
+import com.gargoylesoftware.htmlunit.html.HtmlDivision;
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
+import com.gargoylesoftware.htmlunit.html.HtmlImage;
+import com.gargoylesoftware.htmlunit.html.HtmlInput;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+
+public class CrawlTaskEval {
+
+	private static Logger logger =  LogManager.getLogger(CrawlTaskEval.class);
+
+	private static Map<String, SafeSimpleDateFormat> dfMap = new HashMap<String, SafeSimpleDateFormat>();
+	
+	public static int getIntValue(Object value, String valueExp){
+		if (value instanceof Integer){
+			//user set type to int
+			return ((Integer)value).intValue();
+		}else if (value instanceof String){
+			String strValue = ((String)value).trim();
+			//user has not set the type default to String
+			try{	
+				strValue = strValue.replaceAll("\\D+","");
+				return Integer.parseInt(strValue);
+			}catch(NumberFormatException nfe){
+				logger.error(String.format("defined:%s is a number", valueExp), nfe);
+			}
+		}else{
+			logger.error(String.format("expection valueExp to be an integer, but got %s", valueExp));
+		}
+		return -1;
+	}
+	
+	private static HtmlPage getPage(Object xpathResult, DomNode page, ValueType vt, PageVerifyType pvt, CrawlConf cconf) throws InterruptedException{
+		HtmlPageResult hpResult=null;
+
+		HtmlElement input = (HtmlElement)xpathResult;
+		NextPage np = new NextPage(input);
+		VerifyPageByXPath vpbxpath=null;
+		if (pvt!=null){
+			vpbxpath = new VerifyPageByXPath(new String[]{pvt.getXpath()}, new String[]{pvt.getExpectedContent()});
+		}
+		hpResult = HtmlUnitUtil.clickNextPageWithRetryValidate(null, np, vpbxpath, null, cconf.getMaxRetry(), false, null, cconf);
+		
+		if (hpResult!=null){
+			if (hpResult.getErrorCode()==HtmlPageResult.SUCCSS){
+				HtmlPage hp = hpResult.getPage();
+				logger.debug(hp.toString());
+				return hp;
+			}else{
+				logger.error("get page error:" + hpResult);
+			}
+		}
+		return null;
+	}
+	
+	public static Object eval(DomNode page, ValueType vt, CrawlConf cconf, Map<String, Object> params) throws InterruptedException {
+		Map<String, List<? extends DomNode>> pageMap = new HashMap<String, List<? extends DomNode>>();
+		List<DomNode> pages = new ArrayList<DomNode>();
+		pages.add(page);
+		pageMap.put(ConfKey.CURRENT_PAGE, pages);
+		pageMap.put(ConfKey.START_PAGE, pages);
+		return eval(pageMap, vt, cconf, params);
+	}
+	
+	private static String anchorToFullUrl(HtmlAnchor ha, HtmlPage page){
+		try {
+			URL url = page.getFullyQualifiedUrl(ha.getHrefAttribute());
+			return url.toExternalForm();
+		} catch (MalformedURLException e) {
+			logger.error("", e);
+			return null;
+		}
+	}
+	private static String divToString(HtmlDivision hd){
+		DomText dt = hd.getFirstByXPath(".//text()");
+		if (dt==null){
+			return "";
+		}else{
+			return dt.getTextContent();
+		}
+	}
+	/**
+	 * @pageMap contains key and its corresponding page list, can be a single page
+	 * @vt valueType specifies from type, to type and value expression to evaluate
+	 * @return either the list of evaluated values (for the base page refers to page list) 
+	 * or a single value (base page refers to a single page)
+	 */
+	public static Object eval(Map<String, List<? extends DomNode>> pageMap, ValueType vt, CrawlConf cconf, Map<String, Object> params) 
+			throws InterruptedException{
+		//the list result to return
+		List<List> rxpathListResultList = new ArrayList<List>();
+		List<List<HtmlPage>> rpagelistList = new ArrayList<List<HtmlPage>>();
+		List<HtmlPage> rpageList = new ArrayList<HtmlPage>();
+		List<Object> valueList = new ArrayList<Object>();
+		
+		//
+		String valueExp=null;
+		List<String> valueExpList = new ArrayList<String>();
+		
+		//get from value
+		VarType fromType = vt.getFromType();
+		if (fromType==null){
+			if (vt.getValue().contains("/"))
+				fromType=VarType.XPATH;
+			else
+				fromType=VarType.STRING;
+		}
+		
+		if (ScopeType.PARAM == vt.getFromScope() || ScopeType.ATTRIBUTE==vt.getFromScope()){
+			if (params.containsKey(vt.getValue())){
+				valueExp = params.get(vt.getValue()).toString();
+				valueExpList.add(valueExp);
+			}else{
+				logger.error(String.format("params does not have: %s", vt.getValue()));
+			}
+		}else{//expression without variables [called const]
+			if (fromType == VarType.STRING){
+				//string const
+				valueExp = vt.getValue();
+				valueExpList.add(valueExp);
+			}else if (VarType.XPATH == fromType){
+				//xpath const
+				List<? extends DomNode> pages = null;
+				if (vt.getBasePage()==null){
+					//if not specified, then evaluate on the current page of the map
+					pages = pageMap.get(ConfKey.CURRENT_PAGE);
+				}else{
+					pages = pageMap.get(vt.getBasePage());
+				}
+	
+				String fileSaveDir=null;
+				
+				if (pages!=null){
+					for (DomNode page : pages){
+						Object xpathResult = null;
+						List xpathListResult = null;
+						if (VarType.LIST == vt.getToType() || VarType.EXTERNAL_LIST == vt.getToType()){
+							xpathListResult = page.getByXPath(vt.getValue());
+							if (xpathListResult.size()==0){
+								logger.error(String.format("list from page %s at xpath %s is null.", page.getHtmlPageOrNull(), vt.getValue()));
+							}else{
+								List convertedList = new ArrayList();
+								Object entry = xpathListResult.get(0);
+								if (vt.getToEntryType()==VarType.STRING){
+									if (entry instanceof HtmlImage){
+										for (Object hi:xpathListResult){
+											try {
+												URL url = ((HtmlPage)page).getFullyQualifiedUrl(((HtmlImage)hi).getSrcAttribute());
+												convertedList.add(url.toExternalForm());
+											} catch (MalformedURLException e) {
+												logger.error("", e);
+											}
+										}
+									}else if (entry instanceof HtmlAnchor){
+										for (Object hi:xpathListResult){
+											String url = anchorToFullUrl((HtmlAnchor)hi, (HtmlPage)page);
+											convertedList.add(url);
+										}
+									}else if (entry instanceof DomText){
+										for (Object hi:xpathListResult){
+											convertedList.add(((DomText)hi).getTextContent());
+										}
+									}else if (entry instanceof HtmlDivision){
+										for (Object hi:xpathListResult){
+											convertedList.add(divToString((HtmlDivision)hi));
+										}
+									}else{
+										if (String.class.isAssignableFrom(entry.getClass())){
+											for (Object hi:xpathListResult){
+												convertedList.add(hi.toString());
+											}
+										}else{
+											logger.warn(String.format("still returned, entry %s of type %s in list can't cast to string", entry, entry.getClass()));
+											convertedList = xpathListResult;
+										}
+									}
+								}else if (vt.getToEntryType()==VarType.FILE){
+									if (fileSaveDir==null && vt.getToDirectory()!=null){
+										fileSaveDir = (String) ScriptEngineUtil.eval(vt.getToDirectory(), VarType.STRING, params);
+									}
+									for (Object hi:xpathListResult){
+										String url = anchorToFullUrl((HtmlAnchor)hi, (HtmlPage)page);
+										String fileName = FilenameUtils.getName(url);
+										if (NodeConf.tmframework_hadoop.equals(cconf.getNodeConf().getTaskMgrFramework())){
+											String finalSaveDir = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + fileSaveDir;
+											DownloadUtil.downloadFileToHdfs(url, cconf.isUseProxy(), cconf.getProxyIP(), cconf.getProxyPort(), 
+													finalSaveDir + "/" + fileName, cconf.getTaskMgr().getHdfsDefaultName());
+										}else{
+											DownloadUtil.downloadFile(url, cconf.isUseProxy(), cconf.getProxyIP(), cconf.getProxyPort(), 
+													fileSaveDir, fileName);
+										}
+										convertedList.add(url);
+									}
+								}else{
+									convertedList = xpathListResult;
+								}
+								rxpathListResultList.add(convertedList); //return list of element, no further processing
+							}
+						}else if (VarType.PAGELIST == vt.getToType()){
+							xpathListResult = page.getByXPath(vt.getValue());
+							if (xpathListResult.size()==0){
+								logger.error(String.format("pagelist from page %s at xpath %s is null", page.getBaseURI(), vt.getValue()));
+							}else{
+								List<HtmlPage> pagelist = new ArrayList<HtmlPage>();
+								for (int i=0; i<xpathListResult.size(); i++){
+									Object xpathRes = xpathListResult.get(i);
+									PageVerifyType pvt = null;
+									if (vt.getPageVerify().size()>0){
+										if (vt.getPageVerify().size()==xpathListResult.size()){
+											pvt = vt.getPageVerify().get(i);
+										}else{
+											logger.error("page verify and page number not match for vt:" + vt.toString());
+										}
+									}
+									HtmlPage pageGet = getPage(xpathRes, page, vt, pvt, cconf);
+									if (pageGet!=null){
+										pagelist.add(pageGet.cloneNode(true));
+									}else{
+										logger.error(String.format("can't get page for xpath: %s", xpathRes));
+										if (pvt!=null){
+											logger.error("pvt is " + pvt.getExpectedContent());
+										}
+									}
+								}
+								logger.debug("pagelist got is:" + pagelist);
+								rpagelistList.add(pagelist); //return list of pages, no further processing
+							}
+						}else{//none list type
+							xpathResult = page.getFirstByXPath(vt.getValue());
+							if (xpathResult!=null){
+								if (VarType.PAGE==vt.getToType()){
+									PageVerifyType pvt = null;
+									if (vt.getPageVerify()!=null && vt.getPageVerify().size()>=1){
+										pvt = vt.getPageVerify().get(0);
+									}
+									HtmlPage pageGet = getPage(xpathResult, page, vt, pvt, cconf);
+									if (pageGet!=null)
+										rpageList.add(pageGet); //return page, no further processing
+								}else if (xpathResult instanceof Double){
+									valueExp = ((Double)xpathResult).intValue() + "";
+									valueExpList.add(valueExp);
+								}else {//get the string first
+									valueExp = HtmlUnitUtil.xpathResultToString(xpathResult);
+									valueExpList.add(valueExp);
+								}
+							}else{
+								if (page instanceof HtmlPage){
+									logger.error(String.format("node by xpath:%s not found on page:%s", 
+											vt.getValue(), ((HtmlPage)page).getUrl().toExternalForm()));
+									//logger.debug(String.format("node by xpath:%s not found on page:%s", 
+											//vt.getValue(), ((HtmlPage)page).asXml()));
+									
+								}else{
+									logger.error(String.format("node by xpath:%s not found on page: %s", 
+											vt.getValue(), page.asXml()));
+								}
+							}
+						}
+					}
+				}else{
+					logger.error(String.format("pageMap %s contains null pagelist for key:%s", pageMap, vt.getBasePage()));
+				}
+			}else{
+				logger.error(String.format("unsupported fromType: %s", fromType));
+			}
+		}
+		
+		for (String valueExp1:valueExpList){
+			Object value = null;
+			if (valueExp1!=null){
+				//perform pre-process
+				ValueType.StrPreprocess sp = vt.getStrPreprocess();
+				if (sp!=null){
+					valueExp1 = StringUtil.getStringBetweenFirstPreFirstPost(valueExp1, sp.getTrimPre(), sp.getTrimPost());
+					valueExp1.trim();
+				}
+				if (vt.getToType()!=null){
+					if (VarType.DATE==vt.getToType()){
+						String format = vt.getFormat();
+						SafeSimpleDateFormat sdf=null;
+						if (dfMap.containsKey(format)){
+							sdf = dfMap.get(format);
+						}else{
+							sdf = new SafeSimpleDateFormat(format);
+							dfMap.put(format, sdf);
+						}
+						try {
+							Date d = sdf.parse(valueExp1);
+							if (!format.contains("yy")){
+								//if no year set, using current year
+								d.setYear(new Date().getYear());
+							}
+							value = d;
+						} catch (ParseException e) {
+							logger.error(String.format("date: %s can't be parsed using format: %s.", 
+									valueExp1, format), e);
+						}
+					}else if (VarType.INT == vt.getToType()){
+						valueExp1 = valueExp1.replaceAll("\\D+","");
+						value = Integer.parseInt(valueExp1);
+					}else if (VarType.FLOAT == vt.getToType()){
+						value = Float.parseFloat(valueExp1);
+					}else if (VarType.STRING == vt.getToType()){
+						value = valueExp1;
+					}else{
+						logger.error(String.format("toType not supported: %s", vt.getToType()));
+					}
+				}else{
+					//treated as string
+					value = valueExp1;
+				}
+			}else{
+				value = null;
+			}
+			valueList.add(value);
+		}
+		
+		List<Object> retList = new ArrayList<Object>();
+		retList.addAll(rxpathListResultList);
+		retList.addAll(rpagelistList);
+		retList.addAll(rpageList);
+		retList.addAll(valueList);
+		if (retList.size()==1){
+			return retList.get(0);
+		}else{
+			return retList;
+		}
+	}
+	
+	public static void setInitAttributes(List<AttributeType> attrs, Map<String, Object> paramMap, Map<String, Object> inParams) 
+			throws InterruptedException {
+		for (int i=0; i<attrs.size(); i++){
+			AttributeType nvt = attrs.get(i);
+			ValueType vt = nvt.getValue();
+			if (vt.getFromScope()==ScopeType.PARAM){
+				if (inParams.containsKey(vt.getValue())){
+					paramMap.put(nvt.getName(), inParams.get(vt.getValue()));
+				}else{
+					logger.error(String.format("input params does not have: %s", nvt.getName()));
+				}
+			}
+		}
+	}
+	
+	public static void setUserAttributes(DomNode page, List<AttributeType> attrs, 
+			Map<String, Object> paramMap, CrawlConf cconf, Map<String, Object> inParams) throws InterruptedException {
+		Map<String, List<? extends DomNode>> pageMap = new HashMap<String, List<? extends DomNode>>();
+		List<DomNode> currentPages = new ArrayList<DomNode>();
+		currentPages.add(page);
+		pageMap.put(ConfKey.CURRENT_PAGE, currentPages);
+		setUserAttributes(pageMap, attrs, paramMap, cconf, inParams, false);
+	}
+	
+	//TODO currently only 1 external list type var with tryPattern supported
+	public static boolean setUserAttributes(Map<String, List<? extends DomNode>> pages, List<AttributeType> attrs, 
+			Map<String, Object> paramMap, CrawlConf cconf, Map<String, Object> inParams, boolean tryPattern) throws InterruptedException {
+		boolean externalistFinished=false;
+		for (int i=0; i<attrs.size(); i++){
+			AttributeType nvt = attrs.get(i);
+			ValueType vt = nvt.getValue();
+			if (i==0){
+				paramMap.putAll(inParams);
+			}
+			Object val = eval(pages, vt, cconf, paramMap);
+			if (vt.getToType()==VarType.EXTERNAL_LIST){
+				List listvar = (List)val;
+				if (listvar.size()>0){
+					Object entry = listvar.get(0);
+					boolean doTryPattern=false;
+					String patternVarName=nvt.getName() + "_pattern";
+					if (entry instanceof String && tryPattern){
+						doTryPattern=true;
+					}
+					if (paramMap.containsKey(nvt.getName())){
+						List elistvarorg = (List) paramMap.get(nvt.getName());
+						Object last = elistvarorg.get(elistvarorg.size()-1);
+						Object first = elistvarorg.get(0);
+						//check final condition: this equals last
+						if (entry.equals(last)||entry.equals(first)){
+							logger.info(String.format("this entry %s equals last %s or first %s", entry, last, first));
+							externalistFinished=true;
+						}
+						if (doTryPattern){
+							PatternIO pio = (PatternIO) paramMap.get(patternVarName);
+							if (pio==null){
+								pio = new PatternIO();
+								paramMap.put(patternVarName, pio);
+							}
+							List elistvar = new ArrayList();
+							for (int j=0; j<listvar.size(); j++){
+								elistvar.clear();
+								elistvar.addAll(elistvarorg);
+								elistvar.addAll(listvar.subList(0, j+1));
+								PatternUtil.usePattern(pio, elistvar);
+								if (pio.isFinished()){
+									externalistFinished=true;
+									break;
+								}
+							}
+							paramMap.put(nvt.getName(), elistvar);
+						}else{
+							elistvarorg.addAll(listvar);
+							paramMap.put(nvt.getName(), elistvarorg);
+						}
+					}else{
+						if (doTryPattern){
+							//create the pattern attribute for this external list as well
+							PatternIO pio = new PatternIO();
+							paramMap.put(patternVarName, pio);
+							List elistvar = new ArrayList();
+							for (int j=0; j<listvar.size(); j++){
+								elistvar = listvar.subList(0, j+1);
+								PatternUtil.usePattern(pio, elistvar);
+								if (pio.isFinished()){
+									externalistFinished=true;
+									break;
+								}
+							}
+							paramMap.put(nvt.getName(), elistvar);
+						}else{
+							paramMap.put(nvt.getName(), listvar);
+						}
+					}
+				}
+			}else{
+				if (val instanceof List){
+					List vallist = (List)val;
+					if (vallist.size()>0){
+						Object firstObj = vallist.get(0);
+						if (firstObj instanceof HtmlPage){
+							//add the returned page list to pageMap
+							pages.put(nvt.getName(), vallist);
+						}else{
+							paramMap.put(nvt.getName(), vallist);
+						}
+					}else{
+						
+					}
+				}else if (val instanceof HtmlPage){
+					//add the returned page to pageMap
+					List<HtmlPage> list = new ArrayList<HtmlPage>();
+					list.add((HtmlPage)val);
+					pages.put(nvt.getName(), list);
+				}else{
+					//add the new tuple to paramMap
+					paramMap.put(nvt.getName(), val);
+				}
+			}
+		}
+		return externalistFinished;
+	}
+}

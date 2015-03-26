@@ -14,5 +14,5 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 public interface ListProcessInf {
 	public List<Task> process(HtmlPage listPage, Date readTime, 
-			Category cat, CrawlConf cconf, Task task, int maxItems) throws InterruptedException;
+			Category cat, CrawlConf cconf, Task task, int maxItems, WebClient wc) throws InterruptedException;
 }

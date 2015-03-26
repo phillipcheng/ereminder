@@ -17,7 +17,6 @@
 		<module>taskmgr</module>
 		<module>cld-action</module>
 		<module>datacrawl</module>
-		<module>datacrawlimpl</module>
 		<module>stock</module>
 		<module>cld-webconf</module>
 	</modules>

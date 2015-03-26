@@ -65,7 +65,7 @@ public class CrawlUtil {
 	        public void notify(String s, Object o) { }
 	    });
 	    
-	    webClient.getCookieManager().setCookiesEnabled(false);
+	    webClient.getCookieManager().setCookiesEnabled(true);//required by linkedin
 	    webClient.getOptions().setCssEnabled(true);
 	    webClient.getOptions().setPrintContentOnFailingStatusCode(false);
 		webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);

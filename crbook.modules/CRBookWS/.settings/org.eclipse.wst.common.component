@@ -11,7 +11,7 @@
         <dependent-module archiveName="cld-util-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-util/cld-util">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="cy-common-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/crbook-common/crbook-common">
+        <dependent-module archiveName="cy-common-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cy-common/cy-common">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <dependent-module archiveName="cld-datastore-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-datastore/cld-datastore">

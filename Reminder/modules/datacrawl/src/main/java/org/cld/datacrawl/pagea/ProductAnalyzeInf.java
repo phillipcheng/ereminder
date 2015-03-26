@@ -12,7 +12,7 @@ import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 public interface ProductAnalyzeInf {
-	public String[] getPageVerifyXPaths(Task task);
+	public String[] getPageVerifyXPaths(Task task, ParsedBrowsePrd taskDef);
 
 	public String getTitle(HtmlPage page, Task task, ParsedBrowsePrd taskDef) throws InterruptedException;
 	

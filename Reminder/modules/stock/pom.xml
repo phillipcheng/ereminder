@@ -37,11 +37,6 @@
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
-			<groupId>org.cld.datacrawl.impl</groupId>
-			<artifactId>cld-datacrawl.impl</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.hbase</groupId>
 			<artifactId>hbase-client</artifactId>
 		</dependency>

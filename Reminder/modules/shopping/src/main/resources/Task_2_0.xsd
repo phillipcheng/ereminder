@@ -7,6 +7,7 @@
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:element name="Tasks" type="TasksType"/>
 	<xs:simpleType name="VarType">
@@ -179,6 +180,11 @@ if also not set, then 1 task browsing all items will be generated.
 			</xs:element>
 			<xs:element name="itemPerPage" type="ValueType" minOccurs="0"/>
 			<xs:element name="totalItemNum" type="ValueType" minOccurs="0"/>
+			<xs:element name="maxPageNum" type="ValueType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>max pages allowed for this category, most web-sites has a limitation, if totalPageNum calculated is larger than this, then some items will be missing</xs:documentation>
+				</xs:annotation>
+			</xs:element>
 		</xs:sequence>
 		<xs:attribute name="isLeaf" type="xs:boolean" use="required"/>
 		<xs:attribute name="splitTaskType" type="SplitTaskByType" use="optional" default="page"/>
@@ -268,23 +274,19 @@ if also not set, then 1 task browsing all items will be generated.
 		<xs:sequence>
 			<xs:element name="link" type="ClickType" maxOccurs="unbounded">
 				<xs:annotation>
-					<xs:documentation>usually toType of nextpage is page, and name will be used in later expression
-					</xs:documentation>
+					<xs:documentation>usually toType of nextpage is page, and name will be used in later expression</xs:documentation>
 				</xs:annotation>
 			</xs:element>
 			<xs:element name="finishCondition" type="BinaryBoolOp" minOccurs="0">
 				<xs:annotation>
-					<xs:documentation>
-						if specified, the last link will be clicked till
-						finish condition, if true reach the first page
-						of the book
-					</xs:documentation>
+					<xs:documentation>if specified, the last link will be clicked till finish condition, if true click finished</xs:documentation>
 				</xs:annotation>
 			</xs:element>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="TasksType">
 		<xs:sequence>
+			<xs:element name="loginInfo" type="LoginType" minOccurs="0"/>
 			<xs:element name="skipUrl" minOccurs="0" maxOccurs="unbounded">
 				<xs:simpleType>
 					<xs:restriction base="xs:string">
@@ -344,5 +346,15 @@ if also not set, then 1 task browsing all items will be generated.
 				<xs:documentation>if this is missing, then xpath should exist</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
+	</xs:complexType>
+	<xs:complexType name="LoginType">
+		<xs:sequence>
+			<xs:element name="click" type="ClickStreamType"/>
+			<xs:element name="url" type="xs:string" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>a list of possible redirected url, the 1st url will be used to login</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
 	</xs:complexType>
 </xs:schema>
