@@ -13,8 +13,8 @@ import org.cld.datacrawl.task.BrsDetailStat;
 public class SiteRuntime {
 	BrsCatStat bctBS;	
 	BrsDetailStat bdtBS;
-	BrowseCategoryTaskConf bct;
-	BrowseDetailTaskConf bdt;
+	private BrowseCategoryTaskConf bct;
+	private BrowseDetailTaskConf bdt;
 	
 	CrawlTaskConf ctconf;
 	
@@ -22,5 +22,19 @@ public class SiteRuntime {
 	IListAnalyze la;
 	ListProcessInf originalLP;
 	IProductAnalyze pa;
+	
+	public BrowseCategoryTaskConf getBct() {
+		return bct;
+	}
+	public void setBct(BrowseCategoryTaskConf bct) {
+		this.bct = bct;
+	}
+	
+	public BrowseDetailTaskConf getBdt() {
+		return bdt;
+	}
+	public void setBdt(BrowseDetailTaskConf bdt) {
+		this.bdt = bdt;
+	}
 	
 }

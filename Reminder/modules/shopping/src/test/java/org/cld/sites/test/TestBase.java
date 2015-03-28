@@ -10,12 +10,15 @@ import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.task.TestTaskConf;
 import org.cld.datacrawl.test.CrawlTestUtil;
+import org.cld.datacrawl.test.SiteRuntime;
+import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 import org.junit.Test;
+import org.xml.taskdef.LoginType;
 
 public class TestBase {
-	private static Logger logger =  LogManager.getLogger(TestBase.class);
+	protected static Logger logger =  LogManager.getLogger(TestBase.class);
 	
 	CrawlClientNode ccnode;
 	CrawlConf cconf;
@@ -75,6 +78,17 @@ public class TestBase {
 		TaskUtil.executeTasks(ccnode.getTaskNode(), tl);
 		while(!ccnode.getTaskNode().getTaskInstanceManager().getRunningTasks().isEmpty()){
 			Thread.sleep(2000);
+		}
+	}
+	
+	public int getUnlockedAccounts(String confName){
+		SiteRuntime srt = CrawlTestUtil.getSRT(getConfId(confName), cconf, null);
+		LoginType loginInfo = srt.getBdt().getTasks().getLoginInfo();
+		try {
+			return HtmlUnitUtil.checkLockedCrendentials(loginInfo, cconf);
+		} catch (InterruptedException e) {
+			logger.error("", e);
+			return -1;
 		}
 	}
 }

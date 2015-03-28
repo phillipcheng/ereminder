@@ -87,11 +87,11 @@ public class CrawlTestUtil{
 	
 	public static SiteRuntime getSRT(String siteconfid, CrawlConf cconf, String rootTaskId){
 		SiteRuntime srt = new SiteRuntime();
-		srt.bct = (BrowseCategoryTaskConf) cconf.getTaskMgr().getTask(siteconfid + "_bct");
-		srt.bdt = (BrowseDetailTaskConf) cconf.getTaskMgr().getTask(siteconfid + "_bdt");
-		if (srt.bct!=null)
-			srt.bct.setRootTaskId(rootTaskId);
-		srt.bdt.setRootTaskId(rootTaskId);
+		srt.setBct((BrowseCategoryTaskConf) cconf.getTaskMgr().getTask(siteconfid + "_bct"));
+		srt.setBdt((BrowseDetailTaskConf) cconf.getTaskMgr().getTask(siteconfid + "_bdt"));
+		if (srt.getBct()!=null)
+			srt.getBct().setRootTaskId(rootTaskId);
+		srt.getBdt().setRootTaskId(rootTaskId);
 		srt.bctBS = new BrsCatStat("1");
 		srt.bdtBS = new BrsDetailStat("1");
 		srt.ctconf = cconf.getCCTConf("general"); //TODO
@@ -116,21 +116,21 @@ public class CrawlTestUtil{
 		SiteRuntime srt = getSRT(siteconfid, cconf, rootTaskId);
 		
 		if (startUrl==null){//using start url defined
-			startUrl = srt.bdt.getLeafBrowseCatTask().getBaseBrowseTask().getStartUrl();
+			startUrl = srt.getBdt().getLeafBrowseCatTask().getBaseBrowseTask().getStartUrl();
 		}
 		Category category = new Category(new CrawledItemId(
-				srt.ctconf.getCaInf().getCatId(startUrl, srt.bdt), 
-				srt.bct.getTasks().getStoreId(),
-				new Date()), srt.bdt.getTasks().getProductType());
+				srt.ctconf.getCaInf().getCatId(startUrl, srt.getBdt()), 
+				srt.getBct().getTasks().getStoreId(),
+				new Date()), srt.getBdt().getTasks().getProductType());
 		category.setFullUrl(startUrl);
-		srt.bct.setNewCat(category);
+		srt.getBct().setNewCat(category);
 		if (turnPagesOnly){
 			srt.la.setLpInf(new EmptyListProcessor());
 		}else{
 			srt.la.setLpInf(srt.originalLP);
 		}
 		//need to load javascript
-		srt.la.readTopLink(category, 1, -1, srt.bdt, -1, -1);
+		srt.la.readTopLink(category, 1, -1, srt.getBdt(), -1, -1);
 		logger.info("bds:" + srt.bdtBS);
 	}
 	
@@ -166,11 +166,11 @@ public class CrawlTestUtil{
 		}
 		SiteRuntime srt = getSRT(siteconfid, cconf, rootTaskId);
 		if (catUrl==null || "".equals(catUrl)){
-			srt.bct.setStartURL(srt.bct.getRootBrowseCatTask().getBaseBrowseTask().getStartUrl());
+			srt.getBct().setStartURL(srt.getBct().getRootBrowseCatTask().getBaseBrowseTask().getStartUrl());
 		}else{
-			srt.bct.setStartURL(catUrl);
+			srt.getBct().setStartURL(catUrl);
 		}
-		List<Task> taskList = srt.ca.navigateCategory(srt.bct, srt.bctBS);
+		List<Task> taskList = srt.ca.navigateCategory(srt.getBct(), srt.bctBS);
 		logger.info("stat:" + srt.bctBS);
 		
 		if (type != BROWSE_CAT_TYPE_1_LVL){//not just 1 level, go deeper

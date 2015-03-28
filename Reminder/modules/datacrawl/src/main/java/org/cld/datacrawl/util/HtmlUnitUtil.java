@@ -1,8 +1,6 @@
 package org.cld.datacrawl.util;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -15,6 +13,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
+import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.NextPage;
 import org.cld.datacrawl.mgr.impl.CrawlTaskEval;
 import org.cld.taskmgr.entity.Task;
@@ -28,7 +27,6 @@ import org.xml.taskdef.ValueType;
 import org.xml.taskdef.VarType;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
-import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomNamespaceNode;
 import com.gargoylesoftware.htmlunit.html.DomNode;
@@ -53,17 +51,65 @@ enum LoginStatus{
 public class HtmlUnitUtil {
 	private static final String KEY_USERNAME="username";
 	private static final String KEY_PASSWORD="password";
-	private static final String KEY_CREDENTIAL_IDX="cidx";
-	
 	private static Logger logger =  LogManager.getLogger(HtmlUnitUtil.class);
 
+	private static LoginStatus login(LoginType loginInfo, CredentialType credential, WebClient wc, CrawlConf cconf) 
+			throws InterruptedException{
+		HtmlPage loginPage = null;
+		String loginUrl = loginInfo.getLoginURL();
+		try {
+			loginPage = wc.getPage(loginUrl);
+		} catch (FailingHttpStatusCodeException | IOException e) {
+			logger.error(String.format("get login page:%s error.", loginUrl), e);
+			return LoginStatus.LoginFailed;
+		}
+		Map<String, List<? extends DomNode>> pageMap = new HashMap<String, List<? extends DomNode>>();
+		List<HtmlPage> pagelist= new ArrayList<HtmlPage>();
+		pagelist.add(loginPage);
+		pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put(KEY_USERNAME, credential.getUsername());
+		paramMap.put(KEY_PASSWORD, credential.getPassword());
+		clickClickStream(loginInfo.getClick(), pageMap, paramMap, cconf, loginUrl);
+		pagelist = (List<HtmlPage>) pageMap.get(ConfKey.CURRENT_PAGE);
+		String afterLoginUrl = pagelist.get(0).getUrl().toExternalForm();
+		if (afterLoginUrl.equals(loginUrl)){
+			logger.error(String.format("login failed? remain on the same page, with loginInfo: %s", loginInfo));
+			return LoginStatus.LoginFailed;
+		}else if(afterLoginUrl.contains(loginInfo.getGotchaURL())){
+			logger.info(String.format("catchya using user %s", paramMap.get(KEY_USERNAME)));
+			return LoginStatus.LoginCatchya;
+		}else{
+			logger.info(String.format("login successfully, current url: %s, before url:%s", afterLoginUrl, loginUrl));
+			return LoginStatus.LoginSuccess;
+		}
+	}
+	
 	/**
 	 * 
 	 * @param loginInfo
-	 * @param preIdx, return the credential idx differ than the preIdx
-	 * @return
+	 * @param cconf
+	 * @return the number of unlocked crendentials
+	 * @throws InterruptedException 
 	 */
-	private static Map<String, Object> getCredentialParamMap(LoginType loginInfo, Set<String> usedCredentials){
+	public static int checkLockedCrendentials(LoginType loginInfo, CrawlConf cconf) throws InterruptedException{
+		int unlocked=0;
+		WebClient wc = CrawlUtil.getWebClient(cconf, null, true);
+		for (CredentialType ct: loginInfo.getCredential()){
+			LoginStatus ls = login(loginInfo, ct, wc, cconf);
+			if (LoginStatus.LoginSuccess == ls){
+				unlocked++;
+			}
+		}
+		return unlocked;
+	}
+	
+	/**
+	 * 
+	 * @param loginInfo
+	 * @return credential which is not in the usedCredentials set
+	 */
+	private static CredentialType getCredential(LoginType loginInfo, Set<String> usedCredentials){
 		List<CredentialType> clist = loginInfo.getCredential();
 		int count = clist.size();
 		if (count>0){
@@ -77,13 +123,8 @@ public class HtmlUnitUtil {
 				c = clist.get(idx);
 				username = c.getUsername();
 			}
-			
 			c = clist.get(idx);
-			Map<String, Object> pMap = new HashMap<String, Object>();
-			pMap.put(KEY_USERNAME, c.getUsername());
-			pMap.put(KEY_PASSWORD, c.getPassword());
-			pMap.put(KEY_CREDENTIAL_IDX, idx);
-			return pMap;
+			return c;
 		}else{
 			logger.error("no credential is configured.");
 			return null;
@@ -150,7 +191,9 @@ public class HtmlUnitUtil {
 	}
 
 	/**
-	 * 
+	 * For every url, check the landingUrl to see whether login required,
+	 * if so, login in (find the account which is not locked) and go to the tryUrl, 
+	 * making the login transparent
 	 * @param landingUrl
 	 * @param tryUrl
 	 * @param wc
@@ -168,7 +211,6 @@ public class HtmlUnitUtil {
 				if (loginInfo!=null){
 					boolean requireLogin = false;
 					String gotchaUrl = loginInfo.getGotchaURL();
-					String loginUrl = loginInfo.getLoginURL();
 					if (gotchaUrl!=null && landingUrl.contains(gotchaUrl)){
 						requireLogin = true;
 					}else {
@@ -183,37 +225,15 @@ public class HtmlUnitUtil {
 					//redirected to one of the possibleRedirectedUrls
 					if (requireLogin) {
 						wc.getCookieManager().clearCookies();
-						//being redirected to login pages
-						int preCredentialIdx = -1;//1st time
 						Set<String> usedCredentials = new HashSet<String>();
 						while (usedCredentials.size()<loginInfo.getCredential().size()){
-							HtmlPage loginPage;
-							try {
-								loginPage = wc.getPage(loginUrl);
-							} catch (FailingHttpStatusCodeException | IOException e) {
-								logger.error(String.format("get login page:%s error.", loginUrl), e);
-								return LoginStatus.LoginFailed;
-							}
-							Map<String, List<? extends DomNode>> pageMap = new HashMap<String, List<? extends DomNode>>();
-							List<HtmlPage> pagelist= new ArrayList<HtmlPage>();
-							pagelist.add(loginPage);
-							pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
-							Map<String, Object> paramMap = getCredentialParamMap(loginInfo, usedCredentials);
-							if (paramMap!=null){
-								usedCredentials.add((String) paramMap.get(KEY_USERNAME));
-								preCredentialIdx = (int) paramMap.get(KEY_CREDENTIAL_IDX);
-								clickClickStream(loginInfo.getClick(), pageMap, paramMap, cconf, loginUrl);
-								pagelist = (List<HtmlPage>) pageMap.get(ConfKey.CURRENT_PAGE);
-								String afterLoginUrl = pagelist.get(0).getUrl().toExternalForm();
-								if (afterLoginUrl.equals(loginUrl)){
-									logger.error(String.format("login failed? remain on the same page, with loginInfo: %s", loginInfo));
-									return LoginStatus.LoginFailed;
-								}else if(afterLoginUrl.contains(loginInfo.getGotchaURL())){
-									logger.info(String.format("catchya using user %s", paramMap.get(KEY_USERNAME)));
+							CredentialType ct = getCredential(loginInfo, usedCredentials);
+							if (ct!=null){
+								usedCredentials.add(ct.getUsername());
+								LoginStatus ls = login(loginInfo, ct, wc, cconf);
+								if(LoginStatus.LoginCatchya==ls){
+									logger.info(String.format("catchya using user %s", ct.getUsername()));
 									continue;
-								}else{
-									logger.info(String.format("login successfully, current url: %s, before url:%s", afterLoginUrl, loginUrl));
-									return LoginStatus.LoginSuccess;
 								}
 							}else{
 								//error will be generated by getCredentialParamMap

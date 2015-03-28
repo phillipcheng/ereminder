@@ -2,11 +2,11 @@ package org.cld.sites.test;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
-
 import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.taskmgr.hadoop.HadoopTaskUtil;
-
 import org.cld.stock.load.CNBasicLoad;
 
 public class TestJobs extends TestBase{
@@ -38,5 +38,11 @@ public class TestJobs extends TestBase{
 		FileSystem fs = FileSystem.get(HadoopTaskUtil.getHadoopConf(cconf.getNodeConf()));
 		fs.delete(new Path(outputFile), true);
 		CNBasicLoad.loadHiveFromHbase(propFile, outputFile);
+	}
+	
+	@Test
+	public void checkUnlockedAccounts(){
+		int i = getUnlockedAccounts(LINKEDIN_COMPANY);
+		logger.info(String.format("%d unlocked accounts for %s", i, LINKEDIN_COMPANY));
 	}
 }
