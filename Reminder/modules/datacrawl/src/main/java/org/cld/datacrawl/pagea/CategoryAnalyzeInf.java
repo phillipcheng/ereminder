@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlTaskConf;
+import org.cld.datacrawl.task.BrowseCategoryTaskConf;
 import org.cld.datastore.entity.Category;
 import org.cld.taskmgr.entity.Task;
 import org.xml.mytaskdef.ParsedTasksDef;
@@ -22,7 +23,7 @@ public interface CategoryAnalyzeInf {
 	public boolean needJS(String url, Task task);
 	
 	//for browsing sub-categories
-	public String[] getCatPageVerifyXPaths(Category cat, Task task);
+	public String[] getCatPageVerifyXPaths(Category cat, BrowseCategoryTaskConf task);
 	
 	//get the url of cat at pageNum, normally if the cat has only 1 page, then pageNum =1
 	public String getCatURL(Category cat, int pageNum, ParsedTasksDef tasksDef);

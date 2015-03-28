@@ -25,6 +25,7 @@
 			<xs:enumeration value="externalList"/>
 			<xs:enumeration value="boolean"/>
 			<xs:enumeration value="file"/>
+			<xs:enumeration value="htmlElement"/>
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:simpleType name="OpType">
@@ -47,11 +48,10 @@
 			<xs:enumeration value="OUT"/>
 		</xs:restriction>
 	</xs:simpleType>
-	<xs:simpleType name="SplitTaskByType">
+	<xs:simpleType name="BDTProcessType">
 		<xs:restriction base="xs:string">
-			<xs:enumeration value="page"/>
-			<xs:enumeration value="item"/>
-			<xs:enumeration value="nothing"/>
+			<xs:enumeration value="inline"/>
+			<xs:enumeration value="genbpt"/>
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:complexType name="ParamType">
@@ -187,7 +187,11 @@ if also not set, then 1 task browsing all items will be generated.
 			</xs:element>
 		</xs:sequence>
 		<xs:attribute name="isLeaf" type="xs:boolean" use="required"/>
-		<xs:attribute name="splitTaskType" type="SplitTaskByType" use="optional" default="page"/>
+		<xs:attribute name="pagesPerBDT" type="xs:int" use="optional" default="0">
+			<xs:annotation>
+				<xs:documentation>split into how many pages per bdt, less or equal to 0 means into one browse-all bdt</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
 	</xs:complexType>
 	<xs:complexType name="BrowseDetailType">
 		<xs:sequence>
@@ -206,6 +210,12 @@ if also not set, then 1 task browsing all items will be generated.
 			</xs:annotation>
 		</xs:attribute>
 		<xs:attribute name="monitorPrice" type="xs:boolean" use="optional" default="false"/>
+		<xs:attribute name="processType" type="BDTProcessType" use="optional" default="inline">
+			<xs:annotation>
+				<xs:documentation>inline: browse all products in the bdt within this task
+genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in parrallel</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
 	</xs:complexType>
 	<xs:complexType name="SubListType">
 		<xs:sequence>
@@ -350,11 +360,26 @@ if also not set, then 1 task browsing all items will be generated.
 	<xs:complexType name="LoginType">
 		<xs:sequence>
 			<xs:element name="click" type="ClickStreamType"/>
-			<xs:element name="url" type="xs:string" maxOccurs="unbounded">
+			<xs:element name="redirectedURL" type="xs:string" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>a list of possible redirected url, if redirected here, we login</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="loginURL" type="xs:string">
 				<xs:annotation>
 					<xs:documentation>a list of possible redirected url, the 1st url will be used to login</xs:documentation>
 				</xs:annotation>
 			</xs:element>
+			<xs:element name="gotchaURL" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>we are caught, need manual ?</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="credential" type="CredentialType" maxOccurs="unbounded"/>
 		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="CredentialType">
+		<xs:attribute name="username" type="xs:string"/>
+		<xs:attribute name="password" type="xs:string"/>
 	</xs:complexType>
 </xs:schema>

@@ -2,25 +2,29 @@
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\reminder\maven.1411262641248\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="uscis" productType="default">
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="uscis" productType="default">
 	<PrdTask>
-		<baseBrowseTask startUrl="https://egov.uscis.gov/cris/Dashboard/CaseStatus.do" rerunInterim="20" taskName="uscis">
+		<baseBrowseTask startUrl="https://egov.uscis.gov/casestatus/landing.do" taskName="uscis">
 			<param name="caseId" value="LIN1490968899"/>
 			<userAttribute name="id">
 				<value value="caseId" fromScope="param"/>
 			</userAttribute>
 			<userAttribute name="status">
-				<value value="//table[@id='buckets']/tbody/tr/td[@class='current']/a/b" fromType="xpath" toType="string" basePage="answerPage"/>
+				<value value="//form[@name='caseStatusForm']/div[1]/div[1]/div[1]/div[1]/div[2]/div[3]" fromType="xpath" toType="string" basePage="answerPage"/>
 			</userAttribute>
 			<itemName value="caseId" fromScope="param"/>
 		</baseBrowseTask>
 		<firstPageClickStream>
 			<link>
-				<input name="//input[@id='receipt']">
+				<input name="//input[@id='receipt_number']">
 					<value value="caseId" fromScope="param"/>
 				</input>
 				<nextpage name="answerPage">
-					<value value="//form[@id='dashboardForm']/input[@name='submit']"/>
+					<value value="//input[@name='initCaseSearch']"/>
 				</nextpage>
 			</link>
 		</firstPageClickStream>

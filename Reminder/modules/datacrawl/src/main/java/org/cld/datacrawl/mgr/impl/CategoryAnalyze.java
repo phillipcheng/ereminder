@@ -25,7 +25,6 @@ import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.xml.mytaskdef.BrowseCatInst;
 import org.xml.taskdef.BrowseCatType;
-import org.xml.taskdef.SplitTaskByType;
 
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
@@ -62,7 +61,6 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 		return bctList;
 	}
 	
-	
 	private static BrowseDetailTaskConf genDefaultBDTFromBCT(BrowseCategoryTaskConf bct, Category cat, CrawlConf cconf){
 		BrowseDetailTaskConf bdt = (BrowseDetailTaskConf) CrawlTaskGenerator.getNextTask(bct, cconf);
 		if (bdt != null){
@@ -87,35 +85,35 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 		
 		List<Task> bdtList = new ArrayList<Task>();
 		
-		if (cat.getPageNum()<=0 || bcdef.getSplitTaskType()!=SplitTaskByType.PAGE){
-			logger.warn(String.format("page num not found or task defined not to split by page:%s, 1 task browse all!", cat.getId()));
+		if (cat.getPageNum()<=0 || bcdef.getPagesPerBDT()<=0){
+			logger.warn(String.format("page num not found or pages per bdt set to <=0 :%s, 1 task browse all!", cat.getId()));
 			bdtList.add(genDefaultBDTFromBCT(bct, cat, cconf));
-			return bdtList;
-		}
-		
-		int pagesPerTask = 1;
-		int totalPages=cat.getPageNum();
-		int batch = totalPages/pagesPerTask;
-		logger.debug("tasks needed for this cat:" + batch);
-		int leftPages = totalPages % pagesPerTask;
-		logger.debug("still left pages for this cat:" + leftPages);
-		
-		//every page is full
-		for (int i=0; i<batch; i++){
-			BrowseDetailTaskConf bdt = genDefaultBDTFromBCT(bct, cat, cconf);
-			bdt.setFromPage(i*pagesPerTask + 1);
-			bdt.setToPage((i+1)*pagesPerTask);
-			bdt.setCatId(cat.getId().getId());
-			bdt.setId(bdt.genId());
-			bdtList.add(bdt);
-		}
-		if (leftPages != 0){
-			BrowseDetailTaskConf bte = genDefaultBDTFromBCT(bct, cat, cconf);
-			bte.setFromPage(batch*pagesPerTask + 1);
-			bte.setToPage(-1);//to the end
-			bte.setCatId(cat.getId().getId());
-			bte.setId(bte.genId());
-			bdtList.add(bte);
+		}else{
+			//split by page
+			int pagesPerTask = bcdef.getPagesPerBDT();
+			int totalPages=cat.getPageNum();
+			int batch = totalPages/pagesPerTask;
+			logger.debug("tasks needed for this cat:" + batch);
+			int leftPages = totalPages % pagesPerTask;
+			logger.debug("still left pages for this cat:" + leftPages);
+			
+			//every page is full
+			for (int i=0; i<batch; i++){
+				BrowseDetailTaskConf bdt = genDefaultBDTFromBCT(bct, cat, cconf);
+				bdt.setFromPage(i*pagesPerTask + 1);
+				bdt.setToPage((i+1)*pagesPerTask);
+				bdt.setCatId(cat.getId().getId());
+				bdt.setId(bdt.genId());
+				bdtList.add(bdt);
+			}
+			if (leftPages != 0){
+				BrowseDetailTaskConf bte = genDefaultBDTFromBCT(bct, cat, cconf);
+				bte.setFromPage(batch*pagesPerTask + 1);
+				bte.setToPage(-1);//to the end
+				bte.setCatId(cat.getId().getId());
+				bte.setId(bte.genId());
+				bdtList.add(bte);
+			}
 		}
 		
 		return bdtList;	

@@ -62,6 +62,7 @@ public class ProductListAnalyze implements ProductListAnalyzeInf {
 		if (itemListXpathVT.getToType()==null){
 			itemListXpathVT.setToType(VarType.LIST);
 		}
+		itemListXpathVT.setToEntryType(VarType.HTML_ELEMENT);
 		try {
 			List<DomNode> itemList;
 			itemList = (List<DomNode>) CrawlTaskEval.eval(listPage, itemListXpathVT, cconf, task.getParamMap());

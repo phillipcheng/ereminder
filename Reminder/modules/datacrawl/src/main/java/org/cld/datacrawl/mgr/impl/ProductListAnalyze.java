@@ -15,8 +15,6 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlTaskConf;
-import org.cld.datacrawl.CrawlUtil;
-import org.cld.datacrawl.mgr.IProductAnalyze;
 import org.cld.datacrawl.mgr.IProductListAnalyze;
 import org.cld.datacrawl.mgr.ListProcessInf;
 import org.cld.datacrawl.mgr.TargetPrdInvoke;
@@ -28,9 +26,7 @@ import org.cld.datastore.entity.CrawledItemId;
 import org.cld.datastore.entity.Price;
 import org.cld.datastore.entity.Product;
 import org.cld.taskmgr.entity.Task;
-import org.cld.taskmgr.entity.TaskStat;
-import org.xml.mytaskdef.ParsedBrowsePrd;
-import org.xml.taskdef.SplitTaskByType;
+import org.xml.taskdef.BDTProcessType;
 
 
 public class ProductListAnalyze implements ListProcessInf, IProductListAnalyze {
@@ -132,23 +128,25 @@ public class ProductListAnalyze implements ListProcessInf, IProductListAnalyze {
 			Map<String, Object> taskParams = new HashMap<String, Object>();
 			taskParams.put(CrawlConf.taskParamCConf_Key, cconf);
 			taskParams.putAll(fullOutput.getInParams());
+			String taskName = null;
+			if (fullOutput.getTaskName()!=null){
+				taskName = fullOutput.getTaskName();
+			}else{
+				taskName = task.getParsedTaskDef().getBrowseDetailTask(null).getBrowsePrdTaskType().getBaseBrowseTask().getTaskName();
+			}
 			BrowseProductTaskConf t = (BrowseProductTaskConf) cconf.getTaskMgr().getTaskInstTemplate("org.cld.datacrawl.task.BrowseProductTaskConf", 
-					task.getTasks(), cconf.getPluginClassLoader(), taskParams, new Date(), fullOutput.getTaskName());
+					task.getTasks(), cconf.getPluginClassLoader(), taskParams, new Date(), taskName);
 			t.setStartURL(fullOutput.getStartUrl());
 			t.genId();
-			
-			if (task.getLeafBrowseCatTask().getSplitTaskType()==SplitTaskByType.ITEM){
+			BDTProcessType processType = t.getBrowseDetailTask(fullOutput.getTaskName()).getBrowsePrdTaskType().getProcessType();
+			if (processType == BDTProcessType.GENBPT){
 				tl.add(t);
 				logger.debug(String.format("Task t:%s generated.", t));
-			}else{
+			}else if (processType == BDTProcessType.INLINE){
 				//execute browse product now
-				String taskName = null;
-				if (fullOutput.getTaskName()!=null){
-					taskName = fullOutput.getTaskName();
-				}else{
-					taskName = task.getParsedTaskDef().getBrowseDetailTask(null).getBrowsePrdTaskType().getBaseBrowseTask().getTaskName();	
-				}
 				BrowseProductTaskConf.browseProduct(t, cconf, ctconf, wc, storeId, catId, taskName, fullOutput.getInParams());
+			}else{
+				logger.error("unsupported bdt process type.");
 			}
 		}
 		return tl;

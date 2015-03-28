@@ -105,8 +105,6 @@ public class ListAnalyze implements IListAnalyze {
 				NextPage npget = laInf.getNextPageUrlFromPage(listPage, task.getParsedTaskDef(), params);	
 				return new NextPageAndTasks(npget, tl);
 			}
-		}else if (listPageResult.getErrorCode() ==  HtmlPageResult.EC_APP_ITEM_NOT_FOUND){
-			return new NextPageAndTasks(new NextPage(NextPage.STATUS_APP_NOT_FOUND), null);
 		}else{
 			logger.warn("url:" + np + ", failed with:" + listPageResult.getErrorMsg());
 			return new NextPageAndTasks(new NextPage(NextPage.STATUS_ERR), null);

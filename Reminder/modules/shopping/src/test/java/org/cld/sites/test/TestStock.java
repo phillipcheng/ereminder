@@ -52,8 +52,10 @@ public class TestStock extends TestBase{
 	public void run_szse_prd() throws InterruptedException{
 		cconf.setUpSite(SZSE_STOCK_BASICINFO, null);
 		Map<String, Object> params = new HashMap<String, Object>();
+		List<String> periodList = new ArrayList<String>();
+		periodList.add(StockConst.sz_periodid_12m);
 		params.put("symbal", "002002");
-		params.put("periodId", "GB0310");//report type
+		params.put("periodId", periodList);//report type
 		params.put("startyear", "2010");
 		browsePrd(SZSE_STOCK_BASICINFO, null, params);
 	}

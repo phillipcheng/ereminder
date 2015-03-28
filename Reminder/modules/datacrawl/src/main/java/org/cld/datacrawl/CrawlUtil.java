@@ -127,15 +127,5 @@ public class CrawlUtil {
 		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();
 		hadoopCrawlTaskParams.put(CRAWL_PROPERTIES, crawlPropertyFile);
 		HadoopTaskUtil.executeTasks(cconf.getNodeConf(), tlist, hadoopCrawlTaskParams);
-		if (cconf.getTaskMgr().getHadoopJobTracker()==null){
-			//for local job tracker, after submit enter into dead loop, for debug
-			while (true){
-				try {
-					Thread.sleep(2000);
-				} catch (InterruptedException e) {
-					logger.warn("", e);
-				}
-			}
-		}
 	}
 }

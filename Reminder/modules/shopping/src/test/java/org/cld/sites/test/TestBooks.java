@@ -18,7 +18,7 @@ public class TestBooks extends TestBase {
 	public static final String CBO_CONF="cbo.xml";
 	public static final String A8Z8_CONF="a8z8.xml";
 	public static final String MOM001_CONF="mom001.xml";
-	public static final String XRS123_CONF="xrs123.xml";
+	//public static final String XRS123_CONF="xrs123.xml";//died
 	public static final String DMZJ_CONF="dmzj.xml";
 	public static final String HAODU5_CONF="haodu5.xml";
 	public static final String CL_CONF="childrenslibrary.xml";
@@ -29,10 +29,6 @@ public class TestBooks extends TestBase {
 	public static final String BAOLINY_CONF="baoliny.xml";
 	public static final String SQSXS_CONF="sqsxs.xml";
 	
-	public static final String YAHOO_FINANCE="yahoo.finance.xml";
-	public static final String USCIS_CONF = "uscis.xml";
-	public static final String INVOKE_YAHOO_FINANCE_CONF1="invoke.yahoo.finance.xml";
-	
 	private String[] allConf = new String[]{
 			CBO_CONF,  
 			A8Z8_CONF,
@@ -41,7 +37,6 @@ public class TestBooks extends TestBase {
 			CL_CONF,
 			XRS52_CONF,
 			FKB_CONF,
-			XRS123_CONF,
 			BAOLINY_CONF,
 			SQSXS_CONF,
 //			HAODU5_CONF, //-- dead
@@ -58,11 +53,8 @@ public class TestBooks extends TestBase {
 		catNavigate(A8Z8_CONF, null, CrawlTestUtil.BROWSE_CAT_TYPE_1_PATH);
 		catNavigate(CL_CONF, null, CrawlTestUtil.BROWSE_CAT_TYPE_1_PATH);
 		catNavigate(XRS52_CONF, null, CrawlTestUtil.BROWSE_CAT_TYPE_1_PATH);
-		catNavigate(XRS123_CONF, null, CrawlTestUtil.BROWSE_CAT_TYPE_1_PATH);
 		catNavigate(BAOLINY_CONF, null, CrawlTestUtil.BROWSE_CAT_TYPE_1_PATH);
-		catNavigate(SQSXS_CONF, null, CrawlTestUtil.BROWSE_CAT_TYPE_1_PATH);
-		//catNavigate(FKB_CONF, null, CrawlTestUtil.BROWSE_CAT_TYPE_1_PATH);
-		//catNavigate(HAODU5_CONF, "http://haodu5.com/", CrawlTestUtil.BROWSE_CAT_TYPE_1_PATH);
+		catNavigate(HAODU5_CONF, null, CrawlTestUtil.BROWSE_CAT_TYPE_1_PATH);
 	}
 	
 	//sequential
@@ -72,7 +64,6 @@ public class TestBooks extends TestBase {
 	}
 	
 	//parallel
-	@Test
 	public void regressionTaskAll(String[] allConf) throws Exception {
 		regressionTaskAll(allConf);
 	}
@@ -89,7 +80,6 @@ public class TestBooks extends TestBase {
 		runBDT(CBO_CONF, "http://www.childrensbooksonline.org/library-early.htm", false);
 		runBDT(A8Z8_CONF, "http://lhh.a8z8.com/type-433-86-1.html", false);
 		runBDT(MOM001_CONF, "http://lianhuanhua.mom001.com/sh/", false);
-		runBDT(XRS123_CONF, "http://www.xiaorenshu123.com/category/1.html", false);
 		runBDT(DMZJ_CONF, "http://manhua.dmzj.com/blood/", false);
 		runBDT(HAODU5_CONF, "http://haodu5.com/class_11_1.html", false);
 	}
@@ -100,7 +90,6 @@ public class TestBooks extends TestBase {
 		runBDT(CBO_CONF, "http://www.childrensbooksonline.org/library-pre-reader.htm", true);
 		runBDT(A8Z8_CONF, "http://lhh.a8z8.com/type-433-86-1.html", true);
 		runBDT(MOM001_CONF, "http://lianhuanhua.mom001.com/mz/", true);
-		runBDT(XRS123_CONF, "http://www.xiaorenshu123.com/category/4.html", true);
 		runBDT(HAODU5_CONF, "http://haodu5.com/class_11_1.html", true);
 		runBDT(XRS52_CONF, "http://www.52xrs.com/list/wxmz.htm", true);
 	}
@@ -123,27 +112,4 @@ public class TestBooks extends TestBase {
 		//browsePrd(HAODU5_CONF, "http://haodu5.com/5200/17/17513/");
 		
 	}
-	
-	@Test
-	public void testOnePrd_USCIS() throws Exception{
-		browsePrd(USCIS_CONF, null);
-	}
-	
-	//invoke task via invokeTaskTask
-	@Test
-	public void invokeTask_YahooFinance() throws Exception{
-		cconf.setUpSite(YAHOO_FINANCE, null);
-		CrawlTestUtil.invokeTask(INVOKE_YAHOO_FINANCE_CONF1, cconf);
-	}
-	
-	//invoke task via API
-	@Test
-	public void run_YahooFinance() throws InterruptedException{
-		cconf.setUpSite(YAHOO_FINANCE, null);
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("symbal", "HPQ");
-		browsePrd(YAHOO_FINANCE, null, params);
-	}
-	
-	
 }

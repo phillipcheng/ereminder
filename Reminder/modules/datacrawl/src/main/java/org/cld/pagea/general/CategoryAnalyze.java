@@ -14,6 +14,7 @@ import org.cld.datacrawl.CrawlTaskConf;
 import org.cld.datacrawl.ProductConf;
 import org.cld.datacrawl.mgr.impl.CrawlTaskEval;
 import org.cld.datacrawl.pagea.CategoryAnalyzeInf;
+import org.cld.datacrawl.task.BrowseCategoryTaskConf;
 import org.cld.datastore.entity.Category;
 import org.cld.datastore.entity.CrawledItemId;
 import org.cld.taskmgr.entity.Task;
@@ -44,8 +45,24 @@ public class CategoryAnalyze implements CategoryAnalyzeInf {
 	}
 	
 	@Override
-	public String[] getCatPageVerifyXPaths(Category cat, Task task) {
-		return null;
+	public String[] getCatPageVerifyXPaths(Category cat, BrowseCategoryTaskConf task) {
+		List<String> xpaths = new ArrayList<String>();
+		BrowseCatInst bci = task.getBCI(task.getStartURL());
+		if (bci!=null){
+			ValueType totalItemNumVT = bci.getBc().getTotalItemNum();
+			ValueType totalPageNumVT = bci.getBc().getTotalPageNum();
+			if (totalItemNumVT!=null){
+				if (totalItemNumVT.getFromType()==VarType.XPATH){
+					xpaths.add(totalItemNumVT.getValue());
+				}
+			}
+			if (totalPageNumVT!=null){
+				if (totalPageNumVT.getFromType()==VarType.XPATH){
+					xpaths.add(totalPageNumVT.getValue());
+				}
+			}
+		}
+		return xpaths.toArray(new String[xpaths.size()]);
 	}
 
 	@Override
@@ -84,6 +101,7 @@ public class CategoryAnalyze implements CategoryAnalyzeInf {
 			//default to list, set to list page if needed
 			listXPathVT.setToType(VarType.LIST);
 		}
+		listXPathVT.setToEntryType(VarType.HTML_ELEMENT);
 		List<DomNode> hel = (List<DomNode>) CrawlTaskEval.eval(catlist, listXPathVT, cconf, task.getParamMap());
 		List<Category> lc = new ArrayList<Category>();
 		if (hel.size()>0){

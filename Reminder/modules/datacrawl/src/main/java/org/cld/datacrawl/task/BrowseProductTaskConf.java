@@ -229,7 +229,7 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 		CrawlTaskConf ctconf = cconf.getCCTConf(crawlTaskConf);
 		WebClient wc = CrawlUtil.getWebClient(cconf, taskTemplate.skipUrls, taskTemplate.enableJS);
 		
-		browseProduct(taskTemplate, cconf, ctconf, wc, this.getStoreId(), null, this.getName(), params);
+		browseProduct(this, cconf, ctconf, wc, this.getStoreId(), null, this.getName(), params);
 	
 		return new ArrayList<Task>();
 	}

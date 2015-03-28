@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\reminder\maven.1411262641248\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" storeId="52xrs" rootVolume="999999">
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" storeId="52xrs" rootVolume="999999">
 	<skipUrl>baidu.com</skipUrl>
 	<skipUrl>comicdata.17share.org</skipUrl>
 	<skipUrl>googleads.g.doubleclick.net</skipUrl>
@@ -46,8 +42,8 @@
 			<strPreprocess trimPre="/" trimPost="&#20849;"/>
 		</totalPageNum>
 	</CatTask>
-	<PrdTask nextPage="//a/img[@alt=&apos;&#19979;&#19968;&#39029;&apos;]/..">
-		<baseBrowseTask taskName="prd" isStart="false" enableJS="true" startUrl="http://www.52xrs.com/comic/2398/" highMem="true">
+	<PrdTask nextPage="//a/img[@alt=&apos;&#19979;&#19968;&#39029;&apos;]/.." processType="genbpt">
+		<baseBrowseTask taskName="prd" isStart="false" enableJS="true" startUrl="http://www.52xrs.com/comic/2398/">
 			<userAttribute name="bookpageurls">
 				<value value="//img[@id=&apos;Img&apos;]" fromType="xpath" toType="externalList"/>
 			</userAttribute>

@@ -55,15 +55,20 @@ public class ProductAnalyze implements ProductAnalyzeInf {
 	
 	@Override
 	public String[] getPageVerifyXPaths(Task task, ParsedBrowsePrd taskDef) {
-		List<String> xpathList = new ArrayList<String>();
-		List<AttributeType> attrlist = taskDef.getBrowsePrdTaskType().getBaseBrowseTask().getUserAttribute();
-		for (AttributeType attr: attrlist){
-			if (VarType.XPATH == attr.getValue().getFromType()){
-				xpathList.add(attr.getValue().getValue());
+		if (taskDef.getBrowsePrdTaskType().getFirstPageClickStream()==null){
+			List<String> xpathList = new ArrayList<String>();
+			List<AttributeType> attrlist = taskDef.getBrowsePrdTaskType().getBaseBrowseTask().getUserAttribute();
+			for (AttributeType attr: attrlist){
+				if (VarType.XPATH == attr.getValue().getFromType()){
+					xpathList.add(attr.getValue().getValue());
+				}
 			}
+			String[] array = xpathList.toArray(new String[xpathList.size()]);
+			return array;
+		}else{
+			//when there is firstpage click, the xpath validation are needed after first page clicks
+			return null;
 		}
-		String[] array = xpathList.toArray(new String[xpathList.size()]);
-		return array;
 	}
 
 	@Override
@@ -108,7 +113,7 @@ public class ProductAnalyze implements ProductAnalyzeInf {
 				pagelist.add(prdPage);
 				pageMap.put(ConfKey.START_PAGE, pagelist);
 				pageMap.put(ConfKey.CURRENT_PAGE, pagelist);//set current page
-				HtmlUnitUtil.clickClickStream(firstPageClicks, pageMap, task, cconf, prdPage.getUrl().toExternalForm());
+				HtmlUnitUtil.clickClickStream(firstPageClicks, pageMap, task.getParamMap(), cconf, prdPage.getUrl().toExternalForm());
 			}else{
 				logger.error("click stream does not support finish condition now.");
 			}

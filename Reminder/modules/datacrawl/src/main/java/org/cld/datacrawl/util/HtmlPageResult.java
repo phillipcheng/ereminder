@@ -4,16 +4,16 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 public class HtmlPageResult {
 
-	public static final int UNCHECKED =0;
+	public static final int UNCHECKED = -1;
+	
 	//success
-	public static final int SUCCSS =1;
+	public static final int SUCCSS = 0;
 	
-	//system layer error code
-	public static final int EC_SYSTEM_ERROR=2;
-	
-	//application layer error code
-	public static final int EC_APP_ITEM_NOT_FOUND=100;
-	public static final int EC_VERI_FAILED=101;
+	//failure >0
+	public static final int VERIFY_FAILED=1;
+	public static final int GOTCHA =2;//robot detected by sites
+	public static final int LOGIN_FAILED=3;
+	public static final int SYSTEM_ERROR =4;
 	
 	
 	private HtmlPage page;
@@ -45,6 +45,4 @@ public class HtmlPageResult {
 	public void setErrorMsg(String errorMsg) {
 		this.errorMsg = errorMsg;
 	}
-	
-	
 }

@@ -45,6 +45,7 @@ public class TaskMgr {
 	
 	public static final String moduleName="taskMgr";
 	
+	//keys
 	public static final String webconf_wsurl_Key="taskconf.main.url";
 	public static final String useProxy_Key="use.proxy";
 	public static final String proxyIP_Key="proxy.ip";
@@ -58,6 +59,14 @@ public class TaskMgr {
 	public static final String hadoopTaskMapperClassName_Key="task.mapper.class";
 	public static final String yarnApplicationClasspath_Key="yarn.application.classpath";
 	public static final String hdfsCrawledItemFolder_Key="hdfs.crawleditem.folder";
+	public static final String crawlTasksPerMapper_Key = "crawl.task.per.mapper"; //number of tasks/lines each mapper will process
+	
+	//values
+	private String webconfWSUrl = null;
+	private boolean useProxy=false;
+	private String proxyIP;
+	private int proxyPort;
+	private int timeout; //page fetch time out in seconds
 	
 	private String hdfsDefaultName = null;
 	private String hdfsTaskFolder = null;
@@ -65,13 +74,9 @@ public class TaskMgr {
 	private String hadoopTaskMapperClassName = null;
 	private String yarnAppCp = null;
 	private String hadoopCrawledItemFolder=null;
+	private int crawlTasksPerMapper = 1;
 	
-	private String webconfWSUrl = null;
-	private boolean useProxy=false;
-	private String proxyIP;
-	private int proxyPort;
-	private int timeout; //page fetch time out in seconds
-	
+
 	public static final String taskType_Key = "task.type";
 	public static final String taskName_Key="task.name";
 	
@@ -257,6 +262,8 @@ public class TaskMgr {
 					this.setHadoopTaskMapperClassName(strVal);
 				}else if (hdfsCrawledItemFolder_Key.equals(key)){
 					this.setHadoopCrawledItemFolder(strVal);
+				}else if (crawlTasksPerMapper_Key.equals(key)){
+					this.setCrawlTasksPerMapper(Integer.parseInt(strVal));
 				}else if (yarnApplicationClasspath_Key.equals(key)){
 					List<Object> listVal = properties.getList(key);
 					strVal="";
@@ -541,5 +548,13 @@ public class TaskMgr {
 
 	public void setHadoopCrawledItemFolder(String hadoopCrawledItemFolder) {
 		this.hadoopCrawledItemFolder = hadoopCrawledItemFolder;
+	}
+
+	public int getCrawlTasksPerMapper() {
+		return crawlTasksPerMapper;
+	}
+
+	public void setCrawlTasksPerMapper(int crawlTasksPerMapper) {
+		this.crawlTasksPerMapper = crawlTasksPerMapper;
 	}
 }

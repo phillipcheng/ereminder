@@ -41,7 +41,8 @@ public class HadoopTaskUtil {
 		}
 		conf.set("fs.default.name", taskMgr.getHdfsDefaultName());
 		conf.set("mapreduce.tasktracker.map.tasks.maximum", nc.getThreadSize() + "");
-		conf.set("mapreduce.task.timeout", "0"); 
+		conf.set("mapreduce.task.timeout", "0");
+		conf.setInt(NLineInputFormat.LINES_PER_MAP, taskMgr.getCrawlTasksPerMapper());
 		return conf;
 	}
 	
@@ -67,7 +68,6 @@ public class HadoopTaskUtil {
 			fin.close();
 			
 			//submit to the hadoop cluster
-			conf.setInt(NLineInputFormat.LINES_PER_MAP, 1);//default to 1
 			for(String key: params.keySet()){
 				conf.setStrings(key, params.get(key));
 			}
