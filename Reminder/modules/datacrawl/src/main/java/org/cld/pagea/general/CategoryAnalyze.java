@@ -2,6 +2,7 @@ package org.cld.pagea.general;
 
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -52,16 +53,17 @@ public class CategoryAnalyze implements CategoryAnalyzeInf {
 			ValueType totalItemNumVT = bci.getBc().getTotalItemNum();
 			ValueType totalPageNumVT = bci.getBc().getTotalPageNum();
 			if (totalItemNumVT!=null){
-				if (totalItemNumVT.getFromType()==VarType.XPATH){
+				if (totalItemNumVT.getFromType()==VarType.XPATH || totalItemNumVT.getValue().contains("//")){
 					xpaths.add(totalItemNumVT.getValue());
 				}
 			}
 			if (totalPageNumVT!=null){
-				if (totalPageNumVT.getFromType()==VarType.XPATH){
+				if (totalPageNumVT.getFromType()==VarType.XPATH || totalPageNumVT.getValue().contains("//")){
 					xpaths.add(totalPageNumVT.getValue());
 				}
 			}
 		}
+		logger.info("category page verify xpaths:" + xpaths);
 		return xpaths.toArray(new String[xpaths.size()]);
 	}
 

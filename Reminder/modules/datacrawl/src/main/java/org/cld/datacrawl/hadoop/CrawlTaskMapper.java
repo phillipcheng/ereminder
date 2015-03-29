@@ -28,6 +28,7 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, LongWritable>{
 	public void setup(Context context) throws IOException, InterruptedException {
 		if (cconf==null){
 			String propFile = context.getConfiguration().get(CrawlUtil.CRAWL_PROPERTIES);
+			logger.info(String.format("conf file for mapper job is %s", propFile));
 			cconf = CrawlTestUtil.getCConf(propFile);
 		}
 	}

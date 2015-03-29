@@ -22,9 +22,10 @@ public class TestBase {
 	
 	CrawlClientNode ccnode;
 	CrawlConf cconf;
-	public static final String propFile = "client1-v2.properties";
+	public static String propFile = "client1-v2.properties";
 	
-	private TestBase(String clientProperties) {
+	public TestBase(String clientProperties) {
+		propFile = clientProperties;
 		ccnode = CrawlTestUtil.getCCNode(clientProperties);
 		cconf = ccnode.getCConf();
 	}

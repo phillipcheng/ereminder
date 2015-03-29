@@ -1,0 +1,20 @@
+f_CCR: bay area
+f_I: computer software
+
+f_CS: -- company size 51-200(717), 201-500(181)  = 898
+	|| https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=D,E&page_num=1
+	
+f_CS:-- company size >500 = 75+56+10+25=166
+	|| https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=F,G,H,I&page_num=1
+f_CS:-- company size 11-50: 1468
+		-- follower: >51: 210+465+38=713
+		|| https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=C&f_NFR=NFR2,NFR3,NFR5,NFR4&page_num=1
+		-- follower: <=50: 744
+		|| https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=C&f_NFR=NFR1&page_num=1
+f_CS:-- company size 1-10: 1313
+	|| https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=B&page_num=1
+	
+	
+
+f_JO (job opportunity, linkedin)
+f_NFR (number of follower)

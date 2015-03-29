@@ -69,8 +69,10 @@ public class HadoopTaskUtil {
 			
 			//submit to the hadoop cluster
 			for(String key: params.keySet()){
-				conf.setStrings(key, params.get(key));
+				conf.set(key, params.get(key));
+				logger.info(String.format("add conf entry: %s, %s", key, params.get(key)));
 			}
+			
 			Job job = Job.getInstance(conf, "TaskJob");
 			String className = taskMgr.getHadoopTaskMapperClassName();
 			Class<? extends Mapper> mapperClazz = (Class<? extends Mapper>) Class.forName(className);
