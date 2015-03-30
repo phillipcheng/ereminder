@@ -22,8 +22,18 @@ public class TestBase {
 	
 	CrawlClientNode ccnode;
 	CrawlConf cconf;
-	public static String propFile = "client1-v2.properties";
+	private String propFile = "client1-v2.properties";
 	
+	public String getPropFile() {
+		return propFile;
+	}
+
+	public void setPropFile(String propFile) {
+		this.propFile = propFile;
+		ccnode = CrawlTestUtil.getCCNode(propFile);
+		cconf = ccnode.getCConf();
+	}
+
 	public TestBase(String clientProperties) {
 		propFile = clientProperties;
 		ccnode = CrawlTestUtil.getCCNode(clientProperties);
@@ -31,7 +41,8 @@ public class TestBase {
 	}
 	
 	public TestBase(){
-		this(propFile);
+		ccnode = CrawlTestUtil.getCCNode(propFile);
+		cconf = ccnode.getCConf();
 	}
 	
 	private static String getConfId(String fileName){

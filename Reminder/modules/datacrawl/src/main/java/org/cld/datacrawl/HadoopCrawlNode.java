@@ -14,6 +14,7 @@ public class HadoopCrawlNode implements AppHadoopClientNodeInf {
 	public void start(AppConf aconf, String crawlProperties) {
 		this.cconf = (CrawlConf)aconf;
 		List<Task> telist = cconf.getTaskMgr().getStartableTasks();
-		CrawlUtil.hadoopExecuteCrawlTasks(crawlProperties, cconf, telist);
+		//use the node Id as the source name
+		CrawlUtil.hadoopExecuteCrawlTasks(crawlProperties, cconf, telist, cconf.getNodeConf().getNodeId());
 	}
 }

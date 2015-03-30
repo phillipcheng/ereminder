@@ -89,6 +89,6 @@ public class TestStock extends TestBase{
 		String outputFile = "/output";
 		FileSystem fs = FileSystem.get(HadoopTaskUtil.getHadoopConf(cconf.getNodeConf()));
 		fs.delete(new Path(outputFile), true);
-		CNBasicLoad.loadHiveFromHbase(propFile, outputFile);
+		CNBasicLoad.loadHiveFromHbase(this.getPropFile(), outputFile);
 	}
 }

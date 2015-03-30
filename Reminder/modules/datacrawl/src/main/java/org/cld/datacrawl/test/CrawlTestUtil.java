@@ -223,7 +223,7 @@ public class CrawlTestUtil{
 					}
 				}
 			}else if (cconf.getNodeConf().getTaskMgrFramework().equals(NodeConf.tmframework_hadoop)){
-				CrawlUtil.hadoopExecuteCrawlTasks(propFile, cconf, bdttl);
+				CrawlUtil.hadoopExecuteCrawlTasks(propFile, cconf, bdttl, srt.getBct().genId());
 			}else{
 				logger.error("unsupported taskMgrFramework.");
 			}

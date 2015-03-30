@@ -72,7 +72,7 @@ public class TaskMgr {
 	private String hdfsTaskFolder = null;
 	private String hadoopJobTracker = null;
 	private String hadoopTaskMapperClassName = null;
-	private String yarnAppCp = null;
+	private String[] yarnAppCp = null;
 	private String hadoopCrawledItemFolder=null;
 	private int crawlTasksPerMapper = 1;
 	
@@ -265,15 +265,7 @@ public class TaskMgr {
 				}else if (crawlTasksPerMapper_Key.equals(key)){
 					this.setCrawlTasksPerMapper(Integer.parseInt(strVal));
 				}else if (yarnApplicationClasspath_Key.equals(key)){
-					List<Object> listVal = properties.getList(key);
-					strVal="";
-					for (int i=0; i<listVal.size(); i++){
-						if (i>0){
-							strVal +=",";
-						}
-						strVal += listVal.get(i);
-					}
-					this.setYarnAppCp(strVal);
+					this.setYarnAppCp(properties.getStringArray(key));
 				}else if (taskType_Key.equals(key)){
 					//load task type
 					List<Object> listVal = properties.getList(key);
@@ -534,13 +526,6 @@ public class TaskMgr {
 		this.hadoopTaskMapperClassName = hadoopTaskMapperClassName;
 	}
 
-	public String getYarnAppCp() {
-		return yarnAppCp;
-	}
-
-	public void setYarnAppCp(String yarnAppCp) {
-		this.yarnAppCp = yarnAppCp;
-	}
 
 	public String getHadoopCrawledItemFolder() {
 		return hadoopCrawledItemFolder;
@@ -556,5 +541,13 @@ public class TaskMgr {
 
 	public void setCrawlTasksPerMapper(int crawlTasksPerMapper) {
 		this.crawlTasksPerMapper = crawlTasksPerMapper;
+	}
+
+	public String[] getYarnAppCp() {
+		return yarnAppCp;
+	}
+
+	public void setYarnAppCp(String[] yarnAppCp) {
+		this.yarnAppCp = yarnAppCp;
 	}
 }

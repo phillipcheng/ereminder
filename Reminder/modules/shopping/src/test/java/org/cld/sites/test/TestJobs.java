@@ -2,8 +2,6 @@ package org.cld.sites.test;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.taskmgr.hadoop.HadoopTaskUtil;
@@ -12,10 +10,6 @@ import org.cld.stock.load.CNBasicLoad;
 public class TestJobs extends TestBase{
 	
 	public static final String LINKEDIN_COMPANY="linkedin-company.xml";
-	
-	public TestJobs(String conf){
-		super(conf);
-	}
 	
 	public TestJobs(){
 		super();
@@ -51,7 +45,7 @@ public class TestJobs extends TestBase{
 		String outputFile = "/output/jobs";
 		FileSystem fs = FileSystem.get(HadoopTaskUtil.getHadoopConf(cconf.getNodeConf()));
 		fs.delete(new Path(outputFile), true);
-		CNBasicLoad.loadHiveFromHbase(propFile, outputFile);
+		CNBasicLoad.loadHiveFromHbase(this.getPropFile(), outputFile);
 	}
 	
 	@Test
@@ -67,7 +61,8 @@ public class TestJobs extends TestBase{
 		}
 		
 		String prop = args[0];
-		TestJobs tj = new TestJobs(prop);
+		TestJobs tj = new TestJobs();
+		tj.setPropFile(prop);
 		try {
 			tj.run_linkedin_bct();
 		} catch (Exception e) {

@@ -123,9 +123,17 @@ public class CrawlUtil {
 		((HibernateDataStoreManagerImpl)cconf.getDsm()).setHibernateSF(DBFactory.getDBSF(nodeId, DataCrawl.moduleName));
 	}	
 	
-	public static void hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist){
+	public static void hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, String sourceName){
 		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();
 		hadoopCrawlTaskParams.put(CRAWL_PROPERTIES, crawlPropertyFile);
-		HadoopTaskUtil.executeTasks(cconf.getNodeConf(), tlist, hadoopCrawlTaskParams);
+		if (sourceName==null){
+			HadoopTaskUtil.executeTasks(cconf.getNodeConf(), tlist, hadoopCrawlTaskParams);
+		}else{
+			HadoopTaskUtil.executeTasks(cconf.getNodeConf(), tlist, hadoopCrawlTaskParams, sourceName);
+		}
+	}
+	
+	public static void hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist){
+		hadoopExecuteCrawlTasks(crawlPropertyFile, cconf, tlist, null);
 	}
 }

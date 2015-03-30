@@ -46,7 +46,7 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, LongWritable>{
 			List<Task> tl = t.runMyself(crawlTaskParams, null);
 		
 			if (tl!=null && tl.size()>0){
-				HadoopTaskUtil.executeTasks(cconf.getNodeConf(), tl, hadoopCrawlTaskParams);
+				HadoopTaskUtil.executeTasks(cconf.getNodeConf(), tl, hadoopCrawlTaskParams, t.getId());
 			}
 			logger.info(String.format("I finished and send out %d tasks.", tl.size()));
 		}catch(Throwable e){

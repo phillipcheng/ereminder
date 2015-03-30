@@ -1,5 +1,6 @@
 package org.cld.taskmgr.hadoop;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +22,7 @@ import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.IdUtil;
+import org.cld.util.StringUtil;
 
 public class HadoopTaskUtil {
 
@@ -37,7 +39,17 @@ public class HadoopTaskUtil {
 			conf.set("yarn.resourcemanager.hostname", host);
 			conf.set("mapreduce.framework.name", "yarn");
 			conf.set("yarn.nodemanager.aux-services", "mapreduce_shuffle");
+			
+			/*
 			conf.set("yarn.application.classpath", taskMgr.getYarnAppCp());
+			//or
+			Collection<String> yarncps = conf.getStringCollection("yarn.application.classpath");
+			if (taskMgr.getYarnAppCp()!=null && !yarncps.contains(taskMgr.getYarnAppCp())){
+				yarncps.add(taskMgr.getYarnAppCp());
+				conf.setStrings("yarn.application.classpath", yarncps.toArray(new String[yarncps.size()]));
+			}
+			logger.debug(String.format("the yarn classpaths is:%s", conf.get("yarn.application.classpath")));
+			*/
 		}
 		conf.set("fs.default.name", taskMgr.getHdfsDefaultName());
 		conf.set("mapreduce.tasktracker.map.tasks.maximum", nc.getThreadSize() + "");
@@ -46,8 +58,26 @@ public class HadoopTaskUtil {
 		return conf;
 	}
 	
-	//send the taskList to the cluster
 	public static void executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> params){
+		String sourceName = "";
+		for (int i=0; i<taskList.size(); i++){
+			Task t = taskList.get(i);
+			if (i==0){
+				sourceName = t.getId();
+			}else{
+				sourceName += "__" + t.getId();
+			}
+		}
+		executeTasks(nc, taskList, params, sourceName);
+	}
+	/**
+	 * send the taskList to the cluster
+	 * @param nc
+	 * @param taskList
+	 * @param params
+	 * @param sourceName: the source/generator name, used as the generated task info file name
+	 */
+	public static void executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> params, String sourceName){
 		TaskMgr taskMgr = nc.getTaskMgr();
 		Configuration conf = getHadoopConf(nc);
 		//generate task list file
@@ -60,7 +90,8 @@ public class HadoopTaskUtil {
 				String fn = TaskUtil.taskToJson(t);
 				fileContent += fn + "\n";
 			}
-			String fileName = taskMgr.getHdfsTaskFolder() + "/" + IdUtil.getId(nc.getNodeId());
+			String escapedName = StringUtil.escapeFileName(sourceName);
+			String fileName = taskMgr.getHdfsTaskFolder() + "/" + IdUtil.getId(escapedName);
 			logger.info(String.format("task file: %s with length %d generated.", fileName, fileContent.length()));
 			Path fileNamePath = new Path(fileName);
 			FSDataOutputStream fin = fs.create(fileNamePath);
@@ -74,6 +105,10 @@ public class HadoopTaskUtil {
 			}
 			
 			Job job = Job.getInstance(conf, "TaskJob");
+			//add app specific jars to classpath
+			for (String s: nc.getTaskMgr().getYarnAppCp()){
+				job.addFileToClassPath(new Path(s));
+			}
 			String className = taskMgr.getHadoopTaskMapperClassName();
 			Class<? extends Mapper> mapperClazz = (Class<? extends Mapper>) Class.forName(className);
 			job.setJarByClass(mapperClazz);

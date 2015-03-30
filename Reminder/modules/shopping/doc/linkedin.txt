@@ -1,3 +1,5 @@
+before: 4028
+
 f_CCR: bay area
 f_I: computer software
 
@@ -18,3 +20,5 @@ f_CS:-- company size 1-10: 1313
 
 f_JO (job opportunity, linkedin)
 f_NFR (number of follower)
+
+after: 7878

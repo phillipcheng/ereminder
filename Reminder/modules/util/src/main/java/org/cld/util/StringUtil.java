@@ -246,4 +246,8 @@ public class StringUtil {
 		}
 		return input;
 	}
+	
+	public static String escapeFileName(String name){
+		return name.replaceAll("\\W+", "_");
+	}
 }
