@@ -19,6 +19,7 @@ import org.cld.datacrawl.task.BrowseProductTaskConf;
 import org.cld.datacrawl.task.BrsCatStat;
 import org.cld.datacrawl.task.BrsDetailStat;
 import org.cld.datacrawl.task.InvokeTaskTaskConf;
+import org.cld.datacrawl.util.SomePageErrorException;
 import org.cld.datastore.entity.Category;
 import org.cld.datastore.entity.CrawledItemId;
 import org.cld.taskmgr.NodeConf;
@@ -106,7 +107,7 @@ public class CrawlTestUtil{
 	
 	public static void runBDT(String siteconfid, String confFileName, String startUrl, 
 			boolean turnPagesOnly, CrawlConf cconf, String rootTaskId) 
-			throws InterruptedException 
+			throws InterruptedException, SomePageErrorException
 			{
 		if (confFileName!=null){
 			cconf.setUpSite(confFileName, null);

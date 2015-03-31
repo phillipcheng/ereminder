@@ -187,6 +187,7 @@ public class CategoryAnalyze implements CategoryAnalyzeInf {
 					}else{
 						pageNum = tin / ipp + 1;
 					}
+					logger.info(String.format("totalItemNum:%d, itemPerPage:%d, pageNum:%d", tin, ipp, pageNum));
 					cat.setPageNum(pageNum);
 				}
 			}

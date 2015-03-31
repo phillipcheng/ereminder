@@ -104,7 +104,7 @@ public class HadoopTaskUtil {
 				logger.info(String.format("add conf entry: %s, %s", key, params.get(key)));
 			}
 			
-			Job job = Job.getInstance(conf, "TaskJob");
+			Job job = Job.getInstance(conf, sourceName);
 			//add app specific jars to classpath
 			for (String s: nc.getTaskMgr().getYarnAppCp()){
 				job.addFileToClassPath(new Path(s));

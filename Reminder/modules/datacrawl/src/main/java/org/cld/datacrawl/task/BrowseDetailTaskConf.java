@@ -14,6 +14,7 @@ import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlTaskConf;
 import org.cld.datacrawl.mgr.IListAnalyze;
+import org.cld.datacrawl.util.SomePageErrorException;
 import org.cld.datastore.entity.Category;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
@@ -105,8 +106,8 @@ public class BrowseDetailTaskConf extends Task implements Serializable{
 				}
 				return la.readTopLink(category, getFromPage(), getToPage(), this, maxPages, maxItems);
 			}
-		}catch(Exception e){
-			logger.error(String.format("got exception while exe bdt, t: %s",this), e);
+		}catch(SomePageErrorException e){
+			throw new RuntimeException(e);
 		}
 		return new ArrayList<Task>();
 	}

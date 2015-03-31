@@ -80,27 +80,31 @@ public class TestTaskConf extends Task implements Serializable{
 		CrawlConf cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
 		String startUrl = getStartURL();
 		ThreadContext.put("taskid", getId());
-		if (!isInit()){
-			if (confXml==null){
-				cconf.setUpSite(null, cconf.getDsm().getFullSitConf(siteconfid));
-			}else{
-				cconf.setUpSite(confXml, null);
+		try{
+			if (!isInit()){
+				if (confXml==null){
+					cconf.setUpSite(null, cconf.getDsm().getFullSitConf(siteconfid));
+				}else{
+					cconf.setUpSite(confXml, null);
+				}
 			}
-		}
-		int taskType = getTaskType();
-		if (taskType==TEST_TASK_ONEPATH){
-			CrawlTestUtil.catNavigate(siteconfid, null, cconf, getId(), null, null);
-		}else if (taskType == TEST_TASK_BCT){
-			CrawlTestUtil.catNavigate(siteconfid, null, startUrl, 
-					CrawlTestUtil.BROWSE_CAT_TYPE_RECURSIVE, cconf, getId(), null, null);
-		}else if (taskType == TEST_TASK_ONE_BOOK){
-			CrawlTestUtil.browsePrd(siteconfid, null, startUrl, cconf, getId());
-		}else if (taskType == TEST_TASK_BDT_TURNPAGEONLY){
-			CrawlTestUtil.runBDT(siteconfid, null, startUrl, true, cconf, getId());
-		}else if (taskType == TEST_TASK_BDT){
-			CrawlTestUtil.runBDT(siteconfid, null, startUrl, false, cconf, getId());
-		}else{
-			logger.error(String.format("taskType: %d not supported.", taskType));
+			int taskType = getTaskType();
+			if (taskType==TEST_TASK_ONEPATH){
+				CrawlTestUtil.catNavigate(siteconfid, null, cconf, getId(), null, null);
+			}else if (taskType == TEST_TASK_BCT){
+				CrawlTestUtil.catNavigate(siteconfid, null, startUrl, 
+						CrawlTestUtil.BROWSE_CAT_TYPE_RECURSIVE, cconf, getId(), null, null);
+			}else if (taskType == TEST_TASK_ONE_BOOK){
+				CrawlTestUtil.browsePrd(siteconfid, null, startUrl, cconf, getId());
+			}else if (taskType == TEST_TASK_BDT_TURNPAGEONLY){
+				CrawlTestUtil.runBDT(siteconfid, null, startUrl, true, cconf, getId());
+			}else if (taskType == TEST_TASK_BDT){
+				CrawlTestUtil.runBDT(siteconfid, null, startUrl, false, cconf, getId());
+			}else{
+				logger.error(String.format("taskType: %d not supported.", taskType));
+			}
+		}catch(Exception e){
+			logger.error(String.format("got exception while exe bdt, t: %s",this), e);
 		}
 		return new ArrayList<Task>();
 	}

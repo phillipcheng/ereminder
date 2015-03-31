@@ -10,6 +10,7 @@ import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlTaskConf;
 import org.cld.datacrawl.NextPage;
 import org.cld.datacrawl.entity.ProductList;
+import org.cld.datacrawl.util.SomePageErrorException;
 import org.cld.datastore.entity.Category;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
@@ -34,7 +35,7 @@ public interface IListAnalyze{
 	 * @param maxItems
 	 */
 	public List<Task> readTopLink(Category category, int fromPage, int toPage, 
-			Task task, int maxPages, int maxItems) throws InterruptedException;
+			Task task, int maxPages, int maxItems) throws InterruptedException, SomePageErrorException;
 	
 	public VerifyPageProductList getVPBL();
 	

@@ -24,6 +24,7 @@ import org.cld.datacrawl.pagea.ListAnalyzeInf;
 import org.cld.datacrawl.task.BrsDetailStat;
 import org.cld.datacrawl.util.HtmlPageResult;
 import org.cld.datacrawl.util.HtmlUnitUtil;
+import org.cld.datacrawl.util.SomePageErrorException;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.xml.mytaskdef.ConfKey;
@@ -34,7 +35,6 @@ public class ListAnalyze implements IListAnalyze {
 	
 	private static Logger logger =  LogManager.getLogger(ListAnalyze.class);	
 	public static int NUM_WRONG_LIST_URL = 10;//the max # of error list pages got to browse the list page for a category
-	public static int NUM_APP_NOT_FOUND_LIST_URL = 10;//the max # of app_not_found list pages to browse the list page for a category
 	public static int NUM_WHOLE_LIST_RETRY=3;
 	
 	private CrawlConf cconf;
@@ -124,7 +124,7 @@ public class ListAnalyze implements IListAnalyze {
 	@Override
 	public List<Task> readTopLink(Category category, int fromPage, int toPage, Task task, 
 			int maxPages, int maxItems) 
-			throws InterruptedException{
+			throws InterruptedException, SomePageErrorException {
 		if (toPage == -1){
 			if (category.getItemNum()!=0){
 				if (category.getItemNum() % category.getPageSize()==0)
@@ -152,7 +152,6 @@ public class ListAnalyze implements IListAnalyze {
 		}
 		
 		NextPage np=new NextPage(initUrl);
-		int numAppNotFoundUrl=0;
 		int numWrongUrl=0;
 		int maxWrongTry = NUM_WRONG_LIST_URL;
 		if (toPage != -1){
@@ -184,7 +183,7 @@ public class ListAnalyze implements IListAnalyze {
 				
 				nextcur = cur + 1;
 				
-				if (np.getStatus()==NextPage.STATUS_ERR || np.getStatus()==NextPage.STATUS_APP_NOT_FOUND){
+				if (np.getStatus()==NextPage.STATUS_ERR){
 					numWrongUrl++;
 					logger.debug("error got, next_url try to recover is:" + np);
 				}
@@ -195,15 +194,13 @@ public class ListAnalyze implements IListAnalyze {
 				
 				if (maxPages>0 && pageCount>maxPages)
 					break;
-			}while (np.getStatus()==0 && numWrongUrl< maxWrongTry && 
-					numAppNotFoundUrl < NUM_APP_NOT_FOUND_LIST_URL);
+			}while (np.getStatus()!=NextPage.STATUS_LASTPAGE && numWrongUrl< maxWrongTry);
 			
 			if (numWrongUrl >= maxWrongTry){
 				logger.warn("exceeds max # retries for error list page:" + maxWrongTry + ", last problem url:" + initUrl + ", problem next_url:" + np);
-			}
-			
-			if (numAppNotFoundUrl >= NUM_APP_NOT_FOUND_LIST_URL){
-				logger.warn("exceeds max # retries for app not found page:" + maxWrongTry + ", last problem url:" + initUrl + ", problem next_url:" + np);
+				SomePageErrorException spe = new SomePageErrorException();
+				spe.setErrorPage(np);
+				throw spe;
 			}
 		}finally{
 			wc.closeAllWindows();

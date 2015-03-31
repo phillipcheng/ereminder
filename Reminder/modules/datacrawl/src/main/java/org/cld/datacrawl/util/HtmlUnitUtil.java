@@ -185,7 +185,11 @@ public class HtmlUnitUtil {
 		if (np.getNextUrl()!=null)
 			page = wc.getPage(np.getNextUrl());
 		else{
-			page = np.getNextItem().click();
+			if (np.getNextItem()!=null){
+				page = np.getNextItem().click();
+			}else{
+				return null;
+			}
 		}
 		return page;
 	}
@@ -343,6 +347,11 @@ public class HtmlUnitUtil {
 								result.setErrorCode(HtmlPageResult.SUCCSS);				
 								return result;
 							}
+						}else{
+							result.setErrorMsg("page got is null.");
+							logger.error(String.format("page got is null."));
+							result.setErrorCode(HtmlPageResult.SYSTEM_ERROR);
+							return result;
 						}
 					}
 				} catch (IOException|RuntimeException e) {

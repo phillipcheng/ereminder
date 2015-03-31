@@ -4,14 +4,13 @@ import com.gargoylesoftware.htmlunit.html.HtmlElement;
 
 
 public class NextPage {
-	
+	public static final int STATUS_NORMAL=0;
 	public static final int STATUS_ERR=1;
 	public static final int STATUS_LASTPAGE = 2;
-	public static final int STATUS_APP_NOT_FOUND = 3;
 	
 	private String nextUrl;
 	private HtmlElement nextItem; //the HtmlElement represents next page
-	private int status;
+	private int status = STATUS_NORMAL;
 	
 	public NextPage(int status){
 		this.status=status;

@@ -93,7 +93,7 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 			int pagesPerTask = bcdef.getPagesPerBDT();
 			int totalPages=cat.getPageNum();
 			int batch = totalPages/pagesPerTask;
-			logger.debug("tasks needed for this cat:" + batch);
+			logger.debug(String.format("total pages:%d, pagesPerTask:%d, tasks needed:%d", totalPages, pagesPerTask, batch));
 			int leftPages = totalPages % pagesPerTask;
 			logger.debug("still left pages for this cat:" + leftPages);
 			

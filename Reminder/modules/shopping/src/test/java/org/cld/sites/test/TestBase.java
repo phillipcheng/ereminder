@@ -103,4 +103,55 @@ public class TestBase {
 			return -1;
 		}
 	}
+	
+	public static final String CMD_CRAWL="crawl";
+	public static final String CMD_CHECK_ACCOUNT="checkAccount";
+	
+	public static final String TASK_TYPE_BCT="bct";
+	public static final String TASK_TYPE_BDT="bdt";
+	public static final String TASK_TYPE_BPT="bpt";
+	
+	public static final String START_URL_SEP = "::";
+	
+	//starturls comma separated string
+	public static void main(String[] args){
+		if (args.length<3){
+			logger.error("usage: TestBase propFile site-conf-file-name cmd ...");
+			return;
+		}
+		
+		String prop = args[0];
+		TestBase tb = new TestBase();
+		tb.setPropFile(prop);
+		String siteconfName = args[1];
+		
+		String cmd = args[2];
+		if (CMD_CRAWL.equals(cmd)){
+			if (args.length<5){
+				logger.error(String.format("usage: TestBase propFile site-conf-file-name %s tasktype starturls", cmd));
+			}
+			String taskType = args[3];
+			String startUrls = args[4];
+			
+			String[] surls = startUrls.split(START_URL_SEP);
+			for (String starturl: surls){
+				try {
+					if (TASK_TYPE_BCT.equals(taskType)){
+						tb.catNavigate(siteconfName, starturl, CrawlTestUtil.BROWSE_CAT_TYPE_RECURSIVE);
+					}else if (TASK_TYPE_BDT.equals(taskType)){
+						tb.runBDT(siteconfName, starturl, false);
+					}else if (TASK_TYPE_BPT.equals(taskType)){
+						tb.browsePrd(siteconfName, starturl);
+					}else{
+						logger.error(String.format("task type:%s not supported.", taskType));
+					}
+				} catch (Exception e) {
+					logger.error("", e);
+				}
+			}
+		}else if (CMD_CHECK_ACCOUNT.equals(cmd)){
+			int i = tb.getUnlockedAccounts(siteconfName);
+			logger.info(String.format("%d unlocked accounts for %s", i, siteconfName));
+		}
+	}
 }

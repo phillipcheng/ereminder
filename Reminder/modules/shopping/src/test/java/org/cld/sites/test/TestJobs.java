@@ -31,6 +31,11 @@ public class TestJobs extends TestBase{
 	}
 	
 	@Test
+	public void run_linkedin_bct_one() throws Exception{
+		catNavigate(LINKEDIN_COMPANY, "https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=B&page_num=1", CrawlTestUtil.BROWSE_CAT_TYPE_RECURSIVE);	
+	}
+	
+	@Test
 	public void run_linkedin_bdt() throws Exception{
 		runBDT(LINKEDIN_COMPANY, "https://www.linkedin.com/vsearch/c?f_CCR=us%3A84&f_I=4&f_CS=C&page_num=1", false);
 	}
@@ -54,19 +59,4 @@ public class TestJobs extends TestBase{
 		logger.info(String.format("%d unlocked accounts for %s", i, LINKEDIN_COMPANY));
 	}
 	
-	public static void main(String[] args){
-		if (args.length<1){
-			logger.error("usage: TestJobs propFile");
-			return;
-		}
-		
-		String prop = args[0];
-		TestJobs tj = new TestJobs();
-		tj.setPropFile(prop);
-		try {
-			tj.run_linkedin_bct();
-		} catch (Exception e) {
-			logger.error("", e);
-		}
-	}
 }
