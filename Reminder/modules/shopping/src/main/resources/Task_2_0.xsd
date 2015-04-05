@@ -8,6 +8,7 @@
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:element name="Tasks" type="TasksType"/>
 	<xs:simpleType name="VarType">
@@ -26,6 +27,7 @@
 			<xs:enumeration value="boolean"/>
 			<xs:enumeration value="file"/>
 			<xs:enumeration value="htmlElement"/>
+			<xs:enumeration value="url"/>
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:simpleType name="OpType">
@@ -230,17 +232,42 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 				</xs:annotation>
 			</xs:element>
 			<xs:element name="userAttribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
-			<xs:element name="lastPageCondition" type="BinaryBoolOp" minOccurs="0"/>
+			<xs:element name="lastPageCondition" type="BinaryBoolOp" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>if not specified, then last page is true when:
+1. lastPage xpath does not exist.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="lastScreenCondition" type="BinaryBoolOp" minOccurs="0"/>
 			<xs:element name="name" type="ValueType" minOccurs="0"/>
+			<xs:element name="itemFullUrlClicks" type="ClickStreamType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>clicks needed before apply itemFullUrl</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="itemId" type="ValueType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>the xpath to the id of the item (relative to the item html element), help system to find back the item after clicks</xs:documentation>
+				</xs:annotation>
+			</xs:element>
 		</xs:sequence>
-		<xs:attribute name="itemFullUrl" type="xs:string" use="optional"/>
-		<xs:attribute name="nextPage" type="xs:string" use="optional"/>
+		<xs:attribute name="nextPage" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>turn horizontally</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
 		<xs:attribute name="isLeaf" type="xs:boolean" use="optional" default="true"/>
 		<xs:attribute name="lastItem" type="xs:string" use="optional"/>
+		<xs:attribute name="nextScreen" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>turn vertically</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="itemFullUrl" type="xs:string" use="optional"/>
 	</xs:complexType>
 	<xs:complexType name="AttributeType">
 		<xs:sequence>
-			<xs:element name="value" type="ValueType"/>
+			<xs:element name="value" type="ValueType" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="name" type="xs:string" use="required"/>
 		<xs:attribute name="nameType" type="VarType" use="optional">
@@ -255,9 +282,11 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="BinaryBoolOp">
-		<xs:attribute name="lhs" type="xs:string"/>
-		<xs:attribute name="rhs" type="xs:string"/>
-		<xs:attribute name="operator" type="OpType"/>
+		<xs:sequence>
+			<xs:element name="lhs" type="ValueType"/>
+			<xs:element name="rhs" type="ValueType"/>
+		</xs:sequence>
+		<xs:attribute name="operator" type="OpType" use="required"/>
 	</xs:complexType>
 	<xs:complexType name="TokenType">
 		<xs:annotation>
@@ -342,8 +371,18 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 					<xs:documentation>parameters to input</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="nextpage" type="AttributeType"/>
+			<xs:element name="print" type="AttributeType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>for debug purpose, print the value from the page</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="nextpage" type="ConditionalNextPage"/>
 		</xs:sequence>
+		<xs:attribute name="pageName" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>if only 1 click in the click stream, the pageName is optional.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
 	</xs:complexType>
 	<xs:complexType name="PageVerifyType">
 		<xs:attribute name="xpath" type="xs:string" use="optional">
@@ -360,26 +399,50 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 	<xs:complexType name="LoginType">
 		<xs:sequence>
 			<xs:element name="click" type="ClickStreamType"/>
-			<xs:element name="redirectedURL" type="xs:string" maxOccurs="unbounded">
+			<xs:element name="redirectedURL" type="ValueType" maxOccurs="unbounded">
 				<xs:annotation>
 					<xs:documentation>a list of possible redirected url, if redirected here, we login</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="loginURL" type="xs:string">
+			<xs:element name="loginURL" type="ValueType" minOccurs="0">
 				<xs:annotation>
-					<xs:documentation>a list of possible redirected url, the 1st url will be used to login</xs:documentation>
+					<xs:documentation>the login URL to use, if falls into the previously defined redirectedURL list. if not defined just use the current page (redirectly page)</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="gotchaURL" type="xs:string" minOccurs="0">
+			<xs:element name="gotchaURL" type="ValueType" minOccurs="0">
 				<xs:annotation>
 					<xs:documentation>we are caught, need manual ?</xs:documentation>
 				</xs:annotation>
 			</xs:element>
 			<xs:element name="credential" type="CredentialType" maxOccurs="unbounded"/>
+			<xs:element name="loginSuccessCondition" type="BinaryBoolOp" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>if not specified 
+using system logic: the page after login should differ than login page.
+if specified, then the bool expression should be true</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="loginGotchaCondition" type="BinaryBoolOp" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>if loginSuccessCondition failed, try this one to see whether it is gotcha</xs:documentation>
+				</xs:annotation>
+			</xs:element>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="CredentialType">
 		<xs:attribute name="username" type="xs:string"/>
 		<xs:attribute name="password" type="xs:string"/>
+	</xs:complexType>
+	<xs:complexType name="ConditionalNextPage">
+		<xs:annotation>
+			<xs:documentation>find the next page according to result of condition. eval the value part, if not defined means the current page, if defined (xpath), follow it, then lookup the click whose pagename equals to the nextpage's name, if found, click control goes there, if not, finished.
+</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="condition" type="BinaryBoolOp" minOccurs="0"/>
+			<xs:element name="failNextPage" type="AttributeType" minOccurs="0"/>
+			<xs:element name="successNextPage" type="AttributeType"/>
+		</xs:sequence>
+		<xs:attribute name="waitTime" type="xs:int"/>
 	</xs:complexType>
 </xs:schema>

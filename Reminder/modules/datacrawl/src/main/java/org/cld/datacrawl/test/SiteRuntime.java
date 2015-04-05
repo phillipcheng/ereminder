@@ -9,6 +9,7 @@ import org.cld.datacrawl.task.BrowseCategoryTaskConf;
 import org.cld.datacrawl.task.BrowseDetailTaskConf;
 import org.cld.datacrawl.task.BrsCatStat;
 import org.cld.datacrawl.task.BrsDetailStat;
+import org.xml.taskdef.TasksType;
 
 public class SiteRuntime {
 	BrsCatStat bctBS;	
@@ -22,12 +23,20 @@ public class SiteRuntime {
 	IListAnalyze la;
 	ListProcessInf originalLP;
 	IProductAnalyze pa;
+	TasksType tasks;
 	
+	public TasksType getTasks() {
+		return tasks;
+	}
+	public void setTasks(TasksType tasks) {
+		this.tasks = tasks;
+	}
 	public BrowseCategoryTaskConf getBct() {
 		return bct;
 	}
 	public void setBct(BrowseCategoryTaskConf bct) {
 		this.bct = bct;
+		this.tasks = bct.getTasks();
 	}
 	
 	public BrowseDetailTaskConf getBdt() {
@@ -35,6 +44,7 @@ public class SiteRuntime {
 	}
 	public void setBdt(BrowseDetailTaskConf bdt) {
 		this.bdt = bdt;
+		this.tasks = bdt.getTasks();
 	}
 	
 }

@@ -15,14 +15,17 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.NextPage;
+import org.cld.datacrawl.mgr.impl.BinaryBoolOpEval;
 import org.cld.datacrawl.mgr.impl.CrawlTaskEval;
 import org.cld.taskmgr.entity.Task;
 import org.xml.mytaskdef.ConfKey;
 import org.xml.taskdef.AttributeType;
 import org.xml.taskdef.ClickStreamType;
 import org.xml.taskdef.ClickType;
+import org.xml.taskdef.ConditionalNextPage;
 import org.xml.taskdef.CredentialType;
 import org.xml.taskdef.LoginType;
+import org.xml.taskdef.TasksType;
 import org.xml.taskdef.ValueType;
 import org.xml.taskdef.VarType;
 
@@ -53,16 +56,78 @@ public class HtmlUnitUtil {
 	private static final String KEY_PASSWORD="password";
 	private static Logger logger =  LogManager.getLogger(HtmlUnitUtil.class);
 
+	/*
+	 * directly get page from webclient without the validation, retrying, etc
+	 */
+	private static HtmlPage getDirectPage(WebClient wc, NextPage np) throws IOException, RuntimeException {
+		HtmlPage page;
+		if (np.getNextUrl()!=null)
+			page = wc.getPage(np.getNextUrl());
+		else{
+			if (np.getNextItem()!=null){
+				page = np.getNextItem().click();
+			}else{
+				return null;
+			}
+		}
+		return page;
+	}
+	
+	private static boolean isGotcha(HtmlPage landingPage, LoginType loginInfo, CrawlConf cconf){
+		if (loginInfo.getLoginGotchaCondition()!=null){
+			boolean ret = BinaryBoolOpEval.eval(landingPage, cconf, loginInfo.getLoginSuccessCondition(), null);
+			if (ret){
+				return true;
+			}else{
+				return false;
+			}
+		}else{
+			if (loginInfo.getGotchaURL()!=null){
+				if (loginInfo.getGotchaURL().getFromType()==VarType.URL){
+					if (landingPage.getUrl().toExternalForm().contains(loginInfo.getGotchaURL().getValue())){
+						return true;
+					}else{
+						return false;
+					}
+				}else{
+					logger.error("gotcha url vartype not supported:" + loginInfo.getGotchaURL().getFromType());
+				}
+			}else{
+				logger.info("both gotcha condition and gotcha url not configured, means no gotcha.");
+			}
+		}
+		return false;
+	}
+	
 	private static LoginStatus login(LoginType loginInfo, CredentialType credential, WebClient wc, CrawlConf cconf) 
 			throws InterruptedException{
 		HtmlPage loginPage = null;
-		String loginUrl = loginInfo.getLoginURL();
-		try {
-			loginPage = wc.getPage(loginUrl);
-		} catch (FailingHttpStatusCodeException | IOException e) {
-			logger.error(String.format("get login page:%s error.", loginUrl), e);
+		
+		ValueType loginUrlVT = loginInfo.getLoginURL();
+		NextPage np;
+		if (loginUrlVT.getFromType()==VarType.URL){
+			String loginUrl = loginUrlVT.getValue();
+			np = new NextPage(loginUrl);
+		}else{
+			logger.error("not supported loginUrl VarType:" + loginUrlVT.getFromType());
 			return LoginStatus.LoginFailed;
 		}
+		
+		try {
+			ClickType ct = loginInfo.getClick().getLink().get(0);
+			VerifyPageByXPath vp = new VerifyPageByXPath(ct);
+			HtmlPageResult pgresult = clickNextPageWithRetryValidate(wc, np, vp, null, loginInfo, cconf);
+			if (pgresult.getErrorCode()==HtmlPageResult.SUCCSS){
+				loginPage = pgresult.getPage();
+			}else{
+				logger.error(String.format("open page np:%s failed.", np));
+				return LoginStatus.LoginFailed;
+			}
+		} catch (FailingHttpStatusCodeException e) {
+			logger.error(String.format("get login page:%s error.", np), e);
+			return LoginStatus.LoginFailed;
+		}
+		
 		Map<String, List<? extends DomNode>> pageMap = new HashMap<String, List<? extends DomNode>>();
 		List<HtmlPage> pagelist= new ArrayList<HtmlPage>();
 		pagelist.add(loginPage);
@@ -70,18 +135,31 @@ public class HtmlUnitUtil {
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put(KEY_USERNAME, credential.getUsername());
 		paramMap.put(KEY_PASSWORD, credential.getPassword());
-		clickClickStream(loginInfo.getClick(), pageMap, paramMap, cconf, loginUrl);
+		clickClickStream(loginInfo.getClick(), pageMap, paramMap, cconf, np);
 		pagelist = (List<HtmlPage>) pageMap.get(ConfKey.CURRENT_PAGE);
-		String afterLoginUrl = pagelist.get(0).getUrl().toExternalForm();
-		if (afterLoginUrl.equals(loginUrl)){
-			logger.error(String.format("login failed? remain on the same page, with loginInfo: %s", loginInfo));
-			return LoginStatus.LoginFailed;
-		}else if(afterLoginUrl.contains(loginInfo.getGotchaURL())){
-			logger.info(String.format("catchya using user %s", paramMap.get(KEY_USERNAME)));
+		HtmlPage afterLoginPage = pagelist.get(0);
+		
+		//check gotcha
+		if (isGotcha(afterLoginPage, loginInfo, cconf)){
 			return LoginStatus.LoginCatchya;
 		}else{
-			logger.info(String.format("login successfully, current url: %s, before url:%s", afterLoginUrl, loginUrl));
-			return LoginStatus.LoginSuccess;
+			if (loginInfo.getLoginSuccessCondition()!=null){
+				boolean ret = BinaryBoolOpEval.eval(afterLoginPage, cconf, loginInfo.getLoginSuccessCondition(), null);
+				if (ret){
+					return LoginStatus.LoginSuccess;
+				}else{
+					return LoginStatus.LoginFailed;
+				}
+			}else{
+				String afterLoginUrl = afterLoginPage.getUrl().toExternalForm();
+				if (loginUrlVT.getFromType()==VarType.URL && afterLoginUrl.equals(loginUrlVT.getValue())){
+					logger.error(String.format("login failed? remain on the same page, with loginInfo: %s", loginInfo));
+					return LoginStatus.LoginFailed;
+				}else{
+					logger.info(String.format("login successfully, current url: %s, before url:%s", afterLoginUrl, np));
+					return LoginStatus.LoginSuccess;
+				}
+			}
 		}
 	}
 	
@@ -89,7 +167,7 @@ public class HtmlUnitUtil {
 	 * 
 	 * @param loginInfo
 	 * @param cconf
-	 * @return the number of unlocked crendentials
+	 * @return the number of unlocked credentials
 	 * @throws InterruptedException 
 	 */
 	public static int checkLockedCrendentials(LoginType loginInfo, CrawlConf cconf) throws InterruptedException{
@@ -139,59 +217,89 @@ public class HtmlUnitUtil {
 	 * @throws InterruptedException 
 	 */
 	public static void clickClickStream(ClickStreamType clickstream, Map<String, List<? extends DomNode>> pageMap, 
-			Map<String, Object> params, CrawlConf cconf, String currentUrl) throws InterruptedException{
-		for (ClickType clickType: clickstream.getLink()){
-			//input parameter assignments, based on current page
-			if (clickType.getInput()!=null){
-				for (AttributeType input:clickType.getInput()){
-					Object inputValue = CrawlTaskEval.eval(pageMap, input.getValue(), cconf, params);
-					if (inputValue instanceof String){
-						DomNode currentPage = pageMap.get(ConfKey.CURRENT_PAGE).get(0);
-						String inputXpath = input.getName();
-						HtmlElement he = currentPage.getFirstByXPath(inputXpath);
-						if (he != null){
-							if (he instanceof HtmlInput){
-								((HtmlInput)he).setValueAttribute((String)inputValue);
-							}else{
-								logger.error(String.format("unsupported assignment to type: %s for xpath: %s", he, inputXpath));
-							}
-						}else{
-							logger.error(String.format("xpath %s not found for assignment.", inputXpath));
-						}
-					}else{
-						logger.error(String.format("unsupported inputValue evaluated: %s for %s", inputValue, input.getName()));
-					}
+			Map<String, Object> params, CrawlConf cconf, NextPage currentNP) throws InterruptedException{
+		Map<String, ClickType> clickMap = new HashMap<String, ClickType>(); //click name to click definition map
+		if (clickstream.getLink().size()>0){
+			//setup the map
+			for (ClickType clickType: clickstream.getLink()){
+				if (clickType.getPageName()!=null){
+					clickMap.put(clickType.getPageName(), clickType);
 				}
 			}
-			//do the click
-			ValueType vt = clickType.getNextpage().getValue();
-			vt.setToType(VarType.PAGE);//for click stream, the to type is page
-			Object value = CrawlTaskEval.eval(pageMap, vt, cconf, params);
-			if (value!=null && value instanceof HtmlPage){
-				List<HtmlPage> pagelist1= new ArrayList<HtmlPage>();
-				pagelist1.add((HtmlPage)value);
-				pageMap.put(clickType.getNextpage().getName(), pagelist1);
-				pageMap.put(ConfKey.CURRENT_PAGE, pagelist1); //set current page
-			}else{
-				logger.error(String.format("click stream:%s eval to %s, not a page, check toType. prdPage is:%s", 
-						vt.getValue(), value, currentUrl));
-				break;
+			ClickType curClick = clickstream.getLink().get(0);
+			while (curClick!=null){
+				DomNode currentPage = pageMap.get(ConfKey.CURRENT_PAGE).get(0);
+				//input parameter assignments, based on current page
+				if (curClick.getInput()!=null){
+					for (AttributeType input:curClick.getInput()){
+						Object inputValue = CrawlTaskEval.eval(pageMap, input.getValue(), cconf, params);
+						if (inputValue instanceof String){
+							String inputXpath = input.getName();
+							HtmlElement he = currentPage.getFirstByXPath(inputXpath);
+							if (he != null){
+								if (he instanceof HtmlInput){
+									((HtmlInput)he).setValueAttribute((String)inputValue);
+								}else{
+									logger.error(String.format("unsupported assignment to type: %s for xpath: %s", he, inputXpath));
+								}
+							}else{
+								logger.error(String.format("xpath %s not found for assignment.", inputXpath));
+							}
+						}else{
+							logger.error(String.format("unsupported inputValue evaluated: %s for %s", inputValue, input.getName()));
+						}
+					}
+				}
+				//do the print
+				if (curClick.getPrint()!=null){
+					for (AttributeType print:curClick.getPrint()){
+						Object printValue = CrawlTaskEval.eval(pageMap, print.getValue(), cconf, params);
+						if (printValue!=null)
+							logger.info(print.getName() + ":" + printValue.toString());
+						else
+							logger.info(print.getName() + " is null.");
+					}
+				}
+				//eval condition
+				ConditionalNextPage cnp = curClick.getNextpage();
+				AttributeType nextPage = null;
+				if (cnp.getCondition()==null){
+					nextPage = cnp.getSuccessNextPage();
+				}else{
+					if (BinaryBoolOpEval.eval(currentPage, cconf, cnp.getCondition(), null)){
+						nextPage = cnp.getSuccessNextPage();
+					}else{
+						nextPage = cnp.getFailNextPage();
+					}
+				}
+				
+				if (cnp.getWaitTime()!=null){
+					Thread.sleep(cnp.getWaitTime()*1000);
+				}
+				
+				//do the click
+				ValueType vt = nextPage.getValue();
+				if (vt!=null){
+					vt.setToType(VarType.PAGE);//for click stream, the to type is page
+					Object value = CrawlTaskEval.eval(pageMap, vt, cconf, params);
+					if (value!=null && value instanceof HtmlPage){
+						List<HtmlPage> pagelist1= new ArrayList<HtmlPage>();
+						pagelist1.add((HtmlPage)value);
+						pageMap.put(nextPage.getName(), pagelist1);
+						pageMap.put(ConfKey.CURRENT_PAGE, pagelist1); //set current page
+					}else{
+						logger.error(String.format("click stream:%s eval to %s, not a page, check toType. prdPage is:%s", 
+								vt.getValue(), value, currentNP));
+						break;
+					}
+				}
+				//get the next click
+				curClick = clickMap.get(nextPage.getName());
+				if (curClick==null){
+					logger.debug(String.format("next click with name:%s is null, exit."), nextPage.getName());
+				}
 			}
 		}
-	}
-	
-	private static HtmlPage getPage(WebClient wc, NextPage np) throws IOException, RuntimeException {
-		HtmlPage page;
-		if (np.getNextUrl()!=null)
-			page = wc.getPage(np.getNextUrl());
-		else{
-			if (np.getNextItem()!=null){
-				page = np.getNextItem().click();
-			}else{
-				return null;
-			}
-		}
-		return page;
 	}
 
 	/**
@@ -206,61 +314,59 @@ public class HtmlUnitUtil {
 	 * @return true means login successful, false means either no login performed or login failed.
 	 * @throws InterruptedException
 	 */
-	private static LoginStatus tryLogin(String landingUrl, String tryUrl, WebClient wc, Task task, CrawlConf cconf) 
+	private static LoginStatus tryLogin(HtmlPage landingPage, String tryUrl, WebClient wc, LoginType loginInfo, CrawlConf cconf) 
 			throws InterruptedException{
-		if (task!=null){
+		String landingUrl = landingPage.getUrl().toExternalForm();
+		if (loginInfo!=null){
 			if (tryUrl!=null && !landingUrl.contains(tryUrl)){
-				//np's url does not contain np's next url, meaning redirected
-				LoginType loginInfo = task.getParsedTaskDef().getTasks().getLoginInfo();
-				if (loginInfo!=null){
-					boolean requireLogin = false;
-					String gotchaUrl = loginInfo.getGotchaURL();
-					if (gotchaUrl!=null && landingUrl.contains(gotchaUrl)){
-						requireLogin = true;
-					}else {
-						List<String> possibleRedirectedUrls = loginInfo.getRedirectedURL();
-						for (String redirectUrl: possibleRedirectedUrls){
-							if (landingUrl.contains(redirectUrl)){
-								requireLogin = true;
-								break;
-							}
+				boolean requireLogin = false;
+				if (isGotcha(landingPage, loginInfo, cconf)){//check gotcha
+					requireLogin = true;
+				}else {//check login redirected
+					List<ValueType> possibleRedirectedUrls = loginInfo.getRedirectedURL();
+					for (ValueType redirectUrlVT: possibleRedirectedUrls){
+						if (redirectUrlVT.getFromType()==VarType.URL && landingUrl.contains(redirectUrlVT.getValue())){
+							requireLogin = true;
+							break;
+						}else if (redirectUrlVT.getFromType()==VarType.XPATH && landingPage.getFirstByXPath(redirectUrlVT.getValue())!=null){
+							requireLogin = true;
+							break;
+						}else{
+							logger.error("var type not supported for redirectUrlVT: " + redirectUrlVT.getFromType());
 						}
 					}
-					//redirected to one of the possibleRedirectedUrls
-					if (requireLogin) {
-						wc.getCookieManager().clearCookies();
-						Set<String> usedCredentials = new HashSet<String>();
-						while (usedCredentials.size()<loginInfo.getCredential().size()){
-							CredentialType ct = getCredential(loginInfo, usedCredentials);
-							if (ct!=null){
-								usedCredentials.add(ct.getUsername());
-								LoginStatus ls = login(loginInfo, ct, wc, cconf);
-								if(LoginStatus.LoginCatchya==ls){
-									logger.info(String.format("catchya using user %s", ct.getUsername()));
-									continue;
-								}else{
-									return ls;
-								}
+				}
+				//redirected to one of the possibleRedirectedUrls
+				if (requireLogin) {
+					wc.getCookieManager().clearCookies();
+					Set<String> usedCredentials = new HashSet<String>();
+					while (usedCredentials.size()<loginInfo.getCredential().size()){
+						CredentialType ct = getCredential(loginInfo, usedCredentials);
+						if (ct!=null){
+							usedCredentials.add(ct.getUsername());
+							LoginStatus ls = login(loginInfo, ct, wc, cconf);
+							if(LoginStatus.LoginCatchya==ls){
+								logger.info(String.format("catchya using user %s", ct.getUsername()));
+								continue;
 							}else{
-								//error will be generated by getCredentialParamMap
-								return LoginStatus.LoginFailed;
+								return ls;
 							}
+						}else{
+							//error will be generated by getCredentialParamMap
+							return LoginStatus.LoginFailed;
 						}
-						logger.error("used up all the credential still catchya");
-						return LoginStatus.LoginFailed;
-					}else{
-						logger.error(String.format("No Login: landing page is %s, expected landing is %s, but not in the possibleRedirectedUrls.", 
-								landingUrl, tryUrl));
 					}
+					logger.error("used up all the credential still catchya");
+					return LoginStatus.LoginFailed;
 				}else{
-					logger.warn(String.format("No Login: landing page is %s, expected landing is %s, but conf has no login info defined.", 
-								landingUrl, tryUrl));
+					logger.error(String.format("No Login: landing page is %s, expected landing is %s, but not in the possibleRedirectedUrls.", 
+							landingUrl, tryUrl));
 				}
 			}else{
 				logger.debug(String.format("No Login: landing page %s contains the expected page %s.", landingUrl, tryUrl));
 			}
 		}else{
-			logger.debug(String.format("No Login: task is null."));
+			logger.debug(String.format("No Login: loginInfo is null."));
 		}
 		return LoginStatus.LoginNotNeeded;
 	}
@@ -269,21 +375,19 @@ public class HtmlUnitUtil {
 	 * @param wc
 	 * @param np: next page
 	 * @param vp: verification plugin
-	 * @param param: the parameter to be used for customer verification
-	 * @param times: retry times
-	 * @param cancelable: whether this click can be cancelled
-	 * @param task: the task instance containing both the task param values and task definition
-	 * @param cconf
-	 * @return the page
+	 * @param param: the parameter to be used for customer verification, can be task instance
+	 * @param LoginInfo: the login info defined in tasksdef
+	 * @param cconf, contains retry times, cancelable
+	 * @return the page result
 	 * @throws InterruptedException
 	 */
 	public static HtmlPageResult clickNextPageWithRetryValidate(WebClient wc, NextPage np, VerifyPage vp, Object param, 
-			int times, boolean cancelable, Task task, CrawlConf cconf) 
+			LoginType loginInfo, CrawlConf cconf) 
 			throws InterruptedException{
 		HtmlPageResult result = new HtmlPageResult();
 		HtmlPage page = null;
 		int tried = 0;
-		while (tried < times){
+		while (tried < cconf.getMaxRetry()){
 			if (tried>=1){
 				logger.info("retried with :" + np.toString() + ". times:" + tried);
 			}
@@ -294,17 +398,16 @@ public class HtmlUnitUtil {
 					tick1 = new Date();
 				}
 				try {
-					page = getPage(wc, np);
+					page = getDirectPage(wc, np);
 					int maxloop = 10;
 					int innerloop=0;
 					while(innerloop<maxloop){
 						if (page != null){
-							String landingUrl = page.getUrl().toExternalForm();
 							//
-							LoginStatus loginStatus = tryLogin(landingUrl, np.getNextUrl(), wc, task, cconf);
+							LoginStatus loginStatus = tryLogin(page, np.getNextUrl(), wc, loginInfo, cconf);
 							if (LoginStatus.LoginNotNeeded != loginStatus){
 								if (LoginStatus.LoginSuccess == loginStatus){
-									page = getPage(wc, np);
+									page = getDirectPage(wc, np);
 									if (page==null){
 										logger.error(String.format("after login, go to org request %s, got null page.", np));
 										return result;
@@ -377,7 +480,7 @@ public class HtmlUnitUtil {
 			}
 		}
 		
-		logger.warn("retried with :" + np + ". reach max times:" + times);
+		logger.warn("retried with :" + np + ". reach max times:" + cconf.getMaxRetry());
 		return result;
 	}
 	

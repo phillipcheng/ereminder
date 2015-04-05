@@ -1,9 +1,15 @@
 package org.cld.datacrawl.util;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.util.PatternResult;
+import org.xml.taskdef.AttributeType;
+import org.xml.taskdef.ClickType;
+import org.xml.taskdef.VarType;
 
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
@@ -14,6 +20,24 @@ public class VerifyPageByXPath implements VerifyPage {
 	private String[] expectedValues;
 	
 	public VerifyPageByXPath(){
+	}
+	
+	public VerifyPageByXPath(ClickType ct){
+		List<String> xpaths = new ArrayList<String>();
+		List<AttributeType> atl = ct.getInput();
+		for (AttributeType at:atl){
+			if (at.getValue().getFromType()==VarType.XPATH || at.getValue().getValue().contains("//")){
+				xpaths.add(at.getValue().getValue());
+			}
+		}
+
+		if (ct.getNextpage().getCondition()==null){
+			if (ct.getNextpage().getSuccessNextPage().getValue().getFromType()==VarType.XPATH ||
+					ct.getNextpage().getSuccessNextPage().getValue().getValue().contains("//")){
+				xpaths.add(ct.getNextpage().getSuccessNextPage().getValue().getValue());
+			}
+		}
+		xpathsSuccess = xpaths.toArray(new String[xpaths.size()]);
 	}
 	
 	public String toString(){

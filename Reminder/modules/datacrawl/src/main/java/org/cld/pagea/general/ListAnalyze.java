@@ -6,9 +6,10 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.NextPage;
+import org.cld.datacrawl.mgr.impl.BinaryBoolOpEval;
 import org.cld.datacrawl.pagea.ListAnalyzeInf;
-import org.xml.mytaskdef.BinaryBoolOpEval;
 import org.xml.mytaskdef.ConfKey;
 import org.xml.mytaskdef.ParsedTasksDef;
 import org.xml.taskdef.BinaryBoolOp;
@@ -30,7 +31,7 @@ public class ListAnalyze implements ListAnalyzeInf {
 	}
 	
 	@Override
-	public NextPage getNextPageUrlFromPage(HtmlPage listPage, ParsedTasksDef tasksDef, Map<String, Object> attrs) {
+	public NextPage getNextPageUrlFromPage(HtmlPage listPage, ParsedTasksDef tasksDef, Map<String, Object> attrs, CrawlConf cconf) {
 		BrowseCatType bc = tasksDef.getLeafBrowseCatTask();
 		SubListType slt = bc.getSubItemList();
 		String npxpath = slt.getNextPage();
@@ -44,7 +45,7 @@ public class ListAnalyze implements ListAnalyzeInf {
 						Map<String, Object> values = new HashMap<String, Object>();
 						values.put(ConfKey.PRD_LIST_NextPage, he);
 						values.putAll(attrs);
-						if (BinaryBoolOpEval.eval(bbo, values)){
+						if (BinaryBoolOpEval.eval(listPage, cconf, bbo, values)){
 							return new NextPage(NextPage.STATUS_LASTPAGE);
 						}
 					}

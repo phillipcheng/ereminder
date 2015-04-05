@@ -94,8 +94,7 @@ public class ProductAnalyze implements IProductAnalyze{
 		HtmlPageResult detailsResult;
 		HtmlPage details = null;
 
-		detailsResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(url), VPXP, task.getParsedTaskDef().getTasks(), 
-				cconf.getMaxRetry(), cconf.isCancelable(), task, cconf);	
+		detailsResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(url), VPXP, null, task.getTasks().getLoginInfo(), cconf);	
 		details = detailsResult.getPage();
 		
 		if (detailsResult.getErrorCode() == HtmlPageResult.SUCCSS){			
@@ -144,8 +143,7 @@ public class ProductAnalyze implements IProductAnalyze{
 		HtmlPageResult detailsResult;
 		HtmlPage details = null;
 
-		detailsResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(url), VPXP, task.getParsedTaskDef().getTasks(), 
-				cconf.getMaxRetry(), cconf.isCancelable(), task, cconf);	
+		detailsResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(url), VPXP, null, task.getTasks().getLoginInfo(), cconf);	
 		details = detailsResult.getPage();
 		
 		if (detailsResult.getErrorCode() == HtmlPageResult.SUCCSS){	

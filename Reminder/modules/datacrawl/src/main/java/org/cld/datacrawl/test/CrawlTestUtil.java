@@ -86,13 +86,12 @@ public class CrawlTestUtil{
 		return ctn;
 	}
 	
-	public static SiteRuntime getSRT(String siteconfid, CrawlConf cconf, String rootTaskId){
-		SiteRuntime srt = new SiteRuntime();
-		srt.setBct((BrowseCategoryTaskConf) cconf.getTaskMgr().getTask(siteconfid + "_bct"));
-		srt.setBdt((BrowseDetailTaskConf) cconf.getTaskMgr().getTask(siteconfid + "_bdt"));
+	private static void setupSRT(SiteRuntime srt, CrawlConf cconf, String rootTaskId){
 		if (srt.getBct()!=null)
 			srt.getBct().setRootTaskId(rootTaskId);
-		srt.getBdt().setRootTaskId(rootTaskId);
+		if (srt.getBdt()!=null)
+			srt.getBdt().setRootTaskId(rootTaskId);
+		
 		srt.bctBS = new BrsCatStat("1");
 		srt.bdtBS = new BrsDetailStat("1");
 		srt.ctconf = cconf.getCCTConf("general"); //TODO
@@ -101,6 +100,24 @@ public class CrawlTestUtil{
 		srt.la = srt.ctconf.getLa();
 		srt.originalLP = srt.la.getLpInf();
 		srt.pa = srt.ctconf.getBa();
+	}
+	
+	public static SiteRuntime getSRT(String siteconfid, CrawlConf cconf, String taskName, String rootTaskId){
+		SiteRuntime srt = new SiteRuntime();
+		srt.setBct((BrowseCategoryTaskConf) cconf.getTaskMgr().getTask(taskName));
+		srt.setBdt((BrowseDetailTaskConf) cconf.getTaskMgr().getTask(taskName));
+		
+		setupSRT(srt, cconf, rootTaskId);
+		
+		return srt;
+	}
+	
+	public static SiteRuntime getSRT(String siteconfid, CrawlConf cconf, String rootTaskId){
+		SiteRuntime srt = new SiteRuntime();
+		srt.setBct((BrowseCategoryTaskConf) cconf.getTaskMgr().getTask(siteconfid + "_bct"));
+		srt.setBdt((BrowseDetailTaskConf) cconf.getTaskMgr().getTask(siteconfid + "_bdt"));
+		
+		setupSRT(srt, cconf, rootTaskId);
 		
 		return srt;
 	}
@@ -164,8 +181,10 @@ public class CrawlTestUtil{
 			throws InterruptedException {
 		if (confFileName!=null){
 			cconf.setUpSite(confFileName, null);
+			logger.debug("setup sites completed.");
 		}
 		SiteRuntime srt = getSRT(siteconfid, cconf, rootTaskId);
+		logger.debug("set start url for cat navigate.");
 		if (catUrl==null || "".equals(catUrl)){
 			srt.getBct().setStartURL(srt.getBct().getRootBrowseCatTask().getBaseBrowseTask().getStartUrl());
 		}else{

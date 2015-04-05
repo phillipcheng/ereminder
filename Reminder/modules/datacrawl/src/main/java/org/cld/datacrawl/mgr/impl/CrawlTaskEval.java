@@ -75,7 +75,7 @@ public class CrawlTaskEval {
 		if (pvt!=null){
 			vpbxpath = new VerifyPageByXPath(new String[]{pvt.getXpath()}, new String[]{pvt.getExpectedContent()});
 		}
-		hpResult = HtmlUnitUtil.clickNextPageWithRetryValidate(null, np, vpbxpath, null, cconf.getMaxRetry(), false, null, cconf);
+		hpResult = HtmlUnitUtil.clickNextPageWithRetryValidate(null, np, vpbxpath, null, null, cconf);
 		
 		if (hpResult!=null){
 			if (hpResult.getErrorCode()==HtmlPageResult.SUCCSS){

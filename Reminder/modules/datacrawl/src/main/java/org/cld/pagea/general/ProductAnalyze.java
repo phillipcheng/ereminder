@@ -113,7 +113,7 @@ public class ProductAnalyze implements ProductAnalyzeInf {
 				pagelist.add(prdPage);
 				pageMap.put(ConfKey.START_PAGE, pagelist);
 				pageMap.put(ConfKey.CURRENT_PAGE, pagelist);//set current page
-				HtmlUnitUtil.clickClickStream(firstPageClicks, pageMap, task.getParamMap(), cconf, prdPage.getUrl().toExternalForm());
+				HtmlUnitUtil.clickClickStream(firstPageClicks, pageMap, task.getParamMap(), cconf, new NextPage(prdPage.getUrl().toExternalForm()));
 			}else{
 				logger.error("click stream does not support finish condition now.");
 			}
@@ -164,7 +164,7 @@ public class ProductAnalyze implements ProductAnalyzeInf {
 			if (nextPageEle!=null || url!=null){
 				NextPage np = new NextPage(url, nextPageEle);
 				HtmlPageResult hpResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, np, 
-						new VerifyPageByXPath(getPageVerifyXPaths(task, taskDef)), task, cconf.getMaxRetry(), false, task, cconf);
+						new VerifyPageByXPath(getPageVerifyXPaths(task, taskDef)), null, task.getTasks().getLoginInfo(), cconf);
 				if (hpResult.getErrorCode()==HtmlPageResult.SUCCSS){
 					return hpResult.getPage();
 				}else{
@@ -193,7 +193,7 @@ public class ProductAnalyze implements ProductAnalyzeInf {
 			pageMap = new HashMap<String, List<? extends DomNode>>();
 			
 			HtmlPageResult hpResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(product.getLastUrl()), 
-					 new VerifyPageByXPath(getPageVerifyXPaths(task, taskDef)), null, cconf.getMaxRetry(), cconf.isCancelable(), task, cconf);
+					 new VerifyPageByXPath(getPageVerifyXPaths(task, taskDef)), null, task.getTasks().getLoginInfo(), cconf);
 			if (hpResult.getErrorCode()==HtmlPageResult.SUCCSS){
 				inpage = hpResult.getPage();
 				List<HtmlPage> pagelist = new ArrayList<HtmlPage>();

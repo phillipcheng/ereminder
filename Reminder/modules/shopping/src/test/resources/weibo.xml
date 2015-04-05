@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="weibo" productType="default">
+	<loginInfo>
+		<click>
+			<link pageName="homepage">
+				<nextpage>
+					<successNextPage name="loginpage">
+						<value value="//div[@class='topBar']//a[contains(text(), '登入微博')]"/>
+					</successNextPage>
+				</nextpage>
+			</link>
+			<link pageName="loginpage">
+				<input name="//p[@class='weibo-logindialog-account']/input">
+					<value value="username" fromScope="param"/>
+				</input>
+				<input name="//p[@class='weibo-logindialog-password']/input">
+					<value value="password" fromScope="param"/>
+				</input>
+				<print name="login message">
+					<value value="//p[@class='weibo-logindialog-tip']//text()"/>
+				</print>
+				<nextpage waitTime="2">
+					<successNextPage name="personhp">
+						<value value="//div[@class='weibo-logindialog-form']/p[last()]/a[1]"/>
+					</successNextPage>
+				</nextpage>
+			</link>
+			<link pageName="personhp">
+				<print name="login message">
+					<value value="//p[@class='weibo-logindialog-tip']//text()"/>
+				</print>
+				<nextpage>
+					<condition operator="=">
+						<lhs value="//div[@class='topBar']//span[@class='logout']/a"/>
+						<rhs value="登出"/>
+					</condition>
+					<failNextPage name="loginpage"/>
+					<successNextPage name="finishpage"/>
+				</nextpage>
+			</link>
+		</click>
+		<redirectedURL fromType="xpath" value="//div[@node-type='login_frame']"/>
+		<loginURL fromType="url" value="http://us.weibo.com/gb#"/>
+		<credential username="phillipchengyia@gmail.com" password="testtest"/>
+		<loginSuccessCondition operator="!=">
+			<lhs value="//div[@class='topBar']//span[@class='username']"/>
+			<rhs value="null"/>
+		</loginSuccessCondition>
+	</loginInfo>
+	<CatTask isLeaf="false" pagesPerBDT="2">
+		<baseBrowseTask enableJS="true" taskName="userCat" startUrl="http://www.weibo.com/hegang10135?page=1">
+			<userAttribute name="username">
+				<value value="//div[@class='pf_username']/span[@class='username']"/>
+			</userAttribute>
+			<userAttribute name="location">
+				<value value="//div[@class='PCD_person_info']/div[2]/div[1]/div[1]/ul[1]/li[1]/span[2]/text()"/>
+			</userAttribute>
+			<idUrlMapping>
+				<Token value="http://www.weibo.com/" name="prefix" type="string"/>
+				<Token value="[a-zA-Z0-9/]+" name="id" type="regexp"/>
+				<Token value="?page=" name="suffix" type="string"/>
+				<Token value="[0-9]+" name="pagenum" type="regexp"/>
+			</idUrlMapping>
+		</baseBrowseTask>
+		<subItemList itemFullUrl="//div[@node-type='feed_list_commentList']/a[last()]" nextScreen="//div[@id='pl_common_footer']/a">
+			<itemList value="//div[@id='Pl_Official_MyProfileFeed__22']/div[1]/div[2]/div"/>
+			<userAttribute name="text">
+				<value fromType="xpath" value="//div[@class='WB_detail']/div[1]"/>
+			</userAttribute>
+			<userAttribute name="pubTime">
+				<value fromType="xpath" toType="date" value="//div[@class='WB_detail']/div[last()]/a[1]/@title" format="yyyy-MM-dd hh:mm"/>
+			</userAttribute>
+			<userAttribute name="numForward">
+				<value fromType="xpath" toType="int" value="//div[@class='WB_handle']/ul[1]/li[2]">
+					<strPreprocess trimPre="转发"/>
+				</value>
+			</userAttribute>
+			<userAttribute name="numComment">
+				<value fromType="xpath" toType="int" value="//div[@class='WB_handle']/ul[1]/li[3]">
+					<strPreprocess trimPre="评论"/>
+				</value>
+			</userAttribute>
+			<userAttribute name="numUp">
+				<value fromType="xpath" toType="int" value="//div[@class='WB_handle']/ul[1]/li[4]"/>
+			</userAttribute>
+			<lastScreenCondition operator="=">
+				<lhs value="//div[@id='Pl_Official_MyProfileFeed__22']/div[1]/div[2]/div[last()]/@node-type" fromType="xpath"/>
+				<rhs value="feed_list_page" fromType="string"/>
+			</lastScreenCondition>
+			<itemFullUrlClicks>
+				<link>
+					<nextpage>
+						<successNextPage name="commentPage">
+							<value value="./div[2]/div[1]/ul[1]/li[3]/a"/>
+						</successNextPage>
+					</nextpage>
+				</link>
+			</itemFullUrlClicks>
+			<itemId value="./@mid"/>
+		</subItemList>
+		<itemPerPage value="45"/>
+		<totalItemNum value="//div[@id='Pl_Core_T8CustomTriColumn__3']//table[1]/tbody[1]/tr[1]/td[last()]/a[1]/strong[1]"/>
+		<maxPageNum value="50"/>
+	</CatTask>
+	<CatTask isLeaf="true">
+		<baseBrowseTask enableJS="true" taskName="messageCat">
+			<sampleUrl>http://www.weibo.com/1100856704/CaYKV7uJE?type=comment</sampleUrl>
+			<idUrlMapping>
+				<Token value="http://www.weibo.com/" name="prefix" type="string"/>
+				<Token value="[0-9/a-zA-Z]+" name="id" type="regexp"/>
+				<Token value="?type=comment" name="suffix" type="string"/>
+			</idUrlMapping>
+		</baseBrowseTask>
+		<subItemList nextPage="//div[@class='W_pages']/a/span[contains(text(), 'Next')]">
+			<itemList value="//div[@node-type='comment_list']/div/div[2]"/>
+			<userAttribute name="userid">
+				<value value="./div[1]/a/@usercard"/>
+			</userAttribute>
+			<userAttribute name="usernickname">
+				<value value="./div[1]/a/text()"/>
+			</userAttribute>
+			<userAttribute name="text">
+				<value value="./div[1]/text()"/>
+			</userAttribute>
+			<userAttribute name="replyTime">
+				<value value="./div[2]/div[2]/text()" format="MM-dd hh:mm"/>
+			</userAttribute>
+		</subItemList>
+	</CatTask>
+</Tasks>

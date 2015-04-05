@@ -397,9 +397,12 @@ public class TaskMgr {
 					invokeTask.setStart(true);
 					tasksConf.put(invokeTask.getName(), invokeTask);
 					tl.add(invokeTask);
+					logger.info("invoke Task loaded:" + invokeTask);
 				}
 			}
-		}else if (tasks.getCatTask().size()>0){
+		}
+		
+		if (tasks.getCatTask().size()>0){//create the default confid_bct->confid_bdt chain
 			String siteconfid = tasks.getStoreId();
 			String taskType = "org.cld.datacrawl.task.BrowseCategoryTaskConf";
 			Task bctTask = getTaskInstTemplate(taskType, tasks, pluginClassLoader, params, utime, siteconfid + "_bct");
@@ -413,6 +416,7 @@ public class TaskMgr {
 				bctTask.setNextTask(siteconfid + "_bdt");
 				tasksConf.put(bctTask.getName(), bctTask);
 				tl.add(bctTask);
+				logger.info("BCT Task loaded:" + bctTask);
 			}
 			taskType = "org.cld.datacrawl.task.BrowseDetailTaskConf";
 			Task bdtTask = getTaskInstTemplate(taskType, tasks, pluginClassLoader, params, utime, siteconfid + "_bdt");
@@ -420,18 +424,12 @@ public class TaskMgr {
 				bdtTask.setStart(false);
 				tasksConf.put(bdtTask.getName(), bdtTask);
 				tl.add(bdtTask);
-			}
-			taskType = "org.cld.datacrawl.task.BrowseProductTaskConf";
-			for (BrowseDetailType bpt: tasks.getPrdTask()){
-				Task prdTask = getTaskInstTemplate(taskType, tasks, pluginClassLoader, params, utime, bpt.getBaseBrowseTask().getTaskName());
-				if (prdTask!=null){
-					prdTask.setStart(bpt.getBaseBrowseTask().isIsStart());
-					tasksConf.put(prdTask.getName(), prdTask);
-					tl.add(prdTask);
-				}
+				logger.info("BDT Task loaded:" + bdtTask);
 			}
 			this.setMaxRunningTasks(tasks.getStoreId(), tasks.getMaxThread());
-		}else if (tasks.getPrdTask()!=null){
+		}
+		
+		if (tasks.getPrdTask()!=null){
 			String taskType = "org.cld.datacrawl.task.BrowseProductTaskConf";
 			for (BrowseDetailType bpt: tasks.getPrdTask()){
 				Task prdTask = getTaskInstTemplate(taskType, tasks, pluginClassLoader, params, utime, bpt.getBaseBrowseTask().getTaskName());
@@ -439,10 +437,9 @@ public class TaskMgr {
 					prdTask.setStart(bpt.getBaseBrowseTask().isIsStart());
 					tasksConf.put(prdTask.getName(), prdTask);
 					tl.add(prdTask);
+					logger.info("Prd Task loaded:" + prdTask);
 				}
 			}
-		}else{
-			logger.error("not supported tasks def:" + tasks);
 		}
 		
 		return tl;

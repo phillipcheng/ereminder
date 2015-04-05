@@ -171,8 +171,7 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 		boolean needJS = caInf.needJS(url, bct);
 		WebClient wc = CrawlUtil.getWebClient(cconf, bct.getParsedTaskDef().getSkipUrls(), needJS);
 		HtmlPageResult catPageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(url), 
-				new VerifyPageByXPath(caInf.getCatPageVerifyXPaths(category, bct)), 
-				null, cconf.getMaxRetry(), cconf.isCancelable(), bct, cconf);
+				new VerifyPageByXPath(caInf.getCatPageVerifyXPaths(category, bct)), null, bct.getTasks().getLoginInfo(), cconf);
 		HtmlPage catPage = catPageResult.getPage();
 		CrawlUtil.closeWebClient(wc);
 		

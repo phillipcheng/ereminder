@@ -95,7 +95,7 @@ public class TestBase {
 	
 	public int getUnlockedAccounts(String confName){
 		SiteRuntime srt = CrawlTestUtil.getSRT(getConfId(confName), cconf, null);
-		LoginType loginInfo = srt.getBdt().getTasks().getLoginInfo();
+		LoginType loginInfo = srt.getTasks().getLoginInfo();
 		try {
 			return HtmlUnitUtil.checkLockedCrendentials(loginInfo, cconf);
 		} catch (InterruptedException e) {

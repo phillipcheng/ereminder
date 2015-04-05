@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 import org.cld.datacrawl.CrawlConf;
@@ -29,6 +30,7 @@ import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.xml.mytaskdef.ConfKey;
 import org.xml.mytaskdef.ParsedTasksDef;
+import org.xml.taskdef.BinaryBoolOp;
 
 
 public class ListAnalyze implements IListAnalyze {
@@ -82,14 +84,24 @@ public class ListAnalyze implements IListAnalyze {
 		List<Task> tl;
 	}
 	
-	public NextPageAndTasks readList(WebClient wc, NextPage np, Category cat, Task task, int maxItems) 
+	public NextPageAndTasks readList(WebClient wc, NextPage np, Category cat, Task task, int maxItems, int curPageNum) 
 			throws InterruptedException{	
 		ListAnalyzeInf laInf = ctconf.getLaInf();
 		
-		HtmlPageResult listPageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, np, VPBL, task, 
-				cconf.getMaxRetry(), cconf.isCancelable(), task, cconf);
+		HtmlPageResult listPageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, np, VPBL, task, task.getTasks().getLoginInfo(), cconf);
 		HtmlPage listPage = listPageResult.getPage();
+		//before processing items, if there is screen, scroll them
+		String nextScreenXPath = task.getLeafBrowseCatTask().getSubItemList().getNextScreen();
+		BinaryBoolOp lastScreenCond = task.getLeafBrowseCatTask().getSubItemList().getLastScreenCondition();
 		
+		if (nextScreenXPath!=null && lastScreenCond!=null){
+			while (!BinaryBoolOpEval.eval(listPage, cconf, lastScreenCond, cat.getParamMap())){
+				HtmlElement he = listPage.getFirstByXPath(nextScreenXPath);
+				NextPage nsp = new NextPage(he);
+				listPageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, nsp, VPBL, task, task.getTasks().getLoginInfo(), cconf);
+				listPage = listPageResult.getPage();
+			}
+		}
 		if (listPageResult.getErrorCode() == HtmlPageResult.SUCCSS){
 			Date readTime = new Date(System.currentTimeMillis());
 			List<Task> tl = lpInf.process(listPage, readTime, cat, cconf, task, maxItems, wc);
@@ -101,8 +113,9 @@ public class ListAnalyze implements IListAnalyze {
 						cat.getParamMap(), cconf, task.getParamMap());
 				Map<String, Object> params = cat.getParamMap();
 				params.put(ConfKey.TOTAL_PAGENUM, cat.getPageNum());
+				params.put(ConfKey.CURRENT_PAGENUM, curPageNum);
 				logger.debug("params map before eval next page." + params);
-				NextPage npget = laInf.getNextPageUrlFromPage(listPage, task.getParsedTaskDef(), params);	
+				NextPage npget = laInf.getNextPageUrlFromPage(listPage, task.getParsedTaskDef(), params, cconf);	
 				return new NextPageAndTasks(npget, tl);
 			}
 		}else{
@@ -133,7 +146,6 @@ public class ListAnalyze implements IListAnalyze {
 					toPage = category.getItemNum()/category.getPageSize() + 1;
 			}else{
 				//item num un-set
-				
 			}
 		}
 		logger.debug("toPage after ajustment is:" + toPage);
@@ -159,7 +171,6 @@ public class ListAnalyze implements IListAnalyze {
 		}
 		
 		int cur = fromPage;
-		int nextcur;
 		int pageCount=1;
 		
 		WebClient wc = CrawlUtil.getWebClient(cconf, task.getParsedTaskDef().getSkipUrls(), ctconf.getLaInf().needJS(task.getParsedTaskDef()));
@@ -176,12 +187,12 @@ public class ListAnalyze implements IListAnalyze {
 				
 				logger.debug("url to try in ListAnalyze:" + np);
 				
-				NextPageAndTasks npt = readList(wc, np, category, task, maxItems);
+				NextPageAndTasks npt = readList(wc, np, category, task, maxItems, cur);
 				np = npt.np;
 				if (npt.tl!=null)
 					tl.addAll(npt.tl);
 				
-				nextcur = cur + 1;
+				cur++;
 				
 				if (np.getStatus()==NextPage.STATUS_ERR){
 					numWrongUrl++;
@@ -189,8 +200,6 @@ public class ListAnalyze implements IListAnalyze {
 				}
 				
 				logger.debug("final next_url is:" + np);				
-				
-				cur = nextcur;
 				
 				if (maxPages>0 && pageCount>maxPages)
 					break;
