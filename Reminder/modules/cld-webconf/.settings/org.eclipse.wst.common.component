@@ -23,12 +23,6 @@
         <dependent-module archiveName="cld-action-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-action/cld-action">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="cy-common-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cy-common/cy-common">
-            <dependency-type>uses</dependency-type>
-        </dependent-module>
-        <dependent-module archiveName="crbook-persist-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/crbook-persist/crbook-persist">
-            <dependency-type>uses</dependency-type>
-        </dependent-module>
         <dependent-module archiveName="cld-stock-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-stock/cld-stock">
             <dependency-type>uses</dependency-type>
         </dependent-module>
