@@ -65,7 +65,7 @@ public class CrawlUtil {
 	        public void notify(String s, Object o) { }
 	    });
 	    
-	    webClient.getCookieManager().setCookiesEnabled(true);//required by linkedin
+	    webClient.getCookieManager().setCookiesEnabled(true);//required by linkedin/sina.weibo
 	    webClient.getOptions().setCssEnabled(true);
 	    webClient.getOptions().setPrintContentOnFailingStatusCode(false);
 		webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
@@ -76,8 +76,8 @@ public class CrawlUtil {
 		webClient.getOptions().setUseInsecureSSL(true);
 		if (enableJS){
 			webClient.setAjaxController(new NicelyResynchronizingAjaxController());
-			webClient.waitForBackgroundJavaScript(10000);
-			//webClient.waitForBackgroundJavaScriptStartingBefore(10000);
+			webClient.waitForBackgroundJavaScript(20000);
+			webClient.waitForBackgroundJavaScriptStartingBefore(20000);
 		}
 		int timeout = 10;
 		if (cconf!=null){

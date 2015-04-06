@@ -338,7 +338,6 @@ public class HtmlUnitUtil {
 				}
 				//redirected to one of the possibleRedirectedUrls
 				if (requireLogin) {
-					wc.getCookieManager().clearCookies();
 					Set<String> usedCredentials = new HashSet<String>();
 					while (usedCredentials.size()<loginInfo.getCredential().size()){
 						CredentialType ct = getCredential(loginInfo, usedCredentials);
