@@ -39,6 +39,7 @@ class WeiboLogin:
         print "Posting request..."
         result = urllib2.urlopen(req)#登陆的第二步——解析新浪微博的登录过程中3
         text = result.read()
+        print "result after 2nd step:", text
         try:
             loginUrl = WeiboSearch.sRedirectData(text)#解析重定位结果
             result = urllib2.urlopen(loginUrl)

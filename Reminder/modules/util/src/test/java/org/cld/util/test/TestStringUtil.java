@@ -6,7 +6,9 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.util.JsonUtil;
 import org.cld.util.StringUtil;
+import org.json.JSONObject;
 import org.junit.Test;
 
 
@@ -70,6 +72,12 @@ public class TestStringUtil {
 		assertTrue(slist.size()==2);
 		assertTrue(slist.get(0).equals("999999"));
 		assertTrue(slist.get(1).equals("999998"));
+	}
+	
+	@Test
+	public void testJsonUtil1(){
+		JSONObject jobj = JsonUtil.getJsonDataFromSingleParameterFunctionCall("sinaSSOController.preloginCallBack({\"retcode\":0})");
+		logger.info(jobj);
 	}
 
 }

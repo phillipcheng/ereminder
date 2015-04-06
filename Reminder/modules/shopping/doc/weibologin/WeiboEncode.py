@@ -44,13 +44,16 @@ def GetUserName(userName):
     
     userNameTemp = urllib.quote(userName)
     userNameEncoded = base64.encodestring(userNameTemp)[:-1]
+    print "userNameEncoded:", userNameEncoded
     return userNameEncoded
 
 
 def get_pwd(password, servertime, nonce, pubkey):
     rsaPublickey = int(pubkey, 16)
     key = rsa.PublicKey(rsaPublickey, 65537) #创建公钥
+    print "pub key:", key
     message = str(servertime) + '\t' + str(nonce) + '\n' + str(password) #拼接明文js加密文件中得到
     passwd = rsa.encrypt(message, key) #加密
     passwd = binascii.b2a_hex(passwd) #将加密信息转换为16进制。
+    print "passwd:", passwd
     return passwd
