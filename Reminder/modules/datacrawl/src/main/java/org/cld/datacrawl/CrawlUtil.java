@@ -7,17 +7,15 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import org.hibernate.cfg.Configuration;
 
-import com.gargoylesoftware.htmlunit.AjaxController;
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.IncorrectnessListener;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
 import com.gargoylesoftware.htmlunit.SilentCssErrorHandler;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebConnection;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.WebRequest;
 
 import org.cld.datastore.DBConf;
 import org.cld.datastore.DBFactory;
@@ -51,9 +49,9 @@ public class CrawlUtil {
 		logger.debug("open webclient.");
 		WebClient webClient = null;
 		if (cconf==null || !cconf.isUseProxy()){
-			webClient = new WebClient(BrowserVersion.FIREFOX_24);
+			webClient = new WebClient(BrowserVersion.CHROME);
 		}else{
-			webClient = new WebClient(BrowserVersion.FIREFOX_24, cconf.getProxyIP(), cconf.getProxyPort());
+			webClient = new WebClient(BrowserVersion.CHROME, cconf.getProxyIP(), cconf.getProxyPort());
 		}
 		WebConnection wc = new InterceptWebConnection(webClient, skipUrls);
 		webClient.setWebConnection(wc);
@@ -77,14 +75,7 @@ public class CrawlUtil {
 		webClient.getOptions().setJavaScriptEnabled(enableJS);
 		webClient.getOptions().setUseInsecureSSL(true);
 		if (enableJS){
-			//webClient.setAjaxController(new NicelyResynchronizingAjaxController());
-			webClient.setAjaxController(new AjaxController(){
-			    @Override
-			    public boolean processSynchron(HtmlPage page, WebRequest request, boolean async)
-			    {
-			        return true;
-			    }
-			});
+			webClient.setAjaxController(new NicelyResynchronizingAjaxController());
 			webClient.waitForBackgroundJavaScript(10000);
 			//webClient.waitForBackgroundJavaScriptStartingBefore(10000);
 		}
