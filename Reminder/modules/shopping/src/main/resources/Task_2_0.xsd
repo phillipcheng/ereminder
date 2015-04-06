@@ -9,6 +9,7 @@
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:element name="Tasks" type="TasksType"/>
 	<xs:simpleType name="VarType">
@@ -311,7 +312,7 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 			<xs:documentation>For each click/link, first do some input assignment, then click the xpath typed nextpage and return a page.		</xs:documentation>
 		</xs:annotation>
 		<xs:sequence>
-			<xs:element name="link" type="ClickType" maxOccurs="unbounded">
+			<xs:element name="link" type="ClickType" minOccurs="0" maxOccurs="unbounded">
 				<xs:annotation>
 					<xs:documentation>usually toType of nextpage is page, and name will be used in later expression</xs:documentation>
 				</xs:annotation>
@@ -322,6 +323,11 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 				</xs:annotation>
 			</xs:element>
 		</xs:sequence>
+		<xs:attribute name="impl" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>the implementation of the click stream, can be a java class.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
 	</xs:complexType>
 	<xs:complexType name="TasksType">
 		<xs:sequence>
