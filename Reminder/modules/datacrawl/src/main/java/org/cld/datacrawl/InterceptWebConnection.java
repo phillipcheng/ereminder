@@ -22,13 +22,12 @@ public class InterceptWebConnection extends FalsifyingWebConnection{
     
     @Override
     public WebResponse getResponse(WebRequest request) throws IOException {
-        WebResponse response=super.getResponse(request);
-        String requestUrl = response.getWebRequest().getUrl().toString();
+        String requestUrl = request.getUrl().toString();
         if (skipURL!=null){
 	        for (String url : skipURL){
 		        if(requestUrl.contains(url)){
 		        	logger.info(String.format("url %s is filtered", requestUrl));
-		            return createWebResponse(response.getWebRequest(), "", "application/javascript", 200, "Ok");
+		            return createWebResponse(request, "", "application/javascript", 200, "Ok");
 		        }
 	        }
         }

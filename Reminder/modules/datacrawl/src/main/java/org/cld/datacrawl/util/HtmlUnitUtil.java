@@ -172,12 +172,13 @@ public class HtmlUnitUtil {
 	 */
 	public static int checkLockedCrendentials(LoginType loginInfo, CrawlConf cconf) throws InterruptedException{
 		int unlocked=0;
-		WebClient wc = CrawlUtil.getWebClient(cconf, null, true);
 		for (CredentialType ct: loginInfo.getCredential()){
+			WebClient wc = CrawlUtil.getWebClient(cconf, null, true);
 			LoginStatus ls = login(loginInfo, ct, wc, cconf);
 			if (LoginStatus.LoginSuccess == ls){
 				unlocked++;
 			}
+			wc.closeAllWindows();
 		}
 		return unlocked;
 	}
@@ -296,7 +297,7 @@ public class HtmlUnitUtil {
 				//get the next click
 				curClick = clickMap.get(nextPage.getName());
 				if (curClick==null){
-					logger.debug(String.format("next click with name:%s is null, exit."), nextPage.getName());
+					logger.debug(String.format("next click with name:%s is null, exit.", nextPage.getName()));
 				}
 			}
 		}

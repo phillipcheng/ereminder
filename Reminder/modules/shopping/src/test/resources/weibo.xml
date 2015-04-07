@@ -46,6 +46,8 @@
 		<redirectedURL fromType="xpath" value="//div[@node-type='login_frame']"/>
 		<loginURL fromType="url" value="http://us.weibo.com/gb#"/>
 		<credential username="phillipchengyia@gmail.com" password="testtest"/>
+		<credential username="phillipchengyib@gmail.com" password="testtest"/>
+		<credential username="phillipchengyic@gmail.com" password="testtest"/>
 		<loginSuccessCondition operator="!=">
 			<lhs value="//div[@class='topBar']//span[@class='username']"/>
 			<rhs value="null"/>

@@ -36,7 +36,7 @@ public class BinaryBoolOpEval {
 			if (NULL_VAL.equals(rhsV)){
 				rhsV = null;
 			}
-			if (OpType.NOTEQUALS.equals(op.value())){//!=
+			if (OpType.NOTEQUALS == op){//!=
 				return !Objects.equals(lhsV, rhsV);
 			}else{//=
 				return Objects.equals(lhsV, rhsV);
