@@ -123,7 +123,8 @@ public class ProductAnalyze implements IProductAnalyze{
 			baInf.callbackReadDetails(wc, details, product, task, taskDef);
 			product.getId().setCreateTime(new Date());
 			logger.debug("product got:" + product);
-			cconf.getDsm().addCrawledItem(product, lastProduct);	
+			if (cconf.getDsm()!=null)
+				cconf.getDsm().addCrawledItem(product, lastProduct);	
 		}
 	}
 	

@@ -215,6 +215,7 @@ public class HtmlUnitUtil {
 	 * @param clickstream
 	 * @param pageMap: in-out
 	 * @param task: task instance
+	 * @param currentNP, the url of current page for log
 	 * @throws InterruptedException 
 	 */
 	public static void clickClickStream(ClickStreamType clickstream, Map<String, List<? extends DomNode>> pageMap, 
@@ -397,9 +398,11 @@ public class HtmlUnitUtil {
 				}
 				try {
 					page = getDirectPage(wc, np);
-					int maxloop = 10;
+					int maxloop = 20;
 					int innerloop=0;
 					while(innerloop<maxloop){
+						//refetch the page
+						page = (HtmlPage) page.getWebClient().getWebWindows().get(0).getEnclosedPage();
 						if (page != null){
 							//
 							LoginStatus loginStatus = tryLogin(page, np.getNextUrl(), wc, loginInfo, cconf);

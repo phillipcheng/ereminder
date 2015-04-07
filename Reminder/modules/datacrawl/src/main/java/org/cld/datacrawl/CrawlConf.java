@@ -87,7 +87,7 @@ public class CrawlConf implements AppConf, Serializable {
 	private String productListAnalyzeImpl = "org.cld.datacrawl.mgr.impl.ProductListAnalyze";
 	private String listAnalyzeImpl = "org.cld.datacrawl.mgr.impl.ListAnalyze";
 	private String promotionAnalyzeImpl = "org.cld.datacrawl.mgr.impl.PromotionAnalyze";
-	private String crawlDsManagerValue = crawlDsManager_Value_Hbase;
+	private String crawlDsManagerValue = "nothing";
 	private String crawlDBConnectionUrl;
 	private DataStoreManager dsm;
 

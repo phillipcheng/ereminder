@@ -184,7 +184,9 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 			if (category.isLeaf()){
 				caInf.setCatItemNum(category.getFullUrl(), catPage, category, bct);
 				//add one version if differ
-				cconf.getDsm().addCrawledItem(category, bct.getOldCat());
+				if (cconf.getDsm()!=null){
+					cconf.getDsm().addCrawledItem(category, bct.getOldCat());
+				}
 				return genBDTFromBCT(bct, category, cconf, ctconf, bcdef);
 			}else{
 				int catPages = bct.getPageNum();
@@ -193,7 +195,9 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 					caInf.setCatItemNum(url, catPage, category, bct);
 					catPages = category.getPageNum();
 					//only save the category for the 1st time
-					cconf.getDsm().addCrawledItem(category, bct.getOldCat());
+					if (cconf.getDsm()!=null){
+						cconf.getDsm().addCrawledItem(category, bct.getOldCat());
+					}
 				}
 
 				if (catPages>1){
@@ -206,8 +210,11 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 						if (!newCat.getFullUrl().equals(category.getFullUrl())){
 							//prevent having myself as the sub-category
 							newCat.setRootTaskId(bct.getRootTaskId());
-							Category oldCat = (Category) cconf.getDsm().getCrawledItem(newCat.getId().getId(),
+							Category oldCat = null;
+							if (cconf.getDsm()!=null){
+								oldCat = (Category) cconf.getDsm().getCrawledItem(newCat.getId().getId(),
 									newCat.getId().getStoreId(), Category.class);
+							}
 							if (hasUpdate(oldCat, newCat)){
 								newCat.setParentCatId(category.getId().getId());
 								BrowseCategoryTaskConf bct1 = genBCTFromCat(bct, newCat, cconf, ctconf);
@@ -227,8 +234,11 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 		String startUrl = bct.getStartURL();
 		
 		Category newCat = new Category(task.getParsedTaskDef().getTasks().getProductType());
-		Category oldCat = (Category) cconf.getDsm().getCrawledItem(ctconf.getCaInf().getCatId(startUrl, task), 
+		Category oldCat = null;
+		if (cconf.getDsm()!=null){
+			oldCat = (Category) cconf.getDsm().getCrawledItem(ctconf.getCaInf().getCatId(startUrl, task), 
 				task.getParsedTaskDef().getTasks().getStoreId(), Category.class);
+		}
 		bct.setOldCat(oldCat);
 		BrowseCatInst bci = bct.getParsedTaskDef().getBCI(startUrl);
 		newCat.setRootTaskId(task.getRootTaskId());

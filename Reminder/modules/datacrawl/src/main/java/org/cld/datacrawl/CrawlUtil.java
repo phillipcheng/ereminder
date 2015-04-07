@@ -89,38 +89,42 @@ public class CrawlUtil {
 	}
 	
 	public static void setupSessionFactory(NodeConf nc, CrawlConf cconf){
-		//fix up task session factory
-		DBConf taskDBConf = nc.getDBConf();
-		Configuration cfg = DBFactory.setUpCfg(nc.getNodeId(), TaskMgr.moduleName, taskDBConf);
-		Iterator<TaskTypeConf> itTTC = cconf.getTaskMgr().getAllTaskTypes().iterator();
-		while (itTTC.hasNext()){
-			TaskTypeConf ttconf = itTTC.next();
-			logger.info("adding task defintion:" + ttconf);
-			cfg.addAnnotatedClass(ttconf.getTaskEntityClass());
-			cfg.addAnnotatedClass(ttconf.getTaskStatClass());
+		if (cconf.getCrawlDsManager().equals(CrawlConf.crawlDsManager_Value_Hibernate)){
+			//fix up task session factory
+			DBConf taskDBConf = nc.getDBConf();
+			Configuration cfg = DBFactory.setUpCfg(nc.getNodeId(), TaskMgr.moduleName, taskDBConf);
+			Iterator<TaskTypeConf> itTTC = cconf.getTaskMgr().getAllTaskTypes().iterator();
+			while (itTTC.hasNext()){
+				TaskTypeConf ttconf = itTTC.next();
+				logger.info("adding task defintion:" + ttconf);
+				cfg.addAnnotatedClass(ttconf.getTaskEntityClass());
+				cfg.addAnnotatedClass(ttconf.getTaskStatClass());
+			}
+			DBFactory.setUpSF(cconf.getPluginClassLoader(), nc.getNodeId(), TaskMgr.moduleName, cfg);
+			
+			//fix up crawl session factory via API
+			Configuration hCfg = DBFactory.setUpCfg(nc.getNodeId(), DataCrawl.moduleName, cconf.getDBConf());
+			Map<String, ProductConf> prdConfMap = cconf.getPrdConfMap();
+			Iterator<ProductConf> it = prdConfMap.values().iterator();
+			while (it.hasNext()){
+				ProductConf pconf = it.next();
+				//cfg.addClass(pconf.getProductClass());
+				hCfg.addAnnotatedClass(pconf.getProductClass());
+				logger.debug("added annotated class:" + pconf.getProductClass());
+			}
+			DBFactory.setUpSF(cconf.getPluginClassLoader(), nc.getNodeId(), DataCrawl.moduleName, hCfg);
+			cconf.setTaskSF(DBFactory.getDBSF(nc.getNodeId(), TaskMgr.moduleName));
+			((HibernateDataStoreManagerImpl)cconf.getDsm()).setHibernateSF(DBFactory.getDBSF(nc.getNodeId(), DataCrawl.moduleName));
 		}
-		DBFactory.setUpSF(cconf.getPluginClassLoader(), nc.getNodeId(), TaskMgr.moduleName, cfg);
-		
-		//fix up crawl session factory via API
-		Configuration hCfg = DBFactory.setUpCfg(nc.getNodeId(), DataCrawl.moduleName, cconf.getDBConf());
-		Map<String, ProductConf> prdConfMap = cconf.getPrdConfMap();
-		Iterator<ProductConf> it = prdConfMap.values().iterator();
-		while (it.hasNext()){
-			ProductConf pconf = it.next();
-			//cfg.addClass(pconf.getProductClass());
-			hCfg.addAnnotatedClass(pconf.getProductClass());
-			logger.debug("added annotated class:" + pconf.getProductClass());
-		}
-		DBFactory.setUpSF(cconf.getPluginClassLoader(), nc.getNodeId(), DataCrawl.moduleName, hCfg);
-		cconf.setTaskSF(DBFactory.getDBSF(nc.getNodeId(), TaskMgr.moduleName));
-		((HibernateDataStoreManagerImpl)cconf.getDsm()).setHibernateSF(DBFactory.getDBSF(nc.getNodeId(), DataCrawl.moduleName));
 	}	
 	
 	public static void addPrdConfToSessionFactory(ProductConf prdConf, CrawlConf cconf, String nodeId){
-		Configuration cfg = DBFactory.getDBCfg(nodeId, DataCrawl.moduleName);
-		cfg.addAnnotatedClass(prdConf.getProductClass());
-		DBFactory.setUpSF(cconf.getPluginClassLoader(), nodeId, DataCrawl.moduleName, cfg);
-		((HibernateDataStoreManagerImpl)cconf.getDsm()).setHibernateSF(DBFactory.getDBSF(nodeId, DataCrawl.moduleName));
+		if (cconf.getCrawlDsManager().equals(CrawlConf.crawlDsManager_Value_Hibernate)){
+			Configuration cfg = DBFactory.getDBCfg(nodeId, DataCrawl.moduleName);
+			cfg.addAnnotatedClass(prdConf.getProductClass());
+			DBFactory.setUpSF(cconf.getPluginClassLoader(), nodeId, DataCrawl.moduleName, cfg);
+			((HibernateDataStoreManagerImpl)cconf.getDsm()).setHibernateSF(DBFactory.getDBSF(nodeId, DataCrawl.moduleName));
+		}
 	}	
 	
 	public static void hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, String sourceName){

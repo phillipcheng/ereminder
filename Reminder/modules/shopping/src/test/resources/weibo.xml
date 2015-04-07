@@ -48,6 +48,7 @@
 			</link>
 		</click>
 		<redirectedURL fromType="xpath" value="//div[@node-type='login_frame']"/>
+		<redirectedURL fromType="url" value="http://www.weibo.com/login.php"/>
 		<loginURL fromType="url" value="http://us.weibo.com/gb#"/>
 		<credential username="phillipchengyia@gmail.com" password="testtest"/>
 		<credential username="phillipchengyib@gmail.com" password="testtest"/>

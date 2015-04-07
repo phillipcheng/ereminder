@@ -12,14 +12,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlTaskConf;
+import org.cld.datacrawl.NextPage;
 import org.cld.datacrawl.ProductConf;
 import org.cld.datacrawl.mgr.impl.CrawlTaskEval;
 import org.cld.datacrawl.pagea.CategoryAnalyzeInf;
 import org.cld.datacrawl.task.BrowseCategoryTaskConf;
+import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.datastore.entity.Category;
 import org.cld.datastore.entity.CrawledItemId;
 import org.cld.taskmgr.entity.Task;
 import org.xml.taskdef.BrowseCatType;
+import org.xml.taskdef.ClickStreamType;
 import org.xml.taskdef.SubListType;
 import org.xml.taskdef.ValueType;
 import org.xml.taskdef.VarType;
@@ -30,6 +33,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 import org.xml.mytaskdef.BrowseCatInst;
+import org.xml.mytaskdef.ConfKey;
 import org.xml.mytaskdef.IdUrlMapping;
 import org.xml.mytaskdef.ParsedTasksDef;
 
@@ -108,6 +112,27 @@ public class CategoryAnalyze implements CategoryAnalyzeInf {
 		List<Category> lc = new ArrayList<Category>();
 		if (hel.size()>0){
 			for (DomNode he:hel){
+				//itemFullUrl is applied after itemFullUrlClicks are applied if any
+				ClickStreamType itemFullUrlClicks = slt.getItemFullUrlClicks();
+				if (itemFullUrlClicks!=null){
+					//remember the item id
+					String itemId=null;
+					if (slt.getItemId()!=null){
+						itemId = (String) CrawlTaskEval.eval(he, slt.getItemId(), cconf, null);
+					}
+					//apply the itemFullUrlClicks
+					Map<String, List<? extends DomNode>> pageMap = new HashMap<String, List<? extends DomNode>>();
+					List<DomNode> pagelist= new ArrayList<DomNode>();
+					pagelist.add(he);
+					pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
+					HtmlUnitUtil.clickClickStream(itemFullUrlClicks, pageMap, null, cconf, new NextPage(requestUrl));
+					pagelist = (List<DomNode>) pageMap.get(ConfKey.CURRENT_PAGE);
+					HtmlPage afterLoginPage = (HtmlPage) pagelist.get(0);
+					//refetch the dom node back
+					if (slt.getItemId()!=null){
+						String xpath = slt.getItemId().getValue() + "='" + itemId +"'";
+					}
+				}
 				String itemFullUrlXpath = slt.getItemFullUrl();
 				DomNode fullUrlAnchor = null;
 				if (itemFullUrlXpath!=null){
@@ -146,7 +171,7 @@ public class CategoryAnalyze implements CategoryAnalyzeInf {
 								fullUrl, requestUrl));
 					}
 				}else{
-					logger.error(String.format("unsupported html element: %s, xpath:%s from element %s on page:%s", 
+					logger.error(String.format("unsupported html element for itemFullUrl: %s, xpath:%s from element %s on page:%s", 
 							fullUrlAnchor, slt.getItemFullUrl(), he, requestUrl));
 				}
 			}

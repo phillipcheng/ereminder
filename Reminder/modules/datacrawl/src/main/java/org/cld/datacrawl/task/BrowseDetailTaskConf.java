@@ -90,8 +90,13 @@ public class BrowseDetailTaskConf extends Task implements Serializable{
 				this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
 				IListAnalyze la = ctconf.getLa();		
 				//2. build category from TaskEntry
-				Category category = (Category) cconf.getDsm().getCrawledItem(getCatId(), taskTemplate.getParsedTaskDef().getTasks().getStoreId(),
+				Category category = null;
+				if (cconf.getDsm()!=null){
+					category = (Category) cconf.getDsm().getCrawledItem(getCatId(), taskTemplate.getParsedTaskDef().getTasks().getStoreId(),
 						Category.class);
+				}else{
+					category = new Category();
+				}
 				String catUrl = ctconf.getCaInf().getCatURL(category, this.fromPage, taskTemplate.getParsedTaskDef());
 				logger.info("start browsing category:" + catUrl);
 				category.setFullUrl(catUrl);

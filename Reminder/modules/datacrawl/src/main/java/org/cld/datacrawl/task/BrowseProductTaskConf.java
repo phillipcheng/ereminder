@@ -175,7 +175,9 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 			String internalId = blaInf.getInternalId(startUrl, task, pbpTemplate);
 			if (internalId!=null && !"".equals(internalId)){			
 				//lastProduct = CrawlPersistMgr.getProduct(cconf.getCrawlSF(), internalId);
-				lastProduct = (Product) cconf.getDsm().getCrawledItem(internalId, storeId, Product.class);
+				if (cconf.getDsm()!=null){
+					lastProduct = (Product) cconf.getDsm().getCrawledItem(internalId, storeId, Product.class);
+				}
 				Price thisDetailPrice = null;
 				if (lastProduct != null){
 					//belong to more categories
@@ -190,11 +192,15 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 					}
 					//get 1st browse prd task's monitor price definition
 					if (task.getBrowseDetailTask(null).getBrowsePrdTaskType().isMonitorPrice()){
-						Price lastProductPrice = cconf.getDsm().getLatestPrice(internalId, storeId);
+						Price lastProductPrice = null;
+						if (cconf.getDsm()!=null){
+							lastProductPrice = cconf.getDsm().getLatestPrice(internalId, storeId);
+						}
 						thisDetailPrice = ba.readPrice(wc, startUrl, internalId, storeId, null, task, pbpTemplate);
 						if (thisDetailPrice!=null){
 							if (Price.looksChanged(lastProductPrice, thisDetailPrice)){//for version check
-								cconf.getDsm().addPrice(thisDetailPrice);
+								if (cconf.getDsm()!=null)
+									cconf.getDsm().addPrice(thisDetailPrice);
 							}
 						}
 					}
@@ -210,7 +216,8 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 						logger.debug("adding new product:" + thisProduct);
 						thisDetailPrice = ba.readPrice(wc, startUrl, internalId, storeId, null, task, pbpTemplate);
 						if (thisDetailPrice!=null){
-							cconf.getDsm().addPrice(thisDetailPrice);
+							if (cconf.getDsm()!=null)
+								cconf.getDsm().addPrice(thisDetailPrice);
 						}
 					}
 				}
