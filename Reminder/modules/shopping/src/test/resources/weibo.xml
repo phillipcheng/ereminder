@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd-->
-<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/Users/chengyi/Documents/ereminder/Reminder/modules/shopping/src/main/resources/Task_2_0.xsd" rootVolume="999990" storeId="weibo" productType="default">
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/mydoc/myprojects/ereminder/Reminder/modules/shopping/src/main/resources/Task_2_0.xsd" rootVolume="999990" storeId="weibo" productType="default">
 	<loginInfo>
 		<click>
 			<link pageName="homepage">
@@ -23,8 +28,7 @@
 				<nextpage waitTime="2">
 					<successNextPage name="personhp">
 						<value value="//div[@class='weibo-logindialog-form']/p[last()]/a[1]">
-							<pageVerify xpath="//div[@class='topBar']//span[@class='logout']/a" expectedContent="登出">
-							</pageVerify>
+							<pageVerify xpath="//div[@class='topBar']//span[@class='logout']/a" expectedContent="登出"/>
 						</value>
 					</successNextPage>
 				</nextpage>
@@ -54,7 +58,7 @@
 		</loginSuccessCondition>
 	</loginInfo>
 	<CatTask isLeaf="false" pagesPerBDT="2">
-		<baseBrowseTask enableJS="true" taskName="userCat" startUrl="http://www.weibo.com/hegang10135?page=1">
+		<baseBrowseTask enableJS="true" taskName="userCat" startUrl="http://www.weibo.com/hegang10135">
 			<userAttribute name="username">
 				<value value="//div[@class='pf_username']/span[@class='username']"/>
 			</userAttribute>
@@ -67,6 +71,10 @@
 				<Token value="?page=" name="suffix" type="string"/>
 				<Token value="[0-9]+" name="pagenum" type="regexp"/>
 			</idUrlMapping>
+			<idUrlMappingFirstPage>
+				<Token value="http://www.weibo.com/" name="prefix" type="string"/>
+				<Token value="[a-zA-Z0-9/]+" name="id" type="regexp"/>
+			</idUrlMappingFirstPage>
 		</baseBrowseTask>
 		<subItemList itemFullUrl="//div[@node-type='feed_list_commentList']/a[last()]" nextScreen="//div[@id='pl_common_footer']/a">
 			<itemList value="//div[@id='Pl_Official_MyProfileFeed__22']/div[1]/div[2]/div"/>

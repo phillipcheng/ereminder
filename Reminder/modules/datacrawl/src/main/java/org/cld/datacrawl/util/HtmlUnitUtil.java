@@ -332,8 +332,6 @@ public class HtmlUnitUtil {
 						}else if (redirectUrlVT.getFromType()==VarType.XPATH && landingPage.getFirstByXPath(redirectUrlVT.getValue())!=null){
 							requireLogin = true;
 							break;
-						}else{
-							logger.error("var type not supported for redirectUrlVT: " + redirectUrlVT.getFromType());
 						}
 					}
 				}

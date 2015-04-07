@@ -20,7 +20,7 @@ public class TestWeibo extends TestBase{
 	public static final String SITE_CONF_FILE ="weibo.xml";
 	
 	public static final String[] startUrls = new String[]{
-		"https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=D,E&page_num=1",
+		"http://www.weibo.com/hwrichardyu",
 	};
 	
 	@Test
