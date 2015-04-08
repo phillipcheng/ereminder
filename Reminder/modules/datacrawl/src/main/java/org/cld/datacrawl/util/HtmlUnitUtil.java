@@ -1,6 +1,8 @@
 package org.cld.datacrawl.util;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -34,7 +36,10 @@ import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomNamespaceNode;
 import com.gargoylesoftware.htmlunit.html.DomNode;
 import com.gargoylesoftware.htmlunit.html.DomText;
+import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
+import com.gargoylesoftware.htmlunit.html.HtmlDivision;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
+import com.gargoylesoftware.htmlunit.html.HtmlImage;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
@@ -55,7 +60,7 @@ public class HtmlUnitUtil {
 	private static final String KEY_USERNAME="username";
 	private static final String KEY_PASSWORD="password";
 	private static Logger logger =  LogManager.getLogger(HtmlUnitUtil.class);
-
+	
 	/*
 	 * directly get page from webclient without the validation, retrying, etc
 	 */
@@ -65,8 +70,10 @@ public class HtmlUnitUtil {
 			page = wc.getPage(np.getNextUrl());
 		else{
 			if (np.getNextItem()!=null){
+				logger.debug(String.format("clicking item: %s on page %s now.", np.getNextItem().asXml(), np.getNextItem().getPage().getUrl().toExternalForm()));
 				page = np.getNextItem().click();
 			}else{
+				logger.error("wrong np, no next url, no next item.");
 				return null;
 			}
 		}
@@ -214,7 +221,8 @@ public class HtmlUnitUtil {
 	 * 
 	 * @param clickstream
 	 * @param pageMap: in-out
-	 * @param task: task instance
+	 * @param params
+	 * @param cconf
 	 * @param currentNP, the url of current page for log
 	 * @throws InterruptedException 
 	 */
@@ -483,21 +491,5 @@ public class HtmlUnitUtil {
 		
 		logger.warn("retried with :" + np + ". reach max times:" + cconf.getMaxRetry());
 		return result;
-	}
-	
-	public static String xpathResultToString(Object xpathResult){
-		String strResult = null;
-		if (xpathResult instanceof HtmlInput){
-			strResult = ((HtmlInput)xpathResult).getValueAttribute();
-		}else if (xpathResult instanceof DomNamespaceNode){
-			strResult = ((DomNamespaceNode)xpathResult).getTextContent().trim();
-		}else if (xpathResult instanceof DomText){
-			strResult = ((DomText)xpathResult).getTextContent().trim();
-		}else if (xpathResult instanceof HtmlElement){
-			strResult = ((HtmlElement)xpathResult).asText();
-		}else{
-			logger.error(String.format("xpath result:%s can't be converted to string", xpathResult));
-		}
-		return strResult;
 	}
 }

@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd-->
 <Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/mydoc/myprojects/ereminder/Reminder/modules/shopping/src/main/resources/Task_2_0.xsd" rootVolume="999990" storeId="weibo" productType="default">
 	<loginInfo>
@@ -28,7 +25,10 @@
 				<nextpage waitTime="2">
 					<successNextPage name="personhp">
 						<value value="//div[@class='weibo-logindialog-form']/p[last()]/a[1]">
-							<pageVerify xpath="//div[@class='topBar']//span[@class='logout']/a" expectedContent="登出"/>
+							<pageVerify operator="=">
+								<lhs value="//div[@class='topBar']//span[@class='logout']/a"/>
+								<rhs value="登出"/>
+							</pageVerify>
 						</value>
 					</successNextPage>
 				</nextpage>
@@ -70,15 +70,18 @@
 				<Token value="http://www.weibo.com/" name="prefix" type="string"/>
 				<Token value="[a-zA-Z0-9/]+" name="id" type="regexp"/>
 				<Token value="?page=" name="suffix" type="string"/>
-				<Token value="[0-9]+" name="pagenum" type="regexp"/>
+				<Token value="[0-9]+" name="pageNum" type="regexp"/>
 			</idUrlMapping>
 			<idUrlMappingFirstPage>
 				<Token value="http://www.weibo.com/" name="prefix" type="string"/>
 				<Token value="[a-zA-Z0-9/]+" name="id" type="regexp"/>
 			</idUrlMappingFirstPage>
 		</baseBrowseTask>
-		<subItemList itemFullUrl="//div[@node-type='feed_list_commentList']/a[last()]" nextScreen="//div[@id='pl_common_footer']/a">
+		<subItemList nextScreen="//div[@id='pl_common_footer']/a">
 			<itemList value="//div[@id='Pl_Official_MyProfileFeed__22']/div[1]/div[2]/div"/>
+			<userAttribute name="mid">
+				<value fromType="xpath" value="./@mid"/>
+			</userAttribute>
 			<userAttribute name="text">
 				<value fromType="xpath" value="//div[@class='WB_detail']/div[1]"/>
 			</userAttribute>
@@ -102,16 +105,21 @@
 				<lhs value="//div[@id='Pl_Official_MyProfileFeed__22']/div[1]/div[2]/div[last()]/@node-type" fromType="xpath"/>
 				<rhs value="feed_list_page" fromType="string"/>
 			</lastScreenCondition>
+			<itemFullUrl value="//div[@id='Pl_Official_MyProfileFeed__22']/div[1]/div[2]/div[@mid='[mid]']//div[@node-type='feed_list_commentList']/a[last()]" basePage="listPage"/>
 			<itemFullUrlClicks>
 				<link>
 					<nextpage>
 						<successNextPage name="commentPage">
-							<value value="./div[2]/div[1]/ul[1]/li[3]/a"/>
+							<value value="./div[2]/div[1]/ul[1]/li[3]/a">
+								<pageVerify operator="!=">
+									<lhs value="//div[@id='Pl_Official_MyProfileFeed__22']/div[1]/div[2]/div[@mid='[mid]']//div[@node-type='feed_list_commentList']/a[last()]"/>
+									<rhs value="null"/>
+								</pageVerify>
+							</value>
 						</successNextPage>
 					</nextpage>
 				</link>
 			</itemFullUrlClicks>
-			<itemId value="./@mid"/>
 		</subItemList>
 		<itemPerPage value="45"/>
 		<totalItemNum value="//div[@id='Pl_Core_T8CustomTriColumn__3']//table[1]/tbody[1]/tr[1]/td[last()]/a[1]/strong[1]"/>

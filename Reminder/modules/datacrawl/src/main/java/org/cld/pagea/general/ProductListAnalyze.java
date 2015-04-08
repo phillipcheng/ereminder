@@ -137,7 +137,7 @@ public class ProductListAnalyze implements ProductListAnalyzeInf {
 			if (slt.getItemFullUrl()==null){
 				fullUrlAnchor = itemSummary;
 			}else{
-				fullUrlAnchor = itemSummary.getFirstByXPath(slt.getItemFullUrl());
+				fullUrlAnchor = itemSummary.getFirstByXPath(slt.getItemFullUrl().getValue()); //TODO
 			}
 			
 			if (fullUrlAnchor !=null){

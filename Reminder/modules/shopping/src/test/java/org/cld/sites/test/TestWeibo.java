@@ -19,14 +19,14 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 public class TestWeibo extends TestBase{
 	public static final String SITE_CONF_FILE ="weibo.xml";
 	
-	public static final String[] startUrls = new String[]{
+	public static final String[] bct_startUrls = new String[]{
 		"http://www.weibo.com/hwrichardyu",
 	};
 	
 	@Test
 	public void run_linkedin_bct() throws Exception{
-		for (String startUrl:startUrls){
-			catNavigate(SITE_CONF_FILE, startUrl, CrawlTestUtil.BROWSE_CAT_TYPE_RECURSIVE);	
+		for (String startUrl:bct_startUrls){
+			catNavigate(SITE_CONF_FILE, startUrl, CrawlTestUtil.BROWSE_CAT_TYPE_RECURSIVE, 1);	
 		}
 	}
 	

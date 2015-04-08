@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.datacrawl.mgr.impl.CrawlTaskEval;
 import org.cld.util.PatternResult;
 import org.xml.taskdef.AttributeType;
 import org.xml.taskdef.ClickType;
@@ -74,7 +75,7 @@ public class VerifyPageByXPath implements VerifyPage {
 					logger.warn(String.format("xpath:%s not found on page %s", xpathsSuccess[i], page.getUrl().toExternalForm()));;
 					return false;
 				}else{
-					String strResult = HtmlUnitUtil.xpathResultToString(result);
+					String strResult = CrawlTaskEval.getStringValue(result);
 					if (expectedValues!=null){
 						if (strResult!=null){
 							if (!expectedValues[i].equals(strResult)){

@@ -38,6 +38,7 @@ import org.xml.mytaskdef.IdUrlMapping;
 import org.xml.mytaskdef.ParsedTasksDef;
 
 public class CategoryAnalyze implements CategoryAnalyzeInf {
+	
 	private static Logger logger =  LogManager.getLogger(CategoryAnalyze.class);
 	
 	public CrawlConf cconf;
@@ -55,15 +56,21 @@ public class CategoryAnalyze implements CategoryAnalyzeInf {
 		BrowseCatInst bci = task.getBCI(task.getStartURL());
 		if (bci!=null){
 			ValueType totalItemNumVT = bci.getBc().getTotalItemNum();
-			ValueType totalPageNumVT = bci.getBc().getTotalPageNum();
 			if (totalItemNumVT!=null){
 				if (totalItemNumVT.getFromType()==VarType.XPATH || totalItemNumVT.getValue().contains("//")){
 					xpaths.add(totalItemNumVT.getValue());
 				}
 			}
+			ValueType totalPageNumVT = bci.getBc().getTotalPageNum();
 			if (totalPageNumVT!=null){
 				if (totalPageNumVT.getFromType()==VarType.XPATH || totalPageNumVT.getValue().contains("//")){
 					xpaths.add(totalPageNumVT.getValue());
+				}
+			}
+			ValueType itemListVT = bci.getBc().getSubItemList().getItemList();
+			if (itemListVT!=null){
+				if (itemListVT.getFromType()==VarType.XPATH || itemListVT.getValue().contains("/")){
+					xpaths.add(itemListVT.getValue());
 				}
 			}
 		}
@@ -101,6 +108,8 @@ public class CategoryAnalyze implements CategoryAnalyzeInf {
 		String url = requestUrl;
 		BrowseCatInst bci = task.getBCI(url);
 		BrowseCatType bc = bci.getBc();
+		
+		//evaluate the sublist of html elements
 		SubListType slt = bc.getSubItemList();
 		ValueType listXPathVT = slt.getItemList();
 		if (listXPathVT.getToType()==null){
@@ -112,42 +121,35 @@ public class CategoryAnalyze implements CategoryAnalyzeInf {
 		List<Category> lc = new ArrayList<Category>();
 		if (hel.size()>0){
 			for (DomNode he:hel){
-				//itemFullUrl is applied after itemFullUrlClicks are applied if any
+				//evaluate the attributes
+				Map<String, Object> userAttributes = new HashMap<String, Object>();
+				CrawlTaskEval.setUserAttributes(he, slt.getUserAttribute(), userAttributes, cconf, task.getParamMap());
+				//evaluate itemFullUrlClicks if have
 				ClickStreamType itemFullUrlClicks = slt.getItemFullUrlClicks();
+				HtmlPage newlistPage = null;
 				if (itemFullUrlClicks!=null){
-					//remember the item id
-					String itemId=null;
-					if (slt.getItemId()!=null){
-						itemId = (String) CrawlTaskEval.eval(he, slt.getItemId(), cconf, null);
-					}
 					//apply the itemFullUrlClicks
 					Map<String, List<? extends DomNode>> pageMap = new HashMap<String, List<? extends DomNode>>();
 					List<DomNode> pagelist= new ArrayList<DomNode>();
 					pagelist.add(he);
 					pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
-					HtmlUnitUtil.clickClickStream(itemFullUrlClicks, pageMap, null, cconf, new NextPage(requestUrl));
+					HtmlUnitUtil.clickClickStream(itemFullUrlClicks, pageMap, userAttributes, cconf, new NextPage(requestUrl));
 					pagelist = (List<DomNode>) pageMap.get(ConfKey.CURRENT_PAGE);
-					HtmlPage afterLoginPage = (HtmlPage) pagelist.get(0);
-					//refetch the dom node back
-					if (slt.getItemId()!=null){
-						String xpath = slt.getItemId().getValue() + "='" + itemId +"'";
-					}
+					newlistPage = (HtmlPage) pagelist.get(0);
 				}
-				String itemFullUrlXpath = slt.getItemFullUrl();
-				DomNode fullUrlAnchor = null;
+				ValueType itemFullUrlXpath = slt.getItemFullUrl();
+				String fullUrl = null;
 				if (itemFullUrlXpath!=null){
-					fullUrlAnchor = he.getFirstByXPath(slt.getItemFullUrl());
-				}else{
-					fullUrlAnchor = he;
-				}
-				if (fullUrlAnchor instanceof HtmlAnchor){
-					String fullUrl=null;
-					HtmlAnchor ha = (HtmlAnchor)fullUrlAnchor;
-					try {
-						fullUrl = catlist.getFullyQualifiedUrl(ha.getHrefAttribute()).toExternalForm();
-					} catch (MalformedURLException e) {
-						logger.error("", e);
+					if (ConfKey.LIST_PAGE.equals(itemFullUrlXpath.getBasePage())){
+						itemFullUrlXpath.setBasePage(null);//TODO, here list page just indicate using list page not item object
+						fullUrl = (String) CrawlTaskEval.eval(newlistPage, itemFullUrlXpath, cconf, userAttributes);
+					}else{
+						fullUrl = (String) CrawlTaskEval.eval(he, itemFullUrlXpath, cconf, userAttributes);
 					}
+				}else{
+					fullUrl = CrawlTaskEval.getURLStringValue(he, catlist);
+				}
+				if (fullUrl!=null){
 					String catId = getCatId(fullUrl, task);
 					if (catId!=null){
 						DomNamespaceNode dsn;
@@ -164,15 +166,16 @@ public class CategoryAnalyze implements CategoryAnalyzeInf {
 							cat.setLastItem(dsn.getTextContent());
 						}	
 						//set user attr
-						CrawlTaskEval.setUserAttributes(he, slt.getUserAttribute(), cat.getParamMap(), cconf, task.getParamMap());
+						cat.getParamMap().putAll(userAttributes);
 						lc.add(cat);
+						logger.debug(String.format("cat got: %s", cat));
 					}else{
 						logger.error(String.format("cat returned in sublist with url: %s is not a valid url on page:%s", 
 								fullUrl, requestUrl));
 					}
 				}else{
 					logger.error(String.format("unsupported html element for itemFullUrl: %s, xpath:%s from element %s on page:%s", 
-							fullUrlAnchor, slt.getItemFullUrl(), he, requestUrl));
+							fullUrl, slt.getItemFullUrl(), he, requestUrl));
 				}
 			}
 		}else{

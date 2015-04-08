@@ -240,9 +240,11 @@ public class StringUtil {
 	
 	//replace "[param]" with value from params map, only support type string, for list type, should call this multiple times
 	public static String fillParams(String input, Map<String, Object> params, 
-			String prefix, String postfix){
-		for (String key: params.keySet()){
-			input = input.replace(prefix + key + postfix, params.get(key).toString());
+			String prefix, String postfix){//TODO slow
+		if (input.contains(prefix) && input.contains(postfix) && params!=null){
+			for (String key: params.keySet()){
+				input = input.replace(prefix + key + postfix, params.get(key).toString());
+			}
 		}
 		return input;
 	}

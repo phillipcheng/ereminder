@@ -152,16 +152,21 @@ public class CrawlTestUtil{
 		logger.info("bds:" + srt.bdtBS);
 	}
 	
-	//defaults to startUrl and 1 path type
 	public static void catNavigate(String siteconfid, String confFileName, CrawlConf cconf, 
 			String rootTaskId, CrawlClientNode ccnode, String propFile) 
 			throws InterruptedException{
-		catNavigate(siteconfid, confFileName, null, BROWSE_CAT_TYPE_1_PATH, cconf, rootTaskId, null, ccnode, propFile);
+		catNavigate(siteconfid, confFileName, null, BROWSE_CAT_TYPE_1_PATH, cconf, rootTaskId, null, ccnode, propFile, 0);
+	}
+	//defaults to startUrl and 1 path type
+	public static void catNavigate(String siteconfid, String confFileName, CrawlConf cconf, 
+			String rootTaskId, CrawlClientNode ccnode, String propFile, int pageNum) 
+			throws InterruptedException{
+		catNavigate(siteconfid, confFileName, null, BROWSE_CAT_TYPE_1_PATH, cconf, rootTaskId, null, ccnode, propFile, pageNum);
 	}
 	
 	public static void catNavigate(String siteconfid, String confFileName, String catUrl, int type, 
-			CrawlConf cconf, String rootTaskId, CrawlClientNode ccnode, String propFile) throws InterruptedException {
-		catNavigate(siteconfid, confFileName, catUrl, type, cconf, rootTaskId, null, ccnode, propFile);
+			CrawlConf cconf, String rootTaskId, CrawlClientNode ccnode, String propFile, int pageNum) throws InterruptedException {
+		catNavigate(siteconfid, confFileName, catUrl, type, cconf, rootTaskId, null, ccnode, propFile, pageNum);
 	}
 	
 	/**
@@ -177,7 +182,7 @@ public class CrawlTestUtil{
 	 * @throws Exception
 	 */
 	public static void catNavigate(String siteconfid, String confFileName, String catUrl, int type, 
-			CrawlConf cconf, String rootTaskId, Map<String, Object> inparams, CrawlClientNode ccnode, String propFile) 
+			CrawlConf cconf, String rootTaskId, Map<String, Object> inparams, CrawlClientNode ccnode, String propFile, int pageNum) 
 			throws InterruptedException {
 		if (confFileName!=null){
 			cconf.setUpSite(confFileName, null);
@@ -185,6 +190,7 @@ public class CrawlTestUtil{
 		}
 		SiteRuntime srt = getSRT(siteconfid, cconf, rootTaskId);
 		logger.debug("set start url for cat navigate.");
+		srt.getBct().setPageNum(pageNum);
 		if (catUrl==null || "".equals(catUrl)){
 			srt.getBct().setStartURL(srt.getBct().getRootBrowseCatTask().getBaseBrowseTask().getStartUrl());
 		}else{

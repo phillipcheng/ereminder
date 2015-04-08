@@ -10,6 +10,7 @@
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:element name="Tasks" type="TasksType"/>
 	<xs:simpleType name="VarType">
@@ -85,7 +86,7 @@
 					<xs:documentation>multiple sample provided for toType is Page or Pagelist</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="pageVerify" type="PageVerifyType" minOccurs="0" maxOccurs="unbounded">
+			<xs:element name="pageVerify" type="BinaryBoolOp" minOccurs="0" maxOccurs="unbounded">
 				<xs:annotation>
 					<xs:documentation>string to verify if page or pagelist type, for pagelist, this is also a list, 1-1 mapping.</xs:documentation>
 				</xs:annotation>
@@ -241,14 +242,10 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 			</xs:element>
 			<xs:element name="lastScreenCondition" type="BinaryBoolOp" minOccurs="0"/>
 			<xs:element name="name" type="ValueType" minOccurs="0"/>
+			<xs:element name="itemFullUrl" type="ValueType" minOccurs="0"/>
 			<xs:element name="itemFullUrlClicks" type="ClickStreamType" minOccurs="0">
 				<xs:annotation>
 					<xs:documentation>clicks needed before apply itemFullUrl</xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element name="itemId" type="ValueType" minOccurs="0">
-				<xs:annotation>
-					<xs:documentation>the xpath to the id of the item (relative to the item html element), help system to find back the item after clicks</xs:documentation>
 				</xs:annotation>
 			</xs:element>
 		</xs:sequence>
@@ -264,7 +261,6 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 				<xs:documentation>turn vertically</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
-		<xs:attribute name="itemFullUrl" type="xs:string" use="optional"/>
 	</xs:complexType>
 	<xs:complexType name="AttributeType">
 		<xs:sequence>
@@ -323,11 +319,6 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 				</xs:annotation>
 			</xs:element>
 		</xs:sequence>
-		<xs:attribute name="impl" type="xs:string">
-			<xs:annotation>
-				<xs:documentation>the implementation of the click stream, can be a java class.</xs:documentation>
-			</xs:annotation>
-		</xs:attribute>
 	</xs:complexType>
 	<xs:complexType name="TasksType">
 		<xs:sequence>
@@ -387,18 +378,6 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 		<xs:attribute name="pageName" type="xs:string">
 			<xs:annotation>
 				<xs:documentation>if only 1 click in the click stream, the pageName is optional.</xs:documentation>
-			</xs:annotation>
-		</xs:attribute>
-	</xs:complexType>
-	<xs:complexType name="PageVerifyType">
-		<xs:attribute name="xpath" type="xs:string" use="optional">
-			<xs:annotation>
-				<xs:documentation>if this is missing, then root</xs:documentation>
-			</xs:annotation>
-		</xs:attribute>
-		<xs:attribute name="expectedContent" type="xs:string" use="optional">
-			<xs:annotation>
-				<xs:documentation>if this is missing, then xpath should exist</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 	</xs:complexType>

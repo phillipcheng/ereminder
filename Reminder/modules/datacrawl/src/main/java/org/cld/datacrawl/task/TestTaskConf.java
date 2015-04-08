@@ -93,7 +93,7 @@ public class TestTaskConf extends Task implements Serializable{
 				CrawlTestUtil.catNavigate(siteconfid, null, cconf, getId(), null, null);
 			}else if (taskType == TEST_TASK_BCT){
 				CrawlTestUtil.catNavigate(siteconfid, null, startUrl, 
-						CrawlTestUtil.BROWSE_CAT_TYPE_RECURSIVE, cconf, getId(), null, null);
+						CrawlTestUtil.BROWSE_CAT_TYPE_RECURSIVE, cconf, getId(), null, null, 0);
 			}else if (taskType == TEST_TASK_ONE_BOOK){
 				CrawlTestUtil.browsePrd(siteconfid, null, startUrl, cconf, getId());
 			}else if (taskType == TEST_TASK_BDT_TURNPAGEONLY){

@@ -164,67 +164,70 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 	 * @throws InterruptedException 
 	 */
 	private List<Task> navigateCategoryOneLvl(BrowseCategoryTaskConf bct, BrowseCatType bcdef) throws InterruptedException{
-		CategoryAnalyzeInf caInf = ctconf.getCaInf();
-		Category category = bct.getNewCat();
-		String url = bct.getStartURL();
-		
-		boolean needJS = caInf.needJS(url, bct);
-		WebClient wc = CrawlUtil.getWebClient(cconf, bct.getParsedTaskDef().getSkipUrls(), needJS);
-		HtmlPageResult catPageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(url), 
-				new VerifyPageByXPath(caInf.getCatPageVerifyXPaths(category, bct)), null, bct.getTasks().getLoginInfo(), cconf);
-		HtmlPage catPage = catPageResult.getPage();
-		CrawlUtil.closeWebClient(wc);
-		
-		if (catPageResult.getErrorCode() != HtmlPageResult.SUCCSS || catPage == null){
-			logger.warn("get url:" + url +", to contains:" + 
-					ArrayUtils.toString(caInf.getCatPageVerifyXPaths(category, bct)) 
-					+ " failed with:" + catPageResult.getErrorMsg());
-			return new ArrayList<Task>();
-		}else{
-			if (category.isLeaf()){
-				caInf.setCatItemNum(category.getFullUrl(), catPage, category, bct);
-				//add one version if differ
-				if (cconf.getDsm()!=null){
-					cconf.getDsm().addCrawledItem(category, bct.getOldCat());
-				}
-				return genBDTFromBCT(bct, category, cconf, ctconf, bcdef);
+		WebClient wc = null;
+		try{
+			CategoryAnalyzeInf caInf = ctconf.getCaInf();
+			Category category = bct.getNewCat();
+			String url = bct.getStartURL();
+			boolean needJS = caInf.needJS(url, bct);
+			wc = CrawlUtil.getWebClient(cconf, bct.getParsedTaskDef().getSkipUrls(), needJS);
+			HtmlPageResult catPageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(url), 
+					new VerifyPageByXPath(caInf.getCatPageVerifyXPaths(category, bct)), null, bct.getTasks().getLoginInfo(), cconf);
+			HtmlPage catPage = catPageResult.getPage();
+			
+			if (catPageResult.getErrorCode() != HtmlPageResult.SUCCSS || catPage == null){
+				logger.warn("get url:" + url +", to contains:" + 
+						ArrayUtils.toString(caInf.getCatPageVerifyXPaths(category, bct)) 
+						+ " failed with:" + catPageResult.getErrorMsg());
+				return new ArrayList<Task>();
 			}else{
-				int catPages = bct.getPageNum();
-				if (catPages==0){
-					//we ask, 1st time, we navigate this category detail
-					caInf.setCatItemNum(url, catPage, category, bct);
-					catPages = category.getPageNum();
-					//only save the category for the 1st time
+				if (category.isLeaf()){
+					caInf.setCatItemNum(category.getFullUrl(), catPage, category, bct);
+					//add one version if differ
 					if (cconf.getDsm()!=null){
 						cconf.getDsm().addCrawledItem(category, bct.getOldCat());
 					}
-				}
-
-				if (catPages>1){
-					//we generate bct from bct for each page
-					return genBCTFromBCT(bct, catPages, cconf, ctconf);
-				}else{ //catPages =1
-					List<Category> catList = caInf.getSubCategoyList(url, catPage, category, bct);
-					List<Task> tasks = new ArrayList<Task>();
-					for (Category newCat:catList){
-						if (!newCat.getFullUrl().equals(category.getFullUrl())){
-							//prevent having myself as the sub-category
-							newCat.setRootTaskId(bct.getRootTaskId());
-							Category oldCat = null;
-							if (cconf.getDsm()!=null){
-								oldCat = (Category) cconf.getDsm().getCrawledItem(newCat.getId().getId(),
-									newCat.getId().getStoreId(), Category.class);
-							}
-							if (hasUpdate(oldCat, newCat)){
-								newCat.setParentCatId(category.getId().getId());
-								BrowseCategoryTaskConf bct1 = genBCTFromCat(bct, newCat, cconf, ctconf);
-								tasks.add(bct1);
-							}
+					return genBDTFromBCT(bct, category, cconf, ctconf, bcdef);
+				}else{
+					int catPages = bct.getPageNum();
+					if (catPages==0){
+						//we ask, 1st time, we navigate this category detail
+						caInf.setCatItemNum(url, catPage, category, bct);
+						catPages = category.getPageNum();
+						//only save the category for the 1st time
+						if (cconf.getDsm()!=null){
+							cconf.getDsm().addCrawledItem(category, bct.getOldCat());
 						}
 					}
-					return tasks;
+	
+					if (catPages>1){
+						//we generate bct from bct for each page
+						return genBCTFromBCT(bct, catPages, cconf, ctconf);
+					}else{ //catPages =1
+						List<Category> catList = caInf.getSubCategoyList(url, catPage, category, bct);
+						List<Task> tasks = new ArrayList<Task>();
+						for (Category newCat:catList){
+							if (!newCat.getFullUrl().equals(category.getFullUrl())){
+								//prevent having myself as the sub-category
+								newCat.setRootTaskId(bct.getRootTaskId());
+								Category oldCat = null;
+								if (cconf.getDsm()!=null){
+									oldCat = (Category) cconf.getDsm().getCrawledItem(newCat.getId().getId(),
+										newCat.getId().getStoreId(), Category.class);
+								}
+								if (hasUpdate(oldCat, newCat)){
+									newCat.setParentCatId(category.getId().getId());
+									BrowseCategoryTaskConf bct1 = genBCTFromCat(bct, newCat, cconf, ctconf);
+									tasks.add(bct1);
+								}
+							}
+						}
+						return tasks;
+					}
 				}
 			}
+		}finally{
+			CrawlUtil.closeWebClient(wc);
 		}
 	}
 	

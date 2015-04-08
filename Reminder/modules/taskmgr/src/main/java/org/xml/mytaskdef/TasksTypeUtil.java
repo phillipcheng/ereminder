@@ -48,7 +48,7 @@ public class TasksTypeUtil {
 					params.put(pt.getName(), pt.getValue());
 				}
 			}
-			return StringUtil.fillParams(orgStartUrl, params, "[", "]");
+			return StringUtil.fillParams(orgStartUrl, params, ConfKey.PARAM_PRE, ConfKey.PARAM_POST);
 		}else{
 			return orgStartUrl;
 		}

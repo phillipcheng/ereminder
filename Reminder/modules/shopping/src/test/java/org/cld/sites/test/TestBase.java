@@ -56,7 +56,11 @@ public class TestBase {
 	}
 	
 	public void catNavigate(String confFileName, String starturl, int type) throws Exception{
-		CrawlTestUtil.catNavigate(getConfId(confFileName), confFileName, starturl, type, cconf, testTaskId, ccnode, propFile);
+		CrawlTestUtil.catNavigate(getConfId(confFileName), confFileName, starturl, type, cconf, testTaskId, ccnode, propFile, 0);
+	}
+	
+	public void catNavigate(String confFileName, String starturl, int type, int pageNum) throws Exception{
+		CrawlTestUtil.catNavigate(getConfId(confFileName), confFileName, starturl, type, cconf, testTaskId, ccnode, propFile, pageNum);
 	}
 	
 	public void runBDT(String confFileName, String startUrl, boolean turnPagesOnly) throws Exception{

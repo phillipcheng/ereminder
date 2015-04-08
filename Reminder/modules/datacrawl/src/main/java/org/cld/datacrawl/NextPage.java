@@ -32,7 +32,7 @@ public class NextPage {
 			sb.append("nextUrl:" + nextUrl + "\n");
 		}
 		if (nextItem!=null){
-			sb.append("nextItem:" + nextItem + "\n");
+			sb.append("nextItem:" + nextItem.asXml() + "\n");
 		}
 		sb.append("status:" + status + "\n");
 		return sb.toString();
