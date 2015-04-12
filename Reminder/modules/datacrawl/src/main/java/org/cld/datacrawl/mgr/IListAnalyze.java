@@ -3,27 +3,18 @@ package org.cld.datacrawl.mgr;
 
 import java.util.List;
 
-import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.CrawlTaskConf;
-import org.cld.datacrawl.NextPage;
-import org.cld.datacrawl.entity.ProductList;
 import org.cld.datacrawl.util.SomePageErrorException;
 import org.cld.datastore.entity.Category;
 import org.cld.taskmgr.entity.Task;
-import org.cld.taskmgr.entity.TaskStat;
-import org.xml.mytaskdef.ParsedTasksDef;
 
 
 public interface IListAnalyze{
 	
 	public static final String PARAM_SEP="&";
 
-	public void setup(CrawlConf cconf, CrawlTaskConf ctconf, ListProcessInf lpInf);
-
-	public void setCTConf(CrawlTaskConf ctconf);//
+	public void setup(CrawlConf cconf, ListProcessInf lpInf);
 	
 	/**
 	 * 
@@ -36,10 +27,6 @@ public interface IListAnalyze{
 	 */
 	public List<Task> readTopLink(Category category, int fromPage, int toPage, 
 			Task task, int maxPages, int maxItems) throws InterruptedException, SomePageErrorException;
-	
-	public VerifyPageProductList getVPBL();
-	
-	public void setVPBL(VerifyPageProductList vPBL);
 	
 	public ListProcessInf getLpInf();
 	

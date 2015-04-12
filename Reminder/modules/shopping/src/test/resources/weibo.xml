@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd-->
-<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/mydoc/myprojects/ereminder/Reminder/modules/shopping/src/main/resources/Task_2_0.xsd" rootVolume="999990" storeId="weibo" productType="default">
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/Users/chengyi/Documents/ereminder/Reminder/modules/shopping/src/main/resources/Task_2_0.xsd" rootVolume="999990" storeId="weibo" productType="default">
 	<loginInfo>
-		<click>
+		<loginClickStream name="us.weibo">
+			<link pageName="startpage">
+				<nextpage>
+					<successNextPage name="homepage">
+						<value fromType="url" value="http://us.weibo.com/gb#"/>
+					</successNextPage>
+				</nextpage>
+			</link>
 			<link pageName="homepage">
 				<nextpage>
 					<successNextPage name="loginpage">
@@ -46,17 +51,56 @@
 					<successNextPage name="finishpage"/>
 				</nextpage>
 			</link>
-		</click>
-		<redirectedURL fromType="xpath" value="//div[@node-type='login_frame']"/>
-		<redirectedURL fromType="url" value="http://www.weibo.com/login.php"/>
-		<loginURL fromType="url" value="http://us.weibo.com/gb#"/>
+		</loginClickStream>
+		<loginClickStream name="weibo">
+			<link pageName="startpage">
+				<nextpage>
+					<successNextPage name="loginpage">
+						<value fromType="url" value="http://www.weibo.com/login.php">
+							<pageVerify operator="!=">
+								<lhs value="id('pl_login_form')/div[5]/div[1]/div/input"/>
+								<rhs value="null"/>
+							</pageVerify>
+							<pageVerify operator="!=">
+								<lhs value="id('pl_login_form')/div[5]/div[2]/div/input"/>
+								<rhs value="null"/>
+							</pageVerify>
+							<pageVerify operator="!=">
+								<lhs value="id('pl_login_form')/div[5]/div[6]/div[1]/a/span"/>
+								<rhs value="null"/>
+							</pageVerify>
+						</value>
+					</successNextPage>
+				</nextpage>
+			</link>
+			<link pageName="loginpage">
+				<input name="id('pl_login_form')/div[5]/div[1]/div/input">
+					<value value="username" fromScope="param"/>
+				</input>
+				<input name="id('pl_login_form')/div[5]/div[2]/div/input">
+					<value value="password" fromScope="param"/>
+				</input>
+				<nextpage>
+					<successNextPage name="personhp">
+						<value value="id('pl_login_form')/div[5]/div[6]/div[1]/a/span">
+							<pageVerify operator="!=">
+								<lhs value="//a[@nm='name']"/>
+								<rhs value="null"/>
+							</pageVerify>
+						</value>
+					</successNextPage>
+				</nextpage>
+			</link>
+		</loginClickStream>
+		<redirectedURL clickstream="us.weibo">
+			<landing fromType="xpath" value="//div[@node-type='login_frame']"></landing>
+		</redirectedURL>
+		<redirectedURL clickstream="weibo">
+			<landing fromType="url" value="http://www.weibo.com/login.php"></landing>
+		</redirectedURL>
 		<credential username="phillipchengyia@gmail.com" password="testtest"/>
 		<credential username="phillipchengyib@gmail.com" password="testtest"/>
 		<credential username="phillipchengyic@gmail.com" password="testtest"/>
-		<loginSuccessCondition operator="!=">
-			<lhs value="//div[@class='topBar']//span[@class='username']"/>
-			<rhs value="null"/>
-		</loginSuccessCondition>
 	</loginInfo>
 	<CatTask isLeaf="false" pagesPerBDT="2">
 		<baseBrowseTask enableJS="true" taskName="userCat" startUrl="http://www.weibo.com/hegang10135">

@@ -13,8 +13,10 @@ import org.junit.Test;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlSpan;
 
 public class TestWeibo extends TestBase{
 	public static final String SITE_CONF_FILE ="weibo.xml";
@@ -52,6 +54,25 @@ public class TestWeibo extends TestBase{
 		page = submit.click();
 		Thread.sleep(5000);
 		ha = page.getFirstByXPath("//div[@class='topBar']//span[@class='logout']/a");
+
+		logger.info("ha:" + ha.asText());
+		
+	}
+	
+	@Test
+	public void testLogin2() throws Exception{
+		WebClient wc = CrawlUtil.getWebClient(cconf, null, true);
+		HtmlPage page = wc.getPage("http://www.weibo.com/login.php");
+		Thread.sleep(5000);
+		HtmlInput username = page.getFirstByXPath("id('pl_login_form')/div[5]/div[1]/div/input");
+		username.setValueAttribute("phillipchengyia@gmail.com");
+		HtmlInput password = page.getFirstByXPath("id('pl_login_form')/div[5]/div[2]/div/input");
+		password.setValueAttribute("testtest");
+		HtmlSpan submit = page.getFirstByXPath("id('pl_login_form')/div[5]/div[6]/div[1]/a/span");
+		logger.info(submit);
+		page = submit.click();
+		Thread.sleep(15000);
+		HtmlElement ha = page.getFirstByXPath("//a[@nm='name']");
 
 		logger.info("ha:" + ha.asText());
 		

@@ -14,18 +14,18 @@ import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.CrawlTaskConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.NextPage;
 import org.cld.datastore.entity.Category;
 import org.cld.datacrawl.mgr.IListAnalyze;
 import org.cld.datacrawl.mgr.ListProcessInf;
 import org.cld.datacrawl.mgr.VerifyPageProductList;
-import org.cld.datacrawl.pagea.ListAnalyzeInf;
 import org.cld.datacrawl.task.BrsDetailStat;
 import org.cld.datacrawl.util.HtmlPageResult;
 import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.datacrawl.util.SomePageErrorException;
+import org.cld.pagea.general.CategoryAnalyzeUtil;
+import org.cld.pagea.general.ListAnalyzeUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.xml.mytaskdef.ConfKey;
@@ -40,40 +40,24 @@ public class ListAnalyze implements IListAnalyze {
 	public static int NUM_WHOLE_LIST_RETRY=3;
 	
 	private CrawlConf cconf;
-	private CrawlTaskConf ctconf;
 	private ListProcessInf lpInf; //process the result
 	
 	private VerifyPageProductList VPBL; //verify the detailed result
 	
 	public String toString(){
-		return System.identityHashCode(this) + "\n" +
-				"ctconf:" + System.identityHashCode(ctconf);
+		return System.identityHashCode(this) + "\n" ;
 	}
-	
 	
 	public ListAnalyze(){
 	}
-
-	//runtime, lpInf is ProductListAnalyze
-	public ListAnalyze(CrawlConf cconf, CrawlTaskConf ctconf, ListProcessInf lpInf){
-		this.cconf = cconf;
-		this.ctconf = ctconf;
-		this.lpInf = lpInf;
-		this.VPBL = new VerifyPageProductList(ctconf);
-	}
 	
 	@Override
-	public void setup(CrawlConf cconf, CrawlTaskConf ctconf, ListProcessInf lpInf){
+	public void setup(CrawlConf cconf, ListProcessInf lpInf){
 		this.cconf = cconf;
-		this.ctconf = ctconf;
 		this.lpInf = lpInf;
-		this.VPBL = new VerifyPageProductList(ctconf);
+		this.VPBL = new VerifyPageProductList(cconf);
 	}
 
-	@Override
-	public void setCTConf(CrawlTaskConf ctconf) {
-		this.ctconf = ctconf;		
-	}
 	
 	class NextPageAndTasks{
 		NextPageAndTasks(NextPage np, List<Task> tl){
@@ -86,7 +70,6 @@ public class ListAnalyze implements IListAnalyze {
 	
 	public NextPageAndTasks readList(WebClient wc, NextPage np, Category cat, Task task, int maxItems, int curPageNum) 
 			throws InterruptedException{	
-		ListAnalyzeInf laInf = ctconf.getLaInf();
 		
 		HtmlPageResult listPageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, np, VPBL, task, task.getTasks().getLoginInfo(), cconf);
 		HtmlPage listPage = listPageResult.getPage();
@@ -115,7 +98,7 @@ public class ListAnalyze implements IListAnalyze {
 				params.put(ConfKey.TOTAL_PAGENUM, cat.getPageNum());
 				params.put(ConfKey.CURRENT_PAGENUM, curPageNum);
 				logger.debug("params map before eval next page." + params);
-				NextPage npget = laInf.getNextPageUrlFromPage(listPage, task.getParsedTaskDef(), params, cconf);	
+				NextPage npget = ListAnalyzeUtil.getNextPageUrlFromPage(listPage, task.getParsedTaskDef(), params, cconf);	
 				return new NextPageAndTasks(npget, tl);
 			}
 		}else{
@@ -153,7 +136,7 @@ public class ListAnalyze implements IListAnalyze {
 		String catURL = category.getFullUrl();
 		String initUrl;
 		if (fromPage != 1){
-			initUrl = ctconf.getCaInf().getCatURL(category, fromPage, task.getParsedTaskDef());
+			initUrl = CategoryAnalyzeUtil.getCatURL(category, fromPage, task.getParsedTaskDef());
 		}else{
 			initUrl = catURL;
 		}
@@ -173,7 +156,7 @@ public class ListAnalyze implements IListAnalyze {
 		int cur = fromPage;
 		int pageCount=1;
 		
-		WebClient wc = CrawlUtil.getWebClient(cconf, task.getParsedTaskDef().getSkipUrls(), ctconf.getLaInf().needJS(task.getParsedTaskDef()));
+		WebClient wc = CrawlUtil.getWebClient(cconf, task.getParsedTaskDef().getSkipUrls(), ListAnalyzeUtil.needJS(task.getParsedTaskDef()));
 		List<Task> tl = new ArrayList<Task>();
 		try{
 			do {
@@ -215,16 +198,6 @@ public class ListAnalyze implements IListAnalyze {
 			wc.closeAllWindows();
 		}
 		return tl;
-	}
-	
-	@Override
-	public VerifyPageProductList getVPBL() {
-		return VPBL;
-	}
-	
-	@Override
-	public void setVPBL(VerifyPageProductList vPBL) {
-		VPBL = vPBL;
 	}
 	
 	@Override

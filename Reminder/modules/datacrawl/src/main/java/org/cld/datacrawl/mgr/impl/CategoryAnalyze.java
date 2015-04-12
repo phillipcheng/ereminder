@@ -8,19 +8,18 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.CrawlTaskConf;
 import org.cld.datacrawl.CrawlTaskGenerator;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.NextPage;
 import org.cld.datastore.entity.Category;
 import org.cld.datacrawl.mgr.ICategoryAnalyze;
-import org.cld.datacrawl.pagea.CategoryAnalyzeInf;
 import org.cld.datacrawl.task.BrowseCategoryTaskConf;
 import org.cld.datacrawl.task.BrowseDetailTaskConf;
 import org.cld.datacrawl.task.BrsCatStat;
 import org.cld.datacrawl.util.HtmlPageResult;
 import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.datacrawl.util.VerifyPageByXPath;
+import org.cld.pagea.general.CategoryAnalyzeUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.xml.mytaskdef.BrowseCatInst;
@@ -36,11 +35,8 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 	public static final String CAT_ROOT="ROOT";
 	public static final String CAT_SEP=":";
 	
-	private CrawlTaskConf ctconf;
-	private CrawlConf cconf;
-	
 	//
-	public static BrowseCategoryTaskConf genBCTFromCat(BrowseCategoryTaskConf parentBCT, Category cat, CrawlConf cconf, CrawlTaskConf ctconf){
+	public static BrowseCategoryTaskConf genBCTFromCat(BrowseCategoryTaskConf parentBCT, Category cat, CrawlConf cconf){
 		BrowseCategoryTaskConf bct1 = parentBCT.clone(cconf.getPluginClassLoader());
 		bct1.setStartURL(cat.getFullUrl());
 		bct1.setPcatId(cat.getParentCatId());
@@ -49,11 +45,11 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 		return bct1;
 	}
 	
-	public static List<Task> genBCTFromBCT(BrowseCategoryTaskConf bct, int pages, CrawlConf cconf, CrawlTaskConf ctconf){
+	public static List<Task> genBCTFromBCT(BrowseCategoryTaskConf bct, int pages, CrawlConf cconf){
 		List<Task> bctList = new ArrayList<Task>();
 		for (int i=0; i<pages; i++){
 			BrowseCategoryTaskConf bct1 = bct.clone(cconf.getPluginClassLoader());
-			bct1.setStartURL(ctconf.getCaInf().getCatURL(bct.getNewCat(), i+1, bct.getParsedTaskDef()));
+			bct1.setStartURL(CategoryAnalyzeUtil.getCatURL(bct.getNewCat(), i+1, bct.getParsedTaskDef()));
 			bct1.setId(bct1.genId());
 			bct1.setPageNum(1);
 			bctList.add(bct1);
@@ -81,7 +77,7 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 	 * @return set of bdt
 	 */
 	public static List<Task> genBDTFromBCT(BrowseCategoryTaskConf bct, Category cat, 
-			CrawlConf cconf, CrawlTaskConf ctconf, BrowseCatType bcdef){
+			CrawlConf cconf, BrowseCatType bcdef){
 		
 		List<Task> bdtList = new ArrayList<Task>();
 		
@@ -120,21 +116,10 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 	}
 	
 	public String toString(){
-		return System.identityHashCode(this) + "\n" +
-				"ctconf:" + System.identityHashCode(ctconf);
+		return System.identityHashCode(this) + "\n";
 	}
 
 	public CategoryAnalyze(){	
-	}
-
-	@Override
-	public void setup(CrawlConf cconf, CrawlTaskConf ctconf){
-		this.cconf = cconf;
-		this.ctconf = ctconf;
-	}
-	
-	public CategoryAnalyze(CrawlConf cconf, CrawlTaskConf ctconf){
-		setup(cconf, ctconf);
 	}
 	
 	private boolean hasUpdate(Category oldCat, Category newCat){
@@ -163,36 +148,35 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 	/**
 	 * @throws InterruptedException 
 	 */
-	private List<Task> navigateCategoryOneLvl(BrowseCategoryTaskConf bct, BrowseCatType bcdef) throws InterruptedException{
+	private List<Task> navigateCategoryOneLvl(BrowseCategoryTaskConf bct, BrowseCatType bcdef, CrawlConf cconf) throws InterruptedException{
 		WebClient wc = null;
 		try{
-			CategoryAnalyzeInf caInf = ctconf.getCaInf();
 			Category category = bct.getNewCat();
 			String url = bct.getStartURL();
-			boolean needJS = caInf.needJS(url, bct);
+			boolean needJS = CategoryAnalyzeUtil.needJS(url, bct.getParsedTaskDef());
 			wc = CrawlUtil.getWebClient(cconf, bct.getParsedTaskDef().getSkipUrls(), needJS);
 			HtmlPageResult catPageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(url), 
-					new VerifyPageByXPath(caInf.getCatPageVerifyXPaths(category, bct)), null, bct.getTasks().getLoginInfo(), cconf);
+					new VerifyPageByXPath(CategoryAnalyzeUtil.getCatPageVerifyXPaths(category, bct)), null, bct.getTasks().getLoginInfo(), cconf);
 			HtmlPage catPage = catPageResult.getPage();
 			
 			if (catPageResult.getErrorCode() != HtmlPageResult.SUCCSS || catPage == null){
 				logger.warn("get url:" + url +", to contains:" + 
-						ArrayUtils.toString(caInf.getCatPageVerifyXPaths(category, bct)) 
+						ArrayUtils.toString(CategoryAnalyzeUtil.getCatPageVerifyXPaths(category, bct)) 
 						+ " failed with:" + catPageResult.getErrorMsg());
 				return new ArrayList<Task>();
 			}else{
 				if (category.isLeaf()){
-					caInf.setCatItemNum(category.getFullUrl(), catPage, category, bct);
+					CategoryAnalyzeUtil.setCatItemNum(category.getFullUrl(), catPage, category, bct, cconf);
 					//add one version if differ
 					if (cconf.getDsm()!=null){
 						cconf.getDsm().addCrawledItem(category, bct.getOldCat());
 					}
-					return genBDTFromBCT(bct, category, cconf, ctconf, bcdef);
+					return genBDTFromBCT(bct, category, cconf, bcdef);
 				}else{
 					int catPages = bct.getPageNum();
 					if (catPages==0){
 						//we ask, 1st time, we navigate this category detail
-						caInf.setCatItemNum(url, catPage, category, bct);
+						CategoryAnalyzeUtil.setCatItemNum(url, catPage, category, bct, cconf);
 						catPages = category.getPageNum();
 						//only save the category for the 1st time
 						if (cconf.getDsm()!=null){
@@ -202,9 +186,9 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 	
 					if (catPages>1){
 						//we generate bct from bct for each page
-						return genBCTFromBCT(bct, catPages, cconf, ctconf);
+						return genBCTFromBCT(bct, catPages, cconf);
 					}else{ //catPages =1
-						List<Category> catList = caInf.getSubCategoyList(url, catPage, category, bct);
+						List<Category> catList = CategoryAnalyzeUtil.getSubCategoyList(url, catPage, category, bct, cconf);
 						List<Task> tasks = new ArrayList<Task>();
 						for (Category newCat:catList){
 							if (!newCat.getFullUrl().equals(category.getFullUrl())){
@@ -217,7 +201,7 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 								}
 								if (hasUpdate(oldCat, newCat)){
 									newCat.setParentCatId(category.getId().getId());
-									BrowseCategoryTaskConf bct1 = genBCTFromCat(bct, newCat, cconf, ctconf);
+									BrowseCategoryTaskConf bct1 = genBCTFromCat(bct, newCat, cconf);
 									tasks.add(bct1);
 								}
 							}
@@ -226,34 +210,38 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 					}
 				}
 			}
+		}catch(Exception e){
+			logger.error("", e);
+			return null;
 		}finally{
-			CrawlUtil.closeWebClient(wc);
+			if (wc!=null)
+				CrawlUtil.closeWebClient(wc);
 		}
 	}
 	
 	@Override
-	public List<Task> navigateCategory(Task task, TaskStat taskStat) throws InterruptedException{
+	public List<Task> navigateCategory(Task task, TaskStat taskStat, CrawlConf cconf) throws InterruptedException{
 		BrowseCategoryTaskConf bct = (BrowseCategoryTaskConf) task;
 		String startUrl = bct.getStartURL();
 		
 		Category newCat = new Category(task.getParsedTaskDef().getTasks().getProductType());
 		Category oldCat = null;
 		if (cconf.getDsm()!=null){
-			oldCat = (Category) cconf.getDsm().getCrawledItem(ctconf.getCaInf().getCatId(startUrl, task), 
+			oldCat = (Category) cconf.getDsm().getCrawledItem(CategoryAnalyzeUtil.getCatId(startUrl, task.getParsedTaskDef()), 
 				task.getParsedTaskDef().getTasks().getStoreId(), Category.class);
 		}
 		bct.setOldCat(oldCat);
 		BrowseCatInst bci = bct.getParsedTaskDef().getBCI(startUrl);
 		newCat.setRootTaskId(task.getRootTaskId());
 		newCat.setFullUrl(startUrl);
-		newCat.getId().setId(ctconf.getCaInf().getCatId(startUrl, task));
+		newCat.getId().setId(CategoryAnalyzeUtil.getCatId(startUrl, task.getParsedTaskDef()));
 		newCat.getId().setStoreId(task.getParsedTaskDef().getTasks().getStoreId());
 		newCat.getId().setCreateTime(new Date());
 		newCat.setLeaf(bci.getBc().isIsLeaf());
 		newCat.setParentCatId(bct.getPcatId());
 		if (hasUpdate(oldCat, newCat)){
 			bct.setNewCat(newCat);	
-			return navigateCategoryOneLvl(bct, bci.getBc());
+			return navigateCategoryOneLvl(bct, bci.getBc(), cconf);
 		}else{
 			return new ArrayList<Task>();
 		}
@@ -268,7 +256,7 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 		for (int i=0; i<bctArray.length; i++){
 			BrowseCategoryTaskConf bct = bctArray[i];
 			logger.info("retry:" + bct);
-			tasklist.addAll(navigateCategory(bct, bs));
+			tasklist.addAll(navigateCategory(bct, bs, cconf));
 		}
 		return tasklist;
 	}

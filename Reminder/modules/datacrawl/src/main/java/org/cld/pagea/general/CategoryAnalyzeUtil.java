@@ -11,11 +11,9 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.CrawlTaskConf;
 import org.cld.datacrawl.NextPage;
 import org.cld.datacrawl.ProductConf;
 import org.cld.datacrawl.mgr.impl.CrawlTaskEval;
-import org.cld.datacrawl.pagea.CategoryAnalyzeInf;
 import org.cld.datacrawl.task.BrowseCategoryTaskConf;
 import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.datastore.entity.Category;
@@ -37,21 +35,11 @@ import org.xml.mytaskdef.ConfKey;
 import org.xml.mytaskdef.IdUrlMapping;
 import org.xml.mytaskdef.ParsedTasksDef;
 
-public class CategoryAnalyze implements CategoryAnalyzeInf {
+public class CategoryAnalyzeUtil {
 	
-	private static Logger logger =  LogManager.getLogger(CategoryAnalyze.class);
+	private static Logger logger =  LogManager.getLogger(CategoryAnalyzeUtil.class);
 	
-	public CrawlConf cconf;
-	public CrawlTaskConf ctconf;
-	
-	@Override
-	public void setCTConf(CrawlConf cconf, CrawlTaskConf ctconf) {
-		this.cconf = cconf;
-		this.ctconf = ctconf;
-	}
-	
-	@Override
-	public String[] getCatPageVerifyXPaths(Category cat, BrowseCategoryTaskConf task) {
+	public static String[] getCatPageVerifyXPaths(Category cat, BrowseCategoryTaskConf task) {
 		List<String> xpaths = new ArrayList<String>();
 		BrowseCatInst bci = task.getBCI(task.getStartURL());
 		if (bci!=null){
@@ -78,9 +66,9 @@ public class CategoryAnalyze implements CategoryAnalyzeInf {
 		return xpaths.toArray(new String[xpaths.size()]);
 	}
 
-	@Override
-	public String getCatId(String url, Task task) {
-		BrowseCatInst bci = task.getBCI(url);
+	
+	public static String getCatId(String url, ParsedTasksDef tasksDef) {
+		BrowseCatInst bci = tasksDef.getBCI(url);
 		if (bci!=null){
 			String id = bci.getId();
 			return id;
@@ -88,8 +76,8 @@ public class CategoryAnalyze implements CategoryAnalyzeInf {
 		return null;
 	}
 
-	@Override
-	public String getCatURL(Category cat, int pageNum, ParsedTasksDef tasksDef) {
+	
+	public static String getCatURL(Category cat, int pageNum, ParsedTasksDef tasksDef) {
 		BrowseCatInst bci = tasksDef.getBCI(cat.getFullUrl());
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put(IdUrlMapping.ID_KEY, cat.getId().getId());
@@ -102,8 +90,15 @@ public class CategoryAnalyze implements CategoryAnalyzeInf {
 		}
 	}
 	
-	@Override
-	public List<Category> getSubCategoyList(String requestUrl, HtmlPage catlist, Category startCat, Task task) 
+	/*
+	 * Pagination will be done by getCatPages
+	 * @param requestUrl
+	 * @param catlist page is the htmlpage after clicking the startCat, page's url maybe different then request url
+	 * @param startCat: the parent category
+	 * @return list of sub category including myself, for leaf node, only myself is returned
+	 */
+	public static List<Category> getSubCategoyList(String requestUrl, HtmlPage catlist, Category startCat, 
+			Task task, CrawlConf cconf) 
 			throws InterruptedException {
 		String url = requestUrl;
 		BrowseCatInst bci = task.getBCI(url);
@@ -150,7 +145,7 @@ public class CategoryAnalyze implements CategoryAnalyzeInf {
 					fullUrl = CrawlTaskEval.getURLStringValue(he, catlist);
 				}
 				if (fullUrl!=null){
-					String catId = getCatId(fullUrl, task);
+					String catId = getCatId(fullUrl, task.getParsedTaskDef());
 					if (catId!=null){
 						DomNamespaceNode dsn;
 						Category cat = new Category(new CrawledItemId(catId, startCat.getId().getStoreId(), new Date()), 
@@ -244,8 +239,14 @@ public class CategoryAnalyze implements CategoryAnalyzeInf {
 		}
 	}
 	
-	@Override
-	public void setCatItemNum(String requestUrl, HtmlPage catlist, Category cat, Task task) 
+	/**
+	 * 1) set pageNum for the cat to enable performance improvement by having multiple sub-task
+	 * 2) when page is limited, set total item, page size, page limit to enable split cat to multiple sub-cat to crawl more
+	 * 3) if nothing set, this cat will be browsed without functional and performance improvement but still works
+	 * @param catlist page is the htmlpage after clicking cat
+	 * @param cat (in/out)
+	 */
+	public static void setCatItemNum(String requestUrl, HtmlPage catlist, Category cat, Task task, CrawlConf cconf) 
 			throws InterruptedException {
 		setCatSysAttributes(requestUrl, catlist, cat, task, cconf);
 		ProductConf pconf = cconf.getPrdConfMap().get(cat.getItemType());
@@ -260,9 +261,9 @@ public class CategoryAnalyze implements CategoryAnalyzeInf {
 		}
 	}
 	
-	@Override
-	public boolean needJS(String url, Task task) {
-		BrowseCatInst bci = task.getBCI(url);
+	
+	public static boolean needJS(String url, ParsedTasksDef taskDef) {
+		BrowseCatInst bci = taskDef.getBCI(url);
 		BrowseCatType bc = bci.getBc();
 		return bc.getBaseBrowseTask().isEnableJS();
 	}

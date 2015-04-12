@@ -12,10 +12,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.CrawlTaskConf;
 import org.cld.datacrawl.mgr.IListAnalyze;
 import org.cld.datacrawl.util.SomePageErrorException;
 import org.cld.datastore.entity.Category;
+import org.cld.pagea.general.CategoryAnalyzeUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.xml.taskdef.TasksType;
@@ -33,7 +33,6 @@ public class BrowseDetailTaskConf extends Task implements Serializable{
 	
 	private String catId="";
 	private String productType;//
-	private String crawlTaskConf= "general";
 	private int fromPage;
 	private int toPage=-1;//-1 means to the end
 	
@@ -86,9 +85,8 @@ public class BrowseDetailTaskConf extends Task implements Serializable{
 			
 			if (taskTemplate != null){		
 				//1. re-setup
-				CrawlTaskConf ctconf = cconf.getCCTConf(crawlTaskConf);
 				this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
-				IListAnalyze la = ctconf.getLa();		
+				IListAnalyze la = cconf.getLa();		
 				//2. build category from TaskEntry
 				Category category = null;
 				if (cconf.getDsm()!=null){
@@ -97,7 +95,7 @@ public class BrowseDetailTaskConf extends Task implements Serializable{
 				}else{
 					category = new Category();
 				}
-				String catUrl = ctconf.getCaInf().getCatURL(category, this.fromPage, taskTemplate.getParsedTaskDef());
+				String catUrl = CategoryAnalyzeUtil.getCatURL(category, this.fromPage, taskTemplate.getParsedTaskDef());
 				logger.info("start browsing category:" + catUrl);
 				category.setFullUrl(catUrl);
 				//3. 

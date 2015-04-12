@@ -13,7 +13,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.CrawlTaskConf;
 import org.cld.datacrawl.mgr.ICategoryAnalyze;
 import org.cld.datastore.entity.Category;
 import org.cld.taskmgr.entity.Task;
@@ -36,13 +35,10 @@ public class BrowseCategoryTaskConf extends Task implements Serializable{
 		
 	//configurable values
 	private String startURL;
-	private String crawlTaskConf;
 	private int pageNum=0;//number of pages to browse for this task, 0:we need to ask, 1:we execute, >1:we split to BCT
 	private String pcatId=null;//this bct's parent catId
 	
 	//internal transient variables
-	@JsonIgnore
-	private transient CrawlTaskConf ctconf;
 	@JsonIgnore
 	private transient Category newCat;
 	@JsonIgnore
@@ -54,9 +50,7 @@ public class BrowseCategoryTaskConf extends Task implements Serializable{
 	
 	public String toString(){
 		return super.toString() +
-				", startURL:" + startURL + 
-				", crawlTaskConf:" + crawlTaskConf + 
-				", ctconf:" + ctconf;
+				", startURL:" + startURL;
 	}
 	
 	@Override
@@ -66,8 +60,6 @@ public class BrowseCategoryTaskConf extends Task implements Serializable{
 			BrowseCategoryTaskConf te = (BrowseCategoryTaskConf) taskClass.newInstance();
 			copy(te);
 			te.setStartURL(this.getStartURL());
-			te.setCrawlTaskConf(this.getCrawlTaskConf());
-			te.setCtconf(this.getCtconf());
 			te.setPcatId(this.getPcatId());
 			te.setNewCat(this.getNewCat());
 			te.setOldCat(this.getOldCat());
@@ -90,13 +82,7 @@ public class BrowseCategoryTaskConf extends Task implements Serializable{
 		BrowseCatType bct = tasks.getCatTask().get(0);
 		//since the start url is get from xml file, so un-escape is needed
 		this.startURL=StringEscapeUtils.unescapeXml(bct.getBaseBrowseTask().getStartUrl());
-		this.crawlTaskConf = "general";
 		this.setStoreId(tasks.getStoreId());
-		CrawlConf cconf = (CrawlConf) params.get(CrawlConf.taskParamCConf_Key);
-		ctconf = cconf.getCCTConf(crawlTaskConf);//if no changes to this ctconf, just use the template
-		if (ctconf == null){
-			logger.error("ctconf not found:" + crawlTaskConf);
-		}
 	}
 	
 	@Override
@@ -108,11 +94,9 @@ public class BrowseCategoryTaskConf extends Task implements Serializable{
 		BrowseCategoryTaskConf taskTemplate = (BrowseCategoryTaskConf) cconf.getTaskMgr().getTask(getName());
 		if (taskTemplate!=null){
 			//1. after marshal/un-marshal, re-setup
-			CrawlTaskConf ctconf = taskTemplate.getCtconf();
-			setCtconf(ctconf);
 			this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
-			ICategoryAnalyze ca= ctconf.getCa();
-			return ca.navigateCategory(this, ts);
+			ICategoryAnalyze ca= cconf.getCa();
+			return ca.navigateCategory(this, ts, cconf);
 		}else{
 			logger.error("task is null for:" + getName());
 		}
@@ -125,12 +109,6 @@ public class BrowseCategoryTaskConf extends Task implements Serializable{
 	}
 	public void setStartURL(String startURL) {
 		this.startURL = startURL;
-	}
-	public String getCrawlTaskConf() {
-		return crawlTaskConf;
-	}
-	public void setCrawlTaskConf(String crawlTaskConf) {
-		this.crawlTaskConf = crawlTaskConf;
 	}
 	
 	public int getPageNum() {
@@ -149,12 +127,6 @@ public class BrowseCategoryTaskConf extends Task implements Serializable{
 	}
 	
 	@JsonIgnore
-	public CrawlTaskConf getCtconf() {
-		return ctconf;
-	}
-	public void setCtconf(CrawlTaskConf ctconf) {
-		this.ctconf = ctconf;
-	}@JsonIgnore
 	public Category getNewCat() {
 		return newCat;
 	}

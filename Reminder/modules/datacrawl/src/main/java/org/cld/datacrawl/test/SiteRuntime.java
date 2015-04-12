@@ -1,6 +1,5 @@
 package org.cld.datacrawl.test;
 
-import org.cld.datacrawl.CrawlTaskConf;
 import org.cld.datacrawl.mgr.ICategoryAnalyze;
 import org.cld.datacrawl.mgr.IListAnalyze;
 import org.cld.datacrawl.mgr.IProductAnalyze;
@@ -17,7 +16,6 @@ public class SiteRuntime {
 	private BrowseCategoryTaskConf bct;
 	private BrowseDetailTaskConf bdt;
 	
-	CrawlTaskConf ctconf;
 	
 	ICategoryAnalyze ca;
 	IListAnalyze la;

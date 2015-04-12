@@ -24,17 +24,7 @@ public class CrawlConfChangedEvent {
 	//the new value
 	private int intValue=-1;
 	private String strValue=null;
-	private CrawlTaskConf ctcValue=null;
 	private ProductConf prdConfValue = null;
-	
-
-	public CrawlTaskConf getCtcValue() {
-		return ctcValue;
-	}
-
-	public void setCtcValue(CrawlTaskConf ctcValue) {
-		this.ctcValue = ctcValue;
-	}
 
 	private boolean booleanValue=false;
 	
@@ -44,7 +34,6 @@ public class CrawlConfChangedEvent {
 				"subOpType" + subOpType + "\n" +
 				"intValue:" + intValue + "\n" + 
 				"strValue:" + strValue + "\n" + 
-				"cctcValue:" + ctcValue + "\n" + 
 				"booleanValue:" + booleanValue + "\n" +
 				"prdConfValue:" + prdConfValue + "\n";
 	}
@@ -55,12 +44,7 @@ public class CrawlConfChangedEvent {
 			(subOpType==ccce.subOpType) &&
 			(propName.equals(ccce.propName))
 			){
-			if (PROP_NAME_CTCONF.equals(propName)){
-				if (ctcValue.getName().equals(ccce.ctcValue.getName())){
-					return true;
-				}else
-					return false;
-			}else if (PROP_NAME_PRODUCT_DEF.equals(propName)){
+			if (PROP_NAME_PRODUCT_DEF.equals(propName)){
 				if (prdConfValue.getName().equals(ccce.prdConfValue.getName())){
 					return true;
 				}else

@@ -23,7 +23,6 @@ import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.NextPage;
 import org.cld.datacrawl.ProductConf;
 import org.cld.datacrawl.mgr.impl.CrawlTaskEval;
-import org.cld.datacrawl.pagea.ProductAnalyzeInf;
 import org.cld.datacrawl.util.Content;
 import org.cld.datacrawl.util.HtmlPageResult;
 import org.cld.datacrawl.util.HtmlUnitUtil;
@@ -42,19 +41,12 @@ import org.xml.taskdef.ClickType;
 import org.xml.taskdef.ValueType;
 import org.xml.taskdef.VarType;
 
-public class ProductAnalyze implements ProductAnalyzeInf {
+public class ProductAnalyzeUtil {
 	
-	private static Logger logger =  LogManager.getLogger(ProductAnalyze.class);
+	private static Logger logger =  LogManager.getLogger(ProductAnalyzeUtil.class);
 	
-	public CrawlConf cconf;
 	
-	@Override
-	public void setCConf(CrawlConf cconf){
-		this.cconf = cconf;
-	}
-	
-	@Override
-	public String[] getPageVerifyXPaths(Task task, ParsedBrowsePrd taskDef) {
+	public static String[] getPageVerifyXPaths(Task task, ParsedBrowsePrd taskDef) {
 		if (taskDef.getBrowsePrdTaskType().getFirstPageClickStream()==null){
 			List<String> xpathList = new ArrayList<String>();
 			List<AttributeType> attrlist = taskDef.getBrowsePrdTaskType().getBaseBrowseTask().getUserAttribute();
@@ -71,8 +63,8 @@ public class ProductAnalyze implements ProductAnalyzeInf {
 		}
 	}
 
-	@Override
-	public String getTitle(HtmlPage page, Task task, ParsedBrowsePrd taskDef) 
+	
+	public static String getTitle(HtmlPage page, Task task, ParsedBrowsePrd taskDef, CrawlConf cconf) 
 			throws InterruptedException {
 		BrowseDetailType bd = taskDef.getBrowsePrdTaskType();
 		ValueType nameVT = bd.getBaseBrowseTask().getItemName();
@@ -121,7 +113,7 @@ public class ProductAnalyze implements ProductAnalyzeInf {
 		return pageMap;
 	}
 	
-	private boolean checkFinalPage(String finalExp, Map<String, Object> variables){
+	private static boolean checkFinalPage(String finalExp, Map<String, Object> variables){
 		if (finalExp==null)
 			return false;
 		else{
@@ -130,7 +122,8 @@ public class ProductAnalyze implements ProductAnalyzeInf {
 		}
 	}
 	
-	private HtmlPage getNextPage(WebClient wc, HtmlPage curPage, Task task, ParsedBrowsePrd taskDef) throws InterruptedException{
+	private static HtmlPage getNextPage(WebClient wc, HtmlPage curPage, Task task, 
+			ParsedBrowsePrd taskDef, CrawlConf cconf) throws InterruptedException{
 		BrowseDetailType bdt = taskDef.getBrowsePrdTaskType();
 		if (bdt.getNextPage()!=null){
 			HtmlElement nextPageEle = null ;
@@ -177,8 +170,9 @@ public class ProductAnalyze implements ProductAnalyzeInf {
 			return null;
 		}
 	}
-	@Override
-	public void callbackReadDetails(WebClient wc, HtmlPage inpage, Product product, Task task, ParsedBrowsePrd taskDef) throws InterruptedException {	
+	
+	public static void callbackReadDetails(WebClient wc, HtmlPage inpage, Product product, Task task, 
+			ParsedBrowsePrd taskDef, CrawlConf cconf) throws InterruptedException {	
 		//set the user attributes in case there is default values
 		BrowseDetailType bdt = taskDef.getBrowsePrdTaskType();
 		CrawlTaskEval.setInitAttributes(bdt.getBaseBrowseTask().getUserAttribute(), product.getParamMap(), task.getParamMap());	
@@ -223,7 +217,7 @@ public class ProductAnalyze implements ProductAnalyzeInf {
 			if (finalPage)
 				break;
 			String lastPageUrl = curPage.getUrl().toExternalForm();
-			curPage=getNextPage(wc, curPage, task, taskDef);
+			curPage=getNextPage(wc, curPage, task, taskDef, cconf);
 		}
 		
 		if (finalPage || externalistFinished){
@@ -241,34 +235,4 @@ public class ProductAnalyze implements ProductAnalyzeInf {
 			logger.error(String.format("product conf for %s not found.", product.getItemType()));
 		}
 	}
-	
-	///////////////////
-	/// unnecessary methods
-	/////////////////
-	
-	public List<Content> getPromotions(HtmlPage page) {
-		return null;
-	}
-
-	public double getOrgPrice(HtmlPage page) {
-		return 0;
-	}
-
-	public String getExternalId(HtmlPage page) {
-		return null;
-	}
-
-	public double getCurPrice(HtmlPage page) {
-		return -1;//means no current price found
-	}
-
-	public double getSecHandPrice(HtmlPage page) {
-		return 0;
-	}
-
-	public double getPromPrice(HtmlPage page) {
-		return 0;
-	}
-
-	
 }

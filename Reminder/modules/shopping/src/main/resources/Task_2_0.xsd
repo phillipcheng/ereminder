@@ -319,6 +319,7 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 				</xs:annotation>
 			</xs:element>
 		</xs:sequence>
+		<xs:attribute name="name" type="xs:string" use="optional"/>
 	</xs:complexType>
 	<xs:complexType name="TasksType">
 		<xs:sequence>
@@ -381,17 +382,21 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 			</xs:annotation>
 		</xs:attribute>
 	</xs:complexType>
+	<xs:complexType name="RedirectType">
+		<xs:annotation>
+			<xs:documentation>redirect to the specified clickstream depends on the landing condition/page</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="landing" type="ValueType"/>
+		</xs:sequence>
+		<xs:attribute name="clickstream" type="xs:string"/>
+	</xs:complexType>
 	<xs:complexType name="LoginType">
 		<xs:sequence>
-			<xs:element name="click" type="ClickStreamType"/>
-			<xs:element name="redirectedURL" type="ValueType" maxOccurs="unbounded">
+			<xs:element name="loginClickStream" type="ClickStreamType" maxOccurs="unbounded"/>
+			<xs:element name="redirectedURL" type="RedirectType" maxOccurs="unbounded">
 				<xs:annotation>
 					<xs:documentation>a list of possible redirected url, if redirected here, we login</xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element name="loginURL" type="ValueType" minOccurs="0">
-				<xs:annotation>
-					<xs:documentation>the login URL to use, if falls into the previously defined redirectedURL list. if not defined just use the current page (redirectly page)</xs:documentation>
 				</xs:annotation>
 			</xs:element>
 			<xs:element name="gotchaURL" type="ValueType" minOccurs="0">
@@ -400,13 +405,6 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 				</xs:annotation>
 			</xs:element>
 			<xs:element name="credential" type="CredentialType" maxOccurs="unbounded"/>
-			<xs:element name="loginSuccessCondition" type="BinaryBoolOp" minOccurs="0">
-				<xs:annotation>
-					<xs:documentation>if not specified 
-using system logic: the page after login should differ than login page.
-if specified, then the bool expression should be true</xs:documentation>
-				</xs:annotation>
-			</xs:element>
 			<xs:element name="loginGotchaCondition" type="BinaryBoolOp" minOccurs="0">
 				<xs:annotation>
 					<xs:documentation>if loginSuccessCondition failed, try this one to see whether it is gotcha</xs:documentation>

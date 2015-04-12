@@ -66,27 +66,31 @@ public class ClientNodeImpl implements ClientNodeInf, NodeConfPropListener {
 	public ClientNodeImpl(NodeConf nc){
 		this.nc = nc;
 		
-		localTaskManager = new LocalTaskManager(nc);
-		
-		//System.setSecurityManager(new SecurityManager());
-		if (nc.getRmiCodebase()!=null){
-			System.setProperty("java.rmi.server.codebase", nc.getRmiCodebase());
-		}
-		if (nc.getLocalIP()!=null)
-			System.setProperty("java.rmi.server.hostname", nc.getLocalIP());
-		
-		//2.
-		try {
-			this.acn = (AppClientNodeInf) Class.forName(nc.getAppClientImpl()).newInstance();
-		}catch (Exception e){
-			logger.error("", e);
-		}
+		if (NodeConf.tmframework_hadoop.equals(nc.getTaskMgrFramework())){
+			return;
+		}else if (NodeConf.tmframework_old.equals(nc.getTaskMgrFramework())){
+			localTaskManager = new LocalTaskManager(nc);
+			
+			//System.setSecurityManager(new SecurityManager());
+			if (nc.getRmiCodebase()!=null){
+				System.setProperty("java.rmi.server.codebase", nc.getRmiCodebase());
+			}
+			if (nc.getLocalIP()!=null)
+				System.setProperty("java.rmi.server.hostname", nc.getLocalIP());
+			
+			//2.
+			try {
+				this.acn = (AppClientNodeInf) Class.forName(nc.getAppClientImpl()).newInstance();
+			}catch (Exception e){
+				logger.error("", e);
+			}
 
-		//3.
-		localTaskManager.setup(acn, nc);
-		
-		//4.
-		kt = new ClientKeepAliveThread(this);
+			//3.
+			localTaskManager.setup(acn, nc);
+			
+			//4.
+			kt = new ClientKeepAliveThread(this);
+		}
 	}
 	
 

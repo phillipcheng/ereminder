@@ -24,11 +24,6 @@ import org.cld.datacrawl.mgr.IProductAnalyze;
 import org.cld.datacrawl.mgr.IProductListAnalyze;
 import org.cld.datacrawl.mgr.ICategoryAnalyze;
 import org.cld.datacrawl.mgr.IListAnalyze;
-import org.cld.datacrawl.mgr.ListProcessInf;
-import org.cld.datacrawl.pagea.ProductAnalyzeInf;
-import org.cld.datacrawl.pagea.ProductListAnalyzeInf;
-import org.cld.datacrawl.pagea.CategoryAnalyzeInf;
-import org.cld.datacrawl.pagea.ListAnalyzeInf;
 import org.cld.datastore.DBConf;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.Product;
@@ -82,19 +77,23 @@ public class CrawlConf implements AppConf, Serializable {
 	private int brokenRetry=0;//#retry after a whole set of op (top-link browse, all cat browse)
 	private String[] pluginDir;
 	private String[] pluginJar;
+	
 	private String productAnalyzeImpl = "org.cld.datacrawl.mgr.impl.ProductAnalyze";
 	private String categoryAnalyzeImpl = "org.cld.datacrawl.mgr.impl.CategoryAnalyze";
 	private String productListAnalyzeImpl = "org.cld.datacrawl.mgr.impl.ProductListAnalyze";
 	private String listAnalyzeImpl = "org.cld.datacrawl.mgr.impl.ListAnalyze";
 	private String promotionAnalyzeImpl = "org.cld.datacrawl.mgr.impl.PromotionAnalyze";
+	
+	private ICategoryAnalyze ca;
+	private IListAnalyze la;
+	private IProductAnalyze pa;
+	private IProductListAnalyze pla;
+	
 	private String crawlDsManagerValue = "nothing";
 	private String crawlDBConnectionUrl;
 	private DataStoreManager dsm;
 
 	private Map<String, String> params = new HashMap<String, String>();//store all the parameters in name-value pair for toString
-	
-	private Map<String, CrawlTaskConf> tasksConf = new ConcurrentHashMap<String, CrawlTaskConf>();
-	private Map<String, CrawlTaskConf> oldTasksConf = new HashMap<String, CrawlTaskConf>(); //for reload compare
 	
 	private Map<String, ProductConf> prdConfMap = new ConcurrentHashMap<String, ProductConf>();
 	private Map<String, ProductConf> oldPrdConfMap = new HashMap<String, ProductConf>();
@@ -145,66 +144,30 @@ public class CrawlConf implements AppConf, Serializable {
 	}
 	
 	//fill CTConf with newly created sub-instances
-	private void reloadCTConf(CrawlTaskConf ctconf){
+	private void reloadCTConf(){
 		try {			
-			//reload CategoryAnalyzeInf and ICategoryAnalyze
-			Class<?> caInfClass = Class.forName(ctconf.getCatImpl(), true, pluginClassLoader);
-			CategoryAnalyzeInf cai = (CategoryAnalyzeInf) caInfClass.newInstance();
-			cai.setCTConf(this, ctconf);
-			ctconf.setCaInf(cai);
-			
+			//reload ICategoryAnalyze
 			Class<?> caClass= Class.forName(this.getCategoryAnalyzeImpl(), true, pluginClassLoader);
-			ICategoryAnalyze ca = (ICategoryAnalyze) caClass.newInstance();
-			ca.setup(this, ctconf);
-			ctconf.setCa(ca);
+			setCa((ICategoryAnalyze) caClass.newInstance());
 			
-			//reload ProductListAnalyzeInf and IProductListAnalyze
-			Class<?> plaInfClass = Class.forName(ctconf.getProductListImpl(), true, pluginClassLoader);
-			ProductListAnalyzeInf plai = (ProductListAnalyzeInf) plaInfClass.newInstance();
-			plai.setCConf(this);
-			ctconf.setBlaInf(plai);
 			
+			//reload IProductListAnalyze
 			Class<?> plaClass = Class.forName(this.getProductListAnalyzeImpl(), true, pluginClassLoader);
-			IProductListAnalyze pla = (IProductListAnalyze) plaClass.newInstance();
-			pla.setup(this, ctconf);
-			ctconf.setBla(pla);
+			setPla((IProductListAnalyze) plaClass.newInstance());
 			
-			//reload ListAnalyzeInf and IListAnalyze
-			Class<?> laInfClass = Class.forName(ctconf.getListImpl(), true, pluginClassLoader);
-			ctconf.setLaInf( (ListAnalyzeInf) laInfClass.newInstance());
 			
+			//reload IListAnalyze
 			Class<?> laClass = Class.forName(this.getListAnalyzeImpl(), true, pluginClassLoader);
-			IListAnalyze la = (IListAnalyze) laClass.newInstance();
-			la.setup(this, ctconf, (ListProcessInf) pla);
-			ctconf.setLa(la);
+			setLa((IListAnalyze) laClass.newInstance());
+			la.setup(this, pla);
 			
-			//reload ProductAnalyzeInf and IProductAnalyze
-			Class<?> prdInfClass = Class.forName(ctconf.getProductDetailImpl(), true, pluginClassLoader);				
-			ProductAnalyzeInf paInf =  (ProductAnalyzeInf) prdInfClass.newInstance();
-			ctconf.setBaInf(paInf);
-			paInf.setCConf(this);
-			
+			//reload IProductAnalyze
 			Class<?> prdSysClazz = Class.forName(this.getProductAnalyzeImpl(), true, pluginClassLoader);
-			IProductAnalyze ba = (IProductAnalyze)  prdSysClazz.newInstance();
-			ba.setup(this, ctconf);				
-			ctconf.setBa(ba);
+			setPa((IProductAnalyze)  prdSysClazz.newInstance());
+			
 		}catch (Exception e) {
 			logger.error("", e);
 		} 
-	}
-	
-	/**
-	 * 
-	 * @param key
-	 * @return true for updated, false for nothing new
-	 */
-	private void loadCTConf(String key){
-		CrawlTaskConf ctconf = tasksConf.get(key);
-		
-		reloadCTConf(ctconf);
-		
-		tasksConf.put(key, ctconf);	
-		
 	}
 	
 	//TODO
@@ -240,38 +203,10 @@ public class CrawlConf implements AppConf, Serializable {
 		}
 		
 		//reload ctconf
-		Iterator<String> its = tasksConf.keySet().iterator();
-		while (its.hasNext()){
-			String key = its.next();
-			if (!oldTasksConf.containsKey(key)){
-				//newly added
-				loadCTConf(key);
-				CrawlConfChangedEvent ccce = new CrawlConfChangedEvent();
-				ccce.setOpType(CrawlConfChangedEvent.OP_ADD);
-				ccce.setPropName(CrawlConfChangedEvent.PROP_NAME_CTCONF);
-				ccce.setCtcValue(tasksConf.get(key));
-				fireEvent(ccce);	
-			}else{
-				//existing
-				loadCTConf(key);
-			}
-		}
-		
-		its = oldTasksConf.keySet().iterator();
-		while (its.hasNext()){
-			String key = its.next();
-			if (!tasksConf.containsKey(key)){
-				//deleted task conf
-				CrawlConfChangedEvent ccce = new CrawlConfChangedEvent();
-				ccce.setOpType(CrawlConfChangedEvent.OP_REMOVE);
-				ccce.setPropName(CrawlConfChangedEvent.PROP_NAME_CTCONF);
-				ccce.setCtcValue(oldTasksConf.get(key));
-				fireEvent(ccce);	
-			}
-		}	
+		this.reloadCTConf();
 		
 		//reload ProductConf
-		its = this.prdConfMap.keySet().iterator();
+		Iterator<String> its = this.prdConfMap.keySet().iterator();
 		while (its.hasNext()){
 			String key = its.next();
 			loadProductConf(key);
@@ -356,17 +291,8 @@ public class CrawlConf implements AppConf, Serializable {
 
 	private void readPropertiesFromConfig(){
 		try{
-			//1. clone to the oldTasksConf, oldPrdConf
-			oldTasksConf.clear();
-			Iterator<String> its = tasksConf.keySet().iterator();
-			while (its.hasNext()){
-				String key = its.next();
-				oldTasksConf.put(key, tasksConf.get(key));
-			}
-			tasksConf.clear();
-			
 			oldPrdConfMap.clear();
-			its = prdConfMap.keySet().iterator();
+			Iterator<String> its  = prdConfMap.keySet().iterator();
 			while (its.hasNext()){
 				String key = its.next();
 				oldPrdConfMap.put(key, prdConfMap.get(key));
@@ -427,24 +353,6 @@ public class CrawlConf implements AppConf, Serializable {
 							prdConfMap.put(pt, prdConf);
 						}
 					}
-				}else if (crawlTaskConf_Key.equals(key)){
-					List<Object> listVal = properties.getList(key);
-					for (int i=0;  i<listVal.size(); i++){
-						String tt = (String)listVal.get(i);
-						CrawlTaskConf cctconf = null;
-						if (oldTasksConf.containsKey(tt)){
-							cctconf = oldTasksConf.get(tt);
-						}else{
-							cctconf = new CrawlTaskConf();
-						}
-						cctconf.setName(tt);
-						cctconf.setCatImpl(properties.getString(tt + "." + CrawlTaskConf.catImpl_Key));
-						cctconf.setListImpl(properties.getString(tt + "." + CrawlTaskConf.listImpl_Key));
-						cctconf.setProductListImpl(properties.getString(tt + "." + CrawlTaskConf.productListImpl_Key));
-						cctconf.setProductDetailImpl(properties.getString(tt + "." + CrawlTaskConf.productDetailImpl_Key));
-						cctconf.setPromDetailImpl(properties.getString(tt + "." + CrawlTaskConf.promDetailImpl_Key));
-						tasksConf.put(tt, cctconf);
-					}
 				}
 				
 				params.put(key, strVal);
@@ -452,13 +360,6 @@ public class CrawlConf implements AppConf, Serializable {
 		}catch(Exception e){
 			logger.error("exception while read properties.", e);
 		}
-	}
-	
-	private void fireEvent(CrawlConfChangedEvent ccce){		
-		for (int i=0; i<listeners.size();i++){
-			CrawlConfListener ccl = listeners.get(i);
-			ccl.crawlConfChanged(ccce);
-		}		
 	}
 	
 	/**
@@ -475,14 +376,6 @@ public class CrawlConf implements AppConf, Serializable {
 	
 	public void addListener(CrawlConfListener lis){
 		listeners.add(lis);
-	}	
-	
-	public CrawlTaskConf getCCTConf(String taskType){
-		return tasksConf.get(taskType);
-	}
-	
-	public Map<String, CrawlTaskConf> getTasksConf() {
-		return tasksConf;
 	}	
 	
 	@Override
@@ -669,5 +562,37 @@ public class CrawlConf implements AppConf, Serializable {
 
 	public void setCrawlDsManager(String crawlDsManager) {
 		this.crawlDsManagerValue = crawlDsManager;
+	}
+
+	public ICategoryAnalyze getCa() {
+		return ca;
+	}
+
+	public void setCa(ICategoryAnalyze ca) {
+		this.ca = ca;
+	}
+
+	public IListAnalyze getLa() {
+		return la;
+	}
+
+	public void setLa(IListAnalyze la) {
+		this.la = la;
+	}
+
+	public IProductAnalyze getPa() {
+		return pa;
+	}
+
+	public void setPa(IProductAnalyze pa) {
+		this.pa = pa;
+	}
+
+	public IProductListAnalyze getPla() {
+		return pla;
+	}
+
+	public void setPla(IProductListAnalyze pla) {
+		this.pla = pla;
 	}
 }

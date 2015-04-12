@@ -20,7 +20,7 @@ import org.xml.taskdef.LoginType;
 public class TestBase {
 	protected static Logger logger =  LogManager.getLogger(TestBase.class);
 	
-	CrawlClientNode ccnode;
+	CrawlClientNode ccnode=null;
 	CrawlConf cconf;
 	private String propFile = "client1-v2.properties";
 	
@@ -28,21 +28,21 @@ public class TestBase {
 		return propFile;
 	}
 
+	private void init(){
+		cconf = CrawlTestUtil.getCConf(propFile);
+	}
 	public void setPropFile(String propFile) {
 		this.propFile = propFile;
-		ccnode = CrawlTestUtil.getCCNode(propFile);
-		cconf = ccnode.getCConf();
+		init();
 	}
 
 	public TestBase(String clientProperties) {
 		propFile = clientProperties;
-		ccnode = CrawlTestUtil.getCCNode(clientProperties);
-		cconf = ccnode.getCConf();
+		init();
 	}
 	
 	public TestBase(){
-		ccnode = CrawlTestUtil.getCCNode(propFile);
-		cconf = ccnode.getCConf();
+		init();
 	}
 	
 	private static String getConfId(String fileName){

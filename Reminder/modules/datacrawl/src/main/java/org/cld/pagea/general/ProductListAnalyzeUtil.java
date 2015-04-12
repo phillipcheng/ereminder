@@ -17,7 +17,6 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.mgr.TargetPrdInvoke;
 import org.cld.datacrawl.mgr.impl.CrawlTaskEval;
-import org.cld.datacrawl.pagea.ProductListAnalyzeInf;
 import org.cld.datastore.entity.Product;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.StringUtil;
@@ -33,30 +32,20 @@ import org.xml.taskdef.VarType;
 import org.xml.mytaskdef.IdUrlMapping;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 
-public class ProductListAnalyze implements ProductListAnalyzeInf {
+public class ProductListAnalyzeUtil {
 
-	private static Logger logger =  LogManager.getLogger(ProductListAnalyze.class);
-	private CrawlConf cconf;
+	private static Logger logger =  LogManager.getLogger(ProductListAnalyzeUtil.class);
 	public static final String LIST_PARAM_SEP=",";
 	
-	@Override
-	public String[] getListPageVerifyXPaths(Task task) {
+	
+	public static String[] getListPageVerifyXPaths(Task task) {
 		BrowseCatType bc = task.getLeafBrowseCatTask();
 		String itemListXpath = bc.getSubItemList().getItemList().getValue();
 		return new String[]{itemListXpath};
 	}
 
-	@Override
-	public void setCConf(CrawlConf cconf){
-		this.cconf = cconf;
-	}
-	@Override
-	public String[] getItemVerfiyXPaths(Task task) {
-		return null;
-	}
 	
-	@Override
-	public List<DomNode> getItemList(HtmlPage listPage, Task task) {
+	public static List<DomNode> getItemList(HtmlPage listPage, Task task, CrawlConf cconf) {
 		BrowseCatType bc = task.getLeafBrowseCatTask();
 		ValueType itemListXpathVT = bc.getSubItemList().getItemList();
 		if (itemListXpathVT.getToType()==null){
@@ -77,8 +66,8 @@ public class ProductListAnalyze implements ProductListAnalyzeInf {
 		}
 	}
 
-	@Override
-	public List<TargetPrdInvoke> getTargetPrdInovokeList(DomNode itemSummary, HtmlPage page, Task task, Product dummyProduct) {
+	
+	public static List<TargetPrdInvoke> getTargetPrdInovokeList(DomNode itemSummary, HtmlPage page, Task task, Product dummyProduct) {
 		List<TargetPrdInvoke> targetPrdInvokeList = new ArrayList<TargetPrdInvoke>();
 		
 		BrowseCatType bc = task.getLeafBrowseCatTask();
@@ -159,8 +148,8 @@ public class ProductListAnalyze implements ProductListAnalyzeInf {
 		return targetPrdInvokeList;
 	}
 
-	@Override
-	public String getInternalId(String fullUrl, Task task, ParsedBrowsePrd pbptTemplate) {
+	
+	public static String getInternalId(String fullUrl, Task task, ParsedBrowsePrd pbptTemplate) {
 		IdUrlMapping ium = pbptTemplate.getIum();
 		if (ium!=null){
 			Matcher m = ium.match(fullUrl);
@@ -190,19 +179,7 @@ public class ProductListAnalyze implements ProductListAnalyzeInf {
 		}
 	}
 	
-	@Override
-	public double getCurPrice(DomNode bookSummary) {
-		//means no price found on the list page
-		return -1;
-	}
-
-	@Override
-	public String getPromId(DomNode summary) {
-		return null;
-	}
-
-	@Override
-	public void setAttributes(DomNode summary, Product product, Task t) 
+	public static void setAttributes(DomNode summary, Product product, Task t, CrawlConf cconf) 
 			throws InterruptedException{
 		BrowseCatType bc = t.getLeafBrowseCatTask();
 		ValueType nameVT = bc.getSubItemList().getName();

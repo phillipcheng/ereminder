@@ -15,20 +15,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.CrawlTaskConf;
 import org.cld.datacrawl.CrawlUtil;
-import org.cld.datacrawl.mgr.IProductAnalyze;
-import org.cld.datacrawl.pagea.ProductListAnalyzeInf;
 import org.cld.datastore.entity.CrawledItemId;
 import org.cld.datastore.entity.Price;
 import org.cld.datastore.entity.Product;
+import org.cld.pagea.general.ProductListAnalyzeUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.cld.util.StringUtil;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 import org.xml.taskdef.BrowseDetailType;
 import org.xml.taskdef.ParamType;
-import org.xml.taskdef.ParamValueType;
 import org.xml.taskdef.TasksType;
 import org.xml.taskdef.VarType;
 
@@ -40,8 +37,6 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 	private static final long serialVersionUID = 1L;
 
 	private static Logger logger =  LogManager.getLogger(BrowseProductTaskConf.class);
-
-	private static String crawlTaskConf= "general";
 	
 	//configurable values
 	private String startURL;
@@ -115,13 +110,11 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 	 * @return
 	 * @throws InterruptedException
 	 */
-	public static void browseProduct(BrowseProductTaskConf task, CrawlConf cconf, CrawlTaskConf ctconf, WebClient wc, String storeId, 
+	public static void browseProduct(BrowseProductTaskConf task, CrawlConf cconf, WebClient wc, String storeId, 
 			String catId, String taskName, Map<String, Object> params) 
 			throws InterruptedException{
 		Product lastProduct = null;
 		Product thisProduct = null;
-		IProductAnalyze ba = ctconf.getBa();
-		ProductListAnalyzeInf blaInf = ctconf.getBlaInf();
 		ParsedBrowsePrd pbpTemplate = task.getBrowseDetailTask(taskName);
 		//startUrl may contains parameters needs to be converted to startUrlWithValue (maybe multiple) by filling the ParamValueMap
 		List<String> startUrlList = new ArrayList<String>();
@@ -172,7 +165,7 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 		}
 		
 		for (String startUrl:startUrlList){
-			String internalId = blaInf.getInternalId(startUrl, task, pbpTemplate);
+			String internalId = ProductListAnalyzeUtil.getInternalId(startUrl, task, pbpTemplate);
 			if (internalId!=null && !"".equals(internalId)){			
 				//lastProduct = CrawlPersistMgr.getProduct(cconf.getCrawlSF(), internalId);
 				if (cconf.getDsm()!=null){
@@ -188,21 +181,11 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 						thisProduct = cconf.getProductInstance(task.getTasks().getProductType());
 						CrawledItemId pid = new CrawledItemId(internalId, storeId, new Date());
 						thisProduct.setId(pid);
-						ba.addProduct(wc, startUrl, thisProduct, lastProduct, task, pbpTemplate);
+						cconf.getPa().addProduct(wc, startUrl, thisProduct, lastProduct, task, pbpTemplate, cconf);
 					}
 					//get 1st browse prd task's monitor price definition
 					if (task.getBrowseDetailTask(null).getBrowsePrdTaskType().isMonitorPrice()){
-						Price lastProductPrice = null;
-						if (cconf.getDsm()!=null){
-							lastProductPrice = cconf.getDsm().getLatestPrice(internalId, storeId);
-						}
-						thisDetailPrice = ba.readPrice(wc, startUrl, internalId, storeId, null, task, pbpTemplate);
-						if (thisDetailPrice!=null){
-							if (Price.looksChanged(lastProductPrice, thisDetailPrice)){//for version check
-								if (cconf.getDsm()!=null)
-									cconf.getDsm().addPrice(thisDetailPrice);
-							}
-						}
+						//
 					}
 				}else{
 					//add new product and price
@@ -210,15 +193,10 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 					CrawledItemId pid = new CrawledItemId(internalId, storeId, new Date());
 					thisProduct.setId(pid);
 					thisProduct.addCat(catId);
-					ba.addProduct(wc, startUrl, thisProduct, null, task, pbpTemplate);
+					cconf.getPa().addProduct(wc, startUrl, thisProduct, null, task, pbpTemplate, cconf);
 					//get 1st browse prd task's monitor price definition
 					if (task.getBrowseDetailTask(null).getBrowsePrdTaskType().isMonitorPrice()){
-						logger.debug("adding new product:" + thisProduct);
-						thisDetailPrice = ba.readPrice(wc, startUrl, internalId, storeId, null, task, pbpTemplate);
-						if (thisDetailPrice!=null){
-							if (cconf.getDsm()!=null)
-								cconf.getDsm().addPrice(thisDetailPrice);
-						}
+						//
 					}
 				}
 			}
@@ -233,10 +211,9 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 		
 		BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
 		this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
-		CrawlTaskConf ctconf = cconf.getCCTConf(crawlTaskConf);
 		WebClient wc = CrawlUtil.getWebClient(cconf, taskTemplate.skipUrls, taskTemplate.enableJS);
 		
-		browseProduct(this, cconf, ctconf, wc, this.getStoreId(), null, this.getName(), params);
+		browseProduct(this, cconf, wc, this.getStoreId(), null, this.getName(), params);
 	
 		return new ArrayList<Task>();
 	}

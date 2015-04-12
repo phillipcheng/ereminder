@@ -14,77 +14,31 @@ import com.gargoylesoftware.htmlunit.html.DomNode;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.CrawlTaskConf;
 import org.cld.datacrawl.mgr.IProductListAnalyze;
 import org.cld.datacrawl.mgr.ListProcessInf;
 import org.cld.datacrawl.mgr.TargetPrdInvoke;
-import org.cld.datacrawl.pagea.ProductListAnalyzeInf;
 import org.cld.datacrawl.task.BrowseProductTaskConf;
 import org.cld.datacrawl.task.BrsDetailStat;
 import org.cld.datastore.entity.Category;
 import org.cld.datastore.entity.CrawledItemId;
 import org.cld.datastore.entity.Price;
 import org.cld.datastore.entity.Product;
+import org.cld.pagea.general.ProductListAnalyzeUtil;
 import org.cld.taskmgr.entity.Task;
 import org.xml.taskdef.BDTProcessType;
 
 
-public class ProductListAnalyze implements ListProcessInf, IProductListAnalyze {
+public class ProductListAnalyze implements IProductListAnalyze {
 	private static Logger logger =  LogManager.getLogger(ProductListAnalyze.class);	
-	
-	private CrawlConf cconf;
-	private CrawlTaskConf ctconf;
 	
 	
 	public String toString(){
-		return System.identityHashCode(this) + "\n" +
-				"ctconf:" + System.identityHashCode(ctconf);
+		return System.identityHashCode(this) + "\n";
 	}
 	
 	public ProductListAnalyze(){
 		
 	}
-	
-	public ProductListAnalyze(CrawlConf cconf, CrawlTaskConf ctconf){
-		this.cconf =  cconf;
-		this.ctconf = ctconf;
-	}
-	
-
-	@Override
-	public void setup(CrawlConf cconf, CrawlTaskConf ctconf){
-		this.cconf =  cconf;
-		this.ctconf = ctconf;
-	}
-
-	@Override
-	public void setCTConf(CrawlTaskConf ctconf) {
-		this.ctconf = ctconf;		
-	}
-	
-	
-	@Override
-	public Price readGeneralPriceItem(String internalId, String storeId, DomNode summary, Date rt, 
-			Product product, Task task) throws InterruptedException{
-		ProductListAnalyzeInf blaInf = ctconf.getBlaInf();
-		Price price = null;
-		if (summary != null){
-			//get d_price
-			double dprice = blaInf.getCurPrice(summary);
-			if (dprice == -1){
-				//no price
-			}else{
-				price = new Price();
-				price.setId(new CrawledItemId(internalId, storeId, rt));
-				price.setPrice(dprice);
-				logger.debug("summary bp:" + price);
-			}
-			blaInf.setAttributes(summary, product, task);
-		}
-		
-		return price;
-	}
-	
 	
 	/**
 	 * either full info or url to fetch info
@@ -101,7 +55,6 @@ public class ProductListAnalyze implements ListProcessInf, IProductListAnalyze {
 	public List<Task> readItem(WebClient wc, HtmlPage page, Category category, DomNode productSummary, 
 			String detailedUrl,  Date readTime, CrawlConf cconf, Task task) throws InterruptedException {
 		
-		ProductListAnalyzeInf blaInf = ctconf.getBlaInf();
 		List<TargetPrdInvoke> targetPrdInvokeList = new ArrayList<TargetPrdInvoke>();
 		String catId = category.getRealCatId();
 		String storeId = category.getId().getStoreId();
@@ -109,10 +62,10 @@ public class ProductListAnalyze implements ListProcessInf, IProductListAnalyze {
 		//create a dummy summary product 
 		Product dummySummaryPrd = cconf.getProductInstance(task.getTasks().getProductType());
 		//get the attributes assigned from the summary node
-		blaInf.setAttributes(productSummary, dummySummaryPrd, task);
+		ProductListAnalyzeUtil.setAttributes(productSummary, dummySummaryPrd, task, cconf);
 		
 		if (productSummary!=null && page != null){
-			targetPrdInvokeList = blaInf.getTargetPrdInovokeList(productSummary, page, task, dummySummaryPrd);
+			targetPrdInvokeList = ProductListAnalyzeUtil.getTargetPrdInovokeList(productSummary, page, task, dummySummaryPrd);
 		}else{
 			TargetPrdInvoke spo = new TargetPrdInvoke(detailedUrl);
 			targetPrdInvokeList.add(spo);
@@ -144,7 +97,7 @@ public class ProductListAnalyze implements ListProcessInf, IProductListAnalyze {
 				logger.debug(String.format("Task t:%s generated.", t));
 			}else if (processType == BDTProcessType.INLINE){
 				//execute browse product now
-				BrowseProductTaskConf.browseProduct(t, cconf, ctconf, wc, storeId, catId, taskName, fullOutput.getInParams());
+				BrowseProductTaskConf.browseProduct(t, cconf, wc, storeId, catId, taskName, fullOutput.getInParams());
 			}else{
 				logger.error("unsupported bdt process type.");
 			}
@@ -155,8 +108,7 @@ public class ProductListAnalyze implements ListProcessInf, IProductListAnalyze {
 	@Override
 	public List<Task> process(HtmlPage listPage, Date readTime,
 			Category cat, CrawlConf cconf, Task task, int maxItems, WebClient wc) throws InterruptedException {
-		ProductListAnalyzeInf blaInf = ctconf.getBlaInf();
-		List<DomNode> itemList = blaInf.getItemList(listPage, task);
+		List<DomNode> itemList = ProductListAnalyzeUtil.getItemList(listPage, task, cconf);
 		
 		boolean orgJSOption = wc.getOptions().isJavaScriptEnabled();
 		wc.getOptions().setJavaScriptEnabled(task.getBrowseDetailTask(null).getBrowsePrdTaskType().getBaseBrowseTask().isEnableJS());

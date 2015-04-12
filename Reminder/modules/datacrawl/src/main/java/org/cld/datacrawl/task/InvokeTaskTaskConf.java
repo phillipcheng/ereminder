@@ -20,7 +20,6 @@ import org.xml.taskdef.TaskInvokeType;
 import org.xml.taskdef.TasksType;
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.CrawlTaskConf;
 
 
 @Entity

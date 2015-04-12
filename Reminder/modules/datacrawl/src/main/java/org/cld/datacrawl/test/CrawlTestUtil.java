@@ -22,6 +22,7 @@ import org.cld.datacrawl.task.InvokeTaskTaskConf;
 import org.cld.datacrawl.util.SomePageErrorException;
 import org.cld.datastore.entity.Category;
 import org.cld.datastore.entity.CrawledItemId;
+import org.cld.pagea.general.CategoryAnalyzeUtil;
 import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.client.ClientNodeImpl;
@@ -94,12 +95,11 @@ public class CrawlTestUtil{
 		
 		srt.bctBS = new BrsCatStat("1");
 		srt.bdtBS = new BrsDetailStat("1");
-		srt.ctconf = cconf.getCCTConf("general"); //TODO
 		
-		srt.ca = srt.ctconf.getCa();
-		srt.la = srt.ctconf.getLa();
+		srt.ca = cconf.getCa();
+		srt.la = cconf.getLa();
 		srt.originalLP = srt.la.getLpInf();
-		srt.pa = srt.ctconf.getBa();
+		srt.pa = cconf.getPa();
 	}
 	
 	public static SiteRuntime getSRT(String siteconfid, CrawlConf cconf, String taskName, String rootTaskId){
@@ -137,7 +137,7 @@ public class CrawlTestUtil{
 			startUrl = srt.getBdt().getLeafBrowseCatTask().getBaseBrowseTask().getStartUrl();
 		}
 		Category category = new Category(new CrawledItemId(
-				srt.ctconf.getCaInf().getCatId(startUrl, srt.getBdt()), 
+				CategoryAnalyzeUtil.getCatId(startUrl, srt.getBdt().getParsedTaskDef()), 
 				srt.getBct().getTasks().getStoreId(),
 				new Date()), srt.getBdt().getTasks().getProductType());
 		category.setFullUrl(startUrl);
@@ -196,7 +196,7 @@ public class CrawlTestUtil{
 		}else{
 			srt.getBct().setStartURL(catUrl);
 		}
-		List<Task> taskList = srt.ca.navigateCategory(srt.getBct(), srt.bctBS);
+		List<Task> taskList = srt.ca.navigateCategory(srt.getBct(), srt.bctBS, cconf);
 		logger.info("stat:" + srt.bctBS);
 		
 		if (type != BROWSE_CAT_TYPE_1_LVL){//not just 1 level, go deeper

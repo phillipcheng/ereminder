@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.NextPage;
 import org.cld.datacrawl.mgr.impl.BinaryBoolOpEval;
-import org.cld.datacrawl.pagea.ListAnalyzeInf;
 import org.xml.mytaskdef.ConfKey;
 import org.xml.mytaskdef.ParsedTasksDef;
 import org.xml.taskdef.BinaryBoolOp;
@@ -21,17 +20,11 @@ import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 //this is for the product list
-public class ListAnalyze implements ListAnalyzeInf {
-	private static Logger logger =  LogManager.getLogger(ListAnalyze.class);
-
-	@Override
-	public String[] getListPageVerifyXPaths(ParsedTasksDef tasksDef) {
-		//next page is mandatory if not last page
-		return null;
-	}
+public class ListAnalyzeUtil {
+	private static Logger logger =  LogManager.getLogger(ListAnalyzeUtil.class);
 	
-	@Override
-	public NextPage getNextPageUrlFromPage(HtmlPage listPage, ParsedTasksDef tasksDef, Map<String, Object> attrs, CrawlConf cconf) {
+	
+	public static NextPage getNextPageUrlFromPage(HtmlPage listPage, ParsedTasksDef tasksDef, Map<String, Object> attrs, CrawlConf cconf) {
 		BrowseCatType bc = tasksDef.getLeafBrowseCatTask();
 		SubListType slt = bc.getSubItemList();
 		String npxpath = slt.getNextPage();
@@ -73,8 +66,8 @@ public class ListAnalyze implements ListAnalyzeInf {
 		}
 	}
 
-	@Override
-	public boolean needJS(ParsedTasksDef tasksDef) {
+	
+	public static boolean needJS(ParsedTasksDef tasksDef) {
 		BrowseCatType bc = tasksDef.getLeafBrowseCatTask();
 		return bc.getBaseBrowseTask().isEnableJS();
 	}	

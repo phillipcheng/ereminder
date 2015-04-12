@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlServerNode;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.CrawlTaskConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.DataCrawl;
 import org.cld.datacrawl.entity.CrawlPersistMgr;
@@ -43,7 +42,6 @@ public class TestCrawlServer{
 	BrowseDetailTaskConf bdt;
 	BrowseCategoryTaskConf bct;
 	
-	CrawlTaskConf ctconf;
 	ICategoryAnalyze ca;
 	
 	
