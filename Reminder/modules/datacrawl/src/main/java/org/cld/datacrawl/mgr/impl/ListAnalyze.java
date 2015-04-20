@@ -71,7 +71,7 @@ public class ListAnalyze implements IListAnalyze {
 	public NextPageAndTasks readList(WebClient wc, NextPage np, Category cat, Task task, int maxItems, int curPageNum) 
 			throws InterruptedException{	
 		
-		HtmlPageResult listPageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, np, VPBL, task, task.getTasks().getLoginInfo(), cconf);
+		HtmlPageResult listPageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, np, VPBL, task, task.getParsedTaskDef(), cconf);
 		HtmlPage listPage = listPageResult.getPage();
 		//before processing items, if there is screen, scroll them
 		String nextScreenXPath = task.getLeafBrowseCatTask().getSubItemList().getNextScreen();
@@ -81,7 +81,7 @@ public class ListAnalyze implements IListAnalyze {
 			while (!BinaryBoolOpEval.eval(listPage, cconf, lastScreenCond, cat.getParamMap())){
 				HtmlElement he = listPage.getFirstByXPath(nextScreenXPath);
 				NextPage nsp = new NextPage(he);
-				listPageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, nsp, VPBL, task, task.getTasks().getLoginInfo(), cconf);
+				listPageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, nsp, VPBL, task, task.getParsedTaskDef(), cconf);
 				listPage = listPageResult.getPage();
 			}
 		}

@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
 public class StringUtil {
 	
 	public static final char RMB_1='¥';
-	public static final char RMB_2='￥'; //CH_MONEY_SIGN
+	public static final String RMB_2="￥"; //CH_MONEY_SIGN
 	public static final String PRICE_SPE=",";
 	
 	public static final char KeyValue_Sep1='：'; //CH_colon

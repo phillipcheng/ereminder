@@ -156,7 +156,7 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 			boolean needJS = CategoryAnalyzeUtil.needJS(url, bct.getParsedTaskDef());
 			wc = CrawlUtil.getWebClient(cconf, bct.getParsedTaskDef().getSkipUrls(), needJS);
 			HtmlPageResult catPageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(url), 
-					new VerifyPageByXPath(CategoryAnalyzeUtil.getCatPageVerifyXPaths(category, bct)), null, bct.getTasks().getLoginInfo(), cconf);
+					new VerifyPageByXPath(CategoryAnalyzeUtil.getCatPageVerifyXPaths(category, bct)), null, bct.getParsedTaskDef(), cconf);
 			HtmlPage catPage = catPageResult.getPage();
 			
 			if (catPageResult.getErrorCode() != HtmlPageResult.SUCCSS || catPage == null){

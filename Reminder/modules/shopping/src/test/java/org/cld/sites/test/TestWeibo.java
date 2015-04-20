@@ -33,8 +33,14 @@ public class TestWeibo extends TestBase{
 	}
 	
 	@Test
-	public void checkUnlockedAccounts(){
-		int i = getUnlockedAccounts(SITE_CONF_FILE);
+	public void checkUnlockedAccounts1(){
+		int i = getUnlockedAccounts("http://us.weibo.com/gb#", SITE_CONF_FILE);
+		logger.info(String.format("%d unlocked accounts for %s", i, SITE_CONF_FILE));
+	}
+	
+	@Test
+	public void checkUnlockedAccounts2(){
+		int i = getUnlockedAccounts("http://www.weibo.com/login.php", SITE_CONF_FILE);
 		logger.info(String.format("%d unlocked accounts for %s", i, SITE_CONF_FILE));
 	}
 	

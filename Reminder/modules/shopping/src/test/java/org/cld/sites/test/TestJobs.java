@@ -55,7 +55,7 @@ public class TestJobs extends TestBase{
 	
 	@Test
 	public void checkUnlockedAccounts(){
-		int i = getUnlockedAccounts(LINKEDIN_COMPANY);
+		int i = getUnlockedAccounts("https://www.linkedin.com/uas/login", LINKEDIN_COMPANY);
 		logger.info(String.format("%d unlocked accounts for %s", i, LINKEDIN_COMPANY));
 	}
 	

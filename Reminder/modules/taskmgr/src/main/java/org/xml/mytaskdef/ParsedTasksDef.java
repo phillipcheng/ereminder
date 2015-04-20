@@ -9,8 +9,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.xml.taskdef.BrowseCatType;
 import org.xml.taskdef.BrowseDetailType;
+import org.xml.taskdef.ClickStreamType;
 import org.xml.taskdef.RegExpType;
 import org.xml.taskdef.TasksType;
+
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 public class ParsedTasksDef {
 
@@ -23,8 +26,17 @@ public class ParsedTasksDef {
 	transient String[] skipUrls;
 	transient ParsedBrowsePrd defaultBrowsePrdTask;//browse product
 	transient Map<String, ParsedBrowsePrd> browsePrdTaskMap = new HashMap<String, ParsedBrowsePrd>();
+	//from landing url to loginClickStream
+	transient Map<String, ClickStreamType> landingUrlMap;
 
-
+	public ClickStreamType getLoginClickStream(String landingUrl){
+		return null;
+	}
+	
+	public ClickStreamType getLoginClickStream(HtmlPage page){
+		return null;
+	}
+	
 	public void setUp(TasksType tasks, ClassLoader pluginClassLoader, Map<String, Object> params) {
 		this.tasksDef = tasks;
 		int size = tasks.getCatTask().size();
@@ -70,6 +82,8 @@ public class ParsedTasksDef {
 		skipUrls = new String[tasks.getSkipUrl().size()];
 		tasks.getSkipUrl().toArray(skipUrls);
 	}
+	
+
 	
 	public BrowseCatType getRootBrowseCatTask(){
 		return rootBrowseCatTask;

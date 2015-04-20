@@ -21,6 +21,7 @@ import org.cld.datacrawl.mgr.impl.BinaryBoolOpEval;
 import org.cld.datacrawl.mgr.impl.CrawlTaskEval;
 import org.cld.taskmgr.entity.Task;
 import org.xml.mytaskdef.ConfKey;
+import org.xml.mytaskdef.ParsedTasksDef;
 import org.xml.taskdef.AttributeType;
 import org.xml.taskdef.ClickStreamType;
 import org.xml.taskdef.ClickType;
@@ -106,46 +107,32 @@ public class HtmlUnitUtil {
 		return false;
 	}
 	
-	private static LoginStatus login(LoginType loginInfo, CredentialType credential, WebClient wc, CrawlConf cconf) 
+	/**
+	 * invoke the login click stream based on the landingUrl
+	 * @param landingUrl: 
+	 * @param loginInfo:
+	 * @param credential
+	 * @param wc
+	 * @param cconf
+	 * @return
+	 * @throws InterruptedException
+	 */
+	private static LoginStatus login(String landingUrl, ClickStreamType loginClickStream, ParsedTasksDef tasksDef, CredentialType credential, 
+			WebClient wc, CrawlConf cconf) 
 			throws InterruptedException{
-		HtmlPage loginPage = null;
-		
-		ValueType loginUrlVT = loginInfo.getLoginURL();
-		NextPage np;
-		if (loginUrlVT.getFromType()==VarType.URL){
-			String loginUrl = loginUrlVT.getValue();
-			np = new NextPage(loginUrl);
-		}else{
-			logger.error("not supported loginUrl VarType:" + loginUrlVT.getFromType());
-			return LoginStatus.LoginFailed;
-		}
-		
-		try {
-			ClickType ct = loginInfo.getClick().getLink().get(0);
-			VerifyPageByXPath vp = new VerifyPageByXPath(ct);
-			HtmlPageResult pgresult = clickNextPageWithRetryValidate(wc, np, vp, null, loginInfo, cconf);
-			if (pgresult.getErrorCode()==HtmlPageResult.SUCCSS){
-				loginPage = pgresult.getPage();
-			}else{
-				logger.error(String.format("open page np:%s failed.", np));
-				return LoginStatus.LoginFailed;
-			}
-		} catch (FailingHttpStatusCodeException e) {
-			logger.error(String.format("get login page:%s error.", np), e);
-			return LoginStatus.LoginFailed;
-		}
-		
+		//prepare parameters to invoke clickClickStream
 		Map<String, List<? extends DomNode>> pageMap = new HashMap<String, List<? extends DomNode>>();
 		List<HtmlPage> pagelist= new ArrayList<HtmlPage>();
-		pagelist.add(loginPage);
+		//pagelist.add(loginPage); //we can reuse the current page
 		pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put(KEY_USERNAME, credential.getUsername());
 		paramMap.put(KEY_PASSWORD, credential.getPassword());
-		clickClickStream(loginInfo.getClick(), pageMap, paramMap, cconf, np);
+		NextPage np = new NextPage(landingUrl);
+		clickClickStream(loginClickStream, pageMap, paramMap, cconf, np);
 		pagelist = (List<HtmlPage>) pageMap.get(ConfKey.CURRENT_PAGE);
 		HtmlPage afterLoginPage = pagelist.get(0);
-		
+		LoginType loginInfo = tasksDef.getTasks().getLoginInfo();
 		//check gotcha
 		if (isGotcha(afterLoginPage, loginInfo, cconf)){
 			return LoginStatus.LoginCatchya;
@@ -157,9 +144,9 @@ public class HtmlUnitUtil {
 				}else{
 					return LoginStatus.LoginFailed;
 				}
-			}else{
+			}else{//if no login success condition defined using below system logic
 				String afterLoginUrl = afterLoginPage.getUrl().toExternalForm();
-				if (loginUrlVT.getFromType()==VarType.URL && afterLoginUrl.equals(loginUrlVT.getValue())){
+				if (afterLoginUrl.equals(landingUrl)){
 					logger.error(String.format("login failed? remain on the same page, with loginInfo: %s", loginInfo));
 					return LoginStatus.LoginFailed;
 				}else{
@@ -170,18 +157,12 @@ public class HtmlUnitUtil {
 		}
 	}
 	
-	/**
-	 * 
-	 * @param loginInfo
-	 * @param cconf
-	 * @return the number of unlocked credentials
-	 * @throws InterruptedException 
-	 */
-	public static int checkLockedCrendentials(LoginType loginInfo, CrawlConf cconf) throws InterruptedException{
+	public static int checkLockedCrendentials(String landingUrl, ParsedTasksDef siteDef, CrawlConf cconf) throws InterruptedException{
 		int unlocked=0;
-		for (CredentialType ct: loginInfo.getCredential()){
+		ClickStreamType loginClickStream = siteDef.getLoginClickStream(landingUrl);
+		for (CredentialType ct: siteDef.getTasks().getLoginInfo().getCredential()){
 			WebClient wc = CrawlUtil.getWebClient(cconf, null, true);
-			LoginStatus ls = login(loginInfo, ct, wc, cconf);
+			LoginStatus ls = login(landingUrl, loginClickStream, siteDef, ct, wc, cconf);
 			if (LoginStatus.LoginSuccess == ls){
 				unlocked++;
 			}
@@ -299,7 +280,7 @@ public class HtmlUnitUtil {
 						pageMap.put(ConfKey.CURRENT_PAGE, pagelist1); //set current page
 					}else{
 						logger.error(String.format("click stream:%s eval to %s, not a page, check toType. prdPage is:%s", 
-								vt.getValue(), value, currentNP));
+								vt.getValue(), value, currentNP==null? "null":currentNP));
 						break;
 					}
 				}
@@ -324,24 +305,23 @@ public class HtmlUnitUtil {
 	 * @return true means login successful, false means either no login performed or login failed.
 	 * @throws InterruptedException
 	 */
-	private static LoginStatus tryLogin(HtmlPage landingPage, String tryUrl, WebClient wc, LoginType loginInfo, CrawlConf cconf) 
+	private static LoginStatus tryLogin(HtmlPage landingPage, String tryUrl, WebClient wc, ParsedTasksDef siteDef, CrawlConf cconf) 
 			throws InterruptedException{
 		String landingUrl = landingPage.getUrl().toExternalForm();
+		LoginType loginInfo = siteDef.getTasks().getLoginInfo();
 		if (loginInfo!=null){
 			if (tryUrl!=null && !landingUrl.contains(tryUrl)){
 				boolean requireLogin = false;
+				ClickStreamType loginClickStream = null;
 				if (isGotcha(landingPage, loginInfo, cconf)){//check gotcha
 					requireLogin = true;
 				}else {//check login redirected
-					List<ValueType> possibleRedirectedUrls = loginInfo.getRedirectedURL();
-					for (ValueType redirectUrlVT: possibleRedirectedUrls){
-						if (redirectUrlVT.getFromType()==VarType.URL && landingUrl.contains(redirectUrlVT.getValue())){
-							requireLogin = true;
-							break;
-						}else if (redirectUrlVT.getFromType()==VarType.XPATH && landingPage.getFirstByXPath(redirectUrlVT.getValue())!=null){
-							requireLogin = true;
-							break;
-						}
+					loginClickStream = siteDef.getLoginClickStream(landingUrl);
+					if (loginClickStream == null){
+						loginClickStream = siteDef.getLoginClickStream(landingPage);
+					}
+					if (loginClickStream != null){
+						requireLogin = true;
 					}
 				}
 				//redirected to one of the possibleRedirectedUrls
@@ -351,7 +331,7 @@ public class HtmlUnitUtil {
 						CredentialType ct = getCredential(loginInfo, usedCredentials);
 						if (ct!=null){
 							usedCredentials.add(ct.getUsername());
-							LoginStatus ls = login(loginInfo, ct, wc, cconf);
+							LoginStatus ls = login(landingUrl, loginClickStream, siteDef, ct, wc, cconf);
 							if(LoginStatus.LoginCatchya==ls){
 								logger.info(String.format("catchya using user %s", ct.getUsername()));
 								continue;
@@ -389,7 +369,7 @@ public class HtmlUnitUtil {
 	 * @throws InterruptedException
 	 */
 	public static HtmlPageResult clickNextPageWithRetryValidate(WebClient wc, NextPage np, VerifyPage vp, Object param, 
-			LoginType loginInfo, CrawlConf cconf) 
+			ParsedTasksDef siteDef, CrawlConf cconf) 
 			throws InterruptedException{
 		HtmlPageResult result = new HtmlPageResult();
 		HtmlPage page = null;
@@ -413,7 +393,7 @@ public class HtmlUnitUtil {
 						page = (HtmlPage) page.getWebClient().getWebWindows().get(0).getEnclosedPage();
 						if (page != null){
 							//
-							LoginStatus loginStatus = tryLogin(page, np.getNextUrl(), wc, loginInfo, cconf);
+							LoginStatus loginStatus = tryLogin(page, np.getNextUrl(), wc, siteDef, cconf);
 							if (LoginStatus.LoginNotNeeded != loginStatus){
 								if (LoginStatus.LoginSuccess == loginStatus){
 									page = getDirectPage(wc, np);

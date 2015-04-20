@@ -97,11 +97,11 @@ public class TestBase {
 		}
 	}
 	
-	public int getUnlockedAccounts(String confName){
+	public int getUnlockedAccounts(String landingUrl, String confName){
 		SiteRuntime srt = CrawlTestUtil.getSRT(getConfId(confName), cconf, null);
 		LoginType loginInfo = srt.getTasks().getLoginInfo();
 		try {
-			return HtmlUnitUtil.checkLockedCrendentials(loginInfo, cconf);
+			return HtmlUnitUtil.checkLockedCrendentials(landingUrl, srt.getSiteDef(), cconf);
 		} catch (InterruptedException e) {
 			logger.error("", e);
 			return -1;
@@ -154,8 +154,12 @@ public class TestBase {
 				}
 			}
 		}else if (CMD_CHECK_ACCOUNT.equals(cmd)){
-			int i = tb.getUnlockedAccounts(siteconfName);
-			logger.info(String.format("%d unlocked accounts for %s", i, siteconfName));
+			if (args.length<4){
+				logger.error(String.format("usage: TestBase propFile site-conf-file-name %s starturl", cmd));
+			}
+			String startUrl = args[3];
+			int i = tb.getUnlockedAccounts(startUrl, siteconfName);
+			logger.info(String.format("%d unlocked accounts for %s on url %s", i, siteconfName, startUrl));
 		}
 	}
 }

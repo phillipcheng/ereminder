@@ -157,7 +157,7 @@ public class ProductAnalyzeUtil {
 			if (nextPageEle!=null || url!=null){
 				NextPage np = new NextPage(url, nextPageEle);
 				HtmlPageResult hpResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, np, 
-						new VerifyPageByXPath(getPageVerifyXPaths(task, taskDef)), null, task.getTasks().getLoginInfo(), cconf);
+						new VerifyPageByXPath(getPageVerifyXPaths(task, taskDef)), null, task.getParsedTaskDef(), cconf);
 				if (hpResult.getErrorCode()==HtmlPageResult.SUCCSS){
 					return hpResult.getPage();
 				}else{
@@ -187,7 +187,7 @@ public class ProductAnalyzeUtil {
 			pageMap = new HashMap<String, List<? extends DomNode>>();
 			
 			HtmlPageResult hpResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(product.getLastUrl()), 
-					 new VerifyPageByXPath(getPageVerifyXPaths(task, taskDef)), null, task.getTasks().getLoginInfo(), cconf);
+					 new VerifyPageByXPath(getPageVerifyXPaths(task, taskDef)), null, task.getParsedTaskDef(), cconf);
 			if (hpResult.getErrorCode()==HtmlPageResult.SUCCSS){
 				inpage = hpResult.getPage();
 				List<HtmlPage> pagelist = new ArrayList<HtmlPage>();
