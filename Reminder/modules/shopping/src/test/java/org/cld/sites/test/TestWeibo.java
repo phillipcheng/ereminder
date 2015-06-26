@@ -7,7 +7,10 @@ import java.util.Map;
 
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.test.CrawlTestUtil;
+import org.cld.datacrawl.test.TestBase;
+import org.cld.datacrawl.test.CrawlTestUtil.browse_cat_type;
 import org.cld.sinawebo.Login;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
@@ -21,20 +24,27 @@ import com.gargoylesoftware.htmlunit.html.HtmlSpan;
 public class TestWeibo extends TestBase{
 	public static final String SITE_CONF_FILE ="weibo.xml";
 	
+	private String propFile = "client1-v2.properties";
+	
+	@Before
+	public void setUp(){
+		super.setProp(propFile);
+	}
+	
 	public static final String[] bct_startUrls = new String[]{
 		"http://www.weibo.com/hwrichardyu",
 	};
 	
 	@Test
-	public void run_linkedin_bct() throws Exception{
+	public void run_weibo_bct() throws Exception{
 		for (String startUrl:bct_startUrls){
-			catNavigate(SITE_CONF_FILE, startUrl, CrawlTestUtil.BROWSE_CAT_TYPE_RECURSIVE, 1);	
+			catNavigate(SITE_CONF_FILE, startUrl, browse_cat_type.recursive, 1);	
 		}
 	}
 	
 	@Test
 	public void checkUnlockedAccounts1(){
-		int i = getUnlockedAccounts("http://us.weibo.com/gb#", SITE_CONF_FILE);
+		int i = getUnlockedAccounts("http://us.weibo.com/gb", SITE_CONF_FILE);
 		logger.info(String.format("%d unlocked accounts for %s", i, SITE_CONF_FILE));
 	}
 	

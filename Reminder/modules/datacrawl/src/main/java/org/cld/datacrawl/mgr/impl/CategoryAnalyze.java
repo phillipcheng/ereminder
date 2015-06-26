@@ -122,7 +122,7 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 	public CategoryAnalyze(){	
 	}
 	
-	private boolean hasUpdate(Category oldCat, Category newCat){
+	private static boolean hasUpdate(Category oldCat, Category newCat){
 		if (oldCat==null){ //1st time
 			return true;
 		}
@@ -148,7 +148,7 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 	/**
 	 * @throws InterruptedException 
 	 */
-	private List<Task> navigateCategoryOneLvl(BrowseCategoryTaskConf bct, BrowseCatType bcdef, CrawlConf cconf) throws InterruptedException{
+	public static List<Task> navigateCategoryOneLvl(BrowseCategoryTaskConf bct, BrowseCatType bcdef, CrawlConf cconf) throws InterruptedException{
 		WebClient wc = null;
 		try{
 			Category category = bct.getNewCat();

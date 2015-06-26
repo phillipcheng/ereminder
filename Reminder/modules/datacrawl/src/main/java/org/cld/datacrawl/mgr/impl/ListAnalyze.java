@@ -122,13 +122,17 @@ public class ListAnalyze implements IListAnalyze {
 			int maxPages, int maxItems) 
 			throws InterruptedException, SomePageErrorException {
 		if (toPage == -1){
-			if (category.getItemNum()!=0){
-				if (category.getItemNum() % category.getPageSize()==0)
-					toPage = category.getItemNum()/category.getPageSize();
-				else
-					toPage = category.getItemNum()/category.getPageSize() + 1;
+			if (category.getPageNum()>0){
+				toPage = category.getPageNum();
 			}else{
-				//item num un-set
+				if (category.getItemNum()!=0){//calculate pageNum from itemNum
+					if (category.getItemNum() % category.getPageSize()==0)
+						toPage = category.getItemNum()/category.getPageSize();
+					else
+						toPage = category.getItemNum()/category.getPageSize() + 1;
+				}else{
+					//item num un-set
+				}
 			}
 		}
 		logger.debug("toPage after ajustment is:" + toPage);

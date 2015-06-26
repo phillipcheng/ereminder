@@ -1,5 +1,6 @@
 package org.cld.datacrawl.util;
 
+import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -8,6 +9,7 @@ import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.mgr.impl.BinaryBoolOpEval;
 import org.cld.util.PatternResult;
 import org.xml.taskdef.BinaryBoolOp;
+
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 public class VerifyPageByBoolOp implements VerifyPage {
@@ -21,6 +23,12 @@ public class VerifyPageByBoolOp implements VerifyPage {
 	
 	public VerifyPageByBoolOp(BinaryBoolOp[] ops, CrawlConf cconf){
 		this.validationOps = ops;
+		this.cconf = cconf;
+	}
+	
+	public VerifyPageByBoolOp(List<BinaryBoolOp> ops, CrawlConf cconf){
+		this.validationOps = ops.toArray(new BinaryBoolOp[ops.size()]);
+		this.cconf = cconf;
 	}
 	
 	public String toString(){

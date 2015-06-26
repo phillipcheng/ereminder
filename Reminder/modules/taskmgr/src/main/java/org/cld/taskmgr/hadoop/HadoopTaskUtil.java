@@ -8,6 +8,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -60,12 +61,20 @@ public class HadoopTaskUtil {
 	
 	public static void executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> params){
 		String sourceName = "";
+		Configuration conf = getHadoopConf(nc);
+		int max = conf.getInt(DFSConfigKeys.DFS_NAMENODE_MAX_COMPONENT_LENGTH_KEY, DFSConfigKeys.DFS_NAMENODE_MAX_COMPONENT_LENGTH_DEFAULT);
+		
 		for (int i=0; i<taskList.size(); i++){
+			String preSourceName = sourceName;
 			Task t = taskList.get(i);
 			if (i==0){
 				sourceName = t.getId();
 			}else{
 				sourceName += "__" + t.getId();
+			}
+			if (sourceName.length()>max){
+				sourceName = preSourceName;
+				break;
 			}
 		}
 		executeTasks(nc, taskList, params, sourceName);
@@ -106,8 +115,11 @@ public class HadoopTaskUtil {
 			
 			Job job = Job.getInstance(conf, sourceName);
 			//add app specific jars to classpath
-			for (String s: nc.getTaskMgr().getYarnAppCp()){
-				job.addFileToClassPath(new Path(s));
+			if (nc.getTaskMgr().getYarnAppCp()!=null){
+				for (String s: nc.getTaskMgr().getYarnAppCp()){
+					if (!"".equals(s))
+						job.addFileToClassPath(new Path(s));
+				}
 			}
 			String className = taskMgr.getHadoopTaskMapperClassName();
 			Class<? extends Mapper> mapperClazz = (Class<? extends Mapper>) Class.forName(className);

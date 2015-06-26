@@ -16,6 +16,7 @@ import org.apache.logging.log4j.ThreadContext;
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.test.CrawlTestUtil;
+import org.cld.datacrawl.test.CrawlTestUtil.browse_cat_type;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 
@@ -93,7 +94,7 @@ public class TestTaskConf extends Task implements Serializable{
 				CrawlTestUtil.catNavigate(siteconfid, null, cconf, getId(), null, null);
 			}else if (taskType == TEST_TASK_BCT){
 				CrawlTestUtil.catNavigate(siteconfid, null, startUrl, 
-						CrawlTestUtil.BROWSE_CAT_TYPE_RECURSIVE, cconf, getId(), null, null, 0);
+						browse_cat_type.recursive, cconf, getId(), null, null, 0);
 			}else if (taskType == TEST_TASK_ONE_BOOK){
 				CrawlTestUtil.browsePrd(siteconfid, null, startUrl, cconf, getId());
 			}else if (taskType == TEST_TASK_BDT_TURNPAGEONLY){
@@ -133,5 +134,20 @@ public class TestTaskConf extends Task implements Serializable{
 		this.init = init;
 	}
 	
+	public String getSiteconfid() {
+		return siteconfid;
+	}
+
+	public void setSiteconfid(String siteconfid) {
+		this.siteconfid = siteconfid;
+	}
+
+	public String getConfXml() {
+		return confXml;
+	}
+
+	public void setConfXml(String confXml) {
+		this.confXml = confXml;
+	}
 
 }

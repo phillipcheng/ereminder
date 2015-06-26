@@ -2,8 +2,11 @@ package org.cld.sites.test;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.junit.Before;
 import org.junit.Test;
 import org.cld.datacrawl.test.CrawlTestUtil;
+import org.cld.datacrawl.test.CrawlTestUtil.browse_cat_type;
+import org.cld.datacrawl.test.TestBase;
 import org.cld.taskmgr.hadoop.HadoopTaskUtil;
 import org.cld.stock.load.CNBasicLoad;
 
@@ -11,8 +14,11 @@ public class TestJobs extends TestBase{
 	
 	public static final String LINKEDIN_COMPANY="linkedin-company.xml";
 	
-	public TestJobs(){
-		super();
+	private String propFile = "client1-v2.properties";
+	
+	@Before
+	public void setUp(){
+		super.setProp(propFile);
 	}
 	
 	public static final String[] startUrls = new String[]{
@@ -26,13 +32,13 @@ public class TestJobs extends TestBase{
 	@Test
 	public void run_linkedin_bct() throws Exception{
 		for (String startUrl:startUrls){
-			catNavigate(LINKEDIN_COMPANY, startUrl, CrawlTestUtil.BROWSE_CAT_TYPE_RECURSIVE);	
+			catNavigate(LINKEDIN_COMPANY, startUrl, browse_cat_type.recursive);	
 		}
 	}
 	
 	@Test
 	public void run_linkedin_bct_one() throws Exception{
-		catNavigate(LINKEDIN_COMPANY, "https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=B&page_num=1", CrawlTestUtil.BROWSE_CAT_TYPE_RECURSIVE);	
+		catNavigate(LINKEDIN_COMPANY, "https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=B&page_num=1", browse_cat_type.recursive);	
 	}
 	
 	@Test

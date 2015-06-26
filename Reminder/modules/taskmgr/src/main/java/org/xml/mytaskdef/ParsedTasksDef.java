@@ -10,8 +10,11 @@ import org.apache.logging.log4j.Logger;
 import org.xml.taskdef.BrowseCatType;
 import org.xml.taskdef.BrowseDetailType;
 import org.xml.taskdef.ClickStreamType;
+import org.xml.taskdef.RedirectType;
 import org.xml.taskdef.RegExpType;
 import org.xml.taskdef.TasksType;
+import org.xml.taskdef.ValueType;
+import org.xml.taskdef.VarType;
 
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
@@ -27,13 +30,28 @@ public class ParsedTasksDef {
 	transient ParsedBrowsePrd defaultBrowsePrdTask;//browse product
 	transient Map<String, ParsedBrowsePrd> browsePrdTaskMap = new HashMap<String, ParsedBrowsePrd>();
 	//from landing url to loginClickStream
-	transient Map<String, ClickStreamType> landingUrlMap;
-
+	transient Map<String, ClickStreamType> landingUrlMap = new HashMap<String, ClickStreamType>();
+	//from stream name to loginClickStream
+	transient Map<String, ClickStreamType> clickStreamMap = new HashMap<String, ClickStreamType>();
+	
 	public ClickStreamType getLoginClickStream(String landingUrl){
+		for (String key: landingUrlMap.keySet()){
+			if (landingUrl.startsWith(key)){
+				return landingUrlMap.get(key);
+			}
+		}
 		return null;
 	}
 	
 	public ClickStreamType getLoginClickStream(HtmlPage page){
+		List<RedirectType> redirectedUrls = tasksDef.getLoginInfo().getRedirectedURL();
+		for (RedirectType rt: redirectedUrls){
+			if (rt.getLanding().getFromType()==VarType.XPATH){
+				if (page.getFirstByXPath(rt.getLanding().getValue())!=null){
+					return clickStreamMap.get(rt.getClickstream());
+				}
+			}
+		}
 		return null;
 	}
 	
@@ -81,6 +99,21 @@ public class ParsedTasksDef {
 		
 		skipUrls = new String[tasks.getSkipUrl().size()];
 		tasks.getSkipUrl().toArray(skipUrls);
+		
+		if (tasks.getLoginInfo()!=null){
+			//setup the click stream map
+			List<ClickStreamType> loginClickStreams = tasks.getLoginInfo().getLoginClickStream();
+			for (ClickStreamType cst: loginClickStreams){
+				clickStreamMap.put(cst.getName(), cst);
+			}
+			//setup the login click stream map
+			List<RedirectType> redirectedUrls = tasks.getLoginInfo().getRedirectedURL();
+			for (RedirectType rt: redirectedUrls){
+				if (rt.getLanding().getFromType()==VarType.URL){
+					landingUrlMap.put(rt.getLanding().getValue(), clickStreamMap.get(rt.getClickstream()));
+				}
+			}
+		}
 	}
 	
 

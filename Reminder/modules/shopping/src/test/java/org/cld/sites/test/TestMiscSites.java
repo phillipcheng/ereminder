@@ -6,13 +6,18 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.test.CrawlTestUtil;
+import org.cld.datacrawl.test.TestBase;
+import org.junit.Before;
 import org.junit.Test;
 
 public class TestMiscSites extends TestBase {
 	private static Logger logger =  LogManager.getLogger(TestMiscSites.class);
 	
-	public TestMiscSites(){
-		super();
+	private String propFile = "client1-v2.properties";
+	
+	@Before
+	public void setUp(){
+		super.setProp(propFile);
 	}
 	
 	
@@ -25,8 +30,6 @@ public class TestMiscSites extends TestBase {
 		browsePrd(USCIS_CONF, null);
 	}
 	
-	//TODO
-	//invoke task via invokeTaskTask
 	@Test
 	public void invokeTask_YahooFinance() throws Exception{
 		cconf.setUpSite(YAHOO_FINANCE, null);

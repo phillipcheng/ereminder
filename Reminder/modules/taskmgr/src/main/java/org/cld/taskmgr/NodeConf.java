@@ -117,10 +117,8 @@ public class NodeConf implements Serializable, FileAlterationListener{
 	}
 	
 	public void fireNCPCEvent(NodeConfPropChangedEvent ncpce){
-		logger.info("fire NCPCEvent:" + ncpce + " to " + ncpListeners.size());
 		for (int i=0; i<ncpListeners.size(); i++){
 			NodeConfPropListener ncl = ncpListeners.get(i);
-			logger.info("ncl:" + ncl);
 			ncl.nodeConfPropChanged(ncpce);
 		}
 	}

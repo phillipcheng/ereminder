@@ -1,5 +1,6 @@
 package org.cld.datacrawl.mgr.impl;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
@@ -32,6 +33,7 @@ import org.xml.taskdef.ScopeType;
 import org.xml.taskdef.ValueType;
 import org.xml.taskdef.VarType;
 
+import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.html.DomNamespaceNode;
 import com.gargoylesoftware.htmlunit.html.DomNode;
 import com.gargoylesoftware.htmlunit.html.DomText;
@@ -67,15 +69,16 @@ public class CrawlTaskEval {
 		return -1;
 	}
 	
-	private static HtmlPage getPage(Object xpathResult, DomNode page, ValueType vt, BinaryBoolOp pvt, CrawlConf cconf, Map<String, Object> params) 
+	private static HtmlPage getPage(Object xpathResult, DomNode page, ValueType vt, List<BinaryBoolOp> pvtList, 
+			CrawlConf cconf, Map<String, Object> params) 
 			throws InterruptedException{
 		HtmlPageResult hpResult=null;
 
 		HtmlElement input = (HtmlElement)xpathResult;
 		NextPage np = new NextPage(input);
 		VerifyPageByBoolOp vp=null;
-		if (pvt!=null){
-			vp = new VerifyPageByBoolOp(new BinaryBoolOp[]{pvt}, cconf);
+		if (pvtList!=null){
+			vp = new VerifyPageByBoolOp(pvtList.toArray(new BinaryBoolOp[pvtList.size()]), cconf);
 		}
 		hpResult = HtmlUnitUtil.clickNextPageWithRetryValidate(null, np, vp, params, null, cconf);
 		
@@ -157,7 +160,13 @@ public class CrawlTaskEval {
 				logger.error("", e);
 			}
 		}else if (entry instanceof HtmlAnchor){
-			finalString = anchorToFullUrl((HtmlAnchor)entry, (HtmlPage)page);
+			HtmlPage p = null;
+			if (page instanceof HtmlPage){
+				p = (HtmlPage)page;
+			}else{
+				p = (HtmlPage)page.getPage();
+			}
+			finalString = anchorToFullUrl((HtmlAnchor)entry, (HtmlPage)p);
 		}
 		return finalString;
 	}
@@ -267,13 +276,19 @@ public class CrawlTaskEval {
 									Object xpathRes = xpathListResult.get(i);
 									BinaryBoolOp pvt = null;
 									if (vt.getPageVerify().size()>0){
+										//TODO: For page list type
+										//the pageVerify specified for this ValueType is 1 to 1 mapped to the returned page list, 
+										//so no multiple pageVerify supported for 1 page
 										if (vt.getPageVerify().size()==xpathListResult.size()){
 											pvt = vt.getPageVerify().get(i);
 										}else{
 											logger.error("page verify and page number not match for vt:" + vt.toString());
 										}
 									}
-									HtmlPage pageGet = getPage(xpathRes, page, vt, pvt, cconf, params);
+									List<BinaryBoolOp> pvtlist = new ArrayList<BinaryBoolOp>();
+									if (pvt!=null)
+										pvtlist.add(pvt);
+									HtmlPage pageGet = getPage(xpathRes, page, vt, pvtlist, cconf, params);
 									if (pageGet!=null){
 										pagelist.add(pageGet.cloneNode(true));
 									}else{
@@ -288,12 +303,12 @@ public class CrawlTaskEval {
 							if (xpathResult!=null){
 								if (VarType.PAGE==vt.getToType()){
 									BinaryBoolOp pvt = null;
-									if (vt.getPageVerify()!=null && vt.getPageVerify().size()>=1){
-										pvt = vt.getPageVerify().get(0);//TODO why only 1
-									}
-									HtmlPage pageGet = getPage(xpathResult, page, vt, pvt, cconf, params);
+									HtmlPage pageGet = getPage(xpathResult, page, vt, vt.getPageVerify(), cconf, params);
 									if (pageGet!=null)
 										rpageList.add(pageGet); //return page, no further processing
+								}else if (VarType.URL==vt.getToType()){
+									valueExp = getURLStringValue(xpathResult, page);
+									valueExpList.add(valueExp);
 								}else if (xpathResult instanceof Double){
 									valueExp = ((Double)xpathResult).intValue() + "";
 									valueExpList.add(valueExp);
@@ -317,6 +332,26 @@ public class CrawlTaskEval {
 				}else{
 					logger.error(String.format("pageMap %s contains null pagelist for key:%s", pageMap, vt.getBasePage()));
 				}
+			}else if (VarType.URL == fromType){
+				List<? extends DomNode> currentPages = pageMap.get(ConfKey.CURRENT_PAGE);
+				HtmlPage currentPage = (HtmlPage) currentPages.get(0);
+				if (!currentPage.getUrl().toExternalForm().equals(vt.getValue())){
+					//load new page
+					HtmlPageResult pageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(currentPage.getWebClient(), 
+								new NextPage(vt.getValue()), new VerifyPageByBoolOp(vt.getPageVerify(), cconf), params, null, cconf);
+					if (pageResult.getErrorCode()==HtmlPageResult.SUCCSS){
+						currentPage = pageResult.getPage();
+					}else{
+						logger.error(String.format("get page %s failed.", vt.getValue()));
+					}
+				}else{
+					//keep current page but need to wait verify
+					boolean ret = HtmlUnitUtil.waitVerify(currentPage, new VerifyPageByBoolOp(vt.getPageVerify(), cconf), params);
+					if (!ret){
+						logger.error(String.format("page %s does not contain needed verifications.", currentPage.getUrl().toExternalForm()));
+					}
+				}
+				rpageList.add(currentPage);
 			}else{
 				logger.error(String.format("unsupported fromType: %s", fromType));
 			}
@@ -358,6 +393,8 @@ public class CrawlTaskEval {
 					}else if (VarType.FLOAT == vt.getToType()){
 						value = Float.parseFloat(valueExp1);
 					}else if (VarType.STRING == vt.getToType()){
+						value = valueExp1;
+					}else if (VarType.URL == vt.getToType()){
 						value = valueExp1;
 					}else{
 						logger.error(String.format("toType not supported: %s", vt.getToType()));

@@ -32,16 +32,17 @@ public class ListAnalyzeUtil {
 			if (npxpath.contains("/")){
 				//it is an xpath
 				HtmlElement he = listPage.getFirstByXPath(npxpath);
+				//eval last page condition before eval get next page
 				BinaryBoolOp bbo = slt.getLastPageCondition();
-				if (he!=null){
-					if (bbo!=null){
-						Map<String, Object> values = new HashMap<String, Object>();
-						values.put(ConfKey.PRD_LIST_NextPage, he);
-						values.putAll(attrs);
-						if (BinaryBoolOpEval.eval(listPage, cconf, bbo, values)){
-							return new NextPage(NextPage.STATUS_LASTPAGE);
-						}
+				if (bbo!=null){
+					Map<String, Object> values = new HashMap<String, Object>();
+					values.put(ConfKey.PRD_LIST_NextPage, he);
+					values.putAll(attrs);
+					if (BinaryBoolOpEval.eval(listPage, cconf, bbo, values)){
+						return new NextPage(NextPage.STATUS_LASTPAGE);
 					}
+				}
+				if (he!=null){
 					if (he instanceof HtmlAnchor){
 						//use url more stable than js
 						try {

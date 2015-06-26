@@ -342,7 +342,6 @@ public class TaskMgr {
 					Task newTask = t.clone(pluginClassLoader);
 					ncpce.setObjectValue(newTask);					
 					nc.fireNCPCEvent(ncpce);
-					logger.info("fire add task event:" + ncpce);
 				}else{
 					Task oldT = oldTasksConf.get(key);
 					if (oldT.getLastUpdateDate().before(t.getLastUpdateDate())){
@@ -354,7 +353,6 @@ public class TaskMgr {
 						ncpce.setObjectValue(newTask);	
 						ncpce.setOldObjValue(oldT);
 						nc.fireNCPCEvent(ncpce);
-						logger.info("fire update task event:" + ncpce);
 					}
 				}
 			}

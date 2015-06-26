@@ -2,15 +2,14 @@
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd-->
-<!--/Users/chengyi/Documents/ereminder/Reminder/modules/shopping/src/main/resources/Task_2_0.xsd-->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation=" C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="weibo" productType="default">
 	<loginInfo>
 		<loginClickStream name="us.weibo">
 			<link pageName="startpage">
 				<nextpage>
 					<successNextPage name="homepage">
-						<value fromType="url" value="http://us.weibo.com/gb#"/>
+						<value fromType="url" value="http://us.weibo.com/gb"/>
 					</successNextPage>
 				</nextpage>
 			</link>
@@ -79,9 +78,9 @@
 				<input name="id('pl_login_form')/div[5]/div[2]/div/input">
 					<value value="password" fromScope="param"/>
 				</input>
-				<nextpage>
+				<nextpage waitTime="10">
 					<successNextPage name="personhp">
-						<value value="id('pl_login_form')/div[5]/div[6]/div[1]/a/span">
+						<value value="//div[@id='pl_login_form']/div[5]/div[6]/div[1]/a/span">
 							<pageVerify operator="!=">
 								<lhs value="//a[@nm='name']"/>
 								<rhs value="null"/>
@@ -91,6 +90,9 @@
 				</nextpage>
 			</link>
 		</loginClickStream>
+		<redirectedURL clickstream="us.weibo">
+			<landing fromType="url" value="http://us.weibo.com/gb"/>
+		</redirectedURL>
 		<redirectedURL clickstream="us.weibo">
 			<landing fromType="xpath" value="//div[@node-type='login_frame']"/>
 		</redirectedURL>

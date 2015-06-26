@@ -12,6 +12,7 @@
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:element name="Tasks" type="TasksType"/>
 	<xs:simpleType name="VarType">
@@ -229,12 +230,12 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 					<xs:documentation>xpath to list of item, usually of type html element , but can be page or further click stream (TBD), then itemFullUrl is the abs xpath on the last page</xs:documentation>
 				</xs:annotation>
 			</xs:element>
+			<xs:element name="userAttribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="taskInvokes" type="TaskInvokeType" minOccurs="0" maxOccurs="unbounded">
 				<xs:annotation>
 					<xs:documentation>if not using item full url, then invoking prd Task by passing this param mapping</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="userAttribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="lastPageCondition" type="BinaryBoolOp" minOccurs="0">
 				<xs:annotation>
 					<xs:documentation>if not specified, then last page is true when:
@@ -271,6 +272,11 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 		<xs:attribute name="nameType" type="VarType" use="optional">
 			<xs:annotation>
 				<xs:documentation>for input/set, the nameType defaults to XPATH, for get the nameType defaults to string</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="optional" type="xs:boolean" use="optional" default="false">
+			<xs:annotation>
+				<xs:documentation>if true, its existance will not be used in the page retrieval verification</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 	</xs:complexType>

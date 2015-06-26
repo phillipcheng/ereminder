@@ -30,6 +30,13 @@ public class CrawledItemId implements Serializable {
 	}
 	
 	@Override
+	public String toString(){
+		StringBuffer sb = new StringBuffer();
+		sb.append("id:").append(id).append(", storeId:").append(storeId).append(", createTime:").append(createTime);
+		return sb.toString();
+	}
+	
+	@Override
 	public boolean equals(Object obj){
 		if (obj instanceof CrawledItemId){
 			CrawledItemId ci=(CrawledItemId)obj;

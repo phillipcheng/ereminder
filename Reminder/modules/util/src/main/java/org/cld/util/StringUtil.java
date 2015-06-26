@@ -243,7 +243,10 @@ public class StringUtil {
 			String prefix, String postfix){//TODO slow
 		if (input.contains(prefix) && input.contains(postfix) && params!=null){
 			for (String key: params.keySet()){
-				input = input.replace(prefix + key + postfix, params.get(key).toString());
+				Object value = params.get(key);
+				if (value!=null){
+					input = input.replace(prefix + key + postfix, params.get(key).toString());
+				}
 			}
 		}
 		return input;

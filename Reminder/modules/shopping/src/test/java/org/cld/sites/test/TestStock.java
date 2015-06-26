@@ -7,10 +7,16 @@ import java.util.Map;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.cld.datacrawl.CrawlConf;
+import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.test.CrawlTestUtil;
+import org.cld.datacrawl.test.CrawlTestUtil.browse_cat_type;
+import org.cld.datacrawl.test.TestBase;
 import org.cld.stock.load.CNBasicLoad;
 import org.cld.stock.load.StockConst;
+import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskUtil;
+import org.junit.Before;
 import org.junit.Test;
 
 public class TestStock extends TestBase{
@@ -26,6 +32,43 @@ public class TestStock extends TestBase{
 		super();
 	}
 	
+	private String propFile = "client1-v2.properties";
+	
+	@Before
+	public void setUp(){
+		super.setProp(propFile);
+	}
+	
+	@Test
+	public void run_stock_onepath() throws Exception{
+		catNavigate(SHSE_STOCK_BASICINFO, null, browse_cat_type.one_path);	
+		catNavigate(SZSE_STOCK_BASICINFO, null, browse_cat_type.one_path);	
+		catNavigate(HKSE_STOCK_BASICINFO, null, browse_cat_type.one_path);	
+	}
+	
+	@Test
+	public void run_shse_bct() throws Exception{
+		catNavigate(SHSE_STOCK_BASICINFO, null, browse_cat_type.recursive);	
+	}
+	
+	@Test
+	public void run_szse_bct() throws Exception{
+		catNavigate(SZSE_STOCK_BASICINFO, null, browse_cat_type.one_path);	
+	}
+	
+	@Test
+	public void run_hkse_bct() throws Exception{
+		catNavigate(HKSE_STOCK_BASICINFO, null, browse_cat_type.recursive);	
+	}
+	
+	////
+	@Test
+	public void run_szse_bdt() throws Exception{
+		//the totalpagenum variable will not be evaluated, using bct
+		runBDT(SZSE_STOCK_BASICINFO, null, true);	
+	}
+	
+	///
 	@Test
 	public void run_shse_prd() throws InterruptedException{
 		cconf.setUpSite(SHSE_STOCK_BASICINFO, null);
@@ -44,11 +87,6 @@ public class TestStock extends TestBase{
 	}
 	
 	@Test
-	public void run_shse_bct() throws Exception{
-		catNavigate(SHSE_STOCK_BASICINFO, null, CrawlTestUtil.BROWSE_CAT_TYPE_RECURSIVE);	
-	}
-	
-	@Test
 	public void run_szse_prd() throws InterruptedException{
 		cconf.setUpSite(SZSE_STOCK_BASICINFO, null);
 		Map<String, Object> params = new HashMap<String, Object>();
@@ -61,17 +99,6 @@ public class TestStock extends TestBase{
 	}
 	
 	@Test
-	public void run_szse_bdt() throws Exception{
-		//the totalpagenum variable will not be evaluated, using bct
-		runBDT(SZSE_STOCK_BASICINFO, null, true);	
-	}
-	
-	@Test
-	public void run_szse_bct() throws Exception{
-		catNavigate(SZSE_STOCK_BASICINFO, null, CrawlTestUtil.BROWSE_CAT_TYPE_RECURSIVE);	
-	}
-	
-	@Test
 	public void run_hkse_prd() throws InterruptedException{
 		cconf.setUpSite(HKSE_STOCK_BASICINFO, null);
 		Map<String, Object> params = new HashMap<String, Object>();
@@ -79,10 +106,7 @@ public class TestStock extends TestBase{
 		browsePrd(HKSE_STOCK_BASICINFO, null, params);
 	}
 	
-	@Test
-	public void run_hkse_bct() throws Exception{
-		catNavigate(HKSE_STOCK_BASICINFO, null, CrawlTestUtil.BROWSE_CAT_TYPE_RECURSIVE);	
-	}
+	///
 	
 	@Test
 	public void run_stock_transform() throws Exception {

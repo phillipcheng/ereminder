@@ -30,6 +30,7 @@ public class BinaryBoolOpEval {
 		try {
 			Object lhsV = CrawlTaskEval.eval(page, lhsVar, cconf, attributes);
 			Object rhsV = CrawlTaskEval.eval(page, rhsVar, cconf, attributes);
+			logger.debug("binary bool: l:" + lhsV + ", r:" + rhsV );
 			if (NULL_VAL.equals(lhsV)){
 				lhsV = null;
 			}

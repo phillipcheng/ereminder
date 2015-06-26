@@ -117,13 +117,14 @@ public class HtmlUnitUtil {
 	 * @return
 	 * @throws InterruptedException
 	 */
-	private static LoginStatus login(String landingUrl, ClickStreamType loginClickStream, ParsedTasksDef tasksDef, CredentialType credential, 
+	private static LoginStatus login(HtmlPage landingPage, ClickStreamType loginClickStream, ParsedTasksDef tasksDef, CredentialType credential, 
 			WebClient wc, CrawlConf cconf) 
 			throws InterruptedException{
 		//prepare parameters to invoke clickClickStream
 		Map<String, List<? extends DomNode>> pageMap = new HashMap<String, List<? extends DomNode>>();
 		List<HtmlPage> pagelist= new ArrayList<HtmlPage>();
-		//pagelist.add(loginPage); //we can reuse the current page
+		pagelist.add(landingPage); //we can reuse the current page
+		String landingUrl = landingPage.getUrl().toExternalForm();
 		pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put(KEY_USERNAME, credential.getUsername());
@@ -162,9 +163,15 @@ public class HtmlUnitUtil {
 		ClickStreamType loginClickStream = siteDef.getLoginClickStream(landingUrl);
 		for (CredentialType ct: siteDef.getTasks().getLoginInfo().getCredential()){
 			WebClient wc = CrawlUtil.getWebClient(cconf, null, true);
-			LoginStatus ls = login(landingUrl, loginClickStream, siteDef, ct, wc, cconf);
-			if (LoginStatus.LoginSuccess == ls){
-				unlocked++;
+			HtmlPage landingPage = null;
+			try {
+				landingPage = wc.getPage(landingUrl);
+				LoginStatus ls = login(landingPage, loginClickStream, siteDef, ct, wc, cconf);
+				if (LoginStatus.LoginSuccess == ls){
+					unlocked++;
+				}
+			} catch (FailingHttpStatusCodeException | IOException e) {
+				logger.error("", e);
 			}
 			wc.closeAllWindows();
 		}
@@ -209,15 +216,17 @@ public class HtmlUnitUtil {
 	 */
 	public static void clickClickStream(ClickStreamType clickstream, Map<String, List<? extends DomNode>> pageMap, 
 			Map<String, Object> params, CrawlConf cconf, NextPage currentNP) throws InterruptedException{
+		//setup the map
 		Map<String, ClickType> clickMap = new HashMap<String, ClickType>(); //click name to click definition map
-		if (clickstream.getLink().size()>0){
-			//setup the map
-			for (ClickType clickType: clickstream.getLink()){
-				if (clickType.getPageName()!=null){
-					clickMap.put(clickType.getPageName(), clickType);
-				}
+		for (ClickType clickType: clickstream.getLink()){
+			if (clickType.getPageName()!=null){
+				clickMap.put(clickType.getPageName(), clickType);
 			}
-			ClickType curClick = clickstream.getLink().get(0);
+		}
+		
+		if (clickstream.getLink().size()>0){
+			int clickIdx=0;
+			ClickType curClick = clickstream.getLink().get(clickIdx);
 			while (curClick!=null){
 				DomNode currentPage = pageMap.get(ConfKey.CURRENT_PAGE).get(0);
 				//input parameter assignments, based on current page
@@ -287,6 +296,13 @@ public class HtmlUnitUtil {
 				//get the next click
 				curClick = clickMap.get(nextPage.getName());
 				if (curClick==null){
+					//page name not defined for each click, try get the next click
+					if (clickIdx<clickstream.getLink().size()-1){
+						clickIdx++;
+						curClick = clickstream.getLink().get(clickIdx);
+					}
+				}
+				if (curClick==null){
 					logger.debug(String.format("next click with name:%s is null, exit.", nextPage.getName()));
 				}
 			}
@@ -308,8 +324,8 @@ public class HtmlUnitUtil {
 	private static LoginStatus tryLogin(HtmlPage landingPage, String tryUrl, WebClient wc, ParsedTasksDef siteDef, CrawlConf cconf) 
 			throws InterruptedException{
 		String landingUrl = landingPage.getUrl().toExternalForm();
-		LoginType loginInfo = siteDef.getTasks().getLoginInfo();
-		if (loginInfo!=null){
+		if (siteDef!=null && siteDef.getTasks().getLoginInfo()!=null){
+			LoginType loginInfo = siteDef.getTasks().getLoginInfo();
 			if (tryUrl!=null && !landingUrl.contains(tryUrl)){
 				boolean requireLogin = false;
 				ClickStreamType loginClickStream = null;
@@ -331,7 +347,7 @@ public class HtmlUnitUtil {
 						CredentialType ct = getCredential(loginInfo, usedCredentials);
 						if (ct!=null){
 							usedCredentials.add(ct.getUsername());
-							LoginStatus ls = login(landingUrl, loginClickStream, siteDef, ct, wc, cconf);
+							LoginStatus ls = login(landingPage, loginClickStream, siteDef, ct, wc, cconf);
 							if(LoginStatus.LoginCatchya==ls){
 								logger.info(String.format("catchya using user %s", ct.getUsername()));
 								continue;
@@ -356,6 +372,42 @@ public class HtmlUnitUtil {
 			logger.debug(String.format("No Login: loginInfo is null."));
 		}
 		return LoginStatus.LoginNotNeeded;
+	}
+	
+	public static boolean waitVerify(HtmlPage page, VerifyPage vp, Object param) throws InterruptedException{
+		int maxloop = 20;
+		int innerloop=0;
+		Date tick1 = null;
+		Date tick2 = null;
+		if (logger.isDebugEnabled()){
+			tick1 = new Date();
+		}
+		while(innerloop<maxloop){
+			if (page != null){
+				if (vp !=null){
+					//if has verification, default is failed
+					if (vp.verifySuccess(page, param)){
+						if (logger.isDebugEnabled()){
+							tick2 = new Date();
+							long elapse = tick2.getTime() - tick1.getTime();
+							logger.debug("time elapse:" + elapse + " for loading:" + page.getUrl().toExternalForm());
+						}
+						return true;
+					}else{
+						synchronized(page){
+							page.wait(1000);//wait for the necessary js done
+							logger.warn(String.format("wait for the expected value come out, wait %d times, max %d times", innerloop, maxloop));
+						}
+						innerloop++;
+					}
+				}else{
+					return true;
+				}
+			}else{
+				return false;
+			}
+		}
+		return false;
 	}
 	/**
 	 * 
@@ -386,11 +438,11 @@ public class HtmlUnitUtil {
 				}
 				try {
 					page = getDirectPage(wc, np);
-					int maxloop = 20;
+					int maxloop = 200;
 					int innerloop=0;
 					while(innerloop<maxloop){
 						//refetch the page
-						page = (HtmlPage) page.getWebClient().getWebWindows().get(0).getEnclosedPage();
+						//page = (HtmlPage) page.getWebClient().getWebWindows().get(0).getEnclosedPage();
 						if (page != null){
 							//
 							LoginStatus loginStatus = tryLogin(page, np.getNextUrl(), wc, siteDef, cconf);
@@ -429,6 +481,7 @@ public class HtmlUnitUtil {
 									synchronized(page){
 										page.wait(1000);//wait for the necessary js done
 										logger.warn(String.format("wait for the expected value come out, wait %d times, max %d times", innerloop, maxloop));
+										logger.debug(page.asText());
 									}
 									innerloop++;
 									result.setErrorCode(HtmlPageResult.VERIFY_FAILED);

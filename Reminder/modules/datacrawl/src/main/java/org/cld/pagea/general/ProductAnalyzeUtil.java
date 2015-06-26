@@ -51,7 +51,7 @@ public class ProductAnalyzeUtil {
 			List<String> xpathList = new ArrayList<String>();
 			List<AttributeType> attrlist = taskDef.getBrowsePrdTaskType().getBaseBrowseTask().getUserAttribute();
 			for (AttributeType attr: attrlist){
-				if (VarType.XPATH == attr.getValue().getFromType()){
+				if (VarType.XPATH == attr.getValue().getFromType() && !attr.isOptional()){
 					xpathList.add(attr.getValue().getValue());
 				}
 			}

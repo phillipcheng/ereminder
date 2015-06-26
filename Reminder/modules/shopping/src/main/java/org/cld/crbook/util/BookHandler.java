@@ -268,7 +268,8 @@ public class BookHandler implements ProductHandler{
 		if (bookpageurlspattern!=null && bookpageurlspattern.isFinished()){
 			b.setPageBgUrlPattern(bookpageurlspattern.getPR());
 		}
-		b.setIndexedPages(bookpageurls.size());
+		if (bookpageurls!=null)
+			b.setIndexedPages(bookpageurls.size());
 		if (b.getTotalPage()==-1){
 			b.setTotalPage(b.getIndexedPages());
 		}else{
@@ -277,9 +278,11 @@ public class BookHandler implements ProductHandler{
 			}
 		}
 		b.dataToJSON();
-		
-		List<Page> bplist = convertToPageList(bookpageurls, b.getId(), bpdef.getValue().getToEntryType());
-		XmlCSV.optimizeBook(b, bplist);
+		List<Page> bplist = new ArrayList<Page>();
+		if (bookpageurls!=null){
+			bplist = convertToPageList(bookpageurls, b.getId(), bpdef.getValue().getToEntryType());
+			XmlCSV.optimizeBook(b, bplist);
+		}
 		product.addParam(BookHandler.ITEMTYPE_BOOK, b.toTopJSONString());
 		if (bookpageurlspattern!=null && bookpageurlspattern.isFinished()){
 			//there might be leftover pages
