@@ -24,7 +24,7 @@ public class CNBasicLoad {
 	
 	private static Logger logger =  LogManager.getLogger(CNBasicLoad.class);
 	
-	public static void loadHiveFromHbase(String prop, String outputFileName){
+	public static void genCSVFromHbase(String prop, String outputFileName){
 		
 		try{
 			CrawlConf cconf = CrawlTestUtil.getCConf(prop);

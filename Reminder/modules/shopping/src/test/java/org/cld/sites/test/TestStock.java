@@ -1,5 +1,9 @@
 package org.cld.sites.test;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,8 +20,13 @@ import org.cld.stock.load.CNBasicLoad;
 import org.cld.stock.load.StockConst;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskUtil;
+import org.h2.util.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.gargoylesoftware.htmlunit.Page;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 public class TestStock extends TestBase{
 	
@@ -27,6 +36,10 @@ public class TestStock extends TestBase{
 	
 	public static final String SZSE_STOCK_BASICINFO="szse-stock-basic.xml";
 	public static final String HKSE_STOCK_BASICINFO="hkse-stock-basic.xml";
+	
+
+	public static final String SHSE_STOCK_IDS="shse-stock-ids.xml";
+	public static final String SINA_STOCK="sina-stock.xml";
 	
 	public TestStock(){
 		super();
@@ -107,12 +120,29 @@ public class TestStock extends TestBase{
 	}
 	
 	///
+	@Test
+	public void run_sina() throws Exception {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("stockid", "600000");
+		browsePrd(SINA_STOCK, null, params);
+	}
+	
+	@Test
+	public void testDownload() throws Exception{
+		WebClient wc = CrawlUtil.getWebClient(cconf, null, true);
+		Page hp = wc.getPage("http://money.finance.sina.com.cn/corp/go.php/vDOWN_CashFlow/displaytype/4/stockid/600000/ctrl/all.phtml");
+		InputStream is = hp.getWebResponse().getContentAsStream();
+		OutputStream fop = new FileOutputStream(new File("a.txt"));
+		IOUtils.copy(is, fop);
+		is.close();
+		fop.close();
+	}
 	
 	@Test
 	public void run_stock_transform() throws Exception {
 		String outputFile = "/output";
 		FileSystem fs = FileSystem.get(HadoopTaskUtil.getHadoopConf(cconf.getNodeConf()));
 		fs.delete(new Path(outputFile), true);
-		CNBasicLoad.loadHiveFromHbase(this.getPropFile(), outputFile);
+		CNBasicLoad.genCSVFromHbase(this.getPropFile(), outputFile);
 	}
 }

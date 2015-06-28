@@ -96,6 +96,17 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 		}
 	}
 	
+	private static void addFullUrl(ParsedBrowsePrd pbpTemplate, Map<String, Object> singleValueParams, 
+			List<String> startUrlList, List<String> cachePageList){
+		String fullUrl = StringUtil.fillParams(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl(), 
+				singleValueParams, "[", "]");
+		startUrlList.add(fullUrl);
+		if (pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getCachePage()!=null){
+			String fullCachePage = StringUtil.fillParams(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getCachePage(), 
+					singleValueParams, "[", "]");
+			cachePageList.add(fullCachePage);
+		}
+	}
 	/**
 	 * reusable browse detailed product and add to store if updated
 	 * @param task: task instance
@@ -116,8 +127,10 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 		Product lastProduct = null;
 		Product thisProduct = null;
 		ParsedBrowsePrd pbpTemplate = task.getBrowseDetailTask(taskName);
+		
 		//startUrl may contains parameters needs to be converted to startUrlWithValue (maybe multiple) by filling the ParamValueMap
 		List<String> startUrlList = new ArrayList<String>();
+		List<String> cachePageList = new ArrayList<String>(); //if configured to save cache pages
 		List<ParamType> plist = pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getParam();
 		if (plist!=null && plist.size()>0){
 			List<ParamType> listTypeParams = new ArrayList<ParamType>();
@@ -135,6 +148,7 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 				}
 			}
 			if (listTypeParams.size()>=1){
+				//for list type parameter, it will end up in list of start url (each url maps to a cachepage if configured)
 				ParamType lpvt = listTypeParams.get(0);
 				if (listTypeParams.size()>1){
 					logger.warn(String.format("only 1 list param supported. we got: %d, so we only treat %s", 
@@ -148,22 +162,27 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 					List<Object> listVal = (List<Object>) objVal;
 					for (Object sepParam: listVal){
 						singleValueParams.put(lpvt.getName(), sepParam);
-						String fullUrl = StringUtil.fillParams(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl(), 
-								singleValueParams, "[", "]");
-						startUrlList.add(fullUrl);
+						addFullUrl(pbpTemplate, singleValueParams, startUrlList, cachePageList);
 					}
 				}else{
 					logger.error(String.format("list typed param %s has not list value %s.", lpvt.getName(), objVal));
 				}
 			}else{
-				String fullUrl = StringUtil.fillParams(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl(), 
-						singleValueParams, "[", "]");
-				startUrlList.add(fullUrl);
+				addFullUrl(pbpTemplate, singleValueParams, startUrlList, cachePageList);
 			}
 		}else{
 			startUrlList.add(task.getStartURL());
 		}
 		
+		//cache page if needed
+		if (cachePageList.size()>0){
+			for (int i=0; i<cachePageList.size(); i++){
+				String startUrl = startUrlList.get(i);
+				String cachePage = cachePageList.get(i);
+				CrawlUtil.downloadPage(cconf, startUrl, cachePage, taskName);
+			}
+		}
+		//start browsing
 		for (String startUrl:startUrlList){
 			String internalId = ProductListAnalyzeUtil.getInternalId(startUrl, task, pbpTemplate);
 			if (internalId!=null && !"".equals(internalId)){			
@@ -171,7 +190,6 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 				if (cconf.getDsm()!=null){
 					lastProduct = (Product) cconf.getDsm().getCrawledItem(internalId, storeId, Product.class);
 				}
-				Price thisDetailPrice = null;
 				if (lastProduct != null){
 					//belong to more categories
 					if (catId != null)

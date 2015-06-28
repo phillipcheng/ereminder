@@ -19,7 +19,7 @@
       <AppenderRef ref="Console"/>
     </Logger>
     
-    <Logger name="org.xml.mytaskdef" level="DEBUG" additivity="false">
+    <Logger name="org.xml.mytaskdef" level="INFO" additivity="false">
       <AppenderRef ref="Console"/>
     </Logger>
     <Logger name="cy.common" level="WARN" additivity="false">

@@ -14,6 +14,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
+import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.NextPage;
 import org.cld.datacrawl.util.HtmlPageResult;
 import org.cld.datacrawl.util.HtmlUnitUtil;
@@ -251,14 +252,7 @@ public class CrawlTaskEval {
 									for (Object hi:xpathListResult){
 										String url = anchorToFullUrl((HtmlAnchor)hi, (HtmlPage)page);
 										String fileName = FilenameUtils.getName(url);
-										if (NodeConf.tmframework_hadoop.equals(cconf.getNodeConf().getTaskMgrFramework())){
-											String finalSaveDir = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + fileSaveDir;
-											DownloadUtil.downloadFileToHdfs(url, cconf.isUseProxy(), cconf.getProxyIP(), cconf.getProxyPort(), 
-													finalSaveDir + "/" + fileName, cconf.getTaskMgr().getHdfsDefaultName());
-										}else{
-											DownloadUtil.downloadFile(url, cconf.isUseProxy(), cconf.getProxyIP(), cconf.getProxyPort(), 
-													fileSaveDir, fileName);
-										}
+										CrawlUtil.downloadPage(cconf, url, fileName, fileSaveDir);
 										convertedList.add(url);
 									}
 								}else{
@@ -277,10 +271,13 @@ public class CrawlTaskEval {
 									BinaryBoolOp pvt = null;
 									if (vt.getPageVerify().size()>0){
 										//TODO: For page list type
-										//the pageVerify specified for this ValueType is 1 to 1 mapped to the returned page list, 
-										//so no multiple pageVerify supported for 1 page
+										//no multiple pageVerify supported for 1 page
 										if (vt.getPageVerify().size()==xpathListResult.size()){
+											//the pageVerify specified for this ValueType is 1 to 1 mapped to the returned page list
 											pvt = vt.getPageVerify().get(i);
+										}else if (vt.getPageVerify().size()==1){
+											//one pageVerify for all pages
+											pvt = vt.getPageVerify().get(0);
 										}else{
 											logger.error("page verify and page number not match for vt:" + vt.toString());
 										}

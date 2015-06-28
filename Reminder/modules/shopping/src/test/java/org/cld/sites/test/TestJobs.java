@@ -4,7 +4,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.junit.Before;
 import org.junit.Test;
-import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.datacrawl.test.CrawlTestUtil.browse_cat_type;
 import org.cld.datacrawl.test.TestBase;
 import org.cld.taskmgr.hadoop.HadoopTaskUtil;
@@ -56,7 +55,7 @@ public class TestJobs extends TestBase{
 		String outputFile = "/output/jobs";
 		FileSystem fs = FileSystem.get(HadoopTaskUtil.getHadoopConf(cconf.getNodeConf()));
 		fs.delete(new Path(outputFile), true);
-		CNBasicLoad.loadHiveFromHbase(this.getPropFile(), outputFile);
+		CNBasicLoad.genCSVFromHbase(this.getPropFile(), outputFile);
 	}
 	
 	@Test

@@ -438,7 +438,7 @@ public class HtmlUnitUtil {
 				}
 				try {
 					page = getDirectPage(wc, np);
-					int maxloop = 200;
+					int maxloop = 50;
 					int innerloop=0;
 					while(innerloop<maxloop){
 						//refetch the page

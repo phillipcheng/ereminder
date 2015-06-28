@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import org.hibernate.cfg.Configuration;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
@@ -25,6 +24,7 @@ import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskTypeConf;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskUtil;
+import org.cld.util.DownloadUtil;
 
 public class CrawlUtil {
 	private static Logger logger =  LogManager.getLogger(CrawlUtil.class);
@@ -138,5 +138,16 @@ public class CrawlUtil {
 	
 	public static void hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist){
 		hadoopExecuteCrawlTasks(crawlPropertyFile, cconf, tlist, null);
+	}
+	
+	public static void downloadPage(CrawlConf cconf, String url, String fileName, String fileSaveDir){
+		if (NodeConf.tmframework_hadoop.equals(cconf.getNodeConf().getTaskMgrFramework())){
+			String finalSaveDir = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + fileSaveDir;
+			DownloadUtil.downloadFileToHdfs(url, cconf.isUseProxy(), cconf.getProxyIP(), cconf.getProxyPort(), 
+					finalSaveDir + "/" + fileName, cconf.getTaskMgr().getHdfsDefaultName());
+		}else{
+			DownloadUtil.downloadFile(url, cconf.isUseProxy(), cconf.getProxyIP(), cconf.getProxyPort(), 
+					fileSaveDir, fileName);
+		}
 	}
 }

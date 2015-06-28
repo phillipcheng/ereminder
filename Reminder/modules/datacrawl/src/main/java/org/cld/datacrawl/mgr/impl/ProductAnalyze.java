@@ -45,30 +45,34 @@ public class ProductAnalyze implements IProductAnalyze{
 		
 		product.setRootTaskId(task.getRootTaskId());
 		product.setFullUrl(url);
-		VPXP.setXPaths(ProductAnalyzeUtil.getPageVerifyXPaths(task, taskDef));
-		HtmlPageResult detailsResult;
-		HtmlPage details = null;
 
-		detailsResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(url), VPXP, null, task.getParsedTaskDef(), cconf);	
-		details = detailsResult.getPage();
-		
-		if (detailsResult.getErrorCode() == HtmlPageResult.SUCCSS){			
-			//product name
-			if (product.getName()==null){
-				String title = ProductAnalyzeUtil.getTitle(details, task, taskDef, cconf);
-				product.setName(title);
-			}
-			if (monitorPrice){
-				//
-			}
-			//product external id
+		if (taskDef.getBrowsePrdTaskType().getBaseBrowseTask().getUserAttribute().size()!=0){
+			HtmlPageResult detailsResult;
+			HtmlPage details = null;
+			VPXP.setXPaths(ProductAnalyzeUtil.getPageVerifyXPaths(task, taskDef));
+			detailsResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(url), VPXP, null, task.getParsedTaskDef(), cconf);	
+			details = detailsResult.getPage();
 			
-			//call back
-			ProductAnalyzeUtil.callbackReadDetails(wc, details, product, task, taskDef, cconf);
-			product.getId().setCreateTime(new Date());
-			logger.debug("product got:" + product);
-			if (cconf.getDsm()!=null)
-				cconf.getDsm().addCrawledItem(product, lastProduct);	
+			if (detailsResult.getErrorCode() == HtmlPageResult.SUCCSS){			
+				//product name
+				if (product.getName()==null){
+					String title = ProductAnalyzeUtil.getTitle(details, task, taskDef, cconf);
+					product.setName(title);
+				}
+				if (monitorPrice){
+					//
+				}
+				//product external id
+				
+				//call back
+				ProductAnalyzeUtil.callbackReadDetails(wc, details, product, task, taskDef, cconf);
+				product.getId().setCreateTime(new Date());
+				logger.debug("product got:" + product);
+				if (cconf.getDsm()!=null)
+					cconf.getDsm().addCrawledItem(product, lastProduct);	
+			}
+		}else{
+			//do not need to browse the page
 		}
 	}
 }

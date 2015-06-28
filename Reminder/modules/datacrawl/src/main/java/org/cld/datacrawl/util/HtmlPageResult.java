@@ -1,5 +1,6 @@
 package org.cld.datacrawl.util;
 
+import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 public class HtmlPageResult {

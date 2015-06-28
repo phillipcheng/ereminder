@@ -60,7 +60,6 @@ public class StockBasicDataHbaseTableMapper extends TableMapper<Text, Text>{
 			JSONArray years = allColumns.getJSONArray(0);
 			//skip the 1st column
 			for (int i=1; i<years.length(); i++){
-				int idx=0;
 				String year = years.getString(i);
 				String output = StockConst.SH_STOCK_MARKET_ID + value_sep;
 				output += quoteId + value_sep;

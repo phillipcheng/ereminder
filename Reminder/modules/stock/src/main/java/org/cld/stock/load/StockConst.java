@@ -43,7 +43,7 @@ public class StockConst {
 	{TCBI_TYPES[idx_tid]=STRING;}
 	public static final int idx_pid=2;//date
 	{TCBI_TYPES[idx_pid]=DATE;}
-	//
+	//基本信息 3 to 31
 	public static final int idx_name=3;//string  '公司法定中文名称',
 	{TCBI_TYPES[idx_name]=STRING;}
 	public static final int idx_legalrep=4;//string  '公司法定代表人',
@@ -102,7 +102,7 @@ public class StockConst {
 	{TCBI_TYPES[idx_netCashFlowsPerShareFromOperatingActivities]=FLOAT;}
 	public static final int idx_netAssetsPerShareAttributableToShareholdersOfListedCompany=31;//float '归属于上市公司股东的每股净资产',
 	{TCBI_TYPES[idx_netAssetsPerShareAttributableToShareholdersOfListedCompany]=FLOAT;}
-	//--股本结构
+	//--股本结构  32-47
 	public static final int idx_numberOfStateOwnedFloatingSharesWithTradingLimitedConditions=32;//bigint '国家持有的有限售条件流通股份数',
 	{TCBI_TYPES[idx_numberOfStateOwnedFloatingSharesWithTradingLimitedConditions]=BIGINT;}
 	public static final int idx_NumberOfFloatingSharesWithTradingLimitedConditionsHeldByStateLegalEntity=33;//bigint '国有法人持有的有限售条件流通股份数',
