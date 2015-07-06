@@ -2,7 +2,7 @@ package org.cld.util.reload;
 
 import java.util.Date;
 
-import org.cld.util.TimeUtil;
+import org.cld.util.DateTimeUtil;
 
 public class TimestampedItem<T> {
 	
@@ -37,7 +37,7 @@ public class TimestampedItem<T> {
 	}
 
 	public String toString(){
-		return "timestamp:" + TimeUtil.sddf.format(new Date(timestamp)) + "\n" + 
+		return "timestamp:" + DateTimeUtil.sddf.format(new Date(timestamp)) + "\n" + 
 				"isUpdated:" + updated + "\n" + 
 				"content:" + content.toString() + "\n"; 
 	}

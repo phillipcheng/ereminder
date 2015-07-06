@@ -6,7 +6,7 @@ import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.datacrawl.test.TestBase;
 import org.junit.Before;
 import org.junit.Test;
-import org.cld.datacrawl.test.CrawlTestUtil.browse_cat_type;
+import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
 
 public class TestBooks extends TestBase {
 	private static Logger logger =  LogManager.getLogger(TestBooks.class);
@@ -55,21 +55,21 @@ public class TestBooks extends TestBase {
 	@Test
 	public void rootNav() throws Exception{
 		
-		catNavigate(CBO_CONF, null, browse_cat_type.one_path);
+		catNavigate(CBO_CONF, null, browse_type.one_path);
 		
-		catNavigate(A8Z8_CONF, null, browse_cat_type.one_path);
+		catNavigate(A8Z8_CONF, null, browse_type.one_path);
 		
-		catNavigate(MOM001_CONF, null, browse_cat_type.one_path);
+		catNavigate(MOM001_CONF, null, browse_type.one_path);
 		
-		catNavigate(DMZJ_CONF, null, browse_cat_type.one_path);
+		catNavigate(DMZJ_CONF, null, browse_type.one_path);
 		
-		catNavigate(CL_CONF, null, browse_cat_type.one_path);
+		catNavigate(CL_CONF, null, browse_type.one_path);
 		
-		catNavigate(XRS52_CONF, null, browse_cat_type.one_path);
+		catNavigate(XRS52_CONF, null, browse_type.one_path);
 		
-		catNavigate(FKB_CONF, null, browse_cat_type.one_path);
+		catNavigate(FKB_CONF, null, browse_type.one_path);
 		
-		catNavigate(BAOLINY_CONF, null, browse_cat_type.one_path);
+		catNavigate(BAOLINY_CONF, null, browse_type.one_path);
 		
 	}
 	
@@ -88,7 +88,7 @@ public class TestBooks extends TestBase {
 	//Test browse category 1 level
 	@Test
 	public void catNav_DMZJ1() throws Exception{
-		catNavigate(DMZJ_CONF, "http://manhua.dmzj.com/rishi/", browse_cat_type.one_level);
+		catNavigate(DMZJ_CONF, "http://manhua.dmzj.com/rishi/", browse_type.one_level);
 	}
 	
 	//Test browse details task (leaf category)

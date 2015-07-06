@@ -2,9 +2,9 @@ package org.cld.datastore.test;
 
 import static org.junit.Assert.*;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.CrawledItemId;
 import org.cld.datastore.impl.HbaseDataStoreManagerImpl;
@@ -22,7 +22,7 @@ public class HbaseCrawledItemTest {
 	
 	@Test
 	public void testAddGetCrawledItem(){
-		HbaseDataStoreManagerImpl ds = new HbaseDataStoreManagerImpl();
+		HbaseDataStoreManagerImpl ds = new HbaseDataStoreManagerImpl(new Configuration());
 		CrawledItem ci = new CrawledItem();
 		String id = "abc";
 		String storeid="store1";
@@ -32,7 +32,7 @@ public class HbaseCrawledItemTest {
 		ciid.setId(id);
 		ciid.setStoreId(storeid);
 		ci.setId(ciid);
-		ds.addCrawledItem(ci, null);
+		ds.addCrawledItem(ci, null, null);
 		
 		CrawledItem ci2 = ds.getCrawledItem(id, storeid, null);
 		logger.info("ci2 get from db:" + ci2);
@@ -42,7 +42,7 @@ public class HbaseCrawledItemTest {
 	
 	@Test
 	public void testGetCrawledItem(){
-		HbaseDataStoreManagerImpl ds = new HbaseDataStoreManagerImpl();
+		HbaseDataStoreManagerImpl ds = new HbaseDataStoreManagerImpl(new Configuration());
 		String id = "abc";
 		String storeid="store1";
 		CrawledItem ci2 = ds.getCrawledItem(id, storeid, null);

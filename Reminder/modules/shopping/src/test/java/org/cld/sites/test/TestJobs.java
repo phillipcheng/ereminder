@@ -4,10 +4,10 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.junit.Before;
 import org.junit.Test;
-import org.cld.datacrawl.test.CrawlTestUtil.browse_cat_type;
+import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
 import org.cld.datacrawl.test.TestBase;
 import org.cld.taskmgr.hadoop.HadoopTaskUtil;
-import org.cld.stock.load.CNBasicLoad;
+import org.cld.stock.load.HBaseToCSVMapperLauncher;
 
 public class TestJobs extends TestBase{
 	
@@ -31,13 +31,13 @@ public class TestJobs extends TestBase{
 	@Test
 	public void run_linkedin_bct() throws Exception{
 		for (String startUrl:startUrls){
-			catNavigate(LINKEDIN_COMPANY, startUrl, browse_cat_type.recursive);	
+			catNavigate(LINKEDIN_COMPANY, startUrl, browse_type.recursive);	
 		}
 	}
 	
 	@Test
 	public void run_linkedin_bct_one() throws Exception{
-		catNavigate(LINKEDIN_COMPANY, "https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=B&page_num=1", browse_cat_type.recursive);	
+		catNavigate(LINKEDIN_COMPANY, "https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=B&page_num=1", browse_type.recursive);	
 	}
 	
 	@Test
@@ -55,7 +55,7 @@ public class TestJobs extends TestBase{
 		String outputFile = "/output/jobs";
 		FileSystem fs = FileSystem.get(HadoopTaskUtil.getHadoopConf(cconf.getNodeConf()));
 		fs.delete(new Path(outputFile), true);
-		CNBasicLoad.genCSVFromHbase(this.getPropFile(), outputFile);
+		//HBaseToCSVMapperLauncher.genCSVFromHbase(this.getPropFile(), outputFile);
 	}
 	
 	@Test

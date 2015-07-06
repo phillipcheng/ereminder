@@ -8,7 +8,7 @@ import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
-import org.cld.util.TimeUtil;
+import org.cld.util.DateTimeUtil;
 
 @Entity
 @Table(name = "Price")
@@ -30,7 +30,7 @@ public class Price implements Serializable {
 	public String toString(){
 		String idstring="";
 		if (id!=null){
-			idstring = "id:" + id.getId() + ";createDateTime:" + TimeUtil.sddf.format(id.getCreateTime());
+			idstring = "id:" + id.getId() + ";createDateTime:" + DateTimeUtil.sddf.format(id.getCreateTime());
 		}
 		return idstring + "; price:" + price + "; promotionId:" + promotionIds;
 	}

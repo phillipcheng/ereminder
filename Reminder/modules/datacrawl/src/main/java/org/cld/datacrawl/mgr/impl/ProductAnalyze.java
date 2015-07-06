@@ -12,8 +12,8 @@ import org.cld.pagea.general.ProductAnalyzeUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.NextPage;
+import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.Product;
-import org.cld.datastore.entity.Price;
 import org.cld.datacrawl.mgr.IProductAnalyze;
 import org.cld.datacrawl.util.HtmlPageResult;
 import org.cld.datacrawl.util.HtmlUnitUtil;
@@ -42,7 +42,12 @@ public class ProductAnalyze implements IProductAnalyze{
 			throws InterruptedException{
 		BrowseDetailType bdt = taskDef.getBrowsePrdTaskType();
 		boolean monitorPrice = bdt.isMonitorPrice();
-		
+		DataStoreManager dsManager = null;
+		if (bdt.getBaseBrowseTask().getDsm()!=null){
+			dsManager = cconf.getDsm(bdt.getBaseBrowseTask().getDsm());
+		}else{
+			dsManager = cconf.getDefaultDsm();
+		}
 		product.setRootTaskId(task.getRootTaskId());
 		product.setFullUrl(url);
 
@@ -68,8 +73,8 @@ public class ProductAnalyze implements IProductAnalyze{
 				ProductAnalyzeUtil.callbackReadDetails(wc, details, product, task, taskDef, cconf);
 				product.getId().setCreateTime(new Date());
 				logger.debug("product got:" + product);
-				if (cconf.getDsm()!=null)
-					cconf.getDsm().addCrawledItem(product, lastProduct);	
+				if (dsManager!=null)
+					dsManager.addCrawledItem(product, lastProduct, bdt.getBaseBrowseTask());	
 			}
 		}else{
 			//do not need to browse the page

@@ -18,7 +18,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.util.StringUtil;
-import org.cld.util.TimeUtil;
+import org.cld.util.DateTimeUtil;
 
 public class ClassReloadFactory {
 		
@@ -147,7 +147,7 @@ public class ClassReloadFactory {
 								logger.info(item + " is loaded from:" + item.getClass().getClassLoader());
 								
 								TimestampedItem<Class<?>> ti = new TimestampedItem<Class<?>>(jarEntry.getTime(), item);
-								logger.debug("updated time:" + TimeUtil.sddf.format(new Date(jarEntry.getTime())) + " for:" + jarEntry.getName());
+								logger.debug("updated time:" + DateTimeUtil.sddf.format(new Date(jarEntry.getTime())) + " for:" + jarEntry.getName());
 								if (addItem(ti)){
 									updatedMap.put(name, ti);
 								}

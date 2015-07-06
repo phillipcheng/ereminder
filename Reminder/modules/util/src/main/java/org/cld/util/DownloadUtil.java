@@ -1,8 +1,10 @@
 package org.cld.util;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URL;
@@ -18,7 +20,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class DownloadUtil {
-
+	
 	private static Logger logger =  LogManager.getLogger(DownloadUtil.class);
 	
 	private static InputStream getInputStream(String url, boolean useProxy, String proxyIp, int port){
@@ -33,11 +35,11 @@ public class DownloadUtil {
 			}
 		}catch(Exception e){
 			logger.error("", e);
-			
 		}
 		return is;
 	}
-	public static void downloadFile(String url, boolean useProxy, String proxyIp, int port, String directory, String fileName){
+	public static void downloadFile(String url, boolean useProxy, String proxyIp, int port, 
+			String directory, String fileName){
 		InputStream is = null;
 		FileOutputStream fos = null;
 		try{
@@ -62,24 +64,29 @@ public class DownloadUtil {
 		}
 	}
 	
-	public static void downloadFileToHdfs(String url, boolean useProxy, String proxyIp, int port, String filePath, String fsDefaultName){
+	public static void downloadFileToHdfs(String url, boolean useProxy, String proxyIp, int port, 
+			String filePath, String fsDefaultName){
 		InputStream is = null;
+		FSDataOutputStream fos = null;
+		FileSystem fs = null;
+		
 		try{
 			Configuration conf = new Configuration();
 			conf.set("fs.defaultFS", fsDefaultName);
-			FileSystem fs = FileSystem.get(conf);
+			fs = FileSystem.get(conf);//fs can't be closed
 			is = getInputStream(url, useProxy, proxyIp, port);
 			Path fileNamePath = new Path(filePath);
-			FSDataOutputStream fin = fs.create(fileNamePath);
-			byte[] bytes = IOUtils.toByteArray(is);
-			fin.write(bytes);
-			fin.close();
+			fos = fs.create(fileNamePath);
+			fos.write(IOUtils.toByteArray(is));
 		}catch(Exception e){
 			logger.error("",e);
 		}finally{
 			try{
 				if (is!=null){
 					is.close();
+				}
+				if (fos!=null){
+					fos.close();
 				}
 			}catch(Exception e){
 				logger.error("", e);

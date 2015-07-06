@@ -14,10 +14,13 @@ import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.mgr.IListAnalyze;
 import org.cld.datacrawl.util.SomePageErrorException;
+import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.Category;
 import org.cld.pagea.general.CategoryAnalyzeUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
+import org.xml.mytaskdef.ParsedBrowsePrd;
+import org.xml.taskdef.BrowseDetailType;
 import org.xml.taskdef.TasksType;
 
 @Entity
@@ -82,15 +85,22 @@ public class BrowseDetailTaskConf extends Task implements Serializable{
 			CrawlConf cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
 			
 			BrowseDetailTaskConf taskTemplate = (BrowseDetailTaskConf) cconf.getTaskMgr().getTask(getName());
-			
+			ParsedBrowsePrd pbpTemplate = taskTemplate.getBrowseDetailTask(this.getName());
+			BrowseDetailType bdt = pbpTemplate.getBrowsePrdTaskType();
+			DataStoreManager dsManager = null;
+			if (bdt.getBaseBrowseTask().getDsm()!=null){
+				dsManager = cconf.getDsm(bdt.getBaseBrowseTask().getDsm());
+			}else{
+				dsManager = cconf.getDefaultDsm();
+			}
 			if (taskTemplate != null){		
 				//1. re-setup
 				this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
 				IListAnalyze la = cconf.getLa();		
 				//2. build category from TaskEntry
 				Category category = null;
-				if (cconf.getDsm()!=null){
-					category = (Category) cconf.getDsm().getCrawledItem(getCatId(), taskTemplate.getParsedTaskDef().getTasks().getStoreId(),
+				if (dsManager!=null){
+					category = (Category) dsManager.getCrawledItem(getCatId(), taskTemplate.getParsedTaskDef().getTasks().getStoreId(),
 						Category.class);
 				}else{
 					category = new Category();

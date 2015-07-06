@@ -11,7 +11,7 @@ public class CrawlConfWSImpl implements CrawlConfWS{
 
 	@Override
 	public List<SiteConf> getSiteConf() {
-		return ConfServlet.getCConf().getDsm().getSiteConf(null, true, SiteConf.STATUS_DEPLOYED);
+		return ConfServlet.getCConf().getDefaultDsm().getSiteConf(null, true, SiteConf.STATUS_DEPLOYED);
 	}
 
 }

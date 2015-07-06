@@ -62,12 +62,27 @@
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:complexType name="ParamType">
-		<xs:attribute name="name" type="xs:string" use="required"/>
-		<xs:attribute name="type" type="VarType" use="optional" default="string"/>
+		<xs:attribute name="name" type="xs:string" use="required" />
+		<xs:attribute name="type" type="VarType" use="optional"
+			default="string" />
 		<xs:attribute name="value" type="xs:string" use="optional">
 			<xs:annotation>
-				<xs:documentation>design time the default value, runtime will be assigned by taskInvoker</xs:documentation>
+				<xs:documentation>
+					design time the default value, runtime will be
+					assigned by taskInvoker
+				</xs:documentation>
 			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="direction" default="in" use="optional">
+            <xs:annotation>
+            	<xs:documentation>for hdfs datastore, export to file if this is "out", export for each row</xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:enumeration value="out"></xs:enumeration>
+					<xs:enumeration value="in"></xs:enumeration>
+				</xs:restriction>
+			</xs:simpleType>
 		</xs:attribute>
 	</xs:complexType>
 	<xs:complexType name="ParamValueType">
@@ -135,47 +150,84 @@
 	</xs:complexType>
 	<xs:complexType name="BrowseTaskType">
 		<xs:sequence>
-			<xs:element name="sampleUrl" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+			<xs:element name="sampleUrl" type="xs:string" minOccurs="0"
+				maxOccurs="unbounded">
 				<xs:annotation>
-					<xs:documentation>multiple sample url for start url</xs:documentation>
+					<xs:documentation>
+						multiple sample url for start url
+					</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="param" type="ParamType" minOccurs="0" maxOccurs="unbounded"/>
-			<xs:element name="userAttribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
-			<xs:element name="idUrlMapping" type="RegExpType" minOccurs="0">
+			<xs:element name="param" type="ParamType" minOccurs="0"
+				maxOccurs="unbounded" />
+			<xs:element name="userAttribute" type="AttributeType"
+				minOccurs="0" maxOccurs="unbounded" />
+			<xs:element name="idUrlMapping" type="RegExpType"
+				minOccurs="0">
 				<xs:annotation>
-					<xs:documentation>for bdt: 1. this is uni-directional, from url to id, 2. if not having this, id will be assigned in user attribute</xs:documentation>
+					<xs:documentation>
+						for bdt: 1. this is uni-directional, from url to
+						id, 2. if not having this, id will be assigned
+						in user attribute
+					</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="idUrlMappingFirstPage" type="RegExpType" minOccurs="0"/>
-			<xs:element name="itemName" type="ValueType" minOccurs="0"/>
+			<xs:element name="idUrlMappingFirstPage" type="RegExpType"
+				minOccurs="0" />
+			<xs:element name="itemName" type="ValueType" minOccurs="0" />
 		</xs:sequence>
 		<xs:attribute name="taskName" type="xs:string" use="optional">
 			<xs:annotation>
-				<xs:documentation>if not specified, then this task can't be invoked explicitly</xs:documentation>
+				<xs:documentation>
+					if not specified, then this task can't be invoked
+					explicitly
+				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
-		<xs:attribute name="isStart" type="xs:boolean" use="optional" default="false">
+		<xs:attribute name="isStart" type="xs:boolean" use="optional"
+			default="false">
 			<xs:annotation>
-				<xs:documentation>true, started when engine starts, does not need an invoke</xs:documentation>
+				<xs:documentation>
+					true, started when engine starts, does not need an
+					invoke
+				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
-		<xs:attribute name="rerunInterim" type="xs:int" use="optional">
+		<xs:attribute name="rerunInterim" type="xs:int"
+			use="optional">
 			<xs:annotation>
-				<xs:documentation>if missing, means run only, else specify number of seconds before rerun</xs:documentation>
+				<xs:documentation>
+					if missing, means run only, else specify number of
+					seconds before rerun
+				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
-		<xs:attribute name="enableJS" type="xs:boolean" use="optional" default="false"/>
+		<xs:attribute name="enableJS" type="xs:boolean" use="optional"
+			default="false" />
 		<xs:attribute name="startUrl" type="xs:string" use="optional">
 			<xs:annotation>
-				<xs:documentation>if isStart is true, then this is needed.</xs:documentation>
+				<xs:documentation>
+					if isStart is true, then this is needed.
+				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
-		<xs:attribute name="skipJS" type="xs:string" use="optional"/>
-		<xs:attribute name="cachePage" type="xs:string" use="optional">
+		<xs:attribute name="skipJS" type="xs:string" use="optional" />
+		<xs:attribute name="cachePage" type="xs:string"
+			use="optional">
 			<xs:annotation>
-				<xs:documentation>the dfs file name to save the cache</xs:documentation>
+				<xs:documentation>
+					the dfs file name to save the cache
+				</xs:documentation>
 			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="dsm">
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:enumeration value="hdfs"></xs:enumeration>
+					<xs:enumeration value="hbase"></xs:enumeration>
+					<xs:enumeration value="hibernate"></xs:enumeration>
+				</xs:restriction>
+			</xs:simpleType>
 		</xs:attribute>
 	</xs:complexType>
 	<xs:complexType name="BrowseCatType">
@@ -216,6 +268,10 @@ if also not set, then 1 task browsing all items will be generated.
 			<xs:element name="totalPage" type="ValueType" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="nextPage" type="xs:string"/>
+		<xs:attribute name="tryPattern" type="xs:boolean" use="optional" default="true">
+			<xs:annotation>
+				<xs:documentation>tryPattern for external list type variable, for the value on each page. if there is a total page specified, then tryPattern will be default to true, if not want this, set this to false.</xs:documentation>
+			</xs:annotation></xs:attribute>
 		<xs:attribute name="lastPageCondition" type="xs:string" use="optional">
 			<xs:annotation>
 				<xs:documentation>boolean expression</xs:documentation>

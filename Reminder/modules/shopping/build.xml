@@ -1,15 +1,23 @@
-<project name="MyProject" default="deploy" basedir=".">
+<project name="MyProject" default="dist" basedir=".">
     <description>
         simple example build file
     </description>
+	<property name="src"  location="src"/>
 	<property name="dist"  location="target"/>
+	
 	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
   
 	<target name="dist">
-	  <jar destfile="${dist}/test.jar"
-	       basedir="${dist}/test-classes"
-	  />
+		<jar destfile="${dist}/lib/cld-test-config.jar" basedir="${src}/test/resources"/>
+	  	<jar destfile="${dist}/lib/cld-test-sites.jar" basedir="${src}/test/resources/sites"/>
+		<copy file="${dist}/cld-shopping-1.0.0.jar" todir="${dist}/lib/"/>
 	</target>
+	<!--
+	hadoop fs -mkdir /reminder/lib 
+	hadoop fs -put ${dist}/lib/* /reminder/lib/
+	hadoop fs -rm /reminder/lib/*
+	hadoop fs -put /Users/chengyi/Documents/ereminder/Reminder/modules/shopping/target/lib/* /reminder/lib/
+	-->
 	<target name="deploy">
 		<fileset id="libfiles" dir="${dist}" >
 	  			<include name="lib/cld-*.jar"/>
@@ -29,117 +37,5 @@
 	  <scp trust="yes" sftp="true" todir="root@192.85.143.40:/opt/reminder/" password="root123">
 	  		<fileset refid="libfiles"/>
 	  </scp>
-	</target>
-	
-	<target name="restartserver">
-		<trycatch>
-			<try>
-			   <sshexec host="192.85.143.37" trust="yes"
-						username="root"
-						password="root123"
-						command="/opt/reminder/bin/restartserver.sh"/>
-			</try>
-			<catch>
-			   <echo message="error"/>
-			</catch>
-		</trycatch>
-	</target>
-	
-	<target name="startcrawl">
-		<sshexec host="192.85.143.37" trust="yes"
-			username="root"
-			password="root123"
-			command="cd /opt/reminder/bin; rm -f *.log *.out *.err; nohup ./runclient1.sh &gt; nohup.out 2&gt; nohup.err &lt; /dev/null &amp;"/>
-		<sshexec host="192.85.143.36" trust="yes"
-			username="root"
-			password="root123"
-			command="cd /opt/reminder/bin; rm -f *.log *.out *.err; nohup ./runclient2.sh &gt; nohup.out 2&gt; nohup.err &lt; /dev/null &amp;"/>
-		<sshexec host="192.85.143.40" trust="yes"
-			username="root"
-			password="root123"
-			command="cd /opt/reminder/bin; rm -f *.log *.out *.err; nohup ./runclient3.sh &gt; nohup.out 2&gt; nohup.err &lt; /dev/null &amp;"/>
-	</target>
-	
-	<target name="stopcrawl">
-		<trycatch>
-			<try>
-			   <sshexec host="192.85.143.37" trust="yes"
-						username="root"
-						password="root123"
-						command="/opt/reminder/bin/stopclient1.sh"/>
-			</try>
-			<catch>
-			   <echo message="error"/>
-			</catch>
-		</trycatch>
-		
-		<trycatch>
-			<try>
-			   <sshexec host="192.85.143.36" trust="yes"
-					username="root"
-					password="root123"
-					command="/opt/reminder/bin/stopclient2.sh"/>
-			</try>
-			<catch>
-			   <echo message="error"/>
-			</catch>
-		</trycatch>
-		
-		<trycatch>	
-			<try>
-			   <sshexec host="192.85.143.40" trust="yes"
-					username="root"
-					password="root123"
-					command="/opt/reminder/bin/stopclient3.sh"/>
-			</try>
-			<catch>
-			   <echo message="error"/>
-			</catch>
-		</trycatch>
-	</target>
-	
-	<target name="listclient">
-		<sshexec host="192.85.143.37" trust="yes"
-			username="root"
-			password="root123"
-			command="ps -ef|grep client"/>
-		<sshexec host="192.85.143.36" trust="yes"
-			username="root"
-			password="root123"
-			command="ps -ef|grep client"/>
-		<sshexec host="192.85.143.40" trust="yes"
-			username="root"
-			password="root123"
-			command="ps -ef|grep client"/>
-	</target>
-	
-	<target name="changemode">
-		<sshexec host="192.85.143.37" trust="yes"
-			username="root"
-			password="root123"
-			command="chmod +x /opt/reminder/bin/stopclient1.sh"/>
-		<sshexec host="192.85.143.36" trust="yes"
-			username="root"
-			password="root123"
-			command="chmod +x /opt/reminder/bin/stopclient2.sh"/>
-		<sshexec host="192.85.143.40" trust="yes"
-			username="root"
-			password="root123"
-			command="chmod +x /opt/reminder/bin/stopclient3.sh"/>
-	</target>
-	
-	<target name="cleantmp">
-		<sshexec host="192.85.143.37" trust="yes"
-			username="root"
-			password="root123"
-			command="rm -f /tmp/*.tmp"/>
-		<sshexec host="192.85.143.36" trust="yes"
-			username="root"
-			password="root123"
-			command="rm -f /tmp/*.tmp"/>
-		<sshexec host="192.85.143.40" trust="yes"
-			username="root"
-			password="root123"
-			command="rm -f /tmp/*.tmp"/>
 	</target>
 </project>

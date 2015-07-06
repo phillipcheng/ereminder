@@ -10,7 +10,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.DomAttr;
 import com.gargoylesoftware.htmlunit.html.DomNamespaceNode;
 import com.gargoylesoftware.htmlunit.html.DomNode;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
@@ -23,7 +22,6 @@ import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.NextPage;
 import org.cld.datacrawl.ProductConf;
 import org.cld.datacrawl.mgr.impl.CrawlTaskEval;
-import org.cld.datacrawl.util.Content;
 import org.cld.datacrawl.util.HtmlPageResult;
 import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.datacrawl.util.VerifyPageByXPath;
@@ -34,10 +32,8 @@ import org.cld.util.StringUtil;
 import org.xml.mytaskdef.ConfKey;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 import org.xml.taskdef.AttributeType;
-import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.BrowseDetailType;
 import org.xml.taskdef.ClickStreamType;
-import org.xml.taskdef.ClickType;
 import org.xml.taskdef.ValueType;
 import org.xml.taskdef.VarType;
 
@@ -51,9 +47,19 @@ public class ProductAnalyzeUtil {
 			List<String> xpathList = new ArrayList<String>();
 			List<AttributeType> attrlist = taskDef.getBrowsePrdTaskType().getBaseBrowseTask().getUserAttribute();
 			for (AttributeType attr: attrlist){
-				if (VarType.XPATH == attr.getValue().getFromType() && !attr.isOptional()){
+				if ((VarType.XPATH == attr.getValue().getFromType()||attr.getValue().getValue().contains("/")) 
+						&& !attr.isOptional()){
 					xpathList.add(attr.getValue().getValue());
 				}
+			}
+			ValueType tpVT = taskDef.getBrowsePrdTaskType().getTotalPage();
+			if (tpVT!=null){
+				if (VarType.XPATH == tpVT.getFromType() || tpVT.getValue().contains("/"))
+					xpathList.add(tpVT.getValue());
+			}
+			String np = taskDef.getBrowsePrdTaskType().getNextPage();
+			if (np!=null && np.contains("/")){
+				xpathList.add(np);
 			}
 			String[] array = xpathList.toArray(new String[xpathList.size()]);
 			return array;
@@ -135,10 +141,15 @@ public class ProductAnalyzeUtil {
 				return null;
 			}
 			if (dnsn instanceof HtmlAnchor){
-				try {
-					url = curPage.getFullyQualifiedUrl(((HtmlAnchor)dnsn).getHrefAttribute()).toExternalForm();
-				} catch (MalformedURLException e) {
-					logger.error("", e);
+				HtmlAnchor ha = (HtmlAnchor)dnsn;
+				if (ha.getHrefAttribute().contains("javascript")){
+					nextPageEle = (HtmlElement) dnsn;
+				}else{
+					try {
+						url = curPage.getFullyQualifiedUrl(((HtmlAnchor)dnsn).getHrefAttribute()).toExternalForm();
+					} catch (MalformedURLException e) {
+						logger.error("", e);
+					}
 				}
 			}else if (dnsn instanceof HtmlInput || dnsn instanceof HtmlSpan){
 				//clickable
@@ -178,10 +189,11 @@ public class ProductAnalyzeUtil {
 		CrawlTaskEval.setInitAttributes(bdt.getBaseBrowseTask().getUserAttribute(), product.getParamMap(), task.getParamMap());	
 		
 		Map<String, List<? extends DomNode>> pageMap = null;
+		int totalPage = -1;
 		if (product.getLastUrl()==null){
 			//go to first page if there is click stream
 			pageMap = getFirstPage(wc, inpage, bdt.getFirstPageClickStream(), task, cconf);
-			int totalPage = getTotalPage(pageMap, task, taskDef, cconf);
+			totalPage = getTotalPage(pageMap, task, taskDef, cconf);
 			product.setTotalPage(totalPage);
 		}else{
 			pageMap = new HashMap<String, List<? extends DomNode>>();
@@ -199,12 +211,14 @@ public class ProductAnalyzeUtil {
 		}
 		boolean tryPattern= false;
 		if (product.getTotalPage()>0){
-			tryPattern = true;
+			tryPattern = bdt.isTryPattern();
 		}
 		boolean externalistFinished=false;
 		boolean finalPage=checkFinalPage(bdt.getLastPageCondition(), product.getParamMap());
 		HtmlPage curPage = (HtmlPage) pageMap.get(ConfKey.CURRENT_PAGE).get(0);
-		while (curPage!=null && !finalPage && !externalistFinished){
+		int curPageNum = 1;
+		//(totalPage not set or curPage less than totalPage) & curPage not null & not final & not finished
+		while ((totalPage==-1 || curPageNum<=totalPage) && curPage!=null && !finalPage && !externalistFinished){
 			//eval on curPage again
 			List<HtmlPage> pagelist = new ArrayList<HtmlPage>();
 			pagelist.add(curPage);
@@ -216,8 +230,10 @@ public class ProductAnalyzeUtil {
 			finalPage = checkFinalPage(bdt.getLastPageCondition(), product.getParamMap());
 			if (finalPage)
 				break;
-			String lastPageUrl = curPage.getUrl().toExternalForm();
 			curPage=getNextPage(wc, curPage, task, taskDef, cconf);
+			curPageNum ++;
+			logger.info("curPageNum:" + curPageNum + ", totalPage:" + totalPage);
+			logger.debug(product.getParamMap());
 		}
 		
 		if (finalPage || externalistFinished){

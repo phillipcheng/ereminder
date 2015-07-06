@@ -22,8 +22,8 @@
 		       <td>
 		       	<a href=<%=ServletUtil.genViewCatUrl(cat.getId().getStoreId(), cat.getId().getId()) %>><%= cat.getId().getId() %></a>
 		       </td>
-		       <td><%=ConfServlet.getCConf().getDsm().getProductCount(cat.getId().getStoreId(), cat.getId().getId()) %></td>
-		       <td><%=ConfServlet.getCConf().getDsm().getCategoryCount(cat.getId().getStoreId(), cat.getId().getId()) %></td>
+		       <td><%=ConfServlet.getCConf().getDefaultDsm().getProductCount(cat.getId().getStoreId(), cat.getId().getId()) %></td>
+		       <td><%=ConfServlet.getCConf().getDefaultDsm().getCategoryCount(cat.getId().getStoreId(), cat.getId().getId()) %></td>
 		       <td><%= cat.getName()%></td>
 		       <td><%= cat.getParentCatId()%></td>
 		       <td><%= cat.getPageNum() %></td>

@@ -88,7 +88,7 @@ public class CrawlUtil {
 	}
 	
 	public static void setupSessionFactory(NodeConf nc, CrawlConf cconf){
-		if (cconf.getCrawlDsManager().equals(CrawlConf.crawlDsManager_Value_Hibernate)){
+		if (cconf.getDsm(CrawlConf.crawlDsManager_Value_Hibernate)!=null){
 			//fix up task session factory
 			DBConf taskDBConf = nc.getDBConf();
 			Configuration cfg = DBFactory.setUpCfg(nc.getNodeId(), TaskMgr.moduleName, taskDBConf);
@@ -113,16 +113,16 @@ public class CrawlUtil {
 			}
 			DBFactory.setUpSF(cconf.getPluginClassLoader(), nc.getNodeId(), DataCrawl.moduleName, hCfg);
 			cconf.setTaskSF(DBFactory.getDBSF(nc.getNodeId(), TaskMgr.moduleName));
-			((HibernateDataStoreManagerImpl)cconf.getDsm()).setHibernateSF(DBFactory.getDBSF(nc.getNodeId(), DataCrawl.moduleName));
+			((HibernateDataStoreManagerImpl)cconf.getDsm(CrawlConf.crawlDsManager_Value_Hibernate)).setHibernateSF(DBFactory.getDBSF(nc.getNodeId(), DataCrawl.moduleName));
 		}
 	}	
 	
 	public static void addPrdConfToSessionFactory(ProductConf prdConf, CrawlConf cconf, String nodeId){
-		if (cconf.getCrawlDsManager().equals(CrawlConf.crawlDsManager_Value_Hibernate)){
+		if (cconf.getDsm(CrawlConf.crawlDsManager_Value_Hibernate)!=null){
 			Configuration cfg = DBFactory.getDBCfg(nodeId, DataCrawl.moduleName);
 			cfg.addAnnotatedClass(prdConf.getProductClass());
 			DBFactory.setUpSF(cconf.getPluginClassLoader(), nodeId, DataCrawl.moduleName, cfg);
-			((HibernateDataStoreManagerImpl)cconf.getDsm()).setHibernateSF(DBFactory.getDBSF(nodeId, DataCrawl.moduleName));
+			((HibernateDataStoreManagerImpl)cconf.getDsm(CrawlConf.crawlDsManager_Value_Hibernate)).setHibernateSF(DBFactory.getDBSF(nodeId, DataCrawl.moduleName));
 		}
 	}	
 	

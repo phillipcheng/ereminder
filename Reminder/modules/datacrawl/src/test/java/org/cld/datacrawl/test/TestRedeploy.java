@@ -82,7 +82,6 @@ public class TestRedeploy {
 		//assert thread number is 2
 		logger.info("active thread count:" + this.cni.getTaskInstanceManager().getExe().getCorePoolSize());
 		assertTrue(cni.getTaskInstanceManager().getExe().getCorePoolSize()==2);
-		assertTrue(ccn.getCConf().getDsm()!=null);
 		//change conf to v1
 		try {
 			FileUtils.copyFile(cfgClientV1, cfgClientFile);

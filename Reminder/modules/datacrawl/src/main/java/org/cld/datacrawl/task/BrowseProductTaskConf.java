@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
+import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.CrawledItemId;
 import org.cld.datastore.entity.Price;
 import org.cld.datastore.entity.Product;
@@ -127,7 +128,13 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 		Product lastProduct = null;
 		Product thisProduct = null;
 		ParsedBrowsePrd pbpTemplate = task.getBrowseDetailTask(taskName);
-		
+		BrowseDetailType bdt = pbpTemplate.getBrowsePrdTaskType();
+		DataStoreManager dsManager = null;
+		if (bdt.getBaseBrowseTask().getDsm()!=null){
+			dsManager = cconf.getDsm(bdt.getBaseBrowseTask().getDsm());
+		}else{
+			dsManager = cconf.getDefaultDsm();
+		}
 		//startUrl may contains parameters needs to be converted to startUrlWithValue (maybe multiple) by filling the ParamValueMap
 		List<String> startUrlList = new ArrayList<String>();
 		List<String> cachePageList = new ArrayList<String>(); //if configured to save cache pages
@@ -179,7 +186,7 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 			for (int i=0; i<cachePageList.size(); i++){
 				String startUrl = startUrlList.get(i);
 				String cachePage = cachePageList.get(i);
-				CrawlUtil.downloadPage(cconf, startUrl, cachePage, taskName);
+				CrawlUtil.downloadPage(cconf, startUrl, cachePage, storeId);
 			}
 		}
 		//start browsing
@@ -187,8 +194,8 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 			String internalId = ProductListAnalyzeUtil.getInternalId(startUrl, task, pbpTemplate);
 			if (internalId!=null && !"".equals(internalId)){			
 				//lastProduct = CrawlPersistMgr.getProduct(cconf.getCrawlSF(), internalId);
-				if (cconf.getDsm()!=null){
-					lastProduct = (Product) cconf.getDsm().getCrawledItem(internalId, storeId, Product.class);
+				if (dsManager!=null){
+					lastProduct = (Product) dsManager.getCrawledItem(internalId, storeId, Product.class);
 				}
 				if (lastProduct != null){
 					//belong to more categories

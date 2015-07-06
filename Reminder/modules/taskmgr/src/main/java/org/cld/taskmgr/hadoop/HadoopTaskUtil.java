@@ -1,12 +1,16 @@
 package org.cld.taskmgr.hadoop;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.io.LongWritable;
@@ -37,6 +41,7 @@ public class HadoopTaskUtil {
 			String jobTracker=taskMgr.getHadoopJobTracker();
 			String host = jobTracker.substring(0,jobTracker.indexOf(":"));
 			conf.set("mapreduce.jobtracker.address", taskMgr.getHadoopJobTracker());
+			conf.set("mapred.textoutputformat.separator", ",");//default is tab
 			conf.set("yarn.resourcemanager.hostname", host);
 			conf.set("mapreduce.framework.name", "yarn");
 			conf.set("yarn.nodemanager.aux-services", "mapreduce_shuffle");
@@ -62,7 +67,8 @@ public class HadoopTaskUtil {
 	public static void executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> params){
 		String sourceName = "";
 		Configuration conf = getHadoopConf(nc);
-		int max = conf.getInt(DFSConfigKeys.DFS_NAMENODE_MAX_COMPONENT_LENGTH_KEY, DFSConfigKeys.DFS_NAMENODE_MAX_COMPONENT_LENGTH_DEFAULT);
+		//int max = conf.getInt(DFSConfigKeys.DFS_NAMENODE_MAX_COMPONENT_LENGTH_KEY, DFSConfigKeys.DFS_NAMENODE_MAX_COMPONENT_LENGTH_DEFAULT);
+		int max = 200;
 		
 		for (int i=0; i<taskList.size(); i++){
 			String preSourceName = sourceName;
@@ -79,6 +85,7 @@ public class HadoopTaskUtil {
 		}
 		executeTasks(nc, taskList, params, sourceName);
 	}
+	
 	/**
 	 * send the taskList to the cluster
 	 * @param nc
@@ -94,17 +101,17 @@ public class HadoopTaskUtil {
 		try {
 			//generate the task file
 			fs = FileSystem.get(conf);
-			String fileContent = "";
+			StringBuffer fileContent = new StringBuffer();
 			for (Task t: taskList){
 				String fn = TaskUtil.taskToJson(t);
-				fileContent += fn + "\n";
+				fileContent.append(fn).append("\n");
 			}
 			String escapedName = StringUtil.escapeFileName(sourceName);
 			String fileName = taskMgr.getHdfsTaskFolder() + "/" + IdUtil.getId(escapedName);
 			logger.info(String.format("task file: %s with length %d generated.", fileName, fileContent.length()));
 			Path fileNamePath = new Path(fileName);
 			FSDataOutputStream fin = fs.create(fileNamePath);
-			fin.writeBytes(fileContent);
+			fin.writeBytes(fileContent.toString());
 			fin.close();
 			
 			//submit to the hadoop cluster
@@ -117,8 +124,12 @@ public class HadoopTaskUtil {
 			//add app specific jars to classpath
 			if (nc.getTaskMgr().getYarnAppCp()!=null){
 				for (String s: nc.getTaskMgr().getYarnAppCp()){
-					if (!"".equals(s))
-						job.addFileToClassPath(new Path(s));
+					//find all the jar,zip files under s if s is a directory
+					FileStatus[] fslist = fs.listStatus(new Path(s));
+					Path[] plist = FileUtil.stat2Paths(fslist);
+					for (Path p:plist){
+						job.addFileToClassPath(p);
+					}
 				}
 			}
 			String className = taskMgr.getHadoopTaskMapperClassName();

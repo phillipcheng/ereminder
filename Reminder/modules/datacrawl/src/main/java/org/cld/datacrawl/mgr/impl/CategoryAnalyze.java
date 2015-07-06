@@ -11,6 +11,7 @@ import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlTaskGenerator;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.NextPage;
+import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.Category;
 import org.cld.datacrawl.mgr.ICategoryAnalyze;
 import org.cld.datacrawl.task.BrowseCategoryTaskConf;
@@ -149,6 +150,12 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 	 * @throws InterruptedException 
 	 */
 	public static List<Task> navigateCategoryOneLvl(BrowseCategoryTaskConf bct, BrowseCatType bcdef, CrawlConf cconf) throws InterruptedException{
+		DataStoreManager dsManager = null;
+		if (bcdef.getBaseBrowseTask().getDsm()!=null){
+			dsManager = cconf.getDsm(bcdef.getBaseBrowseTask().getDsm());
+		}else{
+			dsManager = cconf.getDefaultDsm();
+		}
 		WebClient wc = null;
 		try{
 			Category category = bct.getNewCat();
@@ -168,9 +175,8 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 				if (category.isLeaf()){
 					CategoryAnalyzeUtil.setCatItemNum(category.getFullUrl(), catPage, category, bct, cconf);
 					//add one version if differ
-					if (cconf.getDsm()!=null){
-						cconf.getDsm().addCrawledItem(category, bct.getOldCat());
-					}
+					if (dsManager!=null)
+						dsManager.addCrawledItem(category, bct.getOldCat(), bcdef.getBaseBrowseTask());
 					return genBDTFromBCT(bct, category, cconf, bcdef);
 				}else{
 					int catPages = bct.getPageNum();
@@ -179,9 +185,8 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 						CategoryAnalyzeUtil.setCatItemNum(url, catPage, category, bct, cconf);
 						catPages = category.getPageNum();
 						//only save the category for the 1st time
-						if (cconf.getDsm()!=null){
-							cconf.getDsm().addCrawledItem(category, bct.getOldCat());
-						}
+						if (dsManager!=null)
+							dsManager.addCrawledItem(category, bct.getOldCat(), bcdef.getBaseBrowseTask());
 					}
 	
 					if (catPages>1){
@@ -195,8 +200,8 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 								//prevent having myself as the sub-category
 								newCat.setRootTaskId(bct.getRootTaskId());
 								Category oldCat = null;
-								if (cconf.getDsm()!=null){
-									oldCat = (Category) cconf.getDsm().getCrawledItem(newCat.getId().getId(),
+								if (dsManager!=null){
+									oldCat = (Category) dsManager.getCrawledItem(newCat.getId().getId(),
 										newCat.getId().getStoreId(), Category.class);
 								}
 								if (hasUpdate(oldCat, newCat)){
@@ -220,18 +225,23 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 	}
 	
 	@Override
-	public List<Task> navigateCategory(Task task, TaskStat taskStat, CrawlConf cconf) throws InterruptedException{
+	public List<Task> navigateCategory(Task task, TaskStat taskStat, CrawlConf cconf) throws InterruptedException{		
 		BrowseCategoryTaskConf bct = (BrowseCategoryTaskConf) task;
 		String startUrl = bct.getStartURL();
-		
 		Category newCat = new Category(task.getParsedTaskDef().getTasks().getProductType());
+		BrowseCatInst bci = bct.getParsedTaskDef().getBCI(startUrl);
+		DataStoreManager dsManager = null;
+		if (bci.getBc().getBaseBrowseTask().getDsm()!=null){
+			dsManager = cconf.getDsm(bci.getBc().getBaseBrowseTask().getDsm());
+		}else{
+			dsManager = cconf.getDefaultDsm();
+		}
 		Category oldCat = null;
-		if (cconf.getDsm()!=null){
-			oldCat = (Category) cconf.getDsm().getCrawledItem(CategoryAnalyzeUtil.getCatId(startUrl, task.getParsedTaskDef()), 
+		if (dsManager!=null){
+			oldCat = (Category) dsManager.getCrawledItem(CategoryAnalyzeUtil.getCatId(startUrl, task.getParsedTaskDef()), 
 				task.getParsedTaskDef().getTasks().getStoreId(), Category.class);
 		}
 		bct.setOldCat(oldCat);
-		BrowseCatInst bci = bct.getParsedTaskDef().getBCI(startUrl);
 		newCat.setRootTaskId(task.getRootTaskId());
 		newCat.setFullUrl(startUrl);
 		newCat.getId().setId(CategoryAnalyzeUtil.getCatId(startUrl, task.getParsedTaskDef()));

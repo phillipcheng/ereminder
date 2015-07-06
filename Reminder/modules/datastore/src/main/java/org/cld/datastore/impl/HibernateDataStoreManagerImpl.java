@@ -19,6 +19,7 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.Transformers;
+import org.xml.taskdef.BrowseTaskType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.api.DataStoreManager;
@@ -74,7 +75,7 @@ public class HibernateDataStoreManagerImpl implements DataStoreManager {
 	}
 
 	@Override
-	public boolean addCrawledItem(CrawledItem ci, CrawledItem oldCi) {
+	public boolean addCrawledItem(CrawledItem ci, CrawledItem oldCi,BrowseTaskType btt) {
 		//generate the json data param for the ci
 		ci.toParamData();
 		//compare with the oldCi

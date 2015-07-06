@@ -1,6 +1,5 @@
 package org.cld.datacrawl.mgr.impl;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
@@ -19,10 +18,7 @@ import org.cld.datacrawl.NextPage;
 import org.cld.datacrawl.util.HtmlPageResult;
 import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.datacrawl.util.VerifyPageByBoolOp;
-import org.cld.datacrawl.util.VerifyPageByXPath;
-import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.ScriptEngineUtil;
-import org.cld.util.DownloadUtil;
 import org.cld.util.PatternIO;
 import org.cld.util.PatternUtil;
 import org.cld.util.SafeSimpleDateFormat;
@@ -34,7 +30,6 @@ import org.xml.taskdef.ScopeType;
 import org.xml.taskdef.ValueType;
 import org.xml.taskdef.VarType;
 
-import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.html.DomNamespaceNode;
 import com.gargoylesoftware.htmlunit.html.DomNode;
 import com.gargoylesoftware.htmlunit.html.DomText;
@@ -118,7 +113,12 @@ public class CrawlTaskEval {
 		if (dt==null){
 			return "";
 		}else{
-			return dt.getTextContent();
+			String tc = dt.getTextContent();
+			if ("".equals(tc.trim())){
+				return hd.asText();
+			}else{
+				return tc;
+			}
 		}
 	}
 	

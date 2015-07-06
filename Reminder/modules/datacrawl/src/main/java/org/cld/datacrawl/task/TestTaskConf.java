@@ -16,7 +16,7 @@ import org.apache.logging.log4j.ThreadContext;
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.test.CrawlTestUtil;
-import org.cld.datacrawl.test.CrawlTestUtil.browse_cat_type;
+import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 
@@ -30,16 +30,11 @@ public class TestTaskConf extends Task implements Serializable{
 	public static String datetimeformat="yyyy-MM-dd-hh-mm-ss-SSS";
 	public static SimpleDateFormat sdf = new SimpleDateFormat(datetimeformat);
 	
-	public static final int TEST_TASK_ONEPATH=1;
-	public static final int TEST_TASK_BCT=2;
-	public static final int TEST_TASK_BDT=3;
-	public static final int TEST_TASK_BDT_TURNPAGEONLY=4;
-	public static final int TEST_TASK_ONE_BOOK=5;
-	
 	//configurable values
 	private String startURL;
 	private String siteconfid;
-	private int taskType;
+	private browse_type taskType;
+	
 	private boolean init;
 	private String confXml;
 
@@ -47,7 +42,7 @@ public class TestTaskConf extends Task implements Serializable{
 	private TestTaskConf(){
 	}
 	
-	public TestTaskConf(boolean init, int taskType, String siteconfid, String confXml, String startUrl){
+	public TestTaskConf(boolean init, browse_type taskType, String siteconfid, String confXml, String startUrl){
 		this();
 		this.init = init;
 		this.taskType = taskType;
@@ -56,6 +51,10 @@ public class TestTaskConf extends Task implements Serializable{
 		this.startURL = startUrl;
 		super.setStoreId(siteconfid);
 		genId();
+	}
+	
+	public TestTaskConf(boolean init, browse_type taskType, String siteconfid, String confXml){
+		this(init, taskType, siteconfid, confXml, null);
 	}
 	
 	public String toString(){
@@ -84,22 +83,22 @@ public class TestTaskConf extends Task implements Serializable{
 		try{
 			if (!isInit()){
 				if (confXml==null){
-					cconf.setUpSite(null, cconf.getDsm().getFullSitConf(siteconfid));
+					cconf.setUpSite(null, cconf.getDefaultDsm().getFullSitConf(siteconfid));
 				}else{
 					cconf.setUpSite(confXml, null);
 				}
 			}
-			int taskType = getTaskType();
-			if (taskType==TEST_TASK_ONEPATH){
+			browse_type taskType = getTaskType();
+			if (taskType==browse_type.one_path){
 				CrawlTestUtil.catNavigate(siteconfid, null, cconf, getId(), null, null);
-			}else if (taskType == TEST_TASK_BCT){
+			}else if (taskType == browse_type.bct){
 				CrawlTestUtil.catNavigate(siteconfid, null, startUrl, 
-						browse_cat_type.recursive, cconf, getId(), null, null, 0);
-			}else if (taskType == TEST_TASK_ONE_BOOK){
-				CrawlTestUtil.browsePrd(siteconfid, null, startUrl, cconf, getId());
-			}else if (taskType == TEST_TASK_BDT_TURNPAGEONLY){
+						browse_type.recursive, cconf, getId(), null, null, 0);
+			}else if (taskType == browse_type.bpt){
+				CrawlTestUtil.browsePrd(siteconfid, confXml, startUrl, cconf, getId(), this.getParamMap());
+			}else if (taskType == browse_type.bdt_turnpage_only){
 				CrawlTestUtil.runBDT(siteconfid, null, startUrl, true, cconf, getId());
-			}else if (taskType == TEST_TASK_BDT){
+			}else if (taskType == browse_type.bdt){
 				CrawlTestUtil.runBDT(siteconfid, null, startUrl, false, cconf, getId());
 			}else{
 				logger.error(String.format("taskType: %d not supported.", taskType));
@@ -118,13 +117,6 @@ public class TestTaskConf extends Task implements Serializable{
 		this.startURL = startURL;
 	}
 
-	public int getTaskType() {
-		return taskType;
-	}
-
-	public void setTaskType(int taskType) {
-		this.taskType = taskType;
-	}
 
 	public boolean isInit() {
 		return init;
@@ -150,4 +142,11 @@ public class TestTaskConf extends Task implements Serializable{
 		this.confXml = confXml;
 	}
 
+	public browse_type getTaskType() {
+		return taskType;
+	}
+
+	public void setTaskType(browse_type taskType) {
+		this.taskType = taskType;
+	}
 }

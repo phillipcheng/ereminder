@@ -15,7 +15,7 @@ import org.xml.taskdef.VarType;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 public class VerifyPageByXPath implements VerifyPage {
-	public static Logger logger = LogManager.getLogger(PatternResult.class);
+	public static Logger logger = LogManager.getLogger(VerifyPageByXPath.class);
 	
 	private String[] xpathsSuccess;
 	private String[] expectedValues;

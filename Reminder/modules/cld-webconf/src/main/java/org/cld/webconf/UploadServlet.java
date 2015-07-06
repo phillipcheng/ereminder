@@ -45,7 +45,7 @@ public class UploadServlet extends HttpServlet {
            String xmlconf = baos.toString("UTF-8");
            String filename = entry.getName();
            String confid = filename.substring(0, filename.lastIndexOf("."));
-           ConfServlet.getCConf().getDsm().saveXmlConf(confid, uid, xmlconf);
+           ConfServlet.getCConf().getDefaultDsm().saveXmlConf(confid, uid, xmlconf);
            baos.close();
         }
         zis.close();

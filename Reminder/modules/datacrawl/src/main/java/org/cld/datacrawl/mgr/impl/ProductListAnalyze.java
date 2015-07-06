@@ -49,6 +49,8 @@ public class ProductListAnalyze implements IProductListAnalyze {
 	 * @param productSummary: the summary xml get from the list page
 	 * @param detailedUrl: the detailed product detailedUrl
 	 * @param readTime
+	 * @param cconf
+	 * @param task
 	 * @return false, means readItem failed
 	 */
 	@Override

@@ -1,8 +1,6 @@
 package org.cld.datacrawl.util;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -19,7 +17,6 @@ import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.NextPage;
 import org.cld.datacrawl.mgr.impl.BinaryBoolOpEval;
 import org.cld.datacrawl.mgr.impl.CrawlTaskEval;
-import org.cld.taskmgr.entity.Task;
 import org.xml.mytaskdef.ConfKey;
 import org.xml.mytaskdef.ParsedTasksDef;
 import org.xml.taskdef.AttributeType;
@@ -28,19 +25,13 @@ import org.xml.taskdef.ClickType;
 import org.xml.taskdef.ConditionalNextPage;
 import org.xml.taskdef.CredentialType;
 import org.xml.taskdef.LoginType;
-import org.xml.taskdef.TasksType;
 import org.xml.taskdef.ValueType;
 import org.xml.taskdef.VarType;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.DomNamespaceNode;
 import com.gargoylesoftware.htmlunit.html.DomNode;
-import com.gargoylesoftware.htmlunit.html.DomText;
-import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
-import com.gargoylesoftware.htmlunit.html.HtmlDivision;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
-import com.gargoylesoftware.htmlunit.html.HtmlImage;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
@@ -420,6 +411,8 @@ public class HtmlUnitUtil {
 	 * @return the page result
 	 * @throws InterruptedException
 	 */
+	public static final int maxloop = 15;
+	public static final int waitTime = 2000; //ms
 	public static HtmlPageResult clickNextPageWithRetryValidate(WebClient wc, NextPage np, VerifyPage vp, Object param, 
 			ParsedTasksDef siteDef, CrawlConf cconf) 
 			throws InterruptedException{
@@ -438,7 +431,6 @@ public class HtmlUnitUtil {
 				}
 				try {
 					page = getDirectPage(wc, np);
-					int maxloop = 50;
 					int innerloop=0;
 					while(innerloop<maxloop){
 						//refetch the page
@@ -479,7 +471,7 @@ public class HtmlUnitUtil {
 									return result;
 								}else{
 									synchronized(page){
-										page.wait(1000);//wait for the necessary js done
+										page.wait(waitTime);//wait for the necessary js done
 										logger.warn(String.format("wait for the expected value come out, wait %d times, max %d times", innerloop, maxloop));
 										logger.debug(page.asText());
 									}

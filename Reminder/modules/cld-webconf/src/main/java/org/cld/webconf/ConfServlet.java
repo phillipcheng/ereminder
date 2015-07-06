@@ -136,7 +136,7 @@ public class ConfServlet extends HttpServlet {
 		if (ttCache.containsKey(siteconfid)){
 			return ttCache.get(siteconfid);
 		}else{
-			SiteConf sc = cconf.getDsm().getFullSitConf(siteconfid);
+			SiteConf sc = cconf.getDefaultDsm().getFullSitConf(siteconfid);
 			if (sc!=null){
 			JAXBContext jc;
 				try {
@@ -181,10 +181,10 @@ public class ConfServlet extends HttpServlet {
 		
 		//process input
 		if (CMD_DEPLOY.equals(cmd)){
-			cconf.getDsm().deployConf(siteids, true);
+			cconf.getDefaultDsm().deployConf(siteids, true);
 			response.sendRedirect(SiteConfListPage);
 		}else if (CMD_UNDEPLOY.equals(cmd)){
-			cconf.getDsm().deployConf(siteids, false);
+			cconf.getDefaultDsm().deployConf(siteids, false);
 			response.sendRedirect(SiteConfListPage);
 		}else if (CMD_CANCEL.equals(cmd)){
 			if (siteids!=null){
@@ -201,8 +201,8 @@ public class ConfServlet extends HttpServlet {
 			if (siteids!=null){
 				for (String storeId:siteids){
 					logger.info("delete prd/cat/price for storeId:" + storeId);
-					cconf.getDsm().delCategoryByStoreId(storeId);
-					cconf.getDsm().delProductAndPriceByStoreId(storeId);
+					cconf.getDefaultDsm().delCategoryByStoreId(storeId);
+					cconf.getDefaultDsm().delProductAndPriceByStoreId(storeId);
 				}
 			}
 			response.sendRedirect(SiteConfListPage);
@@ -210,7 +210,7 @@ public class ConfServlet extends HttpServlet {
 		}else if (CMD_EDIT.equals(cmd)){
 			if (siteconfid!=null){
 				//get the url
-				String xmlconf=cconf.getDsm().getFullSitConf(siteconfid).getConfxml();
+				String xmlconf=cconf.getDefaultDsm().getFullSitConf(siteconfid).getConfxml();
 				xmlconf = xmlconf.replace(RUN_BODY_PATH, EDIT_BODY_PATH);
 				if (xmlconf!=null){
 					JAXBContext jc;
@@ -277,7 +277,8 @@ public class ConfServlet extends HttpServlet {
 						}
 						int testType = Integer.parseInt(testTypes[i]);
 						testCount++;
-						TestTaskConf tbt = new TestTaskConf(init, testType, siteid, null, startUrl);
+						//TODO
+						TestTaskConf tbt = new TestTaskConf(init, null, siteid, null, startUrl);
 						selectedtaskids.add(tbt.getId());
 						tl.add(tbt);
 						if (testCount>0){
@@ -303,7 +304,7 @@ public class ConfServlet extends HttpServlet {
 			try{
 				output = new ZipOutputStream(new BufferedOutputStream(response.getOutputStream(), DEFAULT_BUFFER_SIZE));
 				for (String sid: siteids){
-					String xmlconf=cconf.getDsm().getFullSitConf(sid).getConfxml();
+					String xmlconf=cconf.getDefaultDsm().getFullSitConf(sid).getConfxml();
 					output.putNextEntry(new ZipEntry(sid+".xml"));
 					output.write(xmlconf.getBytes());
 					output.closeEntry();
@@ -331,7 +332,7 @@ public class ConfServlet extends HttpServlet {
 			//clean the cache for this entry
 			ttCache.remove(siteconfid);
 			//save it to db
-			cconf.getDsm().saveXmlConf(siteconfid, uid, xml);
+			cconf.getDefaultDsm().saveXmlConf(siteconfid, uid, xml);
 			logger.info("xml generated:" + xml);
 			if (xml!=null){
 				JAXBContext jc;

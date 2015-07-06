@@ -31,15 +31,31 @@ import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.cld.taskmgr.server.ServerNodeImpl;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 
 public class CrawlTestUtil{
 	
 	private static Logger logger =  LogManager.getLogger(CrawlTestUtil.class);
 	
-	public enum browse_cat_type{
-		one_level,
-		one_path,
-		recursive
+	public enum browse_type{
+		one_level(0),
+		one_path(1),
+		recursive(2),
+		bct(3),
+		bdt(4),
+		bdt_turnpage_only(5),
+		bpt(6);
+		
+		private int id;
+		private browse_type(final int id){
+			this.id = id;
+		}
+		
+		@JsonValue
+		public int getId(){
+			return id;
+		}
 	}
 
 	public static CrawlConf getCConf(String properties){
@@ -47,7 +63,8 @@ public class CrawlTestUtil{
 		CrawlConf cconf = null;
 		nc = new NodeConf(properties);
 		cconf = new CrawlConf(properties, nc);
-		if (CrawlConf.crawlDsManager_Value_Hibernate.equals(cconf.getCrawlDsManager())){
+		
+		if (cconf.getDsm(CrawlConf.crawlDsManager_Value_Hibernate)!=null){
 			CrawlUtil.setupSessionFactory(nc, cconf);
 		}
 		return cconf;
@@ -81,7 +98,8 @@ public class CrawlTestUtil{
 		nc = new NodeConf(clientProperties);
 		cconf = new CrawlConf(clientProperties, nc);
 		tn = new ClientNodeImpl(nc);
-		if (CrawlConf.crawlDsManager_Value_Hibernate.equals(cconf.getCrawlDsManager())){
+		
+		if (cconf.getDsm(CrawlConf.crawlDsManager_Value_Hibernate)!=null){
 			CrawlUtil.setupSessionFactory(nc, cconf);
 			tn.getTaskInstanceManager().setTaskSF(cconf.getTaskSF());
 		}
@@ -163,16 +181,16 @@ public class CrawlTestUtil{
 	public static void catNavigate(String siteconfid, String confFileName, CrawlConf cconf, 
 			String rootTaskId, CrawlClientNode ccnode, String propFile) 
 			throws InterruptedException{
-		catNavigate(siteconfid, confFileName, null, browse_cat_type.one_path, cconf, rootTaskId, null, ccnode, propFile, 0);
+		catNavigate(siteconfid, confFileName, null, browse_type.one_path, cconf, rootTaskId, null, ccnode, propFile, 0);
 	}
 	//defaults to startUrl and 1 path type
 	public static void catNavigate(String siteconfid, String confFileName, CrawlConf cconf, 
 			String rootTaskId, CrawlClientNode ccnode, String propFile, int pageNum) 
 			throws InterruptedException{
-		catNavigate(siteconfid, confFileName, null, browse_cat_type.one_path, cconf, rootTaskId, null, ccnode, propFile, pageNum);
+		catNavigate(siteconfid, confFileName, null, browse_type.one_path, cconf, rootTaskId, null, ccnode, propFile, pageNum);
 	}
 	
-	public static void catNavigate(String siteconfid, String confFileName, String catUrl, browse_cat_type type, 
+	public static void catNavigate(String siteconfid, String confFileName, String catUrl, browse_type type, 
 			CrawlConf cconf, String rootTaskId, CrawlClientNode ccnode, String propFile, int pageNum) throws InterruptedException {
 		catNavigate(siteconfid, confFileName, catUrl, type, cconf, rootTaskId, null, ccnode, propFile, pageNum);
 	}
@@ -189,7 +207,7 @@ public class CrawlTestUtil{
 	 * @param ccnode: if null, execute sequentially, if not null, in parallel
 	 * @throws Exception
 	 */
-	public static void catNavigate(String siteconfid, String confFileName, String catUrl, browse_cat_type type, 
+	public static void catNavigate(String siteconfid, String confFileName, String catUrl, browse_type type, 
 			CrawlConf cconf, String rootTaskId, Map<String, Object> inparams, CrawlClientNode ccnode, String propFile, int pageNum) 
 			throws InterruptedException {
 		if (confFileName!=null){
@@ -205,14 +223,14 @@ public class CrawlTestUtil{
 			srt.getBct().setStartURL(catUrl);
 		}
 		List<Task> taskList = new ArrayList<Task>();
-		if (type == browse_cat_type.recursive){
+		if (type == browse_type.recursive){
 			taskList.add(srt.getBct());
 			executeTasks(taskList, cconf, ccnode, propFile);
 		}else{
 			taskList = srt.ca.navigateCategory(srt.getBct(), srt.bctBS, cconf);
 			logger.info("stat:" + srt.bctBS);
 			
-			if (type != browse_cat_type.one_level){//one path
+			if (type != browse_type.one_level){//one path
 				List<Task> bdttl = new ArrayList<Task>();
 				while(taskList.size()>0){
 					Task t = taskList.remove(0);

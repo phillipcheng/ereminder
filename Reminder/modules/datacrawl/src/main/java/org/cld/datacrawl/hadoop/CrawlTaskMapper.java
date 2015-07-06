@@ -47,7 +47,7 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, LongWritable>{
 			if (tl!=null && tl.size()>0){
 				HadoopTaskUtil.executeTasks(cconf.getNodeConf(), tl, hadoopCrawlTaskParams, t.getId());
 			}
-			logger.info(String.format("I finished and send out %d tasks.", tl.size()));
+			logger.info(String.format("I finished and send out %d tasks.", tl!=null?tl.size():0));
 		}catch(RuntimeException re){
 			logger.error("runtime excpetion caught, mark this job error.", re);
 			throw re;

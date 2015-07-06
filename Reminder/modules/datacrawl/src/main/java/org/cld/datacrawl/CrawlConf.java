@@ -13,13 +13,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.hibernate.SessionFactory;
-
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import org.cld.datacrawl.mgr.IProductAnalyze;
 import org.cld.datacrawl.mgr.IProductListAnalyze;
 import org.cld.datacrawl.mgr.ICategoryAnalyze;
@@ -29,12 +27,14 @@ import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.Product;
 import org.cld.datastore.entity.SiteConf;
 import org.cld.datastore.impl.HbaseDataStoreManagerImpl;
+import org.cld.datastore.impl.HdfsDataStoreManagerImpl;
 import org.cld.datastore.impl.HibernateDataStoreManagerImpl;
 import org.cld.taskmgr.AppConf;
 import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.NodeConfChangedEvent;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
+import org.cld.taskmgr.hadoop.HadoopTaskUtil;
 
 public class CrawlConf implements AppConf, Serializable {
 	
@@ -58,9 +58,12 @@ public class CrawlConf implements AppConf, Serializable {
 	public static final String promotionAnalyze_Key="promotion.analyze";
 	public static final String productType_Key="product.type";
 	public static final String crawlTaskConf_Key="crawl.taskconf";
+	//dsm can be a list, 1st is default, each site can pick one if not use default
 	public static final String crawlDsManager_Key="crawl.ds.manager";
+		public static final String crawlDsManager_Value_Nothing="nothing";
 		public static final String crawlDsManager_Value_Hibernate="hibernate";
 		public static final String crawlDsManager_Value_Hbase = "hbase";
+		public static final String crawlDsManager_Value_Hdfs = "hdfs";
 	public static final String crawlDBConnectionUrl_Key = "crawl.db.connection.url";
 	public static final String systemProductClassName="org.cld.datastore.entity.Product";
 	
@@ -89,9 +92,10 @@ public class CrawlConf implements AppConf, Serializable {
 	private IProductAnalyze pa;
 	private IProductListAnalyze pla;
 	
-	private String crawlDsManagerValue = "nothing";
+	private List<String> crawlDsManagerValue = new ArrayList<String>();
 	private String crawlDBConnectionUrl;
-	private DataStoreManager dsm;
+	//type to dsm instance, //TODO, name to dsm instance, same type can be multiple different dsm
+	private Map<String, DataStoreManager> dsmMap = new HashMap<String, DataStoreManager>();
 
 	private Map<String, String> params = new HashMap<String, String>();//store all the parameters in name-value pair for toString
 	
@@ -180,20 +184,8 @@ public class CrawlConf implements AppConf, Serializable {
 	 * 2. the plugin dir
 	 */
 	public void reload(){
-		
 		//after read properties, the new ctconf map is empty
 		readPropertiesFromConfig();
-		
-		//
-		if (dsm==null){
-			if (crawlDsManagerValue.equals(crawlDsManager_Value_Hibernate)){
-				dsm = new HibernateDataStoreManagerImpl();
-			}else if (crawlDsManagerValue.equals(crawlDsManager_Value_Hbase)){
-				dsm = new HbaseDataStoreManagerImpl();
-			}else{
-				logger.error("unsupported data store manager type:" + crawlDsManagerValue);
-			}
-		}
 		
 		URL[] pluginurls = getPlugURL();
 		if (pluginurls.length==0){
@@ -217,6 +209,19 @@ public class CrawlConf implements AppConf, Serializable {
 		Map<String, Object> taskParams = new HashMap<String, Object>();
 		taskParams.put(taskParamCConf_Key, this);
 		taskMgr.reload(pluginClassLoader, taskParams);
+		
+		//
+		for (String dsmtype:crawlDsManagerValue){
+			if (dsmtype.equals(crawlDsManager_Value_Hibernate)){
+				dsmMap.put(dsmtype, new HibernateDataStoreManagerImpl());
+			}else if (dsmtype.equals(crawlDsManager_Value_Hbase)){
+				dsmMap.put(dsmtype, new HbaseDataStoreManagerImpl(HadoopTaskUtil.getHadoopConf(getNodeConf())));
+			}else if (dsmtype.equals(crawlDsManager_Value_Hdfs)){
+				dsmMap.put(dsmtype, new HdfsDataStoreManagerImpl(HadoopTaskUtil.getHadoopConf(getNodeConf()), 
+						getTaskMgr().getHadoopCrawledItemFolder()));
+			}
+		}
+		
 	}
 	
 	private void loadProductConf(String key){
@@ -325,12 +330,20 @@ public class CrawlConf implements AppConf, Serializable {
 				}else if (brokenRetry_Key.equals(key)){
 					brokenRetry =  Integer.parseInt(strVal);
 				}else if (crawlDsManager_Key.equals(key)){
-					if (crawlDsManager_Value_Hibernate.equals(strVal)){
-						crawlDsManagerValue = crawlDsManager_Value_Hibernate;
-					}else if (crawlDsManager_Value_Hbase.equals(strVal)){
-						crawlDsManagerValue = crawlDsManager_Value_Hbase;
-					}else{
-						logger.error("unsupported ds manager type:" + strVal);
+					List<Object> listVal = properties.getList(key);
+					for (int i=0;  i<listVal.size(); i++){
+						String dsmtype = (String)listVal.get(i);
+						if (crawlDsManager_Value_Hibernate.equals(dsmtype)){
+							crawlDsManagerValue.add(dsmtype);
+						}else if (crawlDsManager_Value_Hbase.equals(dsmtype)){
+							crawlDsManagerValue.add(dsmtype);
+						}else if (crawlDsManager_Value_Hdfs.equals(dsmtype)){
+							crawlDsManagerValue.add(dsmtype);
+						}else if (crawlDsManager_Value_Nothing.equals(dsmtype)){
+							crawlDsManagerValue.add(dsmtype);
+						}else{
+							logger.error("unsupported ds manager type:" + dsmtype);
+						}
 					}
 				}else if (crawlDBConnectionUrl_Key.equals(key)){
 					crawlDBConnectionUrl = strVal;
@@ -494,8 +507,15 @@ public class CrawlConf implements AppConf, Serializable {
 		this.taskSF = taskSF;
 	}
 	
-	public DataStoreManager getDsm() {
-		return dsm;
+	public DataStoreManager getDsm(String type) {
+		if (type!=null)
+			return dsmMap.get(type);
+		else
+			return null;
+	}
+	
+	public DataStoreManager getDefaultDsm() {
+		return dsmMap.get(this.crawlDsManagerValue.get(0));
 	}
 	
 	public URL[] getPlugURL(){
@@ -554,14 +574,6 @@ public class CrawlConf implements AppConf, Serializable {
 	
 	public boolean isCancelable(){
 		return nodeConf.isCancelable();
-	}
-
-	public String getCrawlDsManager() {
-		return crawlDsManagerValue;
-	}
-
-	public void setCrawlDsManager(String crawlDsManager) {
-		this.crawlDsManagerValue = crawlDsManager;
 	}
 
 	public ICategoryAnalyze getCa() {

@@ -8,7 +8,7 @@ import java.util.Date;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.util.DateTimeRange;
-import org.cld.util.TimeUtil;
+import org.cld.util.DateTimeUtil;
 import org.junit.Test;
 
 public class TestTimeUtil {
@@ -27,19 +27,19 @@ public class TestTimeUtil {
 		DateTimeRange dr;
 		Date fromDT, toDT;
 		
-		dr = TimeUtil.getDTRange("2013年1月14日10:00到2013年1月21日09:59:59");
+		dr = DateTimeUtil.getDTRange("2013年1月14日10:00到2013年1月21日09:59:59");
 		fromDT = dr.getFromDT();
 		toDT = dr.getToDT();
 		logger.info("fromDT:" + fromDT);
 		logger.info("toDT:" + toDT);
 		
-		dr = TimeUtil.getDTRange("2013年01月12日00:00到01月18日00:00");
+		dr = DateTimeUtil.getDTRange("2013年01月12日00:00到01月18日00:00");
 		fromDT = dr.getFromDT();
 		toDT = dr.getToDT();
 		logger.info("fromDT:" + fromDT);
 		logger.info("toDT:" + toDT);
 		
-		dr = TimeUtil.getDTRange("2013年1月21日上午09:30");
+		dr = DateTimeUtil.getDTRange("2013年1月21日上午09:30");
 		fromDT = dr.getFromDT();
 		toDT = dr.getToDT();
 		logger.info("fromDT:" + fromDT);
@@ -51,9 +51,9 @@ public class TestTimeUtil {
 	public void testLocale(){
 		String str = "2013年1月21日上午09:30";
 		try {
-			Date d = TimeUtil.yMdahm_DF.parse(str);
+			Date d = DateTimeUtil.yMdahm_DF.parse(str);
 			logger.info(d);
-			String str2= TimeUtil.yMdahm_DF.format(d);
+			String str2= DateTimeUtil.yMdahm_DF.format(d);
 			logger.info(str2);
 			assertTrue(str.equals(str2));
 		} catch (ParseException e) {

@@ -11,6 +11,7 @@ import org.cld.datastore.entity.Price;
 import org.cld.datastore.entity.Product;
 import org.cld.datastore.entity.SiteConf;
 import org.hibernate.SessionFactory;
+import org.xml.taskdef.BrowseTaskType;
 
 public interface DataStoreManager {
 	
@@ -20,7 +21,7 @@ public interface DataStoreManager {
 	 * CrawledItem operations
 	 */
 	public CrawledItem getCrawledItem(String id, String dataSourceId, Class<? extends CrawledItem> crawledItemClazz);
-	public boolean addCrawledItem(CrawledItem ci, CrawledItem oldCi);	
+	public boolean addCrawledItem(CrawledItem ci, CrawledItem oldCi, BrowseTaskType btt);	
 
 	/***************************
 	 *  Price operations

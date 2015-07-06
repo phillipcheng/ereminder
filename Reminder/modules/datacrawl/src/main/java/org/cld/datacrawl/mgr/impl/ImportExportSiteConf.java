@@ -32,13 +32,13 @@ public class ImportExportSiteConf {
 	
 	
 	public void exportSiteConf(String userId, String path) throws Exception{
-		List<SiteConf> sclist = cconf.getDsm().getSiteConf(userId, true, -1);
+		List<SiteConf> sclist = cconf.getDefaultDsm().getSiteConf(userId, true, -1);
 		logger.info("siteconf found:" + sclist.size());
 		for (SiteConf sc:sclist){
 			String fileName = path + sc.getId() + ".xml";
 			File f = new File(fileName);
 			Writer w = new BufferedWriter(new FileWriter(f));
-			SiteConf fullSC = cconf.getDsm().getFullSitConf(sc.getId());
+			SiteConf fullSC = cconf.getDefaultDsm().getFullSitConf(sc.getId());
 			if (fullSC!=null){
 				w.write(fullSC.getConfxml());
 			}
@@ -70,7 +70,7 @@ public class ImportExportSiteConf {
 			}
 
 			String text = builder.toString();
-			cconf.getDsm().saveXmlConf(name, userId, text);
+			cconf.getDefaultDsm().saveXmlConf(name, userId, text);
 		}
 	}
 

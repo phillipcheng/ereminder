@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.task.TestTaskConf;
-import org.cld.datacrawl.test.CrawlTestUtil.browse_cat_type;
+import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
 import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.taskmgr.entity.Task;
 
@@ -42,11 +42,11 @@ public class TestBase {
 		CrawlTestUtil.catNavigate(getConfId(confFileName), confFileName, cconf, testTaskId, ccnode, pFile);
 	}
 	
-	public void catNavigate(String confFileName, String starturl, browse_cat_type type) throws Exception{
+	public void catNavigate(String confFileName, String starturl, browse_type type) throws Exception{
 		CrawlTestUtil.catNavigate(getConfId(confFileName), confFileName, starturl, type, cconf, testTaskId, ccnode, pFile, 0);
 	}
 	
-	public void catNavigate(String confFileName, String starturl, browse_cat_type type, int pageNum) throws Exception{
+	public void catNavigate(String confFileName, String starturl, browse_type type, int pageNum) throws Exception{
 		CrawlTestUtil.catNavigate(getConfId(confFileName), confFileName, starturl, type, cconf, testTaskId, ccnode, pFile, pageNum);
 	}
 	
@@ -74,7 +74,7 @@ public class TestBase {
 		List<String> selectedtaskids = new ArrayList<String>();
 		List<Task> tl = new ArrayList<Task>();
 		for (String confXml: allConf){
-			TestTaskConf tbt = new TestTaskConf(false, TestTaskConf.TEST_TASK_ONEPATH, getConfId(confXml), confXml, null);
+			TestTaskConf tbt = new TestTaskConf(false, browse_type.one_path, getConfId(confXml), confXml, null);
 			selectedtaskids.add(tbt.getId());
 			tl.add(tbt);
 		}
@@ -124,7 +124,7 @@ public class TestBase {
 			for (String starturl: surls){
 				try {
 					if (TASK_TYPE_BCT.equals(taskType)){
-						tb.catNavigate(siteconfName, starturl, browse_cat_type.recursive);
+						tb.catNavigate(siteconfName, starturl, browse_type.recursive);
 					}else if (TASK_TYPE_BDT.equals(taskType)){
 						tb.runBDT(siteconfName, starturl, false);
 					}else if (TASK_TYPE_BPT.equals(taskType)){

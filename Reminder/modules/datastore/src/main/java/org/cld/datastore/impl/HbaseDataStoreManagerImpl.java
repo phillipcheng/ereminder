@@ -23,6 +23,7 @@ import org.cld.datastore.entity.Logs;
 import org.cld.datastore.entity.Price;
 import org.cld.datastore.entity.Product;
 import org.cld.datastore.entity.SiteConf;
+import org.xml.taskdef.BrowseTaskType;
 
 public class HbaseDataStoreManagerImpl implements DataStoreManager {
 
@@ -39,8 +40,8 @@ public class HbaseDataStoreManagerImpl implements DataStoreManager {
 	private Configuration hbaseConf;
 	
 	
-	public HbaseDataStoreManagerImpl() {
-		hbaseConf = HBaseConfiguration.create();
+	public HbaseDataStoreManagerImpl(Configuration hadoopConf) {
+		hbaseConf = HBaseConfiguration.addHbaseResources(hadoopConf);
 	}
 
 	public static String getRowKey(CrawledItemId cid){
@@ -112,7 +113,7 @@ public class HbaseDataStoreManagerImpl implements DataStoreManager {
 
 
 	@Override
-	public boolean addCrawledItem(CrawledItem ci, CrawledItem oldCi) {
+	public boolean addCrawledItem(CrawledItem ci, CrawledItem oldCi, BrowseTaskType btt) {
 		ci.toParamData();
 		if (oldCi!=null)
 			oldCi.toParamData();

@@ -13,7 +13,7 @@ import org.xml.taskdef.BinaryBoolOp;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 public class VerifyPageByBoolOp implements VerifyPage {
-	public static Logger logger = LogManager.getLogger(PatternResult.class);
+	public static Logger logger = LogManager.getLogger(VerifyPageByBoolOp.class);
 	
 	private BinaryBoolOp[] validationOps;
 	private CrawlConf cconf;

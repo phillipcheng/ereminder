@@ -1,1 +1,6 @@
 create 'crawledItem', 'cf';
+
+if hbase can't start and complaining :hbase exists
+You can access ZooKeeper via several methods, 
+but the easiest is to use the 'hbase zkcli' command from one of the servers running an HBase service.  
+Once in the ZooKeeper CLI, you can run 'rmr /hbase' to remove the znode

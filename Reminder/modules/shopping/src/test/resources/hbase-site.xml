@@ -20,22 +20,22 @@
  * limitations under the License.
  */
 -->
-<configuration>
+<configuration> 
+  <!-- 
   <property>
     <name>hbase.tmp.dir</name>
-    <value>C:/tmp/hbase</value> 
-    <!-- <value>/Users/chengyi/data/tmp</value>-->
+    <value>/Users/chengyi/data/tmp</value>
     <description>Temporary directory on the local filesystem.
     Change this setting to point to a location more permanent
     than '/tmp' (The '/tmp' directory is often cleared on
     machine restart).
     </description>
   </property>
-    <property>
+  <property>
     <name>hbase.zookeeper.property.dataDir</name>
-    <value>C:/tmp/zookeeper</value>
-    <!-- <value>/Users/chengyi/data/zookeeper</value>-->
+    <value>/Users/chengyi/data/zookeeper</value>
   </property>
+   -->
   <property>
     <name>hbase.zookeeper.quorum</name>
     <value>127.0.0.1</value>
@@ -50,9 +50,9 @@
   <property>
   	<name>hbase.cluster.distributed</name>
   	<value>false</value>
-	</property>
-	<property>
+  </property>
+  <property>
   	<name>hbase.rootdir</name>
   	<value>hdfs://127.0.0.1:19000/hbase</value>
-	</property>
+  </property>
 </configuration>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" 
+	rootVolume="999990" 
+	storeId="sina-stock-market-history" 
+	productType="default">
+	<PrdTask tryPattern="false">
+		<baseBrowseTask 
+		startUrl="http://vip.stock.finance.sina.com.cn/corp/go.php/vMS_MarketHistory/stockid/[stockid].phtml?year=[year]&amp;jidu=[quarter]"
+		enableJS="true"
+		taskName="stock-list"
+		dsm="hdfs">
+			<param name="stockid" direction="out"/>
+			<param name="year"/>
+			<param name="quarter"/>
+			<userAttribute name="date">
+				<value value="//table[@id='FundHoldSharesTable']/tbody/tr[position()>2]/td[1]/div[1]" toType="list"/>
+			</userAttribute>
+			<userAttribute name="open">
+				<value value="//table[@id='FundHoldSharesTable']/tbody/tr[position()>2]/td[2]/div[1]" toType="list"/>
+			</userAttribute>
+			<userAttribute name="high">
+				<value value="//table[@id='FundHoldSharesTable']/tbody/tr[position()>2]/td[3]/div[1]" toType="list"/>
+			</userAttribute>
+			<userAttribute name="close">
+				<value value="//table[@id='FundHoldSharesTable']/tbody/tr[position()>2]/td[4]/div[1]" toType="list"/>
+			</userAttribute>
+			<userAttribute name="low">
+				<value value="//table[@id='FundHoldSharesTable']/tbody/tr[position()>2]/td[5]/div[1]" toType="list"/>
+			</userAttribute>
+			<userAttribute name="volume">
+				<value value="//table[@id='FundHoldSharesTable']/tbody/tr[position()>2]/td[6]/div[1]" toType="list"/>
+			</userAttribute>
+			<userAttribute name="tvolume">
+				<value value="//table[@id='FundHoldSharesTable']/tbody/tr[position()>2]/td[7]/div[1]" toType="list"/>
+			</userAttribute>
+			<idUrlMapping>
+				<Token value="http://vip.stock.finance.sina.com.cn/corp/go.php/vMS_MarketHistory/stockid/" name="prefix" type="string"/>
+				<Token value=".*" name="id" type="regexp"/>
+			</idUrlMapping>
+		</baseBrowseTask>
+		<totalPage value="1" toType="int"/>
+	</PrdTask>
+</Tasks>
