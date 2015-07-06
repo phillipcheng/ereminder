@@ -36,7 +36,7 @@ public class TestSinaStock extends TestBase{
 		super();
 	}
 	
-	private String propFile = "client1-v2.properties";
+	private String propFile = "client1-v2-cluster.properties";
 	
 	@Before
 	public void setUp(){

@@ -229,6 +229,10 @@
 				</xs:restriction>
 			</xs:simpleType>
 		</xs:attribute>
+		<xs:attribute name="dsmHeader" type="xs:boolean" use="optional" default="false">
+			<xs:annotation>
+				<xs:documentation>whether generate header line in csv for hdfs</xs:documentation>
+			</xs:annotation></xs:attribute>
 	</xs:complexType>
 	<xs:complexType name="BrowseCatType">
 		<xs:sequence>
