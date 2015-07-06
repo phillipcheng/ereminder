@@ -64,19 +64,23 @@ public class HdfsDataStoreManagerImpl implements DataStoreManager {
 			for (String key:ci.getParamMap().keySet()){
 				Object value = ci.getParam(key);
 				if (value instanceof List){
-					if (i>0){
-						osw.write(",");
+					if (btt.isDsmHeader()){
+						if (i>0){
+							osw.write(",");
+						}
+						osw.write(key);
 					}
-					osw.write(key);
 					if (size==0){//take 1st list's size
 						size = ((List)value).size();
 					}
 					i++;
 				}else if (outParamList.contains(key)){
-					if (i>0){
-						osw.write(",");
+					if (btt.isDsmHeader()){
+						if (i>0){
+							osw.write(",");
+						}
+						osw.write(key);
 					}
-					osw.write(key);
 					i++;
 					nonListKeys.add(key);
 				}else{
@@ -85,7 +89,9 @@ public class HdfsDataStoreManagerImpl implements DataStoreManager {
 				}
 			}
 			logger.info("size:" + size);
-			osw.write("\n");
+			if (btt.isDsmHeader()){
+				osw.write("\n");
+			}
 			for (i=0; i<size; i++){
 				StringBuffer sb = new StringBuffer();
 				int j=0;
