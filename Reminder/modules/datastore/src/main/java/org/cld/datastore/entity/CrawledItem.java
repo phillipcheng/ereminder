@@ -136,6 +136,8 @@ public class CrawledItem {
 				jobj.put(key, toJsonArray((List)val));
 			}else if (val instanceof JSONArray){
 				jobj.put(key, val);
+			}else if (val instanceof Integer){
+				jobj.put(key, val);
 			}else{
 				logger.warn(String.format("type not supported for json serialization: %s:%s", key, val));
 			}

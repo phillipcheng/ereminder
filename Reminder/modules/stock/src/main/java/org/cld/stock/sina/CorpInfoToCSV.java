@@ -8,9 +8,9 @@ import org.cld.datastore.entity.CrawledItem;
 import org.cld.stock.load.ICrawlItemToCSV;
 import org.json.JSONArray;
 
-public class SinaStockCorpInfoToCSV implements ICrawlItemToCSV{
+public class CorpInfoToCSV implements ICrawlItemToCSV{
 	
-	private static Logger logger =  LogManager.getLogger(SinaStockCorpInfoToCSV.class);
+	private static Logger logger =  LogManager.getLogger(CorpInfoToCSV.class);
 
 	public static final String FIELD_NAME_ATTR="attr";
 	@Override

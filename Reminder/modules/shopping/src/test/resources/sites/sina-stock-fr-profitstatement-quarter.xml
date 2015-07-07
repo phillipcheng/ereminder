@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" 
+	rootVolume="999990" 
+	storeId="sina-stock-fr-profitstatement-quarter" 
+	productType="default">
+	<PrdTask>
+		<baseBrowseTask
+		startUrl="http://money.finance.sina.com.cn/corp/go.php/vFD_ProfitStatement/stockid/[stockid]/ctrl/[year]/displaytype/4.phtml" 
+		enableJS="true" 
+		taskName="profitstatement">
+			<param name="stockid"/>
+			<param name="year"/>
+			<param name="quarter"/>
+			<userAttribute name="id">
+				<value value="stockid + '_' + year + '_' + quarter" toType="string" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="data">
+				<value value="&quot;//table[@id='ProfitStatementNewTable0']/tbody/tr/td[count(//table[@id='ProfitStatementNewTable0']/tbody/tr[1]/td)+1-&quot; + quarter + &quot;]&quot;" toType="list" fromType="expression"/>
+			</userAttribute>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>

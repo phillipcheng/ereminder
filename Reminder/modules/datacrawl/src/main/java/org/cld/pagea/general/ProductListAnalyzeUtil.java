@@ -18,11 +18,10 @@ import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.mgr.TargetPrdInvoke;
 import org.cld.datacrawl.mgr.impl.CrawlTaskEval;
 import org.cld.datastore.entity.Product;
+import org.cld.taskmgr.ScriptEngineUtil;
 import org.cld.taskmgr.entity.Task;
-import org.cld.util.StringUtil;
 import org.xml.taskdef.AttributeType;
 import org.xml.taskdef.BrowseCatType;
-import org.xml.taskdef.BrowseDetailType;
 import org.xml.taskdef.ParamValueType;
 import org.xml.taskdef.ScopeType;
 import org.xml.taskdef.SubListType;
@@ -169,8 +168,12 @@ public class ProductListAnalyzeUtil {
 					if (nvt.getValue().getFromScope()==ScopeType.PARAM){
 						id = (String) task.getParamMap().get(nvt.getValue().getValue());
 						return id;
+					}else if (nvt.getValue().getFromType()==VarType.EXPRESSION){
+						Object ret = ScriptEngineUtil.eval(nvt.getValue().getValue(), VarType.STRING, task.getParamMap());
+						return (String)ret;
 					}else{
-						logger.error(String.format("from type not supported for id in user attribute: %s", nvt.getValue().getFromType()));
+						logger.error(String.format("from|scope type not supported for id in user attribute: %s|%s", 
+								nvt.getValue().getFromType(), nvt.getValue().getFromScope()));
 					}
 				}
 			}

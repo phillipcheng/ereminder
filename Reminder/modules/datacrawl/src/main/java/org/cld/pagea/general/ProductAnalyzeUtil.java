@@ -31,6 +31,7 @@ import org.cld.taskmgr.entity.Task;
 import org.cld.util.StringUtil;
 import org.xml.mytaskdef.ConfKey;
 import org.xml.mytaskdef.ParsedBrowsePrd;
+import org.xml.mytaskdef.TasksTypeUtil;
 import org.xml.taskdef.AttributeType;
 import org.xml.taskdef.BrowseDetailType;
 import org.xml.taskdef.ClickStreamType;
@@ -41,21 +42,23 @@ public class ProductAnalyzeUtil {
 	
 	private static Logger logger =  LogManager.getLogger(ProductAnalyzeUtil.class);
 	
-	
+	//
 	public static String[] getPageVerifyXPaths(Task task, ParsedBrowsePrd taskDef) {
 		if (taskDef.getBrowsePrdTaskType().getFirstPageClickStream()==null){
 			List<String> xpathList = new ArrayList<String>();
 			List<AttributeType> attrlist = taskDef.getBrowsePrdTaskType().getBaseBrowseTask().getUserAttribute();
 			for (AttributeType attr: attrlist){
-				if ((VarType.XPATH == attr.getValue().getFromType()||attr.getValue().getValue().contains("/")) 
-						&& !attr.isOptional()){
-					xpathList.add(attr.getValue().getValue());
+				if (!attr.isOptional()){
+					String xpath = TasksTypeUtil.getXPath(attr.getValue(), task.getParamMap());
+					if (xpath!=null)
+						xpathList.add(xpath);
 				}
 			}
 			ValueType tpVT = taskDef.getBrowsePrdTaskType().getTotalPage();
 			if (tpVT!=null){
-				if (VarType.XPATH == tpVT.getFromType() || tpVT.getValue().contains("/"))
-					xpathList.add(tpVT.getValue());
+				String xpath = TasksTypeUtil.getXPath(tpVT, task.getParamMap());
+				if (xpath!=null)
+					xpathList.add(xpath);
 			}
 			String np = taskDef.getBrowsePrdTaskType().getNextPage();
 			if (np!=null && np.contains("/")){

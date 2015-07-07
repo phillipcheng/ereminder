@@ -135,7 +135,7 @@ public class Task implements Comparable<Task>, Serializable{
 		}
 	}
 	
-	//serialize the paramMap to json param data, only selected types (now string) will be stored
+	//serialize the paramMap to json param data, only selected types (now:string,int) will be stored
 	public void toParamData(){
 		JSONObject jobj = new JSONObject();
 		if (paramMap!=null){
@@ -143,6 +143,11 @@ public class Task implements Comparable<Task>, Serializable{
 				Object val = paramMap.get(key);
 				if (val instanceof String){
 					jobj.put(key, (String)val);
+				}else if (val instanceof Integer){
+					jobj.put(key, val);
+				}else{
+					logger.warn(String.format("unsupported type for paramMap json serialization. key:%s, value:%s.",
+							key, val));
 				}
 			}
 		}

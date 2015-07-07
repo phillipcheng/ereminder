@@ -41,7 +41,6 @@ public class HadoopTaskUtil {
 			String jobTracker=taskMgr.getHadoopJobTracker();
 			String host = jobTracker.substring(0,jobTracker.indexOf(":"));
 			conf.set("mapreduce.jobtracker.address", taskMgr.getHadoopJobTracker());
-			conf.set("mapred.textoutputformat.separator", ",");//default is tab
 			conf.set("yarn.resourcemanager.hostname", host);
 			conf.set("mapreduce.framework.name", "yarn");
 			conf.set("yarn.nodemanager.aux-services", "mapreduce_shuffle");
@@ -59,6 +58,7 @@ public class HadoopTaskUtil {
 		}
 		conf.set("fs.default.name", taskMgr.getHdfsDefaultName());
 		conf.set("mapreduce.tasktracker.map.tasks.maximum", nc.getThreadSize() + "");
+		conf.set("mapred.textoutputformat.separator", ",");//default is tab
 		conf.set("mapreduce.task.timeout", "0");
 		conf.setInt(NLineInputFormat.LINES_PER_MAP, taskMgr.getCrawlTasksPerMapper());
 		return conf;
@@ -66,7 +66,7 @@ public class HadoopTaskUtil {
 	
 	public static void executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> params){
 		String sourceName = "";
-		Configuration conf = getHadoopConf(nc);
+		//Configuration conf = getHadoopConf(nc);
 		//int max = conf.getInt(DFSConfigKeys.DFS_NAMENODE_MAX_COMPONENT_LENGTH_KEY, DFSConfigKeys.DFS_NAMENODE_MAX_COMPONENT_LENGTH_DEFAULT);
 		int max = 200;
 		

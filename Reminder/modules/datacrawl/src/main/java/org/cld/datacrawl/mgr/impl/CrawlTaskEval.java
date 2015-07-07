@@ -171,23 +171,142 @@ public class CrawlTaskEval {
 		}
 		return finalString;
 	}
+	
+	private static void processXpath(ValueType vt, String xpathValue, Map<String, List<? extends DomNode>> pageMap
+			, CrawlConf cconf, List<List> rxpathListResultList, List<List<HtmlPage>> rpagelistList, List<HtmlPage> rpageList
+			, List<String> valueExpList, Map<String, Object> params) throws InterruptedException{
+		List<? extends DomNode> pages = null;
+		if (vt.getBasePage()==null){
+			//if not specified, then evaluate on the current page of the map
+			pages = pageMap.get(ConfKey.CURRENT_PAGE);
+		}else{
+			pages = pageMap.get(vt.getBasePage());
+		}
+
+		String fileSaveDir=null;
+		
+		if (pages!=null){
+			for (DomNode page : pages){
+				Object xpathResult = null;
+				List xpathListResult = null;
+				if (VarType.LIST == vt.getToType() || VarType.EXTERNAL_LIST == vt.getToType()){
+					xpathListResult = page.getByXPath(xpathValue);
+					if (xpathListResult.size()==0){
+						logger.error(String.format("list from page %s at xpath %s is null.", page.getHtmlPageOrNull(), vt.getValue()));
+					}else{
+						List convertedList = new ArrayList();
+						if (vt.getToEntryType()==VarType.STRING){
+							for (Object entry:xpathListResult){
+								String finalString= getURLStringValue(entry, page);//TODO for list result, prefer url
+								if (finalString==null){
+									finalString = getStringValue(entry);
+								}
+								if (finalString!=null){
+									convertedList.add(finalString);
+								}
+							}
+						}else if (vt.getToEntryType()==VarType.FILE){
+							if (fileSaveDir==null && vt.getToDirectory()!=null){
+								fileSaveDir = (String) ScriptEngineUtil.eval(vt.getToDirectory(), VarType.STRING, params);
+							}
+							for (Object hi:xpathListResult){
+								String url = anchorToFullUrl((HtmlAnchor)hi, (HtmlPage)page);
+								String fileName = FilenameUtils.getName(url);
+								CrawlUtil.downloadPage(cconf, url, fileName, fileSaveDir);
+								convertedList.add(url);
+							}
+						}else{
+							convertedList = xpathListResult;
+						}
+						rxpathListResultList.add(convertedList); //return list of element, no further processing
+					}
+				}else if (VarType.PAGELIST == vt.getToType()){
+					xpathListResult = page.getByXPath(xpathValue);
+					if (xpathListResult.size()==0){
+						logger.error(String.format("pagelist from page %s at xpath %s is null", page.getBaseURI(), vt.getValue()));
+					}else{
+						List<HtmlPage> pagelist = new ArrayList<HtmlPage>();
+						for (int i=0; i<xpathListResult.size(); i++){
+							Object xpathRes = xpathListResult.get(i);
+							BinaryBoolOp pvt = null;
+							if (vt.getPageVerify().size()>0){
+								//TODO: For page list type
+								//no multiple pageVerify supported for 1 page
+								if (vt.getPageVerify().size()==xpathListResult.size()){
+									//the pageVerify specified for this ValueType is 1 to 1 mapped to the returned page list
+									pvt = vt.getPageVerify().get(i);
+								}else if (vt.getPageVerify().size()==1){
+									//one pageVerify for all pages
+									pvt = vt.getPageVerify().get(0);
+								}else{
+									logger.error("page verify and page number not match for vt:" + vt.toString());
+								}
+							}
+							List<BinaryBoolOp> pvtlist = new ArrayList<BinaryBoolOp>();
+							if (pvt!=null)
+								pvtlist.add(pvt);
+							HtmlPage pageGet = getPage(xpathRes, page, vt, pvtlist, cconf, params);
+							if (pageGet!=null){
+								pagelist.add(pageGet.cloneNode(true));
+							}else{
+								logger.error(String.format("can't get page for xpath: %s", xpathRes));
+							}
+						}
+						logger.debug("pagelist got is:" + pagelist);
+						rpagelistList.add(pagelist); //return list of pages, no further processing
+					}
+				}else{//none list type
+					String valueExp = null;
+					xpathResult = page.getFirstByXPath(xpathValue);
+					if (xpathResult!=null){
+						if (VarType.PAGE==vt.getToType()){
+							BinaryBoolOp pvt = null;
+							HtmlPage pageGet = getPage(xpathResult, page, vt, vt.getPageVerify(), cconf, params);
+							if (pageGet!=null)
+								rpageList.add(pageGet); //return page, no further processing
+						}else if (VarType.URL==vt.getToType()){
+							valueExp = getURLStringValue(xpathResult, page);
+							valueExpList.add(valueExp);
+						}else if (xpathResult instanceof Double){
+							valueExp = ((Double)xpathResult).intValue() + "";
+							valueExpList.add(valueExp);
+						}else {//get the string first
+							valueExp = getStringValue(xpathResult);//TODO for single entry, prefer string
+							valueExpList.add(valueExp);
+						}
+					}else{
+						if (page instanceof HtmlPage){
+							logger.error(String.format("node by xpath:%s not found on page:%s", 
+									xpathValue, ((HtmlPage)page).getUrl().toExternalForm()));
+							
+						}else{
+							logger.error(String.format("node by xpath:%s not found on page: %s", 
+									xpathValue, page.asXml()));
+						}
+						valueExpList.add(null);
+					}
+				}
+			}
+		}else{
+			logger.error(String.format("pageMap %s contains null pagelist for key:%s", pageMap, vt.getBasePage()));
+		}
+	}
+	
 	/**
 	 * @pageMap contains key and its corresponding page list, can be a single page
 	 * @vt valueType specifies from type, to type and value expression to evaluate
 	 * @return either the list of evaluated values (for the base page refers to page list) 
 	 * or a single value (base page refers to a single page)
 	 */
-	public static Object eval(Map<String, List<? extends DomNode>> pageMap, ValueType vt, CrawlConf cconf, Map<String, Object> params) 
-			throws InterruptedException{
+	public static Object eval(Map<String, List<? extends DomNode>> pageMap, ValueType vt, CrawlConf cconf, 
+			Map<String, Object> params)  throws InterruptedException{
 		//the list result to return
 		List<List> rxpathListResultList = new ArrayList<List>();
 		List<List<HtmlPage>> rpagelistList = new ArrayList<List<HtmlPage>>();
 		List<HtmlPage> rpageList = new ArrayList<HtmlPage>();
-		List<Object> valueList = new ArrayList<Object>();
-		
-		//
-		String valueExp=null;
 		List<String> valueExpList = new ArrayList<String>();
+		
+		List<Object> valueList = new ArrayList<Object>();
 		
 		//get from value
 		VarType fromType = vt.getFromType();
@@ -200,134 +319,23 @@ public class CrawlTaskEval {
 		
 		if (ScopeType.PARAM == vt.getFromScope() || ScopeType.ATTRIBUTE==vt.getFromScope()){
 			if (params.containsKey(vt.getValue())){
-				valueExp = params.get(vt.getValue()).toString();
-				valueExpList.add(valueExp);
+				valueExpList.add(params.get(vt.getValue()).toString());
 			}else{
 				logger.error(String.format("params does not have: %s", vt.getValue()));
 			}
 		}else{//expression without variables [called const]
 			if (fromType == VarType.STRING){
 				//string const
-				valueExp = vt.getValue();
-				valueExpList.add(valueExp);
+				valueExpList.add(vt.getValue());
 			}else if (VarType.XPATH == fromType){
 				//xpath may contains parameters needs to be replaced
 				String xpathValue =  vt.getValue();
 				xpathValue = StringUtil.fillParams(xpathValue, params, ConfKey.PARAM_PRE, ConfKey.PARAM_POST);
-				//xpath const
-				List<? extends DomNode> pages = null;
-				if (vt.getBasePage()==null){
-					//if not specified, then evaluate on the current page of the map
-					pages = pageMap.get(ConfKey.CURRENT_PAGE);
-				}else{
-					pages = pageMap.get(vt.getBasePage());
-				}
-	
-				String fileSaveDir=null;
-				
-				if (pages!=null){
-					for (DomNode page : pages){
-						Object xpathResult = null;
-						List xpathListResult = null;
-						if (VarType.LIST == vt.getToType() || VarType.EXTERNAL_LIST == vt.getToType()){
-							xpathListResult = page.getByXPath(xpathValue);
-							if (xpathListResult.size()==0){
-								logger.error(String.format("list from page %s at xpath %s is null.", page.getHtmlPageOrNull(), vt.getValue()));
-							}else{
-								List convertedList = new ArrayList();
-								if (vt.getToEntryType()==VarType.STRING){
-									for (Object entry:xpathListResult){
-										String finalString= getURLStringValue(entry, page);//TODO for list result, prefer url
-										if (finalString==null){
-											finalString = getStringValue(entry);
-										}
-										if (finalString!=null){
-											convertedList.add(finalString);
-										}
-									}
-								}else if (vt.getToEntryType()==VarType.FILE){
-									if (fileSaveDir==null && vt.getToDirectory()!=null){
-										fileSaveDir = (String) ScriptEngineUtil.eval(vt.getToDirectory(), VarType.STRING, params);
-									}
-									for (Object hi:xpathListResult){
-										String url = anchorToFullUrl((HtmlAnchor)hi, (HtmlPage)page);
-										String fileName = FilenameUtils.getName(url);
-										CrawlUtil.downloadPage(cconf, url, fileName, fileSaveDir);
-										convertedList.add(url);
-									}
-								}else{
-									convertedList = xpathListResult;
-								}
-								rxpathListResultList.add(convertedList); //return list of element, no further processing
-							}
-						}else if (VarType.PAGELIST == vt.getToType()){
-							xpathListResult = page.getByXPath(xpathValue);
-							if (xpathListResult.size()==0){
-								logger.error(String.format("pagelist from page %s at xpath %s is null", page.getBaseURI(), vt.getValue()));
-							}else{
-								List<HtmlPage> pagelist = new ArrayList<HtmlPage>();
-								for (int i=0; i<xpathListResult.size(); i++){
-									Object xpathRes = xpathListResult.get(i);
-									BinaryBoolOp pvt = null;
-									if (vt.getPageVerify().size()>0){
-										//TODO: For page list type
-										//no multiple pageVerify supported for 1 page
-										if (vt.getPageVerify().size()==xpathListResult.size()){
-											//the pageVerify specified for this ValueType is 1 to 1 mapped to the returned page list
-											pvt = vt.getPageVerify().get(i);
-										}else if (vt.getPageVerify().size()==1){
-											//one pageVerify for all pages
-											pvt = vt.getPageVerify().get(0);
-										}else{
-											logger.error("page verify and page number not match for vt:" + vt.toString());
-										}
-									}
-									List<BinaryBoolOp> pvtlist = new ArrayList<BinaryBoolOp>();
-									if (pvt!=null)
-										pvtlist.add(pvt);
-									HtmlPage pageGet = getPage(xpathRes, page, vt, pvtlist, cconf, params);
-									if (pageGet!=null){
-										pagelist.add(pageGet.cloneNode(true));
-									}else{
-										logger.error(String.format("can't get page for xpath: %s", xpathRes));
-									}
-								}
-								logger.debug("pagelist got is:" + pagelist);
-								rpagelistList.add(pagelist); //return list of pages, no further processing
-							}
-						}else{//none list type
-							xpathResult = page.getFirstByXPath(xpathValue);
-							if (xpathResult!=null){
-								if (VarType.PAGE==vt.getToType()){
-									BinaryBoolOp pvt = null;
-									HtmlPage pageGet = getPage(xpathResult, page, vt, vt.getPageVerify(), cconf, params);
-									if (pageGet!=null)
-										rpageList.add(pageGet); //return page, no further processing
-								}else if (VarType.URL==vt.getToType()){
-									valueExp = getURLStringValue(xpathResult, page);
-									valueExpList.add(valueExp);
-								}else if (xpathResult instanceof Double){
-									valueExp = ((Double)xpathResult).intValue() + "";
-									valueExpList.add(valueExp);
-								}else {//get the string first
-									valueExp = getStringValue(xpathResult);//TODO for single entry, prefer string
-									valueExpList.add(valueExp);
-								}
-							}else{
-								if (page instanceof HtmlPage){
-									logger.error(String.format("node by xpath:%s not found on page:%s", 
-											xpathValue, ((HtmlPage)page).getUrl().toExternalForm()));
-									
-								}else{
-									logger.error(String.format("node by xpath:%s not found on page: %s", 
-											xpathValue, page.asXml()));
-								}
-								valueExpList.add(null);
-							}
-						}
-					}
-				}else{
-					logger.error(String.format("pageMap %s contains null pagelist for key:%s", pageMap, vt.getBasePage()));
+				processXpath(vt, xpathValue, pageMap, cconf, rxpathListResultList, rpagelistList, rpageList, valueExpList, params);
+			}else if (VarType.EXPRESSION == fromType){
+				String ret = (String) ScriptEngineUtil.eval(vt.getValue(), VarType.STRING, params);
+				if (ret!=null && ret.contains("/")){
+					processXpath(vt, ret, pageMap, cconf, rxpathListResultList, rpagelistList, rpageList, valueExpList, params);
 				}
 			}else if (VarType.URL == fromType){
 				List<? extends DomNode> currentPages = pageMap.get(ConfKey.CURRENT_PAGE);

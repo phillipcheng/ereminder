@@ -5,10 +5,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,9 +22,6 @@ public class IdUrlMapping{
 	public static final String PAGENUM_KEY="pageNum";
 	public static final String ID2_KEY="id2";
 	
-	private static ScriptEngineManager manager = new ScriptEngineManager();
-    
-    
 	String patternString="";
 	Pattern regExpPattern;
 	RegExpType ret;

@@ -24,17 +24,20 @@ public class HBaseToCSVMapperLauncher {
 	
 	public static final String INPUT_TABLE_NAME="crawledItem";
 	public static final String STOREID_FILTER="storeFilter";
+	public static final String ID_FILTER="idFilter";
 	public static final String ToCSVClass = "toCSVClass";
 	
 	private static Logger logger =  LogManager.getLogger(HBaseToCSVMapperLauncher.class);
 	
 	//
-	public static void genCSVFromHbase(String prop, String outputFileName, String storeId, String toCSVClazz){
+	public static void genCSVFromHbase(String prop, String outputFileName, String storeId, 
+			String idFilter, String toCSVClazz){
 		try{
 			CrawlConf cconf = CrawlTestUtil.getCConf(prop);
 			Configuration conf = HadoopTaskUtil.getHadoopConf(cconf.getNodeConf());
 			conf.set(TableInputFormat.INPUT_TABLE, INPUT_TABLE_NAME);
 			conf.set(STOREID_FILTER, storeId);
+			conf.set(ID_FILTER, idFilter);
 			conf.set(ToCSVClass, toCSVClazz);
 			Scan scan = new Scan();
 			scan.addColumn(HbaseDataStoreManagerImpl.CRAWLEDITEM_CF_BYTES, HbaseDataStoreManagerImpl.CRAWLEDITEM_DATA_BYTES);

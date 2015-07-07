@@ -13,7 +13,6 @@ import java.util.Map;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.logging.log4j.LogManager;
@@ -31,7 +30,6 @@ public class TabularCSVConvertTask extends Task implements Serializable{
 
 	private static Logger logger =  LogManager.getLogger(TabularCSVConvertTask.class);
 	
-	public static final String inputFolder = "sina-stock-finance-report";
 	public static final String[] inputFilePrefix= new String[]{"BalanceSheet", "ProfitStatement", "CashFlow"}; 
 	
 	public static String datetimeformat="yyyy-MM-dd-hh-mm-ss-SSS";
@@ -41,6 +39,7 @@ public class TabularCSVConvertTask extends Task implements Serializable{
 	private boolean needHeader = false;
 	
 	private String stockId;
+	private String inputFolder;
 	private CrawlConf cconf;
 
 	public String getStockId() {
@@ -54,8 +53,9 @@ public class TabularCSVConvertTask extends Task implements Serializable{
 	public TabularCSVConvertTask(){	
 	}
 	
-	public TabularCSVConvertTask(String stockId){
+	public TabularCSVConvertTask(String stockId, String inputFolder){
 		this.stockId = stockId;
+		this.inputFolder = inputFolder;
 		genId();
 	}
 	

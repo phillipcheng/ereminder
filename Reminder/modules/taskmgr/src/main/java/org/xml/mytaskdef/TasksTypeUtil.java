@@ -5,12 +5,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.cld.taskmgr.ScriptEngineUtil;
 import org.cld.util.StringUtil;
 import org.xml.taskdef.BrowseCatType;
 import org.xml.taskdef.BrowseTaskType;
 import org.xml.taskdef.BrowseDetailType;
 import org.xml.taskdef.ParamType;
 import org.xml.taskdef.TasksType;
+import org.xml.taskdef.ValueType;
+import org.xml.taskdef.VarType;
 
 public class TasksTypeUtil {
 	
@@ -59,6 +62,25 @@ public class TasksTypeUtil {
 			return tt.getCatTask().get(0).getBaseBrowseTask().getStartUrl();
 		}else if (tt.getPrdTask().size()>0){
 			return tt.getPrdTask().get(0).getBaseBrowseTask().getStartUrl();
+		}else{
+			return null;
+		}
+	}
+	
+	//evaluate the starturl getting rid of the parameters if any
+	public static String getXPath(ValueType vt, Map<String,Object> params){
+		if (vt.getFromType() == VarType.XPATH){
+			return vt.getValue();
+		}else if (vt.getFromType()==VarType.STRING && vt.getValue().contains("/")){
+			return vt.getValue();
+		}else if (vt.getFromType() == VarType.EXPRESSION){
+			//try evaluate
+			String xpath = (String)ScriptEngineUtil.eval(vt.getValue(), VarType.STRING, params);
+			if (xpath!=null && xpath.contains("/")){
+				return xpath;
+			}else{
+				return null;
+			}
 		}else{
 			return null;
 		}
