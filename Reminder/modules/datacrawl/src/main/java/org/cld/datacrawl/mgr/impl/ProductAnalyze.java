@@ -17,22 +17,25 @@ import org.cld.datastore.entity.Product;
 import org.cld.datacrawl.mgr.IProductAnalyze;
 import org.cld.datacrawl.util.HtmlPageResult;
 import org.cld.datacrawl.util.HtmlUnitUtil;
+import org.cld.datacrawl.util.VerifyPage;
+import org.cld.datacrawl.util.VerifyPageByBoolOp;
+import org.cld.datacrawl.util.VerifyPageByBoolOpXPath;
 import org.cld.datacrawl.util.VerifyPageByXPath;
 import org.xml.mytaskdef.ParsedBrowsePrd;
+import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.BrowseDetailType;
 
 public class ProductAnalyze implements IProductAnalyze{
 	
 	private static Logger logger =  LogManager.getLogger(ProductAnalyze.class);
 	
-	private VerifyPageByXPath VPXP; //
+	private VerifyPage VPXP; //
 	
 	public String toString(){
 		return System.identityHashCode(this) + "\n";
 	}
 	
 	public ProductAnalyze(){
-		this.VPXP = new VerifyPageByXPath();
 	}
 
 	
@@ -52,9 +55,16 @@ public class ProductAnalyze implements IProductAnalyze{
 		product.setFullUrl(url);
 
 		if (taskDef.getBrowsePrdTaskType().getBaseBrowseTask().getUserAttribute().size()!=0){
+			//
+			String[] xpaths = ProductAnalyzeUtil.getPageVerifyXPaths(task, taskDef);
+			BinaryBoolOp[] bbops = ProductAnalyzeUtil.getPageVerifyBoolOp(task, taskDef);
+			VerifyPageByBoolOp vpbbo = xpaths!=null? new VerifyPageByBoolOp(bbops, cconf):null;
+			VerifyPageByXPath vpbxp = bbops!=null? new VerifyPageByXPath(xpaths):null;
+			VPXP = new VerifyPageByBoolOpXPath(vpbbo, vpbxp);
+			
+			//
 			HtmlPageResult detailsResult;
 			HtmlPage details = null;
-			VPXP.setXPaths(ProductAnalyzeUtil.getPageVerifyXPaths(task, taskDef));
 			detailsResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(url), VPXP, null, task.getParsedTaskDef(), cconf);	
 			details = detailsResult.getPage();
 			

@@ -8,7 +8,7 @@ create external table ProfitStatement(stockid String,dt Date,BusinessIncome deci
 
 create external table CorpInfo(stockid String,name String,EnglishName String, IPOMarket String, IPODate Date, IPOPrice decimal(10,2), leadUnderwriter String, foundDate Date, RegisteredCapital String, InstitutionType String, OrgType String, BoardSecretary String, CompanyPhone String, BoardSecretaryPhone String, CompanyFax String, BoardSecretaryFax String, CompanyEmail String, BoardSecretaryEmail String, CompanyWebsite String, zipcode String, InfoDisclosureWebsite String, NameHistory String, RegisteredAddress String, OfficeAddress String, CompanyInfo String, BusinessScope String) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/sina-stock-corp-info';
 
-create external table MarketDaily(close decimal(10,4), dt Date, high decimal(10,4),low decimal(10,4), open decimal(10,4), stockid String, tvolume BIGINT, volume BIGINT) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/sina-stock-market-history';
+create external table MarketDaily(close decimal(10,4), dt Date, high decimal(10,4),low decimal(10,4), open decimal(10,4), stockid String, tvolume BIGINT, volume BIGINT) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/sina-stock-market-history-output';
 
 
 截止日期	2014-12-31

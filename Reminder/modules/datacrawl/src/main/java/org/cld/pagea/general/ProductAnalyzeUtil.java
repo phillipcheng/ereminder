@@ -33,6 +33,7 @@ import org.xml.mytaskdef.ConfKey;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 import org.xml.mytaskdef.TasksTypeUtil;
 import org.xml.taskdef.AttributeType;
+import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.BrowseDetailType;
 import org.xml.taskdef.ClickStreamType;
 import org.xml.taskdef.ValueType;
@@ -47,6 +48,7 @@ public class ProductAnalyzeUtil {
 		if (taskDef.getBrowsePrdTaskType().getFirstPageClickStream()==null){
 			List<String> xpathList = new ArrayList<String>();
 			List<AttributeType> attrlist = taskDef.getBrowsePrdTaskType().getBaseBrowseTask().getUserAttribute();
+			//page verifications
 			for (AttributeType attr: attrlist){
 				if (!attr.isOptional()){
 					String xpath = TasksTypeUtil.getXPath(attr.getValue(), task.getParamMap());
@@ -64,8 +66,25 @@ public class ProductAnalyzeUtil {
 			if (np!=null && np.contains("/")){
 				xpathList.add(np);
 			}
-			String[] array = xpathList.toArray(new String[xpathList.size()]);
-			return array;
+			if (xpathList.size()>0)
+				return xpathList.toArray(new String[xpathList.size()]);
+			else
+				return null;
+		}else{
+			//when there is firstpage click, the xpath validation are needed after first page clicks
+			return null;
+		}
+	}
+	
+	public static BinaryBoolOp[] getPageVerifyBoolOp(Task task, ParsedBrowsePrd taskDef){
+		if (taskDef.getBrowsePrdTaskType().getFirstPageClickStream()==null){
+			//page verifications
+			List<BinaryBoolOp> bboplist = taskDef.getBrowsePrdTaskType().getBaseBrowseTask().getPageVerify();
+			if (bboplist!=null){
+				return bboplist.toArray(new BinaryBoolOp[bboplist.size()]);
+			}else{
+				return null;
+			}
 		}else{
 			//when there is firstpage click, the xpath validation are needed after first page clicks
 			return null;

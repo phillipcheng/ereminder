@@ -1,19 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:element name="Tasks" type="TasksType"/>
 	<xs:simpleType name="VarType">
@@ -162,6 +147,7 @@
 				maxOccurs="unbounded" />
 			<xs:element name="userAttribute" type="AttributeType"
 				minOccurs="0" maxOccurs="unbounded" />
+			<xs:element name="pageVerify" type="BinaryBoolOp" maxOccurs="unbounded" minOccurs="0"></xs:element>
 			<xs:element name="idUrlMapping" type="RegExpType"
 				minOccurs="0">
 				<xs:annotation>
@@ -342,7 +328,7 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 		</xs:attribute>
 		<xs:attribute name="optional" type="xs:boolean" use="optional" default="false">
 			<xs:annotation>
-				<xs:documentation>if true, its existance will not be used in the page retrieval verification</xs:documentation>
+				<xs:documentation>if false, its existance will not be used in the page retrieval verification, default is false, so default will be used in verification</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 	</xs:complexType>

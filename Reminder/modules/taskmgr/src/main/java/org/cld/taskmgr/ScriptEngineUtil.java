@@ -22,29 +22,32 @@ public class ScriptEngineUtil {
 		}
 		try {
 			Object ret = jsEngine.eval(exp);
-			if (ret instanceof String){
-				if (toType == VarType.STRING){
-					;
-				}else if (toType == VarType.INT){
-					ret = Integer.parseInt((String)ret);
+			logger.debug(String.format("eval %s get result %s", exp, ret));
+			if (ret!=null){
+				if (ret instanceof String){
+					if (toType == VarType.STRING){
+						;
+					}else if (toType == VarType.INT){
+						ret = Integer.parseInt((String)ret);
+					}else{
+						logger.error(String.format("unsupported to type for string result: %s", toType));
+					}
+				}else if (ret instanceof Double){
+					if (toType ==VarType.INT){
+						ret = ((Double)ret).intValue();
+					}else{
+						logger.error(String.format("unsupported to type for double result: %s", toType));
+					}
+				}else if (ret instanceof Boolean){
+					if (toType==VarType.BOOLEAN){
+						return ret;
+					}else{
+						logger.error(String.format("expect a boolean result from exp:%s", exp));
+						return null;
+					}
 				}else{
-					logger.error(String.format("unsupported to type for string result: %s", toType));
+					logger.error(String.format("unsupported type of eval ret: %s", ret.getClass()));
 				}
-			}else if (ret instanceof Double){
-				if (toType ==VarType.INT){
-					ret = ((Double)ret).intValue();
-				}else{
-					logger.error(String.format("unsupported to type for double result: %s", toType));
-				}
-			}else if (ret instanceof Boolean){
-				if (toType==VarType.BOOLEAN){
-					return ret;
-				}else{
-					logger.error(String.format("expect a boolean result from exp:%s", exp));
-					return null;
-				}
-			}else{
-				logger.error(String.format("unsupported type of eval ret: %s", ret.getClass()));
 			}
 			return ret;
 		} catch (ScriptException e) {

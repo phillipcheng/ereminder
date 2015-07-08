@@ -13,6 +13,7 @@ import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
 import org.cld.datacrawl.test.TestBase;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.stock.load.HBaseToCSVMapperLauncher;
+import org.cld.stock.load.ReformatMapredLauncher;
 import org.cld.stock.load.TabularCSVConvertTask;
 import org.cld.stock.sina.ETLUtil;
 import org.cld.stock.sina.StockConfig;
@@ -28,7 +29,7 @@ public class TestSinaStock extends TestBase{
 		super();
 	}
 	
-	private String propFile = "client1-v2-cluster.properties";
+	private String propFile = "client1-v2.properties";
 	
 	@Before
 	public void setUp(){
@@ -60,7 +61,7 @@ public class TestSinaStock extends TestBase{
 		}
 		CrawlUtil.hadoopExecuteCrawlTasks(this.getPropFile(), cconf, tlist);
 	}
-	//convert to csv/hive
+	//fr history convert to csv/hive
 	@Test
 	public void run_sina_convert_fr_history_tabular_to_csv() throws Exception {
 		CrawledItem ci = cconf.getDsm("hbase").getCrawledItem("hs_a", StockConfig.SINA_STOCK_IDS, null);
@@ -75,10 +76,16 @@ public class TestSinaStock extends TestBase{
 		}
 		CrawlUtil.hadoopExecuteCrawlTasks(this.getPropFile(), cconf, tlist);
 	}
+	//fr history reformat from split by stockid to split by quarter
+	@Test
+	public void run_sina_fr_reformat() throws Exception{
+		ReformatMapredLauncher.format(this.getPropFile(), "/reminder/items/sina-stock-fr-history/BalanceSheet", 1, "/reminder/items/sina-stock-fr-history-output/BalanceSheet");
+	}
+	
 	//crawl finance report for specific quarter(s)
 	@Test
 	public void run_sina_browse_fr_quarter() throws Exception {
-		int year = 2014;
+		int year = 2015;
 		int quarter = 2;
 		CrawledItem ci = cconf.getDsm("hbase").getCrawledItem("hs_a", StockConfig.SINA_STOCK_IDS, null);
 		ci.fromParamData();
@@ -218,10 +225,10 @@ public class TestSinaStock extends TestBase{
 		cconf.setUpSite(StockConfig.SINA_STOCK_FR_BALANCESHEET_QUARTER+".xml", null);
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("stockid", "600000");
-		params.put("year", 2014);
+		params.put("year", 2015);
 		params.put("quarter", 2);
 		browsePrd(StockConfig.SINA_STOCK_FR_BALANCESHEET_QUARTER+".xml", null, params);
-		params.put("stockid", "600007");
+		params.put("quarter", 1);
 		browsePrd(StockConfig.SINA_STOCK_FR_BALANCESHEET_QUARTER+".xml", null, params);
 	}
 }
