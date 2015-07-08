@@ -105,7 +105,7 @@ public class ETLUtil {
 			}
 			
 			for (quarter=startQ; quarter<=endQ; quarter++){
-				String itemFolder = cconf.getTaskMgr().getHadoopCrawledItemFolder();
+				String itemFolder = cconf.getTaskMgr().getHadoopCrawledItemFolder()+"/";
 				Path ppat = new Path(itemFolder + StockConfig.SINA_STOCK_MARKET_HISTORY+"/"+"*_phtml_year_"+year+"_jidu_"+quarter);
 				FileStatus[] files = fs.globStatus(ppat);
 				if (files.length>1){
