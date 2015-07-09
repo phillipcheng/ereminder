@@ -19,18 +19,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
+import org.cld.stock.sina.StockConfig;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.cld.taskmgr.hadoop.HadoopTaskUtil;
 
 @Entity
-@DiscriminatorValue("org.cld.stock.load.ConvertTask")
+@DiscriminatorValue("org.cld.stock.load.TabularCSVConvertTask")
 public class TabularCSVConvertTask extends Task implements Serializable{
 	private static final long serialVersionUID = 1L;
 
 	private static Logger logger =  LogManager.getLogger(TabularCSVConvertTask.class);
-	
-	public static final String[] inputFilePrefix= new String[]{"BalanceSheet", "ProfitStatement", "CashFlow"}; 
 	
 	public static String datetimeformat="yyyy-MM-dd-hh-mm-ss-SSS";
 	public static SimpleDateFormat sdf = new SimpleDateFormat(datetimeformat);
@@ -40,6 +39,15 @@ public class TabularCSVConvertTask extends Task implements Serializable{
 	
 	private String stockId;
 	private String inputFolder;
+	//need to generate getter and setter for task serialization, if not this will be null
+	public String getInputFolder() {
+		return inputFolder;
+	}
+
+	public void setInputFolder(String inputFolder) {
+		this.inputFolder = inputFolder;
+	}
+
 	private CrawlConf cconf;
 
 	public String getStockId() {
@@ -82,7 +90,7 @@ public class TabularCSVConvertTask extends Task implements Serializable{
 			FileSystem fs = FileSystem.get(HadoopTaskUtil.getHadoopConf(cconf.getNodeConf()));
 			logger.info("process convert task: " + stockId);
 			String inF = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + inputFolder + "/";
-			for (String prefix:inputFilePrefix){
+			for (String prefix:StockConfig.subFR){
 				String ifname = inF + prefix + "_" + stockId;
 				String ofname = inF + prefix + "/" + stockId;
 				Path ip = new Path(ifname);

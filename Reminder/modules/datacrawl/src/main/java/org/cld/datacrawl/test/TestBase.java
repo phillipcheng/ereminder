@@ -101,7 +101,7 @@ public class TestBase {
 	public static final String START_URL_SEP = "::";
 	
 	//starturls comma separated string
-	public static void main(String[] args){
+	public static void main(String[] args) throws Exception {
 		if (args.length<3){
 			logger.error("usage: TestBase propFile site-conf-file-name cmd ...");
 			return;

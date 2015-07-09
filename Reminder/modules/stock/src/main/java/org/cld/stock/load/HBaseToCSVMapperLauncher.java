@@ -59,7 +59,9 @@ public class HBaseToCSVMapperLauncher {
 			job.setJarByClass(AbstractHbaseToCSVMapper.class);
 			job.setOutputKeyClass(Text.class);
 			job.setOutputValueClass(Text.class);
-			FileOutputFormat.setOutputPath(job, new Path(outputFileName));
+			Path op = new Path(outputFileName);
+			fs.delete(op, true);
+			FileOutputFormat.setOutputPath(job, op);
 			if (cconf.getTaskMgr().getHadoopJobTracker()!=null){
 				job.submit();
 			}else{

@@ -54,12 +54,14 @@ public class AbstractHbaseToCSVMapper extends TableMapper<Text, Text>{
 				if (m!=null){
 					stockid = m.group(1);
 				}
-				context.write(new Text(stockid), new Text(output));
+				if (output!=null && !"".equals(output)){
+					context.write(new Text(stockid), new Text(output));
+				}
 			}catch(Exception e){
 				logger.error("", e);
 			}
 		}else{
-			logger.info("storeFilter:" + storeFilter + ", ci storeId:" + ci.getId().getStoreId());
+			//logger.info("storeFilter:" + storeFilter + ", ci storeId:" + ci.getId().getStoreId());
 		}
 	}
 }

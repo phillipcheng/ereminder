@@ -8,6 +8,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -46,7 +47,7 @@ public class ReformatMapredLauncher {
 					}
 				}
 			}
-			MultipleOutputs.addNamedOutput(job, NAMED_OUTPUT, TextOutputFormat.class,Text.class, Text.class);
+			MultipleOutputs.addNamedOutput(job, NAMED_OUTPUT, TextOutputFormat.class, Text.class, NullWritable.class);
 			job.setJarByClass(ReformatMapredLauncher.class);
 			job.setMapperClass(ReformatMapper.class);
 			job.setReducerClass(ReformatReducer.class);

@@ -1,7 +1,5 @@
 package org.cld.stock.sina;
 
-import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.entity.CrawledItem;
@@ -20,22 +18,30 @@ public class FinanceReportToCSV implements ICrawlItemToCSV{
 		JSONArray ls = (JSONArray)o;
 		StringBuffer sb = new StringBuffer();
 		try{
-			for (int i=0; i<ls.length(); i++){
-				if (i>0){
-					sb.append(",");
+			if (ls!=null){
+				for (int i=0; i<ls.length(); i++){
+					if (i>0){
+						sb.append(",");
+					}
+					String str = ls.getString(i);
+					if ("--".equals(str)){
+						str = "0";
+					}else if (str.contains(",")){
+						str = str.replace(",", "");//remove comma
+					}
+					try {
+						float f = Float.parseFloat(str);
+						f = f * 10000; //unit is 万元
+						sb.append(Float.toString(f));
+					}catch(NumberFormatException pe){
+						logger.info(String.format("not a float: %s",str));
+						sb.append(str);
+					}
 				}
-				String str = ls.getString(i);
-				if ("--".equals(str)){
-					str = "0";
-				}else if (str.contains(",")){
-					str = str.replace(",", "");//remove comma
-				}
-				sb.append(str);
 			}
 		}catch(Exception e){
 			logger.error("", e);
 		}
 		return sb.toString();
 	}
-	
 }
