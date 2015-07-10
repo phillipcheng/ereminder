@@ -17,6 +17,9 @@
         <dependent-module archiveName="cld-datacrawl-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-datacrawl/cld-datacrawl">
             <dependency-type>uses</dependency-type>
         </dependent-module>
+        <dependent-module archiveName="cld-etl-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-etl/cld-etl">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
         <dependent-module archiveName="cld-util-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-util/cld-util">
             <dependency-type>uses</dependency-type>
         </dependent-module>
