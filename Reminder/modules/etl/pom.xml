@@ -1,16 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.cld.datacrawl</groupId>
-	<artifactId>cld-datacrawl</artifactId>
+	<groupId>org.cld.etl</groupId>
+	<artifactId>cld-etl</artifactId>
 	<packaging>jar</packaging>
-	<name>data crawl</name>
+	<name>data etl</name>
 	<parent>
 		<artifactId>env</artifactId>
 		<groupId>org.cld.build</groupId>
 		<version>1.0.0</version>
 	</parent>
-	
+
 	<dependencies>
 		<dependency>
 	    	<groupId>org.apache.logging.log4j</groupId>
@@ -20,21 +20,27 @@
     		<groupId>org.apache.logging.log4j</groupId>
     		<artifactId>log4j-core</artifactId>
  		</dependency>
-		<dependency>
-			<groupId>net.sourceforge.htmlunit</groupId>
-			<artifactId>htmlunit</artifactId>
+ 		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>commons-configuration</groupId>
-			<artifactId>commons-configuration</artifactId>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
 		</dependency>
-       	<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
+		<dependency>
+			<groupId>org.cld.utils</groupId>
+			<artifactId>cld-util</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.cld.datastore</groupId>
 			<artifactId>cld-datastore</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.cld.utils</groupId>
+			<artifactId>cld-util</artifactId>
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
@@ -43,14 +49,12 @@
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
-			<groupId>org.cld.etl</groupId>
-			<artifactId>cld-etl</artifactId>
-			<version>1.0.0</version>
+			<groupId>org.apache.hbase</groupId>
+			<artifactId>hbase-client</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.cld.utils</groupId>
-			<artifactId>cld-util</artifactId>
-			<version>1.0.0</version>
+			<groupId>org.apache.hbase</groupId>
+			<artifactId>hbase-server</artifactId>
 		</dependency>
 	</dependencies>
 	

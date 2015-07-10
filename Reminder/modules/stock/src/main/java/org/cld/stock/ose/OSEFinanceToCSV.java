@@ -1,17 +1,21 @@
 package org.cld.stock.ose;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.entity.CrawledItem;
-import org.cld.stock.load.ICrawlItemToCSV;
-import org.cld.stock.load.StockConst;
 import org.cld.util.StringUtil;
+import org.etl.fci.ICrawlItemToCSV;
 import org.json.JSONArray;
 
 public class OSEFinanceToCSV implements ICrawlItemToCSV{
 	
 	private static Logger logger =  LogManager.getLogger(OSEFinanceToCSV.class);
 	public static final String value_sep = ",";
+	public static final String FIELD_NAME_SYMBAL="symbal";
+	
 	
 	//return the string in YYYYMMDD format
 	public static String getDateForPeriodId(String year, String periodId, String siteId){
@@ -35,7 +39,8 @@ public class OSEFinanceToCSV implements ICrawlItemToCSV{
 	}
 
 	@Override
-	public String getCSV(CrawledItem ci) {
+	public List<String[]> getCSV(CrawledItem ci) {
+		String symbal = (String) ci.getParam(FIELD_NAME_SYMBAL);
 		JSONArray allColumns = (JSONArray) ci.getParam(StockConst.param_sh_columns);
 		JSONArray data = (JSONArray) ci.getParam(StockConst.param_sh_rows);
 		String id = ci.getId().getId();
@@ -43,7 +48,7 @@ public class OSEFinanceToCSV implements ICrawlItemToCSV{
 		String quoteId = StringUtil.getStringBetweenFirstPreFirstPost(id, null, StockConst.SH_REPORT_ID_KEY);
 		String storeId = ci.getId().getStoreId();
 		JSONArray years = allColumns.getJSONArray(0);
-		String ret = "";
+		List<String[]> retList = new ArrayList<String[]>();
 		//skip the 1st column
 		for (int i=1; i<years.length(); i++){
 			String year = years.getString(i);
@@ -66,8 +71,9 @@ public class OSEFinanceToCSV implements ICrawlItemToCSV{
 					}
 				}
 			}
-			ret += output + "\n";
+			retList.add(new String[]{symbal, output});
 		}
-		return ret;
+
+		return retList;
 	}
 }

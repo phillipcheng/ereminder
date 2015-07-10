@@ -12,7 +12,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.mgr.IListAnalyze;
 import org.cld.datacrawl.util.SomePageErrorException;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.Category;
@@ -95,8 +94,7 @@ public class BrowseDetailTaskConf extends Task implements Serializable{
 			}
 			if (taskTemplate != null){		
 				//1. re-setup
-				this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
-				IListAnalyze la = cconf.getLa();		
+				this.setParsedTaskDef(taskTemplate.getParsedTaskDef());		
 				//2. build category from TaskEntry
 				Category category = null;
 				if (dsManager!=null){
@@ -117,7 +115,7 @@ public class BrowseDetailTaskConf extends Task implements Serializable{
 				if (params.containsKey(TASK_RUN_PARAM_MAX_ITEM)){
 					maxItems = ((Integer)params.get(TASK_RUN_PARAM_MAX_ITEM)).intValue();
 				}
-				return la.readTopLink(category, getFromPage(), getToPage(), this, maxPages, maxItems);
+				return cconf.getLa().readTopLink(category, getFromPage(), getToPage(), this, maxPages, maxItems);
 			}
 		}catch(SomePageErrorException e){
 			throw new RuntimeException(e);

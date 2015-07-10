@@ -1,4 +1,4 @@
-package org.cld.datacrawl.mgr.impl;
+package org.cld.datacrawl.mgr;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

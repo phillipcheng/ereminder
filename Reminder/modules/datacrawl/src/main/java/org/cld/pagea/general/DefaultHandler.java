@@ -4,7 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.ProductHandler;
-import org.cld.datacrawl.mgr.impl.CrawlTaskEval;
+import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.datastore.entity.Category;
 import org.cld.datastore.entity.Product;
 import org.cld.taskmgr.entity.Task;

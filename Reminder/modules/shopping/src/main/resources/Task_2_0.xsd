@@ -147,7 +147,9 @@
 				maxOccurs="unbounded" />
 			<xs:element name="userAttribute" type="AttributeType"
 				minOccurs="0" maxOccurs="unbounded" />
-			<xs:element name="pageVerify" type="BinaryBoolOp" maxOccurs="unbounded" minOccurs="0"></xs:element>
+			<xs:element name="pageVerify" type="BinaryBoolOp"
+				maxOccurs="unbounded" minOccurs="0">
+			</xs:element>
 			<xs:element name="idUrlMapping" type="RegExpType"
 				minOccurs="0">
 				<xs:annotation>
@@ -161,6 +163,10 @@
 			<xs:element name="idUrlMappingFirstPage" type="RegExpType"
 				minOccurs="0" />
 			<xs:element name="itemName" type="ValueType" minOccurs="0" />
+			<xs:element name="csvtransform" type="xs:string" maxOccurs="1" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>the org.etl.fci.ICrawlItemToCSV class: when dsm is hdfs, will transform the crawledItem into a list of csv lines, and will be saved to hdfs</xs:documentation>
+				</xs:annotation></xs:element>
 		</xs:sequence>
 		<xs:attribute name="taskName" type="xs:string" use="optional">
 			<xs:annotation>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" 
+	rootVolume="999990" 
+	storeId="sina-stock-earnnotice" 
+	productType="default">
+	<PrdTask>
+		<baseBrowseTask
+		startUrl="http://money.finance.sina.com.cn/corp/go.php/vFD_AchievementNotice/stockid/[stockid].phtml" 
+		enableJS="true" 
+		taskName="earnnotice">
+			<param name="stockid"/>
+			<userAttribute name="id">
+				<value value="stockid" toType="string" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="data">
+				<value value="//table[@id='Table1']/tbody/tr[count(td)=2]/td" toType="list"/>
+			</userAttribute>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>

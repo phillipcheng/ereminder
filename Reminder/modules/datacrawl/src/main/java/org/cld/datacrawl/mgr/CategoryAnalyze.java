@@ -1,4 +1,4 @@
-package org.cld.datacrawl.mgr.impl;
+package org.cld.datacrawl.mgr;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -13,7 +13,6 @@ import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.NextPage;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.Category;
-import org.cld.datacrawl.mgr.ICategoryAnalyze;
 import org.cld.datacrawl.task.BrowseCategoryTaskConf;
 import org.cld.datacrawl.task.BrowseDetailTaskConf;
 import org.cld.datacrawl.task.BrsCatStat;
@@ -30,7 +29,7 @@ import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 
-public class CategoryAnalyze implements ICategoryAnalyze{
+public class CategoryAnalyze {
 	private static Logger logger =  LogManager.getLogger(CategoryAnalyze.class);
 	
 	public static final String CAT_ROOT="ROOT";
@@ -224,7 +223,6 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 		}
 	}
 	
-	@Override
 	public List<Task> navigateCategory(Task task, TaskStat taskStat, CrawlConf cconf) throws InterruptedException{		
 		BrowseCategoryTaskConf bct = (BrowseCategoryTaskConf) task;
 		String startUrl = bct.getStartURL();
@@ -257,7 +255,6 @@ public class CategoryAnalyze implements ICategoryAnalyze{
 		}
 	}
 	
-	@Override
 	public List<Task> retryCat(CrawlConf cconf, TaskStat taskStat) throws InterruptedException{
 		List<Task> tasklist = new ArrayList<Task>();
 		BrsCatStat bs =(BrsCatStat)taskStat;

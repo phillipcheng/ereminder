@@ -41,7 +41,6 @@
   			<groupId>org.cld.datastore</groupId>
   			<artifactId>cld-datastore</artifactId>
   			<version>1.0.0</version>
-  			<type>jar</type>
   		</dependency>
   		<dependency>
 			<groupId>com.h2database</groupId>

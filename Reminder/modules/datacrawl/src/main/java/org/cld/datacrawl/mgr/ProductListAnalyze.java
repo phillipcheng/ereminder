@@ -1,4 +1,4 @@
-package org.cld.datacrawl.mgr.impl;
+package org.cld.datacrawl.mgr;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -14,9 +14,6 @@ import com.gargoylesoftware.htmlunit.html.DomNode;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.mgr.IProductListAnalyze;
-import org.cld.datacrawl.mgr.ListProcessInf;
-import org.cld.datacrawl.mgr.TargetPrdInvoke;
 import org.cld.datacrawl.task.BrowseProductTaskConf;
 import org.cld.datacrawl.task.BrsDetailStat;
 import org.cld.datastore.entity.Category;
@@ -28,7 +25,7 @@ import org.cld.taskmgr.entity.Task;
 import org.xml.taskdef.BDTProcessType;
 
 
-public class ProductListAnalyze implements IProductListAnalyze {
+public class ProductListAnalyze implements ListProcessInf{
 	private static Logger logger =  LogManager.getLogger(ProductListAnalyze.class);	
 	
 	
@@ -53,7 +50,6 @@ public class ProductListAnalyze implements IProductListAnalyze {
 	 * @param task
 	 * @return false, means readItem failed
 	 */
-	@Override
 	public List<Task> readItem(WebClient wc, HtmlPage page, Category category, DomNode productSummary, 
 			String detailedUrl,  Date readTime, CrawlConf cconf, Task task) throws InterruptedException {
 		
@@ -99,7 +95,7 @@ public class ProductListAnalyze implements IProductListAnalyze {
 				logger.debug(String.format("Task t:%s generated.", t));
 			}else if (processType == BDTProcessType.INLINE){
 				//execute browse product now
-				BrowseProductTaskConf.browseProduct(t, cconf, wc, storeId, catId, taskName, fullOutput.getInParams());
+				BrowseProductTaskConf.browseProduct(t, cconf, wc, storeId, catId, taskName, fullOutput.getInParams(), false);
 			}else{
 				logger.error("unsupported bdt process type.");
 			}

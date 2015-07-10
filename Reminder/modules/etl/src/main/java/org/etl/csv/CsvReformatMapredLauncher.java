@@ -1,7 +1,8 @@
-package org.cld.stock.load;
+package org.etl.csv;
 
-import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.test.CrawlTestUtil;
+import org.cld.taskmgr.NodeConf;
+import org.cld.taskmgr.TaskMgr;
+import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.hadoop.HadoopTaskUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -20,25 +21,28 @@ import org.apache.logging.log4j.Logger;
 
 
 
-public class ReformatMapredLauncher {
+public class CsvReformatMapredLauncher {
 	
 	public static final String INPUT_TABLE_NAME="crawledItem";
 	public static final String KEY_INDEX="keyIndex";
 	public static final String NAMED_OUTPUT="text";
 	
-	private static Logger logger =  LogManager.getLogger(ReformatMapredLauncher.class);
+	private static Logger logger =  LogManager.getLogger(CsvReformatMapredLauncher.class);
 	
-	//the keyIdx of the input csv value
+	//the keyIdx of the input csv value to be the reduce key
 	public static void format(String prop, String inputFolder, int keyIdx, String outputFolder){
 		try{
-			CrawlConf cconf = CrawlTestUtil.getCConf(prop);
-			Configuration conf = HadoopTaskUtil.getHadoopConf(cconf.getNodeConf());
+			NodeConf nc = TaskUtil.getNodeConf(prop);
+			TaskMgr tm = new TaskMgr();
+			tm.loadConf(prop, null, null);
+			Configuration conf = HadoopTaskUtil.getHadoopConf(nc);
 			conf.setInt(KEY_INDEX, keyIdx);
 			conf.set("mapred.textoutputformat.separator", "");//default is tab
 			Job job = Job.getInstance(conf, "Format");
 			FileSystem fs = FileSystem.get(conf);
-			if (cconf.getTaskMgr().getYarnAppCp()!=null){
-				for (String s: cconf.getTaskMgr().getYarnAppCp()){
+			
+			if (tm.getYarnAppCp()!=null){
+				for (String s: tm.getYarnAppCp()){
 					//find all the jar,zip files under s if s is a directory
 					FileStatus[] fslist = fs.listStatus(new Path(s));
 					Path[] plist = FileUtil.stat2Paths(fslist);
@@ -48,14 +52,14 @@ public class ReformatMapredLauncher {
 				}
 			}
 			MultipleOutputs.addNamedOutput(job, NAMED_OUTPUT, TextOutputFormat.class, Text.class, NullWritable.class);
-			job.setJarByClass(ReformatMapredLauncher.class);
-			job.setMapperClass(ReformatMapper.class);
-			job.setReducerClass(ReformatReducer.class);
+			job.setJarByClass(CsvReformatMapredLauncher.class);
+			job.setMapperClass(CsvReformatMapper.class);
+			job.setReducerClass(CsvReformatReducer.class);
 			job.setOutputKeyClass(Text.class);
 			job.setOutputValueClass(Text.class);
 			FileInputFormat.setInputPaths(job, new Path(inputFolder));
 			FileOutputFormat.setOutputPath(job, new Path(outputFolder));
-			if (cconf.getTaskMgr().getHadoopJobTracker()!=null){
+			if (tm.getHadoopJobTracker()!=null){
 				job.submit();
 			}else{
 				job.waitForCompletion(true);

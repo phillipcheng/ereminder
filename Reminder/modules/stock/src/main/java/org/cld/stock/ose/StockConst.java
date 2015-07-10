@@ -1,4 +1,4 @@
-package org.cld.stock.load;
+package org.cld.stock.ose;
 
 public class StockConst {
 	public static final String param_sh_columns="columns";

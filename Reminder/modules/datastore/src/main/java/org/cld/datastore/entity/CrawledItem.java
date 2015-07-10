@@ -1,5 +1,6 @@
 package org.cld.datastore.entity;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +72,8 @@ public class CrawledItem {
 	
 	@JsonIgnore
 	private transient Map<String, Object> params = new TreeMap<String, Object>();//I need the order of keys
+	
+	private List<String[]> csvValue;//list of key,value pairs for hdfs to save
 	
 	//called by product, category's default constructor for hibernate
 	public CrawledItem(){
@@ -153,7 +156,19 @@ public class CrawledItem {
 				String[] names = JSONObject.getNames(jobj);
 				if (names!=null){
 					for (String name:names){
-						params.put(name, jobj.opt(name));
+						Object o = jobj.opt(name);
+						if (o instanceof JSONArray){
+							List<String> listdata = new ArrayList<String>();     
+							JSONArray jArray = (JSONArray)o; 
+							if (jArray != null) { 
+							   for (int i=0;i<jArray.length();i++){ 
+							    listdata.add(jArray.get(i).toString());
+							   } 
+							}
+							params.put(name, listdata);
+						}else{
+							params.put(name, o);
+						}
 					}
 				}
 			}catch(Exception e){
@@ -284,4 +299,14 @@ public class CrawledItem {
 			return null;
 		}
 	}
+
+	public List<String[]> getCsvValue() {
+		return csvValue;
+	}
+
+	public void setCsvValue(List<String[]> csvValue) {
+		this.csvValue = csvValue;
+	}
+
+
 }

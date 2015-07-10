@@ -1,8 +1,9 @@
-package org.cld.stock.load;
+package org.etl.fci;
 
-import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.datastore.impl.HbaseDataStoreManagerImpl;
+import org.cld.taskmgr.NodeConf;
+import org.cld.taskmgr.TaskMgr;
+import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.hadoop.HadoopTaskUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -12,12 +13,11 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import com.gargoylesoftware.htmlunit.javascript.host.Text;
 
 
 public class HBaseToCSVMapperLauncher {
@@ -33,8 +33,10 @@ public class HBaseToCSVMapperLauncher {
 	public static void genCSVFromHbase(String prop, String outputFileName, String storeId, 
 			String idFilter, String toCSVClazz){
 		try{
-			CrawlConf cconf = CrawlTestUtil.getCConf(prop);
-			Configuration conf = HadoopTaskUtil.getHadoopConf(cconf.getNodeConf());
+			NodeConf nc = TaskUtil.getNodeConf(prop);
+			TaskMgr tm = new TaskMgr();
+			tm.loadConf(prop, null, null);
+			Configuration conf = HadoopTaskUtil.getHadoopConf(nc);
 			conf.set(TableInputFormat.INPUT_TABLE, INPUT_TABLE_NAME);
 			conf.set(STOREID_FILTER, storeId);
 			conf.set(ID_FILTER, idFilter);
@@ -43,8 +45,8 @@ public class HBaseToCSVMapperLauncher {
 			scan.addColumn(HbaseDataStoreManagerImpl.CRAWLEDITEM_CF_BYTES, HbaseDataStoreManagerImpl.CRAWLEDITEM_DATA_BYTES);
 			Job job = Job.getInstance(conf, "ConvertJob");
 			FileSystem fs = FileSystem.get(conf);
-			if (cconf.getTaskMgr().getYarnAppCp()!=null){
-				for (String s: cconf.getTaskMgr().getYarnAppCp()){
+			if (tm.getYarnAppCp()!=null){
+				for (String s: tm.getYarnAppCp()){
 					//find all the jar,zip files under s if s is a directory
 					FileStatus[] fslist = fs.listStatus(new Path(s));
 					Path[] plist = FileUtil.stat2Paths(fslist);
@@ -62,7 +64,7 @@ public class HBaseToCSVMapperLauncher {
 			Path op = new Path(outputFileName);
 			fs.delete(op, true);
 			FileOutputFormat.setOutputPath(job, op);
-			if (cconf.getTaskMgr().getHadoopJobTracker()!=null){
+			if (tm.getHadoopJobTracker()!=null){
 				job.submit();
 			}else{
 				job.waitForCompletion(true);

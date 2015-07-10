@@ -192,13 +192,7 @@ public class TaskMgr {
 			logger.error("task stat class not found for:" + ttype, e);
 		}
 		
-		ttypeConfs.put(ttype.getName(), ttype);
-		
-		if (!oldTTypeConfs.containsKey(ttype.getName())){
-			//newly added, fire event if needed.	
-		}else{
-			//compare oldTTypeConfs.get(key) and ttypeConfs.get(key) and fire updated event
-		}	
+		ttypeConfs.put(ttype.getName(), ttype);	
 	}
 	
 	private void loadSystemTaskType(){
@@ -208,32 +202,13 @@ public class TaskMgr {
 		taskConf.setProcessImpl(null);
 		taskConf.setStatImpl(systemTaskStatClassName);
 	}
-	/**
-	 * read task type conf and task conf from configuration
-	 * task type conf must come before task conf
-	 */
-	public void reload(ClassLoader pluginClassLoader, Map<String, Object> params){
-		try{	
-			//1. backup to oldTTypeConfs
-			oldTTypeConfs.clear();
-			Iterator<String> its = ttypeConfs.keySet().iterator();
-			while (its.hasNext()){
-				String key = its.next();
-				oldTTypeConfs.put(key, ttypeConfs.get(key));
+	//
+	public void loadConf(String propFile, ClassLoader pluginClassLoader, Map<String, Object> params){
+		try{
+			if (params == null){
+				params = new HashMap<String, Object>();
 			}
-			ttypeConfs.clear();
-			loadSystemTaskType();
 			
-			//1. backup to oldTasksConf
-			oldTasksConf.clear();
-			its = tasksConf.keySet().iterator();
-			while (its.hasNext()){
-				String key = its.next();
-				oldTasksConf.put(key, tasksConf.get(key));
-			}
-			tasksConf.clear();
-			
-			//2. 
 			properties = new PropertiesConfiguration(this.masterConfFile);
 			
 			Iterator<String> enu = properties.getKeys();
@@ -279,14 +254,6 @@ public class TaskMgr {
 						loadTaskType(taskConf, pluginClassLoader);
 						logger.debug("taskconf put:" + tt + ", " + taskConf);
 					}
-					//fire deleted event
-					its = oldTTypeConfs.keySet().iterator();
-					while (its.hasNext()){
-						String ttypeName = its.next();
-						if (!ttypeConfs.containsKey(ttypeName)){
-							//fire task type deleted event if needed
-						}
-					}	
 				}else if (taskName_Key.equals(key)){
 					//load task from files
 					List<Object> listVal = properties.getList(key);
@@ -301,28 +268,59 @@ public class TaskMgr {
 						}
 					}
 				}
-				
-				//task.name=, get the task definition from web service
-				if (webconfWSUrl!=null){
-					logger.info("get siteconf from ws.");
-					DataStoreRSClient dsrsclient = null;
-					if (useProxy){
-						dsrsclient = new DataStoreRSClient(webconfWSUrl, proxyIP, proxyPort, timeout);
-					}else{
-						dsrsclient = new DataStoreRSClient(webconfWSUrl, timeout);
+			}
+		}catch(Exception e){
+			logger.error("", e);
+		}
+	}
+	/**
+	 * read task type conf and task conf from configuration
+	 * task type conf must come before task conf
+	 */
+	public void reload(ClassLoader pluginClassLoader, Map<String, Object> params){
+		try{	
+			//1. backup to oldTTypeConfs
+			oldTTypeConfs.clear();
+			Iterator<String> its = ttypeConfs.keySet().iterator();
+			while (its.hasNext()){
+				String key = its.next();
+				oldTTypeConfs.put(key, ttypeConfs.get(key));
+			}
+			ttypeConfs.clear();
+			loadSystemTaskType();
+			
+			//1. backup to oldTasksConf
+			oldTasksConf.clear();
+			its = tasksConf.keySet().iterator();
+			while (its.hasNext()){
+				String key = its.next();
+				oldTasksConf.put(key, tasksConf.get(key));
+			}
+			tasksConf.clear();
+			
+			//2. load conf
+			loadConf(this.masterConfFile, pluginClassLoader, params);
+			
+			//3. task.name=, get the task definition from web service
+			if (webconfWSUrl!=null){
+				logger.info("get siteconf from ws.");
+				DataStoreRSClient dsrsclient = null;
+				if (useProxy){
+					dsrsclient = new DataStoreRSClient(webconfWSUrl, proxyIP, proxyPort, timeout);
+				}else{
+					dsrsclient = new DataStoreRSClient(webconfWSUrl, timeout);
+				}
+				List<SiteConf> scl = dsrsclient.getDeployedSiteConf();
+				if (scl!=null){
+					logger.info(String.format("siteconf got: %d", scl.size()));
+					for (SiteConf sc: scl){
+						setUpSite(null, sc, pluginClassLoader, params);
 					}
-					List<SiteConf> scl = dsrsclient.getDeployedSiteConf();
-					if (scl!=null){
-						logger.info(String.format("siteconf got: %d", scl.size()));
-						for (SiteConf sc: scl){
-							setUpSite(null, sc, pluginClassLoader, params);
-						}
-					}else{
-						logger.error("no deployed siteconf found.");
-					}
+				}else{
+					logger.error("no deployed siteconf found.");
 				}
 			}
-			
+			//
 			for (String key: oldTasksConf.keySet()){
 				if (!tasksConf.containsKey(key)){
 					NodeConfPropChangedEvent ncpce = new NodeConfPropChangedEvent();

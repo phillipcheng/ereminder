@@ -7,7 +7,7 @@ import java.util.Map;
 
 import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
 import org.cld.datacrawl.test.TestBase;
-import org.cld.stock.load.StockConst;
+import org.cld.stock.ose.StockConst;
 import org.junit.Before;
 import org.junit.Test;
 

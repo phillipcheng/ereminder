@@ -1,8 +1,5 @@
 package org.cld.taskmgr.hadoop;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -12,13 +9,12 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.DFSConfigKeys;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -64,10 +60,9 @@ public class HadoopTaskUtil {
 		return conf;
 	}
 	
-	public static void executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> params){
+	public static void executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> params, 
+			String hdfsOutputDir){
 		String sourceName = "";
-		//Configuration conf = getHadoopConf(nc);
-		//int max = conf.getInt(DFSConfigKeys.DFS_NAMENODE_MAX_COMPONENT_LENGTH_KEY, DFSConfigKeys.DFS_NAMENODE_MAX_COMPONENT_LENGTH_DEFAULT);
 		int max = 200;
 		
 		for (int i=0; i<taskList.size(); i++){
@@ -83,7 +78,7 @@ public class HadoopTaskUtil {
 				break;
 			}
 		}
-		executeTasks(nc, taskList, params, sourceName);
+		executeTasks(nc, taskList, params, sourceName, hdfsOutputDir);
 	}
 	
 	/**
@@ -93,7 +88,8 @@ public class HadoopTaskUtil {
 	 * @param params
 	 * @param sourceName: the source/generator name, used as the generated task info file name
 	 */
-	public static void executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> params, String sourceName){
+	public static void executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> params, 
+			String sourceName, String hdfsOutputDir){
 		TaskMgr taskMgr = nc.getTaskMgr();
 		Configuration conf = getHadoopConf(nc);
 		//generate task list file
@@ -138,11 +134,17 @@ public class HadoopTaskUtil {
 			job.setMapperClass(mapperClazz);
 			job.setNumReduceTasks(0);//no reducer
 			job.setOutputKeyClass(Text.class);
-			job.setOutputValueClass(LongWritable.class);
-			job.setOutputFormatClass(NullOutputFormat.class);
+			job.setOutputValueClass(Text.class);
 			job.setInputFormatClass(NLineInputFormat.class);
 			Path in = new Path(fileName);
 			FileInputFormat.addInputPath(job, in);
+			if (hdfsOutputDir!=null){
+				Path out = new Path(taskMgr.getHadoopCrawledItemFolder() + "/" + hdfsOutputDir);
+				fs.delete(out, true);
+				FileOutputFormat.setOutputPath(job, out);
+			}else{
+				job.setOutputFormatClass(NullOutputFormat.class);
+			}
 			if (taskMgr.getHadoopJobTracker()!=null){
 				job.submit();
 			}else{

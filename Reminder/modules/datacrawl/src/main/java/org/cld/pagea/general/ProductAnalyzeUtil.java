@@ -21,7 +21,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlSpan;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.NextPage;
 import org.cld.datacrawl.ProductConf;
-import org.cld.datacrawl.mgr.impl.CrawlTaskEval;
+import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.datacrawl.util.HtmlPageResult;
 import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.datacrawl.util.VerifyPageByXPath;

@@ -1,6 +1,7 @@
-package org.cld.stock.load;
+package org.etl.fci;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,7 +26,7 @@ public class AbstractHbaseToCSVMapper extends TableMapper<Text, Text>{
 			throws IOException, InterruptedException {
 		Configuration conf = context.getConfiguration();
 		String storeFilter = conf.get(HBaseToCSVMapperLauncher.STOREID_FILTER);
-		//stockid_year_quarter: ([0-9]+)_2014_2
+		//first group is the output entry id, e.g. ([0-9]+)_a_b
 		String idFilter = conf.get(HBaseToCSVMapperLauncher.ID_FILTER);
 		Pattern idp = null;
 		if (idFilter!=null) idp = Pattern.compile(idFilter);
@@ -33,8 +34,6 @@ public class AbstractHbaseToCSVMapper extends TableMapper<Text, Text>{
 		String rowKey = Bytes.toString(key.get());
 		//id|storeid
 		String id = rowKey.substring(0, rowKey.indexOf(HbaseDataStoreManagerImpl.rowkey_sep));
-		
-		
 		CrawledItem ci = HbaseDataStoreManagerImpl.getCrawledItemFromResult(rowKey, value);
 		if (!Product.CRAWLITEM_TYPE.equals(ci.getType())){
 			logger.info("filter non product type crawledItem." + ci.getType());
@@ -49,13 +48,15 @@ public class AbstractHbaseToCSVMapper extends TableMapper<Text, Text>{
 			}
 			try{
 				ICrawlItemToCSV tocsv = (ICrawlItemToCSV) Class.forName(toCSVClazz).newInstance();
-				String output = tocsv.getCSV(ci);
-				String stockid = id;
+				String outputId = id;
 				if (m!=null){
-					stockid = m.group(1);
+					outputId = m.group(1);
 				}
-				if (output!=null && !"".equals(output)){
-					context.write(new Text(stockid), new Text(output));
+				List<String[]> retcsv = tocsv.getCSV(ci);
+				for (String[] output: retcsv){
+					if (output!=null && !"".equals(output)){
+						context.write(new Text(outputId), new Text(output[1]));
+					}
 				}
 			}catch(Exception e){
 				logger.error("", e);

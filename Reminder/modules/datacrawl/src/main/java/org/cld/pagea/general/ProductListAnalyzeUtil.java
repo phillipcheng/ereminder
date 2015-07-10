@@ -15,8 +15,8 @@ import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 import org.cld.datacrawl.CrawlConf;
+import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.datacrawl.mgr.TargetPrdInvoke;
-import org.cld.datacrawl.mgr.impl.CrawlTaskEval;
 import org.cld.datastore.entity.Product;
 import org.cld.taskmgr.ScriptEngineUtil;
 import org.cld.taskmgr.entity.Task;

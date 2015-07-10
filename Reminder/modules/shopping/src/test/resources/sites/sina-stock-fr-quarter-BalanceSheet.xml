@@ -7,7 +7,8 @@
 		<baseBrowseTask
 		startUrl="http://money.finance.sina.com.cn/corp/go.php/vFD_BalanceSheet/stockid/[stockid]/ctrl/[year]/displaytype/4.phtml" 
 		enableJS="true" 
-		taskName="balancesheet">
+		taskName="balancesheet"
+		dsm="hdfs">
 			<param name="stockid"/>
 			<param name="year"/>
 			<param name="quarter"/>
@@ -26,6 +27,7 @@
 				<rhs value="null">
 				</rhs>
 			</pageVerify>
+			<csvtransform>org.cld.stock.sina.FinanceReportToCSV</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>
 </Tasks>

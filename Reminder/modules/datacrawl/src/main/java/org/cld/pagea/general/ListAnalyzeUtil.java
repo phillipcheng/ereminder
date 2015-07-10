@@ -8,7 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.NextPage;
-import org.cld.datacrawl.mgr.impl.BinaryBoolOpEval;
+import org.cld.datacrawl.mgr.BinaryBoolOpEval;
 import org.xml.mytaskdef.ConfKey;
 import org.xml.mytaskdef.ParsedTasksDef;
 import org.xml.taskdef.BinaryBoolOp;

@@ -10,23 +10,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.taskmgr.client.ClientNodeImpl;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskPersistMgr;
-import org.cld.util.IdUtil;
 import org.cld.util.distribute.SimpleNodeConf;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -139,5 +127,12 @@ public class TaskUtil {
 		} catch (RemoteException e) {
 			logger.error("", e);
 		}
+	}
+	
+	//
+	public static NodeConf getNodeConf(String properties){
+		NodeConf nc = null;
+		nc = new NodeConf(properties);
+		return nc;
 	}
 }

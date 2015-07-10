@@ -122,9 +122,10 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 	 * @return
 	 * @throws InterruptedException
 	 */
-	public static void browseProduct(BrowseProductTaskConf task, CrawlConf cconf, WebClient wc, String storeId, 
-			String catId, String taskName, Map<String, Object> params) 
+	public static List<String[]> browseProduct(BrowseProductTaskConf task, CrawlConf cconf, WebClient wc, String storeId, 
+			String catId, String taskName, Map<String, Object> params, boolean retcsv) 
 			throws InterruptedException{
+		List<String[]> csv = null;
 		Product lastProduct = null;
 		Product thisProduct = null;
 		ParsedBrowsePrd pbpTemplate = task.getBrowseDetailTask(taskName);
@@ -206,7 +207,8 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 						thisProduct = cconf.getProductInstance(task.getTasks().getProductType());
 						CrawledItemId pid = new CrawledItemId(internalId, storeId, new Date());
 						thisProduct.setId(pid);
-						cconf.getPa().addProduct(wc, startUrl, thisProduct, lastProduct, task, pbpTemplate, cconf);
+						csv = cconf.getPa().addProduct(wc, startUrl, thisProduct, lastProduct, 
+								task, pbpTemplate, cconf, retcsv);
 					}
 					//get 1st browse prd task's monitor price definition
 					if (task.getBrowseDetailTask(null).getBrowsePrdTaskType().isMonitorPrice()){
@@ -218,7 +220,7 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 					CrawledItemId pid = new CrawledItemId(internalId, storeId, new Date());
 					thisProduct.setId(pid);
 					thisProduct.addCat(catId);
-					cconf.getPa().addProduct(wc, startUrl, thisProduct, null, task, pbpTemplate, cconf);
+					csv = cconf.getPa().addProduct(wc, startUrl, thisProduct, null, task, pbpTemplate, cconf, retcsv);
 					//get 1st browse prd task's monitor price definition
 					if (task.getBrowseDetailTask(null).getBrowsePrdTaskType().isMonitorPrice()){
 						//
@@ -226,6 +228,7 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 				}
 			}
 		}
+		return csv;
 	}
 	
 	@Override
@@ -233,14 +236,24 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 		//adding the runtime params
 		this.putAllParams(params);
 		CrawlConf cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
-		
 		BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
 		this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
 		WebClient wc = CrawlUtil.getWebClient(cconf, taskTemplate.skipUrls, taskTemplate.enableJS);
 		
-		browseProduct(this, cconf, wc, this.getStoreId(), null, this.getName(), this.getParamMap());
+		browseProduct(this, cconf, wc, this.getStoreId(), null, this.getName(), this.getParamMap(), false);
 	
 		return new ArrayList<Task>();
+	}
+	
+	public List<String[]> runMyselfFromMapred(Map<String, Object> params) throws InterruptedException{
+		//adding the runtime params
+		this.putAllParams(params);
+		CrawlConf cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
+		BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
+		this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
+		WebClient wc = CrawlUtil.getWebClient(cconf, taskTemplate.skipUrls, taskTemplate.enableJS);
+		
+		return browseProduct(this, cconf, wc, this.getStoreId(), null, this.getName(), this.getParamMap(), true);
 	}
 	
 	//setter and getter

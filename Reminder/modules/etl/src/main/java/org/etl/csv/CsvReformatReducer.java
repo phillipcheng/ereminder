@@ -1,4 +1,4 @@
-package org.cld.stock.load;
+package org.etl.csv;
 
 import java.io.IOException;
 
@@ -9,9 +9,9 @@ import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class ReformatReducer extends Reducer<Text, Text, Text, Text>{
+public class CsvReformatReducer extends Reducer<Text, Text, Text, Text>{
 	
-	private static Logger logger =  LogManager.getLogger(ReformatReducer.class);
+	private static Logger logger =  LogManager.getLogger(CsvReformatReducer.class);
 	
 	private MultipleOutputs<Text, Text> mos;
 	
@@ -25,7 +25,7 @@ public class ReformatReducer extends Reducer<Text, Text, Text, Text>{
             ) throws IOException, InterruptedException {
 		int i=0;
 		for(Text value: values) {
-			mos.write(ReformatMapredLauncher.NAMED_OUTPUT, value, NullWritable.get(), key.toString());
+			mos.write(CsvReformatMapredLauncher.NAMED_OUTPUT, value, NullWritable.get(), key.toString());
 			i++;
 		}
 		logger.debug(String.format("reduce key:%s, record number:%d",  key.toString(), i));

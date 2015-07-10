@@ -22,7 +22,7 @@ import org.xml.taskdef.BrowseTaskType;
 import org.xml.taskdef.ParamType;
 
 //store csv file in hdfs
-public class HdfsDataStoreManagerImpl implements DataStoreManager {
+public class HdfsDataStoreManagerImpl implements DataStoreManager{
 
 	private static Logger logger = LogManager.getLogger(HdfsDataStoreManagerImpl.class);
 
@@ -40,16 +40,81 @@ public class HdfsDataStoreManagerImpl implements DataStoreManager {
 		return null;
 	}
 
-
-	@Override
-	public boolean addCrawledItem(CrawledItem ci, CrawledItem oldCi, BrowseTaskType btt) {
-		//TODO pre-cache this
+	public static List<String[]> getCSV(CrawledItem ci, BrowseTaskType btt) {
+		String id = ci.getId().getId();
+		List<String[]> csvList = new ArrayList<String[]>();
 		List<String> outParamList = new ArrayList<String>();
 		for (ParamType pt:btt.getParam()){
 			if ("out".equals(pt.getDirection())){
 				outParamList.add(pt.getName());
 			}
 		}
+		
+		int i=0;
+		int size=0;
+		List<String> nonListKeys = new ArrayList<String>();
+		StringBuffer sb = new StringBuffer();
+		for (String key:ci.getParamMap().keySet()){
+			Object value = ci.getParam(key);
+			if (value instanceof List){
+				if (btt.isDsmHeader()){
+					if (i>0){
+						sb.append(",");
+					}
+					sb.append(key);
+				}
+				if (size==0){//take 1st list's size
+					size = ((List)value).size();
+				}
+				i++;
+			}else if (outParamList.contains(key)){
+				if (btt.isDsmHeader()){
+					if (i>0){
+						sb.append(",");
+					}
+					sb.append(key);
+				}
+				i++;
+				nonListKeys.add(key);
+			}else{
+				nonListKeys.add(key);
+				logger.warn("all param type should be list. skip:" + key + ":" + value);
+			}
+		}
+		logger.info("size:" + size);
+		if (btt.isDsmHeader()){
+			csvList.add(new String[]{id, sb.toString()});
+		}
+		for (i=0; i<size; i++){
+			sb = new StringBuffer();
+			int j=0;
+			for (String key:ci.getParamMap().keySet()){
+				if (!nonListKeys.contains(key)){
+					List value = (List) ci.getParam(key);
+					if (j>0){
+						sb.append(",");
+					}
+					String v = (String) value.get(i);
+					sb.append(v.trim());
+					j++;
+				}else if (outParamList.contains(key)){
+					String v = (String) ci.getParam(key);
+					if (j>0){
+						sb.append(",");
+					}
+					sb.append(v);
+					j++;
+				}
+			}
+			sb.append("\n");
+			csvList.add(new String[]{id, sb.toString()});
+		}
+		return csvList;
+	}
+	
+	@Override
+	public boolean addCrawledItem(CrawledItem ci, CrawledItem oldCi, BrowseTaskType btt) {
+		//TODO pre-cache this
 		String fileName = ci.getId().getId(); //as file name
 		fileName = fileName.replaceAll("[^a-zA-Z0-9]", "_");
 		String outF = rootDir + "/" + ci.getId().getStoreId() + "/" + fileName;
@@ -58,63 +123,8 @@ public class HdfsDataStoreManagerImpl implements DataStoreManager {
 		try {
 			FileSystem fs = FileSystem.get(hadoopConfig);
 			osw = new BufferedWriter(new OutputStreamWriter(fs.create(op,true), "GBK"));
-			int i=0;
-			int size=0;
-			List<String> nonListKeys = new ArrayList<String>();
-			for (String key:ci.getParamMap().keySet()){
-				Object value = ci.getParam(key);
-				if (value instanceof List){
-					if (btt.isDsmHeader()){
-						if (i>0){
-							osw.write(",");
-						}
-						osw.write(key);
-					}
-					if (size==0){//take 1st list's size
-						size = ((List)value).size();
-					}
-					i++;
-				}else if (outParamList.contains(key)){
-					if (btt.isDsmHeader()){
-						if (i>0){
-							osw.write(",");
-						}
-						osw.write(key);
-					}
-					i++;
-					nonListKeys.add(key);
-				}else{
-					nonListKeys.add(key);
-					logger.warn("all param type should be list. skip:" + key + ":" + value);
-				}
-			}
-			logger.info("size:" + size);
-			if (btt.isDsmHeader()){
-				osw.write("\n");
-			}
-			for (i=0; i<size; i++){
-				StringBuffer sb = new StringBuffer();
-				int j=0;
-				for (String key:ci.getParamMap().keySet()){
-					if (!nonListKeys.contains(key)){
-						List value = (List) ci.getParam(key);
-						if (j>0){
-							sb.append(",");
-						}
-						String v = (String) value.get(i);
-						sb.append(v.trim());
-						j++;
-					}else if (outParamList.contains(key)){
-						String v = (String) ci.getParam(key);
-						if (j>0){
-							sb.append(",");
-						}
-						sb.append(v);
-						j++;
-					}
-				}
-				sb.append("\n");
-				osw.write(sb.toString());
+			for (String[] v:ci.getCsvValue()){
+				osw.write(v[1]);//write out value only
 			}
 		}catch(Exception e){
 			logger.error("", e);

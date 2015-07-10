@@ -5,7 +5,7 @@
 	productType="default">
 	<!-- all financial reports -->
 	<PrdTask>
-		<baseBrowseTask cachePage="BalanceSheet_[stockid]" 
+		<baseBrowseTask cachePage="BalanceSheet/[stockid]" 
 		startUrl="http://money.finance.sina.com.cn/corp/go.php/vDOWN_BalanceSheet/displaytype/4/stockid/[stockid]/ctrl/all.phtml" 
 		enableJS="true" 
 		taskName="all-balancesheet">
@@ -18,7 +18,7 @@
 		</baseBrowseTask>
 	</PrdTask>
 	<PrdTask>
-		<baseBrowseTask cachePage="ProfitStatement_[stockid]" 
+		<baseBrowseTask cachePage="ProfitStatement/[stockid]" 
 		startUrl="http://money.finance.sina.com.cn/corp/go.php/vDOWN_ProfitStatement/displaytype/4/stockid/[stockid]/ctrl/all.phtml" 
 		enableJS="true" 
 		taskName="all-profitstatement">
@@ -31,7 +31,7 @@
 		</baseBrowseTask>
 	</PrdTask>
 	<PrdTask>
-		<baseBrowseTask cachePage="CashFlow_[stockid]" 
+		<baseBrowseTask cachePage="CashFlow/[stockid]" 
 		startUrl="http://money.finance.sina.com.cn/corp/go.php/vDOWN_CashFlow/displaytype/4/stockid/[stockid]/ctrl/all.phtml" 
 		enableJS="true" 
 		taskName="all-cashflow">

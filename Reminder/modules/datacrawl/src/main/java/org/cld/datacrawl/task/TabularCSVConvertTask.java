@@ -1,4 +1,4 @@
-package org.cld.stock.load;
+package org.cld.datacrawl.task;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -19,10 +19,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.stock.sina.StockConfig;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.cld.taskmgr.hadoop.HadoopTaskUtil;
+import org.etl.csv.TabularCSVConverter;
 
 @Entity
 @DiscriminatorValue("org.cld.stock.load.TabularCSVConvertTask")
@@ -37,8 +37,10 @@ public class TabularCSVConvertTask extends Task implements Serializable{
 	public static String encoding="GBK";
 	private boolean needHeader = false;
 	
-	private String stockId;
+	private String tableId;
+
 	private String inputFolder;
+	private String outputFolder;
 	//need to generate getter and setter for task serialization, if not this will be null
 	public String getInputFolder() {
 		return inputFolder;
@@ -50,32 +52,33 @@ public class TabularCSVConvertTask extends Task implements Serializable{
 
 	private CrawlConf cconf;
 
-	public String getStockId() {
-		return stockId;
+	public String getTableId() {
+		return tableId;
 	}
 
-	public void setStockId(String stockId) {
-		this.stockId = stockId;
+	public void setTableId(String tableId) {
+		this.tableId = tableId;
 	}
 
 	public TabularCSVConvertTask(){	
 	}
 	
-	public TabularCSVConvertTask(String stockId, String inputFolder){
-		this.stockId = stockId;
+	public TabularCSVConvertTask(String tableId, String inputFolder, String outputFolder){
+		this.tableId = tableId;
 		this.inputFolder = inputFolder;
+		this.outputFolder = outputFolder;
 		genId();
 	}
 	
-	public TabularCSVConvertTask(String stockId, boolean needHeader){
-		this.stockId = stockId;
+	public TabularCSVConvertTask(String tableId, boolean needHeader){
+		this.tableId = tableId;
 		this.needHeader = needHeader;
 		genId();
 	}
 	
 	@Override
 	public String genId(){
-		String inputId = stockId + "-" + sdf.format(new Date());
+		String inputId = tableId + "-" + sdf.format(new Date());
 		inputId = inputId.replace(":", "-");
 		inputId = inputId.replace("/", "-");
 		inputId = inputId.replace(".", "-");
@@ -88,19 +91,19 @@ public class TabularCSVConvertTask extends Task implements Serializable{
 		try{
 			cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
 			FileSystem fs = FileSystem.get(HadoopTaskUtil.getHadoopConf(cconf.getNodeConf()));
-			logger.info("process convert task: " + stockId);
+			logger.info("process convert task: " + tableId);
 			String inF = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + inputFolder + "/";
-			for (String prefix:StockConfig.subFR){
-				String ifname = inF + prefix + "_" + stockId;
-				String ofname = inF + prefix + "/" + stockId;
-				Path ip = new Path(ifname);
-				BufferedReader isr= new BufferedReader(new InputStreamReader(fs.open(ip), encoding));
-				Path op = new Path(ofname);
-				BufferedWriter osw = new BufferedWriter(new OutputStreamWriter(fs.create(op,true), encoding));
-				TabularCSVConverter.convert(stockId, isr, osw, needHeader);
-				isr.close();
-				osw.close();
-			}
+			String outF = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + outputFolder + "/";
+			String ifname = inF + tableId;
+			String ofname = outF + tableId;
+			Path ip = new Path(ifname);
+			BufferedReader isr= new BufferedReader(new InputStreamReader(fs.open(ip), encoding));
+			Path op = new Path(ofname);
+			BufferedWriter osw = new BufferedWriter(new OutputStreamWriter(fs.create(op,true), encoding));
+			TabularCSVConverter.convert(tableId, isr, osw, needHeader);
+			isr.close();
+			osw.close();
+			
 		}catch(Exception e){
 			logger.error("", e);
 		}

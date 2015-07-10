@@ -13,7 +13,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.mgr.ICategoryAnalyze;
 import org.cld.datastore.entity.Category;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
@@ -95,8 +94,7 @@ public class BrowseCategoryTaskConf extends Task implements Serializable{
 		if (taskTemplate!=null){
 			//1. after marshal/un-marshal, re-setup
 			this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
-			ICategoryAnalyze ca= cconf.getCa();
-			return ca.navigateCategory(this, ts, cconf);
+			return cconf.getCa().navigateCategory(this, ts, cconf);
 		}else{
 			logger.error("task is null for:" + getName());
 		}

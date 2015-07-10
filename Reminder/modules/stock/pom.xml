@@ -37,6 +37,11 @@
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
+			<groupId>org.cld.etl</groupId>
+			<artifactId>cld-etl</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
 			<groupId>org.apache.hbase</groupId>
 			<artifactId>hbase-client</artifactId>
 		</dependency>

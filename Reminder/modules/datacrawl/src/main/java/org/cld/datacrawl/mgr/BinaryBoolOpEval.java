@@ -1,4 +1,4 @@
-package org.cld.datacrawl.mgr.impl;
+package org.cld.datacrawl.mgr;
 
 import java.util.HashMap;
 import java.util.Map;

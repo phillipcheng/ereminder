@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.mgr.impl.CrawlTaskEval;
+import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.util.PatternResult;
 import org.xml.taskdef.AttributeType;
 import org.xml.taskdef.ClickType;

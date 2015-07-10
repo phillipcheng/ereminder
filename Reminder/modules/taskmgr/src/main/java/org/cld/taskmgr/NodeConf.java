@@ -170,28 +170,6 @@ public class NodeConf implements Serializable, FileAlterationListener{
 		
 	}
 	
-	private void monitorConfChange(){
-		String dir = masterConf.getBasePath();
-		File directory = null;
-		try {
-			directory = new File(new URI(dir));
-		} catch (URISyntaxException e1) {
-			logger.error("uriexception.",e1);
-		}
-		propDir = directory.getParent();
-		FileAlterationObserver observer = new FileAlterationObserver(directory.getParent(), 
-				FileFilterUtils.nameFileFilter(this.confFile));
-		logger.info("adding observer to directory:" + observer.getDirectory());
-		observer.addListener(this);
-		FileAlterationMonitor monitor = new FileAlterationMonitor(CONF_WATCH_PERIOD);
-		monitor.addObserver(observer);
-		try {
-			monitor.start();
-		} catch (Exception e) {
-			logger.error("monitor start exception.", e);
-		}
-	}
-	
 	public NodeConf(String conf){
 		//
 		this.confFile = conf;

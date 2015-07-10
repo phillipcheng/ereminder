@@ -1,9 +1,9 @@
 package org.cld.datacrawl.test;
 
-import org.cld.datacrawl.mgr.ICategoryAnalyze;
-import org.cld.datacrawl.mgr.IListAnalyze;
-import org.cld.datacrawl.mgr.IProductAnalyze;
+import org.cld.datacrawl.mgr.CategoryAnalyze;
+import org.cld.datacrawl.mgr.ListAnalyze;
 import org.cld.datacrawl.mgr.ListProcessInf;
+import org.cld.datacrawl.mgr.ProductAnalyze;
 import org.cld.datacrawl.task.BrowseCategoryTaskConf;
 import org.cld.datacrawl.task.BrowseDetailTaskConf;
 import org.cld.datacrawl.task.BrsCatStat;
@@ -18,10 +18,10 @@ public class SiteRuntime {
 	private BrowseDetailTaskConf bdt;
 	
 	
-	ICategoryAnalyze ca;
-	IListAnalyze la;
+	CategoryAnalyze ca;
+	ListAnalyze la;
 	ListProcessInf originalLP;
-	IProductAnalyze pa;
+	ProductAnalyze pa;
 	ParsedTasksDef siteDef;
 	
 	public ParsedTasksDef getSiteDef(){

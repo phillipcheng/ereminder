@@ -1,4 +1,4 @@
-package org.cld.datacrawl.mgr.impl;
+package org.cld.datacrawl.mgr;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,9 +17,6 @@ import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.NextPage;
 import org.cld.datastore.entity.Category;
-import org.cld.datacrawl.mgr.IListAnalyze;
-import org.cld.datacrawl.mgr.ListProcessInf;
-import org.cld.datacrawl.mgr.VerifyPageProductList;
 import org.cld.datacrawl.task.BrsDetailStat;
 import org.cld.datacrawl.util.HtmlPageResult;
 import org.cld.datacrawl.util.HtmlUnitUtil;
@@ -33,7 +30,7 @@ import org.xml.mytaskdef.ParsedTasksDef;
 import org.xml.taskdef.BinaryBoolOp;
 
 
-public class ListAnalyze implements IListAnalyze {
+public class ListAnalyze {
 	
 	private static Logger logger =  LogManager.getLogger(ListAnalyze.class);	
 	public static int NUM_WRONG_LIST_URL = 10;//the max # of error list pages got to browse the list page for a category
@@ -51,7 +48,6 @@ public class ListAnalyze implements IListAnalyze {
 	public ListAnalyze(){
 	}
 	
-	@Override
 	public void setup(CrawlConf cconf, ListProcessInf lpInf){
 		this.cconf = cconf;
 		this.lpInf = lpInf;
@@ -117,7 +113,6 @@ public class ListAnalyze implements IListAnalyze {
 	 * @param toPage: -1 means to tail
 	 * @param read till either maxPages or maxItems reached, if both -1, means browse all
 	 */
-	@Override
 	public List<Task> readTopLink(Category category, int fromPage, int toPage, Task task, 
 			int maxPages, int maxItems) 
 			throws InterruptedException, SomePageErrorException {
@@ -204,12 +199,10 @@ public class ListAnalyze implements IListAnalyze {
 		return tl;
 	}
 	
-	@Override
 	public ListProcessInf getLpInf() {
 		return lpInf;
 	}
-	
-	@Override
+
 	public void setLpInf(ListProcessInf lpInf) {
 		this.lpInf = lpInf;
 	}

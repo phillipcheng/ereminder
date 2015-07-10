@@ -18,10 +18,10 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.mgr.IProductAnalyze;
-import org.cld.datacrawl.mgr.IProductListAnalyze;
-import org.cld.datacrawl.mgr.ICategoryAnalyze;
-import org.cld.datacrawl.mgr.IListAnalyze;
+import org.cld.datacrawl.mgr.CategoryAnalyze;
+import org.cld.datacrawl.mgr.ListAnalyze;
+import org.cld.datacrawl.mgr.ProductAnalyze;
+import org.cld.datacrawl.mgr.ProductListAnalyze;
 import org.cld.datastore.DBConf;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.Product;
@@ -81,16 +81,10 @@ public class CrawlConf implements AppConf, Serializable {
 	private String[] pluginDir;
 	private String[] pluginJar;
 	
-	private String productAnalyzeImpl = "org.cld.datacrawl.mgr.impl.ProductAnalyze";
-	private String categoryAnalyzeImpl = "org.cld.datacrawl.mgr.impl.CategoryAnalyze";
-	private String productListAnalyzeImpl = "org.cld.datacrawl.mgr.impl.ProductListAnalyze";
-	private String listAnalyzeImpl = "org.cld.datacrawl.mgr.impl.ListAnalyze";
-	private String promotionAnalyzeImpl = "org.cld.datacrawl.mgr.impl.PromotionAnalyze";
-	
-	private ICategoryAnalyze ca;
-	private IListAnalyze la;
-	private IProductAnalyze pa;
-	private IProductListAnalyze pla;
+	private CategoryAnalyze ca = new CategoryAnalyze();
+	private ListAnalyze la = new ListAnalyze();
+	private ProductAnalyze pa = new ProductAnalyze();
+	private ProductListAnalyze pla = new ProductListAnalyze();
 	
 	private List<String> crawlDsManagerValue = new ArrayList<String>();
 	private String crawlDBConnectionUrl;
@@ -147,33 +141,6 @@ public class CrawlConf implements AppConf, Serializable {
 		loadSystemPrdDef();
 	}
 	
-	//fill CTConf with newly created sub-instances
-	private void reloadCTConf(){
-		try {			
-			//reload ICategoryAnalyze
-			Class<?> caClass= Class.forName(this.getCategoryAnalyzeImpl(), true, pluginClassLoader);
-			setCa((ICategoryAnalyze) caClass.newInstance());
-			
-			
-			//reload IProductListAnalyze
-			Class<?> plaClass = Class.forName(this.getProductListAnalyzeImpl(), true, pluginClassLoader);
-			setPla((IProductListAnalyze) plaClass.newInstance());
-			
-			
-			//reload IListAnalyze
-			Class<?> laClass = Class.forName(this.getListAnalyzeImpl(), true, pluginClassLoader);
-			setLa((IListAnalyze) laClass.newInstance());
-			la.setup(this, pla);
-			
-			//reload IProductAnalyze
-			Class<?> prdSysClazz = Class.forName(this.getProductAnalyzeImpl(), true, pluginClassLoader);
-			setPa((IProductAnalyze)  prdSysClazz.newInstance());
-			
-		}catch (Exception e) {
-			logger.error("", e);
-		} 
-	}
-	
 	//TODO
 	//current implementation is wrong, i should first read in new conf
 	//then compare with current conf to delete, update or add, instead of
@@ -194,8 +161,7 @@ public class CrawlConf implements AppConf, Serializable {
 			pluginClassLoader = new URLClassLoader(pluginurls);
 		}
 		
-		//reload ctconf
-		this.reloadCTConf();
+		la.setup(this, pla);
 		
 		//reload ProductConf
 		Iterator<String> its = this.prdConfMap.keySet().iterator();
@@ -421,36 +387,6 @@ public class CrawlConf implements AppConf, Serializable {
 		}
 	}
 	
-	public String getProductAnalyzeImpl() {
-		return productAnalyzeImpl;
-	}
-	public void setProductAnalyzeImpl(String productAnalyzeImpl) {
-		this.productAnalyzeImpl = productAnalyzeImpl;
-	}
-	public String getCategoryAnalyzeImpl() {
-		return categoryAnalyzeImpl;
-	}
-	public void setCategoryAnalyzeImpl(String categoryAnalyzeImpl) {
-		this.categoryAnalyzeImpl = categoryAnalyzeImpl;
-	}
-	public String getProductListAnalyzeImpl() {
-		return productListAnalyzeImpl;
-	}
-	public void setProductListAnalyzeImpl(String productListAnalyzeImpl) {
-		this.productListAnalyzeImpl = productListAnalyzeImpl;
-	}
-	public String getListAnalyzeImpl() {
-		return listAnalyzeImpl;
-	}
-	public void setListAnalyzeImpl(String listAnalyzeImpl) {
-		this.listAnalyzeImpl = listAnalyzeImpl;
-	}
-	public String getPromotionAnalyzeImpl() {
-		return promotionAnalyzeImpl;
-	}
-	public void setPromotionAnalyzeImpl(String promotionAnalyzeImpl) {
-		this.promotionAnalyzeImpl = promotionAnalyzeImpl;
-	}
 	public int getTimeout() {
 		return timeout;
 	}
@@ -576,35 +512,35 @@ public class CrawlConf implements AppConf, Serializable {
 		return nodeConf.isCancelable();
 	}
 
-	public ICategoryAnalyze getCa() {
+	public CategoryAnalyze getCa() {
 		return ca;
 	}
 
-	public void setCa(ICategoryAnalyze ca) {
+	public void setCa(CategoryAnalyze ca) {
 		this.ca = ca;
 	}
 
-	public IListAnalyze getLa() {
+	public ListAnalyze getLa() {
 		return la;
 	}
 
-	public void setLa(IListAnalyze la) {
+	public void setLa(ListAnalyze la) {
 		this.la = la;
 	}
 
-	public IProductAnalyze getPa() {
+	public ProductAnalyze getPa() {
 		return pa;
 	}
 
-	public void setPa(IProductAnalyze pa) {
+	public void setPa(ProductAnalyze pa) {
 		this.pa = pa;
 	}
 
-	public IProductListAnalyze getPla() {
+	public ProductListAnalyze getPla() {
 		return pla;
 	}
 
-	public void setPla(IProductListAnalyze pla) {
+	public void setPla(ProductListAnalyze pla) {
 		this.pla = pla;
 	}
 }

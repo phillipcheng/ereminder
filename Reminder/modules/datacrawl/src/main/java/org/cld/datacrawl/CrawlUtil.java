@@ -126,18 +126,24 @@ public class CrawlUtil {
 		}
 	}	
 	
-	public static void hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, String sourceName){
+	public static void hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, 
+			String sourceName, String hdfsOutputDir){
 		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();
 		hadoopCrawlTaskParams.put(CRAWL_PROPERTIES, crawlPropertyFile);
 		if (sourceName==null){
-			HadoopTaskUtil.executeTasks(cconf.getNodeConf(), tlist, hadoopCrawlTaskParams);
+			HadoopTaskUtil.executeTasks(cconf.getNodeConf(), tlist, hadoopCrawlTaskParams, hdfsOutputDir);
 		}else{
-			HadoopTaskUtil.executeTasks(cconf.getNodeConf(), tlist, hadoopCrawlTaskParams, sourceName);
+			HadoopTaskUtil.executeTasks(cconf.getNodeConf(), tlist, hadoopCrawlTaskParams, sourceName, hdfsOutputDir);
 		}
 	}
 	
+	public static void hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, 
+			String hdfsOutputDir){
+		hadoopExecuteCrawlTasks(crawlPropertyFile, cconf, tlist, null, hdfsOutputDir);
+	}
+	
 	public static void hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist){
-		hadoopExecuteCrawlTasks(crawlPropertyFile, cconf, tlist, null);
+		hadoopExecuteCrawlTasks(crawlPropertyFile, cconf, tlist, null, null);
 	}
 	
 	public static void downloadPage(CrawlConf cconf, String url, String fileName, String fileSaveDir){

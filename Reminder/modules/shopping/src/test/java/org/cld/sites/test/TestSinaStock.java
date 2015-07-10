@@ -8,18 +8,17 @@ import java.util.Map;
 
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlUtil;
+import org.cld.datacrawl.task.TabularCSVConvertTask;
 import org.cld.datacrawl.task.TestTaskConf;
 import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
 import org.cld.datacrawl.test.TestBase;
 import org.cld.datastore.entity.CrawledItem;
-import org.cld.stock.load.HBaseToCSVMapperLauncher;
-import org.cld.stock.load.ReformatMapredLauncher;
-import org.cld.stock.load.TabularCSVConvertTask;
 import org.cld.stock.sina.ETLUtil;
 import org.cld.stock.sina.StockConfig;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.DateTimeUtil;
-import org.json.JSONArray;
+import org.etl.csv.CsvReformatMapredLauncher;
+import org.etl.fci.HBaseToCSVMapperLauncher;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -29,13 +28,13 @@ public class TestSinaStock extends TestBase{
 		super();
 	}
 	
-	public TestSinaStock(String propFile){
+	public void setUp(String propFile){
 		super.setProp(propFile);
 		this.propFile = propFile;
 		this.itemsFolder = this.cconf.getTaskMgr().getHadoopCrawledItemFolder();
 	}
 	
-	private String propFile = "client1-v2-cluster.properties";
+	private String propFile = "client1-v2.properties";
 	private String itemsFolder;
 	
 	@Before
@@ -57,12 +56,12 @@ public class TestSinaStock extends TestBase{
 	public void run_browse_fr_history() throws Exception {
 		CrawledItem ci = cconf.getDsm("hbase").getCrawledItem("hs_a", StockConfig.SINA_STOCK_IDS, null);
 		ci.fromParamData();
-		JSONArray jsarry = (JSONArray) ci.getParam("ids");
+		List<String> ids = (List<String>) ci.getParam("ids");
 		List<Task> tlist = new ArrayList<Task>();
-		for (int i=0; i<jsarry.length(); i++){
+		for (int i=0; i<ids.size(); i++){
 			TestTaskConf ttc = new TestTaskConf(false, browse_type.bpt, StockConfig.SINA_STOCK_FR_HISTORY, 
 					StockConfig.SINA_STOCK_FR_HISTORY + ".xml");
-			String sid = jsarry.getString(i);
+			String sid = ids.get(i);
 			String stockid = sid.substring(2);
 			ttc.putParam("stockid", stockid);
 			tlist.add(ttc);
@@ -74,13 +73,17 @@ public class TestSinaStock extends TestBase{
 	public void run_convert_fr_history_tabular_to_csv() throws Exception {
 		CrawledItem ci = cconf.getDsm("hbase").getCrawledItem("hs_a", StockConfig.SINA_STOCK_IDS, null);
 		ci.fromParamData();
-		JSONArray jsarry = (JSONArray) ci.getParam("ids");
+		List<String> ids = (List<String>) ci.getParam("ids");
 		List<Task> tlist = new ArrayList<Task>();
-		for (int i=0; i<jsarry.length(); i++){
-			String sid = jsarry.getString(i);
+		for (int i=0; i<ids.size(); i++){
+			String sid = ids.get(i);
 			String stockid = sid.substring(2);
-			TabularCSVConvertTask ct = new TabularCSVConvertTask(stockid, StockConfig.SINA_STOCK_FR_HISTORY);
-			tlist.add(ct);
+			for (String subFR: StockConfig.subFR){
+				TabularCSVConvertTask ct = new TabularCSVConvertTask(stockid, 
+						StockConfig.SINA_STOCK_FR_HISTORY + "/" + subFR, 
+						StockConfig.SINA_STOCK_FR_HISTORY_OUT+ "/" + subFR);
+				tlist.add(ct);
+			}
 		}
 		CrawlUtil.hadoopExecuteCrawlTasks(this.getPropFile(), cconf, tlist);
 	}
@@ -88,65 +91,56 @@ public class TestSinaStock extends TestBase{
 	@Test
 	public void run_fr_reformat() throws Exception{
 		for (String subFR: StockConfig.subFR){
-			ReformatMapredLauncher.format(this.getPropFile(), itemsFolder + "/" + StockConfig.SINA_STOCK_FR_HISTORY + "/" + subFR, 1, 
-				itemsFolder  + "/" + StockConfig.SINA_STOCK_FR_HISTORY + "-out"+ "/" + subFR);
+			CsvReformatMapredLauncher.format(this.getPropFile(), itemsFolder + "/" + StockConfig.SINA_STOCK_FR_HISTORY + "/" + subFR, 1, 
+				itemsFolder  + "/" + StockConfig.SINA_STOCK_FR_HISTORY_OUT+ "/" + subFR);
 		}
 	}
 	public void run_browse_fr_quarter(int year, int quarter){
 		CrawledItem ci = cconf.getDsm("hbase").getCrawledItem("hs_a", StockConfig.SINA_STOCK_IDS, null);
 		ci.fromParamData();
-		JSONArray jsarry = (JSONArray) ci.getParam("ids");
-		List<Task> tlist = new ArrayList<Task>();
-		for (int i=0; i<jsarry.length(); i++){
-			String sid = jsarry.getString(i);
-			String stockid = sid.substring(2);
-			Map<String, Object> paramMap = new HashMap<String, Object>();
-			paramMap.put("stockid", stockid);
-			paramMap.put("year", year);
-			paramMap.put("quarter", quarter);
-			for (String subFR:StockConfig.subFR){
-				TestTaskConf ttc = new TestTaskConf(false, browse_type.bpt, 
-						StockConfig.SINA_STOCK_FR_QUARTER + "-" + subFR, 
-						StockConfig.SINA_STOCK_FR_QUARTER + "-" + subFR + ".xml");
-				ttc.putAllParams(paramMap);
-				tlist.add(ttc);
+		List<String> jsarry = (List<String>) ci.getParam("ids");
+		
+		for (String subFR:StockConfig.subFR){
+			List<Task> tlist = new ArrayList<Task>();
+			for (int i=0; i<jsarry.size(); i++){
+				String sid = jsarry.get(i);
+				String stockid = sid.substring(2);
+				Map<String, Object> paramMap = new HashMap<String, Object>();
+				paramMap.put("stockid", stockid);
+				paramMap.put("year", year);
+				paramMap.put("quarter", quarter);
+				
+				String confFileName = StockConfig.SINA_STOCK_FR_QUARTER + "-" + subFR + ".xml";
+				List<Task> tl = new ArrayList<Task>();
+				if (confFileName!=null){
+					tl = cconf.setUpSite(confFileName, null);
+				}
+				Task t = tl.get(0);
+				t.putAllParams(paramMap);
+				tlist.add(t);
 			}
-			
+			CrawlUtil.hadoopExecuteCrawlTasks(this.getPropFile(), cconf, tlist, 
+					StockConfig.SINA_STOCK_FR_QUARTER + "-" + subFR + "/" + year + "_" + quarter);
 		}
-		CrawlUtil.hadoopExecuteCrawlTasks(this.getPropFile(), cconf, tlist);
 	}
 	//crawl finance report for specific quarter(s)
 	@Test
 	public void run_browse_fr_quarter() throws Exception {
 		int year = 2015;
-		int quarter = 2;
+		int quarter = 1;
 		run_browse_fr_quarter(year, quarter);
 	}
-	//convert finance-report-quarter to hdfs/hive
-	public void run_fr_quarter_to_csv(int year, int quarter) {
-		String idFilter = "([0-9]+)_"+year+"_"+quarter;
-		for (String subFR:StockConfig.subFR){
-			String output = itemsFolder + "/" + StockConfig.SINA_STOCK_FR_QUARTER + "-" + subFR +"/"+year+"_"+quarter;
-			HBaseToCSVMapperLauncher.genCSVFromHbase(this.getPropFile(), output, 
-				StockConfig.SINA_STOCK_FR_QUARTER + "-" + subFR, idFilter, "org.cld.stock.sina.FinanceReportToCSV");
-		}
-	}
-	@Test
-	public void run_fr_quarter_to_csv() throws Exception{
-		int year=2014;
-		int quarter = 2;
-		run_fr_quarter_to_csv(year, quarter);
-	}
-	//crawl corp info to hbase
+	
+	//crawl corp info to hbase, we need this
 	@Test
 	public void run_browse_corp_info() throws Exception {
 		CrawledItem ci = cconf.getDsm("hbase").getCrawledItem("hs_a", StockConfig.SINA_STOCK_IDS, null);
 		ci.fromParamData();
-		JSONArray jsarry = (JSONArray) ci.getParam("ids");
+		List<String> ids = (List<String>) ci.getParam("ids");
 		List<Task> tlist = new ArrayList<Task>();
-		for (int i=0; i<jsarry.length(); i++){
+		for (int i=0; i<ids.size(); i++){
 			TestTaskConf ttc = new TestTaskConf(false, browse_type.bpt, StockConfig.SINA_STOCK_CORP_INFO, StockConfig.SINA_STOCK_CORP_INFO + ".xml");
-			String sid = jsarry.getString(i);
+			String sid = ids.get(i);
 			String stockid = sid.substring(2);
 			ttc.putParam("stockid", stockid);
 			tlist.add(ttc);
@@ -177,10 +171,10 @@ public class TestSinaStock extends TestBase{
 	public void run_browse_market_quarter(int year, int quarter){
 		CrawledItem ci = cconf.getDsm("hbase").getCrawledItem("hs_a", StockConfig.SINA_STOCK_IDS, null);
 		ci.fromParamData();
-		JSONArray jsarry = (JSONArray) ci.getParam("ids");
+		List<String> ids = (List<String>) ci.getParam("ids");
 		List<Task> tlist = new ArrayList<Task>();
-		for (int i=0; i<jsarry.length(); i++){
-			String sid = jsarry.getString(i);
+		for (int i=0; i<ids.size(); i++){
+			String sid = ids.get(i);
 			String stockid = sid.substring(2);
 			TestTaskConf ttc = new TestTaskConf(false, browse_type.bpt, 
 					StockConfig.SINA_STOCK_MARKET_HISTORY, StockConfig.SINA_STOCK_MARKET_HISTORY+".xml");
@@ -255,7 +249,6 @@ public class TestSinaStock extends TestBase{
 	public static final String browse_market_quarter = "brs-mkt-qut";
 	public static final String merge_market_quarter = "mrg-mkt-qut";
 	public static final String browse_fr_quarter = "brs-fr-qut";
-	public static final String fr_csv_quarter = "fr-csv-qut";
 	
 	public static void main(String[] args) throws Exception {
 		int year = 2015;
@@ -265,7 +258,8 @@ public class TestSinaStock extends TestBase{
 		if (args.length>=1){
 			propFile = args[0];
 		}
-		TestSinaStock tss = new TestSinaStock(propFile);
+		TestSinaStock tss = new TestSinaStock();
+		tss.setProp(propFile);
 		
 		if (args.length>=2){
 			cmd = args[1];
@@ -286,8 +280,6 @@ public class TestSinaStock extends TestBase{
 			tss.run_merge_market_history_quarter(year, quarter);
 		}else if (browse_fr_quarter.equals(cmd)){
 			tss.run_browse_fr_quarter(year, quarter);
-		}else if (fr_csv_quarter.equals(cmd)){
-			tss.run_fr_quarter_to_csv(year, quarter);
 		}
 	}
 }
