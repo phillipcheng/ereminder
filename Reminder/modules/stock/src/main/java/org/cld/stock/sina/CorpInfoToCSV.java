@@ -18,13 +18,13 @@ public class CorpInfoToCSV implements ICrawlItemToCSV{
 	@Override
 	public List<String[]> getCSV(CrawledItem ci) {
 		String stockid = (String) ci.getParam(FIELD_NAME_STOCKID);
-		JSONArray ls = (JSONArray)ci.getParam(FIELD_NAME_ATTR);
+		List<String> ls = (List<String>)ci.getParam(FIELD_NAME_ATTR);
 		StringBuffer sb = new StringBuffer();
 		try{
-			for (int i=1; i<ls.length(); i+=2){
+			for (int i=1; i<ls.size(); i+=2){
 				if (i>1) //skip first comma
 					sb.append(",");
-				String str = ls.getString(i);
+				String str = ls.get(i);
 				str = str.replace(",", "\\,");
 				str = str.replaceAll("\\r\\n|\\r|\\n", " ");
 				sb.append(str);

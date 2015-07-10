@@ -34,7 +34,7 @@ public class TestSinaStock extends TestBase{
 		this.itemsFolder = this.cconf.getTaskMgr().getHadoopCrawledItemFolder();
 	}
 	
-	private String propFile = "client1-v2.properties";
+	private String propFile = "client1-v2-cluster.properties";
 	private String itemsFolder;
 	
 	@Before
@@ -91,8 +91,10 @@ public class TestSinaStock extends TestBase{
 	@Test
 	public void run_fr_reformat() throws Exception{
 		for (String subFR: StockConfig.subFR){
-			CsvReformatMapredLauncher.format(this.getPropFile(), itemsFolder + "/" + StockConfig.SINA_STOCK_FR_HISTORY + "/" + subFR, 1, 
-				itemsFolder  + "/" + StockConfig.SINA_STOCK_FR_HISTORY_OUT+ "/" + subFR);
+			CsvReformatMapredLauncher.format(this.getPropFile(), 
+					itemsFolder + "/" + StockConfig.SINA_STOCK_FR_HISTORY_OUT + "/" + subFR, 
+					1, 
+					itemsFolder  + "/" + StockConfig.SINA_STOCK_FR_HISTORY_QUARTER_OUT + "/" + subFR);
 		}
 	}
 	public void run_browse_fr_quarter(int year, int quarter){
@@ -151,8 +153,11 @@ public class TestSinaStock extends TestBase{
 	//convert corp info to hdfs/hive
 	@Test
 	public void run_corp_info_to_csv() throws Exception{
-		HBaseToCSVMapperLauncher.genCSVFromHbase(this.getPropFile(), itemsFolder + "/" + StockConfig.SINA_STOCK_CORP_INFO, 
-				StockConfig.SINA_STOCK_CORP_INFO, null, "org.cld.stock.sina.CorpInfoToCSV");
+		HBaseToCSVMapperLauncher.genCSVFromHbase(this.getPropFile(), 
+				itemsFolder + "/" + StockConfig.SINA_STOCK_CORP_INFO, 
+				StockConfig.SINA_STOCK_CORP_INFO, 
+				null, 
+				"org.cld.stock.sina.CorpInfoToCSV");
 	}
 	
 	//crawl market history to hdfs/hive

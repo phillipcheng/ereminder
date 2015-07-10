@@ -35,11 +35,13 @@ public class HBaseToCSVMapperLauncher {
 		try{
 			NodeConf nc = TaskUtil.getNodeConf(prop);
 			TaskMgr tm = new TaskMgr();
-			tm.loadConf(prop, null, null);
+			tm.loadConf(prop, tm.getClass().getClassLoader(), null);
+			nc.setTaskMgr(tm);
 			Configuration conf = HadoopTaskUtil.getHadoopConf(nc);
 			conf.set(TableInputFormat.INPUT_TABLE, INPUT_TABLE_NAME);
 			conf.set(STOREID_FILTER, storeId);
-			conf.set(ID_FILTER, idFilter);
+			if (idFilter!=null)
+				conf.set(ID_FILTER, idFilter);
 			conf.set(ToCSVClass, toCSVClazz);
 			Scan scan = new Scan();
 			scan.addColumn(HbaseDataStoreManagerImpl.CRAWLEDITEM_CF_BYTES, HbaseDataStoreManagerImpl.CRAWLEDITEM_DATA_BYTES);

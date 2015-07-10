@@ -209,7 +209,7 @@ public class TaskMgr {
 				params = new HashMap<String, Object>();
 			}
 			
-			properties = new PropertiesConfiguration(this.masterConfFile);
+			properties = new PropertiesConfiguration(propFile);
 			
 			Iterator<String> enu = properties.getKeys();
 			

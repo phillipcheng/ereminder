@@ -38,27 +38,33 @@ public class TabularCSVConvertTask extends Task implements Serializable{
 	private boolean needHeader = false;
 	
 	private String tableId;
-
 	private String inputFolder;
 	private String outputFolder;
-	//need to generate getter and setter for task serialization, if not this will be null
-	public String getInputFolder() {
-		return inputFolder;
-	}
-
-	public void setInputFolder(String inputFolder) {
-		this.inputFolder = inputFolder;
-	}
+	
 
 	private CrawlConf cconf;
 
+	//need to generate getter and setter for task serialization, if not this will be null
 	public String getTableId() {
 		return tableId;
 	}
-
 	public void setTableId(String tableId) {
 		this.tableId = tableId;
 	}
+	public String getInputFolder() {
+		return inputFolder;
+	}
+	public void setInputFolder(String inputFolder) {
+		this.inputFolder = inputFolder;
+	}
+	public String getOutputFolder() {
+		return outputFolder;
+	}
+	public void setOutputFolder(String outputFolder) {
+		this.outputFolder = outputFolder;
+	}
+	
+	
 
 	public TabularCSVConvertTask(){	
 	}

@@ -19,11 +19,8 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-
-
 public class CsvReformatMapredLauncher {
 	
-	public static final String INPUT_TABLE_NAME="crawledItem";
 	public static final String KEY_INDEX="keyIndex";
 	public static final String NAMED_OUTPUT="text";
 	
@@ -34,7 +31,8 @@ public class CsvReformatMapredLauncher {
 		try{
 			NodeConf nc = TaskUtil.getNodeConf(prop);
 			TaskMgr tm = new TaskMgr();
-			tm.loadConf(prop, null, null);
+			tm.loadConf(prop, tm.getClass().getClassLoader(), null);
+			nc.setTaskMgr(tm);
 			Configuration conf = HadoopTaskUtil.getHadoopConf(nc);
 			conf.setInt(KEY_INDEX, keyIdx);
 			conf.set("mapred.textoutputformat.separator", "");//default is tab

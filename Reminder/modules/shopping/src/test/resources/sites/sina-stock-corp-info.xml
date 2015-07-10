@@ -10,7 +10,7 @@
 		taskName="corp-info">
 			<param name="stockid"/>
 			<userAttribute name="attr">
-				<value value="//table[@id='comInfo1']/tbody/tr/td" toType="list" fromType="expression"/>
+				<value value="//table[@id='comInfo1']/tbody/tr/td" toType="list"/>
 			</userAttribute>
 			<idUrlMapping>
 				<Token value="http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CorpInfo/stockid/" name="prefix" type="string"/>
