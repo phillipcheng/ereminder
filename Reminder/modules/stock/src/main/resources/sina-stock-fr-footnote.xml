@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" 
+	rootVolume="999990" 
+	storeId="sina-stock-fr-footnote" 
+	productType="default">
+	<PrdTask>
+		<baseBrowseTask
+		startUrl="http://vip.stock.finance.sina.com.cn/corp/go.php/vFD_FootNotes/stockid/[stockid].phtml" 
+		enableJS="true" 
+		taskName="footnote">
+			<param name="stockid"/>
+			<userAttribute name="id">
+				<value value="stockid" fromScope="param"/>
+			</userAttribute>
+			<userAttribute name="accountRecievable">
+				<value value="//div[@id='con03-0']/table[1]/tbody[1]/tr/td" toType="list"/>
+			</userAttribute>
+			<userAttribute name="accountRecievableRowSpan">
+				<value value="//div[@id='con03-0']/table[1]/tbody[1]/tr/td[1]/@rowspan" toType="list"/>
+			</userAttribute>
+			<userAttribute name="accountRecievableColNum">
+				<value value="count(//div[@id='con03-0']/table[1]/tbody[1]/tr[1]/td)" toType="int"/>
+			</userAttribute>
+			
+			<userAttribute name="inventory">
+				<value value="//div[@id='con03-2']/table[1]/tbody[1]/tr/td" toType="list"/>
+			</userAttribute>
+			<userAttribute name="inventoryRowSpan">
+				<value value="//div[@id='con03-2']/table[1]/tbody[1]/tr/td[1]/@rowspan" toType="list"/>
+			</userAttribute>
+			<userAttribute name="inventoryColNum">
+				<value value="count(//div[@id='con03-2']/table[1]/tbody[1]/tr[1]/td)" toType="int"/>
+			</userAttribute>
+			
+			<userAttribute name="recievableAging">
+				<value value="//div[@id='con03-3']/table[1]/tbody[1]/tr/td" toType="list"/>
+			</userAttribute>
+			<userAttribute name="recievableAgingRowSpan">
+				<value value="//div[@id='con03-3']/table[1]/tbody[1]/tr/td[1]/@rowspan" toType="list"/>
+			</userAttribute>
+			<userAttribute name="recievableAgingColNum">
+				<value value="count(//div[@id='con03-3']/table[1]/tbody[1]/tr[1]/td)" toType="int"/>
+			</userAttribute>
+			
+			<userAttribute name="tax">
+				<value value="//div[@id='con03-4']/table[1]/tbody[1]/tr/td" toType="list"/>
+			</userAttribute>
+			<userAttribute name="taxRowSpan">
+				<value value="//div[@id='con03-4']/table[1]/tbody[1]/tr/td[1]/@rowspan" toType="list"/>
+			</userAttribute>
+			<userAttribute name="taxColNum">
+				<value value="count(//div[@id='con03-4']/table[1]/tbody[1]/tr[1]/td)" toType="int"/>
+			</userAttribute>
+			
+			<userAttribute name="incomeStructureByIndustry">
+				<value value="//div[@id='con03-5']/table[1]/tbody[1]/tr/td" toType="list"/>
+			</userAttribute>
+			<userAttribute name="incomeStructureByIndustryRowSpan">
+				<value value="//div[@id='con03-5']/table[1]/tbody[1]/tr/td[1]/@rowspan" toType="list"/>
+			</userAttribute>
+			<userAttribute name="incomeStructureByIndustryColNum">
+				<value value="count(//div[@id='con03-5']/table[1]/tbody[1]/tr[1]/td)" toType="int"/>
+			</userAttribute>
+			
+			<userAttribute name="incomeStructureByProduct">
+				<value value="//div[@id='con03-5']/table[2]/tbody[1]/tr/td" toType="list"/>
+			</userAttribute>
+			<userAttribute name="incomeStructureByProductRowSpan">
+				<value value="//div[@id='con03-5']/table[2]/tbody[1]/tr/td[1]/@rowspan" toType="list"/>
+			</userAttribute>
+			<userAttribute name="incomeStructureByProductColNum">
+				<value value="count(//div[@id='con03-5']/table[2]/tbody[1]/tr[1]/td)" toType="int"/>
+			</userAttribute>
+			
+			<userAttribute name="incomeStructureByRegion">
+				<value value="//div[@id='con03-5']/table[3]/tbody[1]/tr/td" toType="list"/>
+			</userAttribute>
+			<userAttribute name="incomeStructureByRegionRowSpan">
+				<value value="//div[@id='con03-5']/table[3]/tbody[1]/tr/td[1]/@rowspan" toType="list"/>
+			</userAttribute>
+			<userAttribute name="incomeStructureByRegionColNum">
+				<value value="count(//div[@id='con03-5']/table[3]/tbody[1]/tr[1]/td)" toType="int"/>
+			</userAttribute>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>

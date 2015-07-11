@@ -1,0 +1,19 @@
+<project name="MyProject" default="dist" basedir=".">
+    <description>
+        simple example build file
+    </description>
+	<property name="src"  location="src"/>
+	<property name="dist"  location="target"/>
+	
+	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
+  
+	<target name="dist">
+		<delete file="${dist}/cld-stock-1.0.0-tests.jar"/>
+		<jar destfile="${dist}/cld-stock-1.0.0-tests.jar">
+    		<fileset dir="${dist}/test-classes"
+            	 includes="**/*.class"/>
+  		</jar>
+		<copy file="${dist}/cld-stock-1.0.0.jar" todir="${dist}/lib/"/>
+		<copy file="${dist}/cld-stock-1.0.0-tests.jar" todir="${dist}/lib/"/>
+	</target>
+</project>

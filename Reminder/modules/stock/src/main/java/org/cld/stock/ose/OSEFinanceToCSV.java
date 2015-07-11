@@ -2,12 +2,13 @@ package org.cld.stock.ose;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.entity.CrawledItem;
+import org.cld.etl.fci.ICrawlItemToCSV;
 import org.cld.util.StringUtil;
-import org.etl.fci.ICrawlItemToCSV;
 import org.json.JSONArray;
 
 public class OSEFinanceToCSV implements ICrawlItemToCSV{
@@ -39,7 +40,7 @@ public class OSEFinanceToCSV implements ICrawlItemToCSV{
 	}
 
 	@Override
-	public List<String[]> getCSV(CrawledItem ci) {
+	public List<String[]> getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		String symbal = (String) ci.getParam(FIELD_NAME_SYMBAL);
 		JSONArray allColumns = (JSONArray) ci.getParam(StockConst.param_sh_columns);
 		JSONArray data = (JSONArray) ci.getParam(StockConst.param_sh_rows);

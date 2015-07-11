@@ -10,11 +10,11 @@
 	<target name="dist">
 		<delete file="${dist}/cld-shopping-1.0.0-tests.jar"/>
 		<jar destfile="${dist}/cld-shopping-1.0.0-tests.jar">
-    	<fileset dir="${dist}/test-classes"
-             includes="**/*.class"/>
-  	</jar>
+    		<fileset dir="${dist}/test-classes"
+            	 includes="**/*.class"/>
+  			</jar>
 		<jar destfile="${dist}/lib/cld-test-config.jar" basedir="${src}/test/resources"/>
-	  <jar destfile="${dist}/lib/cld-test-sites.jar" basedir="${src}/test/resources/sites"/>
+	    <jar destfile="${dist}/lib/cld-test-sites.jar" basedir="${src}/test/resources/sites"/>
 		<copy file="${dist}/cld-shopping-1.0.0.jar" todir="${dist}/lib/"/>
 		<copy file="${dist}/cld-shopping-1.0.0-tests.jar" todir="${dist}/lib/"/>
 	</target>

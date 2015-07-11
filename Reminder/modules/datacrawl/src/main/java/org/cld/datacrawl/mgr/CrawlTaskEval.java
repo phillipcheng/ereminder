@@ -426,7 +426,8 @@ public class CrawlTaskEval {
 		}
 	}
 	
-	public static void setInitAttributes(List<AttributeType> attrs, Map<String, Object> paramMap, Map<String, Object> inParams) 
+	public static void setInitAttributes(List<AttributeType> attrs, Map<String, Object> paramMap, 
+			Map<String, Object> inParams) 
 			throws InterruptedException {
 		for (int i=0; i<attrs.size(); i++){
 			AttributeType nvt = attrs.get(i);

@@ -2,11 +2,12 @@ package org.cld.stock.sina;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.entity.CrawledItem;
-import org.etl.fci.ICrawlItemToCSV;
+import org.cld.etl.fci.ICrawlItemToCSV;
 import org.json.JSONArray;
 
 public class FinanceReportToCSV implements ICrawlItemToCSV{
@@ -18,7 +19,7 @@ public class FinanceReportToCSV implements ICrawlItemToCSV{
 	public static final String FIELD_NAME_STOCKID="stockid";
 	
 	@Override
-	public List<String[]> getCSV(CrawledItem ci) {
+	public List<String[]> getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		String stockid = (String) ci.getParam(FIELD_NAME_STOCKID);
 		List<String> ls = (List<String>)ci.getParam(FIELD_NAME_DATA);
 		StringBuffer sb = new StringBuffer();

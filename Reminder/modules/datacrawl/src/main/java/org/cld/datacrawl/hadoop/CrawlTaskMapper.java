@@ -46,9 +46,13 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 			if (t instanceof BrowseProductTaskConf){
 				BrowseProductTaskConf bpt = (BrowseProductTaskConf) t;
 				List<String[]> csv = bpt.runMyselfFromMapred(crawlTaskParams);
-				for (String[] v: csv){
-					if (v[1]!=null && !"".equals(v[1]))
-						context.write(new Text(v[0]), new Text(v[1]));
+				if (csv!=null){
+					for (String[] v: csv){
+						if (v[1]!=null && !"".equals(v[1]))
+							context.write(new Text(v[0]), new Text(v[1]));
+					}
+				}else{
+					//called from mapred, but no output specified.
 				}
 			}else{//for other types
 				List<Task> tl = t.runMyself(crawlTaskParams, null);

@@ -18,8 +18,7 @@
 		<module>etl</module>
 		<module>cld-action</module>
 		<module>datacrawl</module>
-		<module>stock</module>
-		<module>cld-webconf</module>
+		<!-- <module>cld-webconf</module> -->
 	</modules>
 
 </project>

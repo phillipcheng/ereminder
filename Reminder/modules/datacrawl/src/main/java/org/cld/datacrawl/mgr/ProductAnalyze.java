@@ -22,7 +22,7 @@ import org.cld.datacrawl.util.VerifyPage;
 import org.cld.datacrawl.util.VerifyPageByBoolOp;
 import org.cld.datacrawl.util.VerifyPageByBoolOpXPath;
 import org.cld.datacrawl.util.VerifyPageByXPath;
-import org.etl.fci.ICrawlItemToCSV;
+import org.cld.etl.fci.ICrawlItemToCSV;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.BrowseDetailType;
@@ -98,7 +98,7 @@ public class ProductAnalyze{
 						//do the transform and set to crawledItem.csv
 						try {
 							ICrawlItemToCSV cicsv = (ICrawlItemToCSV) Class.forName(csvTransform).newInstance();
-							List<String[]> csv = cicsv.getCSV(product);
+							List<String[]> csv = cicsv.getCSV(product, null);
 							product.setCsvValue(csv);
 							if (retCsv) return csv;
 						} catch (Exception e) {

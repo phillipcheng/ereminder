@@ -92,7 +92,13 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 		for (ParamType pt: bdt.getBaseBrowseTask().getParam()){
 			if (pt.getValue()!=null){
 				//has default value, put in the paramsMap
-				this.putParam(pt.getName(), pt.getValue());
+				if (VarType.STRING==pt.getType()){
+					putParam(pt.getName(), pt.getValue());
+				}else if (VarType.INT == pt.getType()){
+					putParam(pt.getName(), Integer.parseInt(pt.getValue()));
+				}else{
+					logger.error(String.format("default value type not support for param : %s", pt.getName()));
+				}
 			}
 		}
 	}
@@ -250,10 +256,15 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 		this.putAllParams(params);
 		CrawlConf cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
 		BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
-		this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
-		WebClient wc = CrawlUtil.getWebClient(cconf, taskTemplate.skipUrls, taskTemplate.enableJS);
-		
-		return browseProduct(this, cconf, wc, this.getStoreId(), null, this.getName(), this.getParamMap(), true);
+		if (taskTemplate!=null){
+			this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
+			WebClient wc = CrawlUtil.getWebClient(cconf, taskTemplate.skipUrls, taskTemplate.enableJS);
+			
+			return browseProduct(this, cconf, wc, this.getStoreId(), null, this.getName(), this.getParamMap(), true);
+		}else{
+			logger.error(String.format("task %s not found in config.", getName()));
+			return null;
+		}
 	}
 	
 	//setter and getter

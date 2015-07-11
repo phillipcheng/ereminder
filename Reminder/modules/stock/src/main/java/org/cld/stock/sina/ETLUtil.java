@@ -27,21 +27,17 @@ public class ETLUtil {
 	
 	private static Logger logger =  LogManager.getLogger(ETLUtil.class);
 	
-	public static void getMarketHistory(CrawlConf cconf, String propfile, String marketId) 
-			throws Exception {
-		CrawledItem ci = cconf.getDsm("hbase").getCrawledItem(marketId, StockConfig.SINA_STOCK_IDS, null);
-		ci.fromParamData();
-		JSONArray jsarry = (JSONArray) ci.getParam("ids");
+	public static void getMarketHistory(String[] ids, CrawlConf cconf, String propfile) {
 		List<Task> tlist = new ArrayList<Task>();
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-		for (int i=0; i<jsarry.length(); i++){
-			String sid = jsarry.getString(i);
+		for (int i=0; i<ids.length; i++){
+			String sid = ids[i];
 			String stockid = sid.substring(2);
 			//get the IPODate
 			CrawledItem corpInfo = cconf.getDsm("hbase").getCrawledItem(stockid, StockConfig.SINA_STOCK_CORP_INFO, null);
-			JSONArray jsa = (JSONArray)corpInfo.getParam(CorpInfoToCSV.FIELD_NAME_ATTR);
-			String ipoDateStr = jsa.getString(StockConfig.IPO_DATE_IDX).trim();
-			String foundDateStr = jsa.getString(StockConfig.FOUND_DATE_IDX).trim();
+			List<String> fnList = (List<String>)corpInfo.getParam(CorpInfoToCSV.FIELD_NAME_ATTR);
+			String ipoDateStr = fnList.get(StockConfig.IPO_DATE_IDX).trim();
+			String foundDateStr = fnList.get(StockConfig.FOUND_DATE_IDX).trim();
 			String dateUsed = ipoDateStr;
 			int[] yq = DateTimeUtil.getYearQuarter(ipoDateStr, sdf);
 			if (yq==null){

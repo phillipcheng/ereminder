@@ -9,6 +9,8 @@ public class StockConfig {
 	public static final String SINA_STOCK_FR_QUARTER="sina-stock-fr-quarter";
 	public static final String SINA_STOCK_MARKET_HISTORY="sina-stock-market-history";
 	public static final String SINA_STOCK_CORP_INFO="sina-stock-corp-info";
+	public static final String SINA_STOCK_FR_FOOTNOTE="sina-stock-fr-footnote";
+	public static final String SINA_STOCK_FR_AchieveNotice="sina-stock-fr-achievenotice";
 	//
 	public static final String[] subFR = new String[]{"BalanceSheet", "ProfitStatement", "CashFlow"}; 
 	//idx on the corp-info page

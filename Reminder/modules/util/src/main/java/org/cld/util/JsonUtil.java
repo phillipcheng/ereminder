@@ -1,11 +1,18 @@
 package org.cld.util;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class JsonUtil {
+	private static Logger logger =  LogManager.getLogger(JsonUtil.class);
 	
 	//
 	public static JSONObject getJsonDataFromSingleParameterFunctionCall(String input){
@@ -16,6 +23,69 @@ public class JsonUtil {
 			return new JSONObject(jsonData);
 		}else{
 			return null;
+		}
+	}
+	
+	public static JSONArray toJsonArray(List list){
+		JSONArray js = new JSONArray();
+		for (Object obj:list){
+			if (obj instanceof List){
+				js.put(toJsonArray((List)obj));
+			}else{
+				js.put(obj);
+			}
+		}
+		return js;
+	}
+	
+	public static String toJsonString(Map<String, Object> params){
+		JSONObject jobj = new JSONObject();
+		if (params!=null){
+			for (String key: params.keySet()){
+				Object val = params.get(key);
+				if (val instanceof String){
+					jobj.put(key, (String)val);
+				}else if (val instanceof Float){
+					jobj.put(key, ((Float) val).floatValue());
+				}else if (val instanceof List){
+					jobj.put(key, toJsonArray((List)val));
+				}else if (val instanceof JSONArray){
+					jobj.put(key, val);
+				}else if (val instanceof Integer){
+					jobj.put(key, val);
+				}else{
+					logger.warn(String.format("type not supported for json serialization: %s:%s", key, val));
+				}
+			}
+		}
+		return jobj.toString();
+	}
+	
+	public static void fromJsonString(String jsonString, Map<String, Object> params){
+		if (jsonString!=null){
+			try{
+				JSONObject jobj = new JSONObject(jsonString);
+				String[] names = JSONObject.getNames(jobj);
+				if (names!=null){
+					for (String name:names){
+						Object o = jobj.opt(name);
+						if (o instanceof JSONArray){
+							List<String> listdata = new ArrayList<String>();     
+							JSONArray jArray = (JSONArray)o; 
+							if (jArray != null) { 
+							   for (int i=0;i<jArray.length();i++){ 
+							    listdata.add(jArray.get(i).toString());
+							   } 
+							}
+							params.put(name, listdata);
+						}else{
+							params.put(name, o);
+						}
+					}
+				}
+			}catch(Exception e){
+				logger.error("the paramData is:" + jsonString, e);
+			}
 		}
 	}
 }

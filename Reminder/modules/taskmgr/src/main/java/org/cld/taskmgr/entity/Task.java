@@ -21,6 +21,7 @@ import javax.persistence.Table;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.taskmgr.TaskMgr;
+import org.cld.util.JsonUtil;
 import org.h2.util.StringUtils;
 import org.json.JSONObject;
 import org.xml.mytaskdef.BrowseCatInst;
@@ -137,37 +138,12 @@ public class Task implements Comparable<Task>, Serializable{
 	
 	//serialize the paramMap to json param data, only selected types (now:string,int) will be stored
 	public void toParamData(){
-		JSONObject jobj = new JSONObject();
-		if (paramMap!=null){
-			for (String key: paramMap.keySet()){
-				Object val = paramMap.get(key);
-				if (val instanceof String){
-					jobj.put(key, (String)val);
-				}else if (val instanceof Integer){
-					jobj.put(key, val);
-				}else{
-					logger.warn(String.format("unsupported type for paramMap json serialization. key:%s, value:%s.",
-							key, val));
-				}
-			}
-		}
-		paramData = jobj.toString();
+		paramData = JsonUtil.toJsonString(paramMap);
 	}
+	
 	//deserialize
 	public void fromParamData(){
-		if (paramData!=null){
-			try{
-				JSONObject jobj = new JSONObject(paramData);
-				String[] names = JSONObject.getNames(jobj);
-				if (names!=null){
-					for (String name:names){
-						paramMap.put(name, jobj.opt(name));
-					}
-				}
-			}catch(Exception e){
-				logger.error("the paramData is:" + paramData, e);
-			}
-		}
+		JsonUtil.fromJsonString(paramData, paramMap);
 	}
 	
 	//id is enough, id is md5 of the content

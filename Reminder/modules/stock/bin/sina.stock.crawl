@@ -1,0 +1,25 @@
+1) cleanup hbase
+2) cleanup hdfs
+
+3) runsinatest.sh run_browse_idlist  //not needed for test
+
+4) runsinatest.sh run_browse_fr_history
+5) runsinatest.sh run_convert_fr_history_tabular_to_csv //file downloaded to csv
+6) runsinatest.sh run_fr_reformat //from by stockid to by quarter
+
+7) runsinatest.sh run_browse_corp_info
+8) runsinatest.sh run_corp_info_to_csv  //need the hbase data
+
+9) runsinatest.sh run_browse_market_history
+10) runsinatest.sh run_merge_market_history  //from by stockid to by quarter
+
+11) runsinatest.sh run_browse_fr_footnote_history
+12) runsinatest.sh run_fr_footnote_to_csv //for all the subArea
+
+13) runsinatest.sh run_fr_achievenotice
+
+//incremental updates
+11) runsinamain.sh brs-mkt-qut 2015 1
+12) runsinamain.sh mrg-mkt-qut 2015 1
+13) runsinamain.sh brs-fr-qut 2015 1
+

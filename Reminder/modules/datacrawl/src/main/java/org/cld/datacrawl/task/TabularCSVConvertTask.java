@@ -19,10 +19,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
+import org.cld.etl.csv.TabularCSVConverter;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.cld.taskmgr.hadoop.HadoopTaskUtil;
-import org.etl.csv.TabularCSVConverter;
 
 @Entity
 @DiscriminatorValue("org.cld.stock.load.TabularCSVConvertTask")
