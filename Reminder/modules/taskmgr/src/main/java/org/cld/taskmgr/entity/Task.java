@@ -92,6 +92,24 @@ public class Task implements Comparable<Task>, Serializable{
 		this.name = name;
 		this.id = genId();
 	}
+	
+	public Task copy(Task t){
+		t.setStart(this.start);
+		t.setId(this.id);
+		t.setStoreId(this.storeId);
+		t.setName(this.name);
+		t.setRootTaskId(this.rootTaskId);
+		t.setTtype(this.ttype);
+		t.setNextTask(this.nextTask);
+		t.setRerunInterim(rerunInterim);
+		t.setLastUpdateDate(lastUpdateDate);
+		t.setStartDate(startDate);
+		t.setNodeId(nodeId);
+		t.setParamData(paramData);
+		t.getParamMap().putAll(this.getParamMap());
+		t.setParsedTaskDef(parsedTaskDef);
+		return t;
+	}
 
 	public String genId(){
 		String paramValues="";
@@ -111,17 +129,6 @@ public class Task implements Comparable<Task>, Serializable{
 			}
 		}
 		return storeId + "|" + paramValues;
-	}
-	
-	public Task copy(Task t){
-		t.setId(this.id);
-		t.setStart(this.start);
-		t.setName(this.name);
-		t.setTtype(this.ttype);
-		t.setNextTask(this.nextTask);
-		t.setRerunInterim(rerunInterim);
-		t.setStoreId(this.storeId);
-		return t;
 	}
 	
 	public Task clone(ClassLoader classLoader){

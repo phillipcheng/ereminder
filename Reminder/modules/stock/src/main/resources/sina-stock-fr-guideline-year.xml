@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" 
+	rootVolume="999990" 
+	storeId="sina-stock-fr-guideline-year" 
+	productType="default">
+	<PrdTask>
+		<baseBrowseTask
+		startUrl="http://money.finance.sina.com.cn/corp/go.php/vFD_FinancialGuideLine/stockid/[stockid]/ctrl/[year]/displaytype/4.phtml" 
+		enableJS="true" 
+		taskName="guideline"
+		dsm="hdfs">
+			<param name="stockid"/>
+			<param name="year"/>
+			<userAttribute name="id">
+				<value value="stockid + '_' + year" toType="string" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="count(//table[@id='BalanceSheetNewTable0']/tbody/tr[1]/td)" toType="int" />
+			</userAttribute>
+			<userAttribute name="data">
+				<value value="//table[@id='BalanceSheetNewTable0']/tbody/tr[count(td)>1]/td" toType="list"/>
+			</userAttribute>
+			<csvtransform>org.cld.stock.sina.ColumnNumberAsCSV</csvtransform>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>

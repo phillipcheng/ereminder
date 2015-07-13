@@ -16,6 +16,8 @@ public class CorpInfoToCSV implements ICrawlItemToCSV{
 
 	public static final String FIELD_NAME_ATTR="attr";
 	public static final String FIELD_NAME_STOCKID="stockid";
+	
+	//column to csv
 	@Override
 	public List<String[]> getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		String stockid = (String) ci.getParam(FIELD_NAME_STOCKID);

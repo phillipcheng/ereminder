@@ -66,26 +66,22 @@ public class TestSinaStock extends TestBase{
 		}
 	}
 	
-	public void run_all_id_by_task(String marketId, String configName, Map<String, Object> params, String outputDir){
+	public void run_all_id_by_task(String marketId, String confName, Map<String, Object> params, String outputDir){
 		String[] idarray = getStockIdByMarketId(marketId);
+		String confFileName = confName + ".xml";
+		List<Task> tl = new ArrayList<Task>();
+		if (confFileName!=null){
+			tl = cconf.setUpSite(confFileName, null);
+		}
 		List<Task> tlist = new ArrayList<Task>();
 		for (int i=0; i<idarray.length; i++){
 			String sid = idarray[i];
 			String stockid = sid.substring(2);
-			Map<String, Object> paramMap = new HashMap<String, Object>();
-			paramMap.put("stockid", stockid);
-			if (params!=null){
-				paramMap.putAll(params);
-			}
-			
-			String confFileName = configName + ".xml";
-			List<Task> tl = new ArrayList<Task>();
-			if (confFileName!=null){
-				tl = cconf.setUpSite(confFileName, null);
-			}
 			for (Task t: tl){
-				t.putAllParams(paramMap);
-				tlist.add(t);
+				Task t1 = t.clone(getClass().getClassLoader());
+				t1.putAllParams(params);
+				t1.putParam("stockid", stockid);
+				tlist.add(t1);
 			}
 		}
 		CrawlUtil.hadoopExecuteCrawlTasks(this.getPropFile(), cconf, tlist, outputDir);
@@ -184,7 +180,7 @@ public class TestSinaStock extends TestBase{
 	@Test
 	public void run_browse_market_history() {
 		String[] ids = getStockIdByMarketId(marketId);
-		ETLUtil.getMarketHistory(ids, cconf, this.getPropFile());
+		ETLUtil.getDataFromStartYearQuarter(ids, cconf, this.getPropFile(), StockConfig.SINA_STOCK_MARKET_HISTORY);
 	}
 	
 	//merge all stocks' market history into one file per quarter
@@ -247,6 +243,46 @@ public class TestSinaStock extends TestBase{
 				StockConfig.SINA_STOCK_FR_AchieveNotice);
 	}
 	
+	/***
+	 * Finance Guideline
+	 * */
+	@Test
+	public void run_fr_finance_guideline(){
+		String[] ids = getStockIdByMarketId(marketId);
+		ETLUtil.getDataFromStartYear(ids, cconf, this.getPropFile(), 
+				StockConfig.SINA_STOCK_FR_FINANCE_GUIDELINE_YEAR, 
+				StockConfig.SINA_STOCK_FR_FINANCE_GUIDELINE_YEAR);
+	}
+	
+	/***
+	 * Asset Devalue
+	 * */
+	@Test
+	public void run_fr_assetdevalue(){
+		String[] ids = getStockIdByMarketId(marketId);
+		ETLUtil.getDataFromStartYear(ids, cconf, this.getPropFile(), 
+				StockConfig.SINA_STOCK_FR_ASSETDEVALUE_YEAR, 
+				StockConfig.SINA_STOCK_FR_ASSETDEVALUE_YEAR);
+	}
+	
+	/***
+	 * Befenit Change 股东权益增减 data has some problem only 2013 and 2014
+	 * */
+	
+	/***
+	 * Bad Account same as Asset Devalue
+	 * */
+	
+	/**
+	 * Stock Structure
+	 */
+	@Test
+	public void run_fr_stock_structure(){
+		String[] ids = getStockIdByMarketId(marketId);
+		ETLUtil.getDataFromStartYear(ids, cconf, this.getPropFile(), 
+				StockConfig.SINA_STOCK_STOCK_STRUCTURE, 
+				StockConfig.SINA_STOCK_STOCK_STRUCTURE);
+	}
 	//////Tests
 	//show title
 	@Test

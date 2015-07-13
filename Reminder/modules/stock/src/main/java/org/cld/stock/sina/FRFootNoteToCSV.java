@@ -23,12 +23,14 @@ public class FRFootNoteToCSV implements ICrawlItemToCSV{
 		"recievableAging", "tax", "incomeStructureByIndustry", 
 		"incomeStructureByProduct", "incomeStructureByRegion"};
 	
+	//row to csv
 	@Override
 	public List<String[]> getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		String stockid = (String) ci.getParam(FIELD_NAME_STOCKID);
 		String attrKeyValue = (String) paramMap.get(FR_FOOTNOTE_ATTR_NAME);
 		String attrRowspanKeyValue = attrKeyValue + ROW_SPAN;
 		String attrColNumKeyValue = attrKeyValue + COL_NUM;
+		
 		List<String> vl = (List<String>)ci.getParam(attrKeyValue);//list of values
 		List<String> rsvl = (List<String>)ci.getParam(attrRowspanKeyValue);//list of rowspan
 		int colNum = (int) ci.getParam(attrColNumKeyValue);

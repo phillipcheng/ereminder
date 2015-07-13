@@ -11,6 +11,12 @@ public class StockConfig {
 	public static final String SINA_STOCK_CORP_INFO="sina-stock-corp-info";
 	public static final String SINA_STOCK_FR_FOOTNOTE="sina-stock-fr-footnote";
 	public static final String SINA_STOCK_FR_AchieveNotice="sina-stock-fr-achievenotice";
+	public static final String SINA_STOCK_FR_FINANCE_GUIDELINE_YEAR="sina-stock-fr-guideline-year";
+	public static final String SINA_STOCK_FR_ASSETDEVALUE_YEAR="sina-stock-fr-assetdevalue-year";
+	public static final String SINA_STOCK_STOCK_STRUCTURE="sina-stock-stock-structure";
+	
+	
+	
 	//
 	public static final String[] subFR = new String[]{"BalanceSheet", "ProfitStatement", "CashFlow"}; 
 	//idx on the corp-info page

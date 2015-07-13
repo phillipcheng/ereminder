@@ -163,10 +163,16 @@
 			<xs:element name="idUrlMappingFirstPage" type="RegExpType"
 				minOccurs="0" />
 			<xs:element name="itemName" type="ValueType" minOccurs="0" />
-			<xs:element name="csvtransform" type="xs:string" maxOccurs="1" minOccurs="0">
+			<xs:element name="csvtransform" type="xs:string"
+				maxOccurs="1" minOccurs="0">
 				<xs:annotation>
-					<xs:documentation>the org.etl.fci.ICrawlItemToCSV class: when dsm is hdfs, will transform the crawledItem into a list of csv lines, and will be saved to hdfs</xs:documentation>
-				</xs:annotation></xs:element>
+					<xs:documentation>
+						the org.etl.fci.ICrawlItemToCSV class: when dsm
+						is hdfs, will transform the crawledItem into a
+						list of csv lines, and will be saved to hdfs
+					</xs:documentation>
+				</xs:annotation>
+			</xs:element>
 		</xs:sequence>
 		<xs:attribute name="taskName" type="xs:string" use="optional">
 			<xs:annotation>
@@ -203,6 +209,7 @@
 				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
+		<xs:attribute name="startUrlType" type="VarType" default="string" use="optional"></xs:attribute>
 		<xs:attribute name="skipJS" type="xs:string" use="optional" />
 		<xs:attribute name="cachePage" type="xs:string"
 			use="optional">
@@ -221,10 +228,14 @@
 				</xs:restriction>
 			</xs:simpleType>
 		</xs:attribute>
-		<xs:attribute name="dsmHeader" type="xs:boolean" use="optional" default="false">
+		<xs:attribute name="dsmHeader" type="xs:boolean" use="optional"
+			default="false">
 			<xs:annotation>
-				<xs:documentation>whether generate header line in csv for hdfs</xs:documentation>
-			</xs:annotation></xs:attribute>
+				<xs:documentation>
+					whether generate header line in csv for hdfs
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
 	</xs:complexType>
 	<xs:complexType name="BrowseCatType">
 		<xs:sequence>

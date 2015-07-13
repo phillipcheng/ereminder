@@ -17,7 +17,7 @@ public class AchieveNoticeToCSV implements ICrawlItemToCSV{
 	public static final String FN_COL_NUM="ColNum";
 	public static final String FN_DATA="data";
 	
-	
+	//row to csv
 	@Override
 	public List<String[]> getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		String stockid = (String) ci.getParam(FN_STOCKID);

@@ -62,6 +62,8 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 			copy(te);
 			te.setStartURL(this.getStartURL());
 			te.setProductType(this.getProductType());
+			te.skipUrls = this.skipUrls;
+			te.enableJS = this.enableJS;
 			return te;
 		}catch(Exception e){
 			logger.error("",e);

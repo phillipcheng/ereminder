@@ -18,6 +18,7 @@ public class FinanceReportToCSV implements ICrawlItemToCSV{
 	public static final String FIELD_NAME_DATA="data";
 	public static final String FIELD_NAME_STOCKID="stockid";
 	
+	//column to csv
 	@Override
 	public List<String[]> getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		String stockid = (String) ci.getParam(FIELD_NAME_STOCKID);
