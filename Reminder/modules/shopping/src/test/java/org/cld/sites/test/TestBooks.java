@@ -19,16 +19,11 @@ public class TestBooks extends TestBase {
 	public static final String CBO_CONF="cbo.xml";
 	public static final String A8Z8_CONF="a8z8.xml";
 	public static final String MOM001_CONF="mom001.xml";
-	//public static final String XRS123_CONF="xrs123.xml";//died
 	public static final String DMZJ_CONF="dmzj.xml";
-	public static final String HAODU5_CONF="haodu5.xml";
 	public static final String CL_CONF="childrenslibrary.xml";
 	public static final String XRS52_CONF="52xrs.xml";
 	public static final String FKB_CONF="freekidsbooks.xml";
-	public static final String VYMING_CONF="vyming.xml";
-	public static final String WX114_CONF="wx114.xml";
 	public static final String BAOLINY_CONF="baoliny.xml";
-	public static final String SQSXS_CONF="sqsxs.xml";
 	
 	private String[] allConf = new String[]{
 			CBO_CONF,  
@@ -39,10 +34,6 @@ public class TestBooks extends TestBase {
 			XRS52_CONF,
 			FKB_CONF,
 			BAOLINY_CONF,
-//			SQSXS_CONF, //--updated
-//			HAODU5_CONF, //-- dead
-//			VYMING_CONF, //-- dead
-//			WX114_CONF, //--updated
 	};
 	
 	

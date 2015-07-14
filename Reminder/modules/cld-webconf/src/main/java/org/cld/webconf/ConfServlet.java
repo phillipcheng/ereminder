@@ -45,6 +45,7 @@ import org.xml.mytaskdef.TasksTypeUtil;
 import org.xml.taskdef.BrowseCatType;
 import org.xml.taskdef.BrowseTaskType;
 import org.xml.taskdef.TasksType;
+import org.xml.taskdef.ValueType;
 
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomElement;

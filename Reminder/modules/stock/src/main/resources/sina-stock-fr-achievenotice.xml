@@ -1,16 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../shopping/src/main/resources/Task_2_0.xsd" 
-	rootVolume="999990" 
-	storeId="sina-stock-earnnotice" 
-	productType="default">
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../shopping/src/main/resources/Task_2_0.xsd" rootVolume="999990" storeId="sina-stock-earnnotice" productType="default">
 	<PrdTask>
-		<baseBrowseTask
-		startUrl="http://money.finance.sina.com.cn/corp/go.php/vFD_AchievementNotice/stockid/[stockid].phtml" 
-		enableJS="true" 
-		taskName="earnnotice"
-		dsm="hdfs">
+		<baseBrowseTask enableJS="true" taskName="earnnotice" dsm="hdfs">
 			<param name="stockid"/>
 			<param name="ColNum" type="int" value="6"/>
+			<startUrl value="http://money.finance.sina.com.cn/corp/go.php/vFD_AchievementNotice/stockid/[stockid].phtml"/>
 			<userAttribute name="id">
 				<value value="stockid" fromScope="param"/>
 			</userAttribute>

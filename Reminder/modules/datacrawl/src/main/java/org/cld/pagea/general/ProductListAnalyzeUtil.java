@@ -116,8 +116,8 @@ public class ProductListAnalyzeUtil {
 							paramValueMap.put(pv.getParamName(), listVal);
 						}
 					}
-					TargetPrdInvoke spo = new TargetPrdInvoke(taskName, 
-							pbptTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl(), paramValueMap);
+					String startUrl = (String) CrawlTaskEval.eval(pbptTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl(), paramValueMap);
+					TargetPrdInvoke spo = new TargetPrdInvoke(taskName, startUrl, paramValueMap);
 					targetPrdInvokeList.add(spo);
 				}
 			}
