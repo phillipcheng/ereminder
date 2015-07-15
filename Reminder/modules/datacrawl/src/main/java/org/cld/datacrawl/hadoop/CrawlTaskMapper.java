@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlClientNode;
@@ -14,15 +15,17 @@ import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.task.BrowseProductTaskConf;
 import org.cld.datacrawl.test.CrawlTestUtil;
+import org.cld.etl.csv.CsvReformatMapredLauncher;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
-import org.cld.taskmgr.hadoop.HadoopTaskUtil;
+import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 
 public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 	
 	private static Logger logger =  LogManager.getLogger(CrawlTaskMapper.class);
 	
 	private CrawlConf cconf = null;
+	private MultipleOutputs<Text, Text> mos;
 	
 	@Override
 	public void setup(Context context) throws IOException, InterruptedException {
@@ -31,6 +34,8 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 			logger.info(String.format("conf file for mapper job is %s", propFile));
 			cconf = CrawlTestUtil.getCConf(propFile);
 		}
+		mos = new MultipleOutputs<Text,Text>(context);
+		
 	}
 	
 	@Override
@@ -48,8 +53,17 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 				List<String[]> csv = bpt.runMyselfFromMapred(crawlTaskParams);
 				if (csv!=null){
 					for (String[] v: csv){
-						if (v[1]!=null && !"".equals(v[1]))
-							context.write(new Text(v[0]), new Text(v[1]));
+						if (v.length==2){
+							if (v[1]!=null && !"".equals(v[1])){
+								context.write(new Text(v[0]), new Text(v[1]));
+							}
+						}else if (v.length==3){
+							String outkey=v[0];
+							String outvalue=v[1];
+							String outfilePrefix=v[2];
+							mos.write(CsvReformatMapredLauncher.NAMED_OUTPUT, 
+									new Text(outkey), new Text(outvalue), outfilePrefix);
+						}
 					}
 				}else{
 					//called from mapred, but no output specified.
@@ -57,7 +71,9 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 			}else{//for other types
 				List<Task> tl = t.runMyself(crawlTaskParams, null);
 				if (tl!=null && tl.size()>0){
-					HadoopTaskUtil.executeTasks(cconf.getNodeConf(), tl, hadoopCrawlTaskParams, t.getId());
+					boolean multipleOutput= CrawlUtil.hasMultipleOutput(tl);//guess this from tl
+					HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), tl, 
+							hadoopCrawlTaskParams, null, t.getId(), multipleOutput);
 				}
 				logger.info(String.format("I finished and send out %d tasks.", tl!=null?tl.size():0));
 			}
@@ -66,4 +82,9 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 			throw re;
 		}
 	}
+	
+    @Override
+    protected void cleanup(Context context) throws IOException, InterruptedException {
+        mos.close();
+    }
 }

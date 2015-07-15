@@ -163,7 +163,7 @@
 			<xs:element name="idUrlMappingFirstPage" type="RegExpType"
 				minOccurs="0" />
 			<xs:element name="itemName" type="ValueType" minOccurs="0" />
-			<xs:element name="csvtransform" type="xs:string"
+			<xs:element name="csvtransform" type="CsvTransformType"
 				maxOccurs="1" minOccurs="0">
 				<xs:annotation>
 					<xs:documentation>
@@ -508,5 +508,10 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 			<xs:element name="successNextPage" type="AttributeType"/>
 		</xs:sequence>
 		<xs:attribute name="waitTime" type="xs:int"/>
+	</xs:complexType>
+
+	<xs:complexType name="CsvTransformType">
+        <xs:attribute name="transformClass" type="xs:string"></xs:attribute>
+        <xs:attribute name="multipleOutput" type="xs:boolean" use="optional" default="false"></xs:attribute>
 	</xs:complexType>
 </xs:schema>

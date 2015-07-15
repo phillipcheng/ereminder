@@ -14,6 +14,7 @@ public class StockConfig {
 	public static final String SINA_STOCK_FR_FINANCE_GUIDELINE_YEAR="sina-stock-fr-guideline-year";
 	public static final String SINA_STOCK_FR_ASSETDEVALUE_YEAR="sina-stock-fr-assetdevalue-year";
 	public static final String SINA_STOCK_STOCK_STRUCTURE="sina-stock-stock-structure";
+	public static final String SINA_STOCK_STOCK_HOLDER="sina-stock-stock-holder";
 	
 	
 	

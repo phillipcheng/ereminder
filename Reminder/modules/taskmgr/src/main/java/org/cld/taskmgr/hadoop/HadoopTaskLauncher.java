@@ -9,13 +9,16 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.taskmgr.NodeConf;
@@ -25,9 +28,10 @@ import org.cld.taskmgr.entity.Task;
 import org.cld.util.IdUtil;
 import org.cld.util.StringUtil;
 
-public class HadoopTaskUtil {
+public class HadoopTaskLauncher {
 
-	private static Logger logger =  LogManager.getLogger(HadoopTaskUtil.class);
+	private static Logger logger =  LogManager.getLogger(HadoopTaskLauncher.class);
+	public static final String NAMED_OUTPUT_TXT = "txt";
 	
 	public static Configuration getHadoopConf(NodeConf nc){
 		//all the site config should go here, since we can't point the etc/hadoop folder which contains the site config
@@ -60,8 +64,7 @@ public class HadoopTaskUtil {
 		return conf;
 	}
 	
-	public static void executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> params, 
-			String hdfsOutputDir){
+	public static String getSourceName(List<Task> taskList){
 		String sourceName = "";
 		int max = 200;
 		
@@ -78,7 +81,7 @@ public class HadoopTaskUtil {
 				break;
 			}
 		}
-		executeTasks(nc, taskList, params, sourceName, hdfsOutputDir);
+		return sourceName;
 	}
 	
 	/**
@@ -87,9 +90,11 @@ public class HadoopTaskUtil {
 	 * @param taskList
 	 * @param params
 	 * @param sourceName: the source/generator name, used as the generated task info file name
+	 * @param hdfsOutputDir
+	 * @param multipleOutput
 	 */
 	public static void executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> params, 
-			String sourceName, String hdfsOutputDir){
+			String sourceName, String hdfsOutputDir, boolean multipleOutput){
 		TaskMgr taskMgr = nc.getTaskMgr();
 		Configuration conf = getHadoopConf(nc);
 		//generate task list file
@@ -102,6 +107,7 @@ public class HadoopTaskUtil {
 				String fn = TaskUtil.taskToJson(t);
 				fileContent.append(fn).append("\n");
 			}
+			if (sourceName==null) sourceName = getSourceName(taskList);
 			String escapedName = StringUtil.escapeFileName(sourceName);
 			String fileName = taskMgr.getHdfsTaskFolder() + "/" + IdUtil.getId(escapedName);
 			logger.info(String.format("task file: %s with length %d generated.", fileName, fileContent.length()));
@@ -136,6 +142,8 @@ public class HadoopTaskUtil {
 			job.setOutputKeyClass(Text.class);
 			job.setOutputValueClass(Text.class);
 			job.setInputFormatClass(NLineInputFormat.class);
+			if (multipleOutput)
+				MultipleOutputs.addNamedOutput(job, NAMED_OUTPUT_TXT, TextOutputFormat.class, Text.class, Text.class);
 			Path in = new Path(fileName);
 			FileInputFormat.addInputPath(job, in);
 			if (hdfsOutputDir!=null){

@@ -8,6 +8,8 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.cfg.Configuration;
+import org.xml.mytaskdef.ParsedBrowsePrd;
+import org.xml.taskdef.BrowseTaskType;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.IncorrectnessListener;
@@ -16,6 +18,7 @@ import com.gargoylesoftware.htmlunit.SilentCssErrorHandler;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebConnection;
 
+import org.cld.datacrawl.task.BrowseProductTaskConf;
 import org.cld.datastore.DBConf;
 import org.cld.datastore.DBFactory;
 import org.cld.datastore.impl.HibernateDataStoreManagerImpl;
@@ -23,7 +26,7 @@ import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskTypeConf;
 import org.cld.taskmgr.entity.Task;
-import org.cld.taskmgr.hadoop.HadoopTaskUtil;
+import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.DownloadUtil;
 
 public class CrawlUtil {
@@ -126,24 +129,32 @@ public class CrawlUtil {
 		}
 	}	
 	
+	public static boolean hasMultipleOutput(List<Task> tl){
+		Task t = tl.get(0);
+		if (t instanceof BrowseProductTaskConf){
+			ParsedBrowsePrd pbp = t.getBrowseDetailTask(t.getName());
+			if (pbp!=null){
+				BrowseTaskType btt = pbp.getBrowsePrdTaskType().getBaseBrowseTask();
+				if (btt!=null){
+					return btt.getCsvtransform().isMultipleOutput();
+				}else{
+					return false;
+				}
+			}else{
+				return false;
+			}
+		}else{
+			return false;
+		}
+		
+	}
 	public static void hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, 
 			String sourceName, String hdfsOutputDir){
 		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();
 		hadoopCrawlTaskParams.put(CRAWL_PROPERTIES, crawlPropertyFile);
-		if (sourceName==null){
-			HadoopTaskUtil.executeTasks(cconf.getNodeConf(), tlist, hadoopCrawlTaskParams, hdfsOutputDir);
-		}else{
-			HadoopTaskUtil.executeTasks(cconf.getNodeConf(), tlist, hadoopCrawlTaskParams, sourceName, hdfsOutputDir);
-		}
-	}
-	
-	public static void hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, 
-			String hdfsOutputDir){
-		hadoopExecuteCrawlTasks(crawlPropertyFile, cconf, tlist, null, hdfsOutputDir);
-	}
-	
-	public static void hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist){
-		hadoopExecuteCrawlTasks(crawlPropertyFile, cconf, tlist, null, null);
+		boolean multipleOutput = hasMultipleOutput(tlist);
+		HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), tlist, hadoopCrawlTaskParams, 
+				sourceName, hdfsOutputDir, multipleOutput);
 	}
 	
 	public static void downloadPage(CrawlConf cconf, String url, String fileName, String fileSaveDir){

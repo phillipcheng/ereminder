@@ -34,7 +34,7 @@ import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.NodeConfChangedEvent;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
-import org.cld.taskmgr.hadoop.HadoopTaskUtil;
+import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 
 public class CrawlConf implements AppConf, Serializable {
 	
@@ -181,9 +181,9 @@ public class CrawlConf implements AppConf, Serializable {
 			if (dsmtype.equals(crawlDsManager_Value_Hibernate)){
 				dsmMap.put(dsmtype, new HibernateDataStoreManagerImpl());
 			}else if (dsmtype.equals(crawlDsManager_Value_Hbase)){
-				dsmMap.put(dsmtype, new HbaseDataStoreManagerImpl(HadoopTaskUtil.getHadoopConf(getNodeConf())));
+				dsmMap.put(dsmtype, new HbaseDataStoreManagerImpl(HadoopTaskLauncher.getHadoopConf(getNodeConf())));
 			}else if (dsmtype.equals(crawlDsManager_Value_Hdfs)){
-				dsmMap.put(dsmtype, new HdfsDataStoreManagerImpl(HadoopTaskUtil.getHadoopConf(getNodeConf()), 
+				dsmMap.put(dsmtype, new HdfsDataStoreManagerImpl(HadoopTaskLauncher.getHadoopConf(getNodeConf()), 
 						getTaskMgr().getHadoopCrawledItemFolder()));
 			}
 		}

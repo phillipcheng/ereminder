@@ -6,7 +6,7 @@ import org.cld.datastore.impl.HbaseDataStoreManagerImpl;
 import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskUtil;
-import org.cld.taskmgr.hadoop.HadoopTaskUtil;
+import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.JsonUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -16,9 +16,12 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -46,7 +49,7 @@ public class HBaseToCSVMapperLauncher {
 			TaskMgr tm = new TaskMgr();
 			tm.loadConf(prop, tm.getClass().getClassLoader(), null);
 			nc.setTaskMgr(tm);
-			Configuration conf = HadoopTaskUtil.getHadoopConf(nc);
+			Configuration conf = HadoopTaskLauncher.getHadoopConf(nc);
 			conf.set(TableInputFormat.INPUT_TABLE, INPUT_TABLE_NAME);
 			conf.set(KEY_STOREID_FILTER, storeId);
 			if (idFilter!=null)

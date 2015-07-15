@@ -7,7 +7,7 @@ import org.junit.Test;
 import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
 import org.cld.datacrawl.test.TestBase;
 import org.cld.etl.fci.HBaseToCSVMapperLauncher;
-import org.cld.taskmgr.hadoop.HadoopTaskUtil;
+import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 
 public class TestJobs extends TestBase{
 	
@@ -53,7 +53,7 @@ public class TestJobs extends TestBase{
 	@Test
 	public void run_jobs_transform() throws Exception {
 		String outputFile = "/output/jobs";
-		FileSystem fs = FileSystem.get(HadoopTaskUtil.getHadoopConf(cconf.getNodeConf()));
+		FileSystem fs = FileSystem.get(HadoopTaskLauncher.getHadoopConf(cconf.getNodeConf()));
 		fs.delete(new Path(outputFile), true);
 		//HBaseToCSVMapperLauncher.genCSVFromHbase(this.getPropFile(), outputFile);
 	}

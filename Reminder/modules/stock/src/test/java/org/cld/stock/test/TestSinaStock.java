@@ -84,7 +84,8 @@ public class TestSinaStock extends TestBase{
 				tlist.add(t1);
 			}
 		}
-		CrawlUtil.hadoopExecuteCrawlTasks(this.getPropFile(), cconf, tlist, outputDir);
+		//TODO fill the mapreduce task name
+		CrawlUtil.hadoopExecuteCrawlTasks(this.getPropFile(), cconf, tlist, null, outputDir);
 	}
 	/***
 	 * Stock ids
@@ -123,7 +124,8 @@ public class TestSinaStock extends TestBase{
 				tlist.add(ct);
 			}
 		}
-		CrawlUtil.hadoopExecuteCrawlTasks(this.getPropFile(), cconf, tlist);
+		//TODO fill the mapred task name
+		CrawlUtil.hadoopExecuteCrawlTasks(this.getPropFile(), cconf, tlist, null, null);
 	}
 	//fr history reformat from split by stockid to split by quarter
 	@Test
@@ -277,12 +279,24 @@ public class TestSinaStock extends TestBase{
 	 * Stock Structure
 	 */
 	@Test
-	public void run_fr_stock_structure(){
+	public void run_stock_structure(){
 		String[] ids = getStockIdByMarketId(marketId);
 		ETLUtil.getDataFromStartYear(ids, cconf, this.getPropFile(), 
 				StockConfig.SINA_STOCK_STOCK_STRUCTURE, 
 				StockConfig.SINA_STOCK_STOCK_STRUCTURE);
 	}
+	
+	/**
+	 * Stock Structure
+	 */
+	@Test
+	public void run_stock_holder(){
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("history", true);
+		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_STOCK_HOLDER, 
+				paramMap, StockConfig.SINA_STOCK_STOCK_HOLDER);
+	}
+	
 	//////Tests
 	//show title
 	@Test

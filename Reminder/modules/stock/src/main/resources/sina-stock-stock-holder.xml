@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" 
 	rootVolume="999990" 
-	storeId="sina-stock-stock-structure" 
+	storeId="sina-stock-stock-holder" 
 	productType="default">
 	<PrdTask>
 		<baseBrowseTask
 		startUrl="&amp; http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_StockHolder/stockid/ &amp; + stockid + history ? &amp;.phtml&amp; : &amp;/displaytype/30.phtml&amp;"
 		enableJS="true" 
-		taskName="stock-structure"
+		taskName="stock-holder"
 		dsm="hdfs">
 			<param name="stockid"/>
 			<param name="history" type="boolean" value="false"/>
@@ -15,15 +15,24 @@
 				<value value="stockid" toType="string" fromScope="param"/>
 			</userAttribute>
 			<userAttribute name="ColNum">
-				<value value="count(//table[@id='StockStructureNewTable0']/tbody/tr[1]/td)" toType="int" />
+				<value value="5" toType="int" />
 			</userAttribute>
 			<userAttribute name="RowNum">
-				<value value="count(//table[@id='StockStructureNewTable0']/tbody/tr)" toType="int" />
+				<value value="5" toType="int" />
 			</userAttribute>
-			<userAttribute name="data">
-				<value value="//table[contains(@id,'StockStructureNewTable')]/tbody/tr/td" toType="list"/>
+			<userAttribute name="RowKeyFromColIdx">
+				<value value="0" toType="int"/>
 			</userAttribute>
-			<csvtransform>org.cld.stock.sina.MultiTableColumnNumberAsCSV</csvtransform>
+			<userAttribute name="SectionSepValue">
+				<value value="截至日期" toType="string"/>
+			</userAttribute>
+			<userAttribute name="ColCsvName">
+				<value value="TopStockHolderSummary" toType="string"/>
+			</userAttribute>
+			<userAttribute name="RowCsvName">
+				<value value="TopStockHolder" toType="string"/>
+			</userAttribute>
+			<csvtransform transformClass="org.cld.stock.sina.ColTableRowTableAsCSV" multipleOutput="true"/>
 		</baseBrowseTask>
 	</PrdTask>
 </Tasks>

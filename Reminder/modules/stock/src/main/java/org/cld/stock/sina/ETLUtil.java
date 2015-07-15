@@ -21,7 +21,7 @@ import org.cld.datacrawl.task.TestTaskConf;
 import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.taskmgr.entity.Task;
-import org.cld.taskmgr.hadoop.HadoopTaskUtil;
+import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.DateTimeUtil;
 import org.json.JSONArray;
 
@@ -86,14 +86,15 @@ public class ETLUtil {
 			}
 		}
 		logger.info("sending out:" + tlist.size() + " tasks.");
-		CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist);
+		CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, 
+				null, null);
 	}
 	
 	public static void mergeMarketHistoryByQuarter(CrawlConf cconf, int fromYear, 
 			int fromQuarter, int toYear, int toQuarter) throws Exception {
 		int year;
 		int quarter;
-		Configuration conf = HadoopTaskUtil.getHadoopConf(cconf.getNodeConf());
+		Configuration conf = HadoopTaskLauncher.getHadoopConf(cconf.getNodeConf());
 		FileSystem fs = FileSystem.get(conf);
 		for (year=toYear; year>=fromYear; year--){
 			int startQ=1;
@@ -163,7 +164,8 @@ public class ETLUtil {
 			for (int year:taskByYear.keySet()){
 				List<Task> tlist = taskByYear.get(year);
 				logger.info("sending out:" + tlist.size() + " tasks.");
-				CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, outputDirPrefix + "/" + year);
+				CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, 
+						null, outputDirPrefix + "/" + year);
 			}
 		}else{
 			List<Task> alllist = new ArrayList<Task>();
@@ -172,7 +174,8 @@ public class ETLUtil {
 				alllist.addAll(tlist);
 			}
 			logger.info("sending out:" + alllist.size() + " tasks.");
-			CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, alllist);
+			CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, alllist, 
+					null, null);
 		}
 	}
 }

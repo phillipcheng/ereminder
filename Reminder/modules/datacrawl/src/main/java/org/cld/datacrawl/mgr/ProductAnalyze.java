@@ -26,6 +26,7 @@ import org.cld.etl.fci.ICrawlItemToCSV;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.BrowseDetailType;
+import org.xml.taskdef.CsvTransformType;
 
 public class ProductAnalyze{
 	
@@ -92,12 +93,13 @@ public class ProductAnalyze{
 				}
 				//call back
 				ProductAnalyzeUtil.callbackReadDetails(wc, details, product, task, taskDef, cconf);
-				String csvTransform = bdt.getBaseBrowseTask().getCsvtransform();
+				CsvTransformType csvTransform = bdt.getBaseBrowseTask().getCsvtransform();
 				if (CrawlConf.crawlDsManager_Value_Hdfs.equals(bdt.getBaseBrowseTask().getDsm())){
 					if (csvTransform!=null){
 						//do the transform and set to crawledItem.csv
 						try {
-							ICrawlItemToCSV cicsv = (ICrawlItemToCSV) Class.forName(csvTransform).newInstance();
+							ICrawlItemToCSV cicsv = (ICrawlItemToCSV) 
+									Class.forName(csvTransform.getTransformClass()).newInstance();
 							List<String[]> csv = cicsv.getCSV(product, null);
 							product.setCsvValue(csv);
 							if (retCsv) return csv;

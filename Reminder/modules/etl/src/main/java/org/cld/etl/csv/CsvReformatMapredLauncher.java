@@ -3,7 +3,7 @@ package org.cld.etl.csv;
 import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskUtil;
-import org.cld.taskmgr.hadoop.HadoopTaskUtil;
+import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -12,6 +12,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
@@ -33,7 +34,7 @@ public class CsvReformatMapredLauncher {
 			TaskMgr tm = new TaskMgr();
 			tm.loadConf(prop, tm.getClass().getClassLoader(), null);
 			nc.setTaskMgr(tm);
-			Configuration conf = HadoopTaskUtil.getHadoopConf(nc);
+			Configuration conf = HadoopTaskLauncher.getHadoopConf(nc);
 			conf.setInt(KEY_INDEX, keyIdx);
 			conf.set("mapred.textoutputformat.separator", "");//default is tab
 			Job job = Job.getInstance(conf, "Format");

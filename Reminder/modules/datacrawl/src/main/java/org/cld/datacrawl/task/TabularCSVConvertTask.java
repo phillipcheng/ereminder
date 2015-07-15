@@ -22,7 +22,7 @@ import org.cld.datacrawl.CrawlConf;
 import org.cld.etl.csv.TabularCSVConverter;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
-import org.cld.taskmgr.hadoop.HadoopTaskUtil;
+import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 
 @Entity
 @DiscriminatorValue("org.cld.stock.load.TabularCSVConvertTask")
@@ -96,7 +96,7 @@ public class TabularCSVConvertTask extends Task implements Serializable{
 	public List<Task> runMyself(Map<String, Object> params, TaskStat ts) throws InterruptedException{
 		try{
 			cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
-			FileSystem fs = FileSystem.get(HadoopTaskUtil.getHadoopConf(cconf.getNodeConf()));
+			FileSystem fs = FileSystem.get(HadoopTaskLauncher.getHadoopConf(cconf.getNodeConf()));
 			logger.info("process convert task: " + tableId);
 			String inF = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + inputFolder + "/";
 			String outF = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + outputFolder + "/";
