@@ -93,27 +93,28 @@ public class ProductAnalyze{
 				}
 				//call back
 				ProductAnalyzeUtil.callbackReadDetails(wc, details, product, task, taskDef, cconf);
+				product.getId().setCreateTime(new Date());
+				logger.debug("product got:" + product);
 				CsvTransformType csvTransform = bdt.getBaseBrowseTask().getCsvtransform();
-				if (CrawlConf.crawlDsManager_Value_Hdfs.equals(bdt.getBaseBrowseTask().getDsm())){
-					if (csvTransform!=null){
-						//do the transform and set to crawledItem.csv
-						try {
-							ICrawlItemToCSV cicsv = (ICrawlItemToCSV) 
-									Class.forName(csvTransform.getTransformClass()).newInstance();
-							List<String[]> csv = cicsv.getCSV(product, null);
-							product.setCsvValue(csv);
-							if (retCsv) return csv;
-						} catch (Exception e) {
-							e.printStackTrace();
+				if (csvTransform!=null){
+					//do the transform and set to crawledItem.csv
+					try {
+						ICrawlItemToCSV cicsv = (ICrawlItemToCSV) 
+								Class.forName(csvTransform.getTransformClass()).newInstance();
+						List<String[]> csv = cicsv.getCSV(product, null);
+						product.setCsvValue(csv);
+						if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm())){
+							dsManager.addCrawledItem(product, lastProduct, bdt.getBaseBrowseTask());
 						}
-					}else{
-						//use default one
+						if (retCsv) return csv;
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}else{
+					if (CrawlConf.crawlDsManager_Value_Hdfs.equals(bdt.getBaseBrowseTask().getDsm())){
 						product.setCsvValue(HdfsDataStoreManagerImpl.getCSV(product, bdt.getBaseBrowseTask()));
 					}
 				}
-				//call transform
-				product.getId().setCreateTime(new Date());
-				logger.debug("product got:" + product);
 				if (dsManager!=null)
 					dsManager.addCrawledItem(product, lastProduct, bdt.getBaseBrowseTask());	
 			}

@@ -206,7 +206,12 @@
 		<xs:attribute name="enableJS" type="xs:boolean" use="optional" default="false"/>
 		<xs:attribute name="skipJS" type="xs:string" use="optional"/>
 		<xs:attribute name="dsm">
-			<xs:simpleType>
+            <xs:annotation>
+            	<xs:documentation>csvtransform set means generate csv for the whole batch of browse prd tasks. if dsm not set, that is all, if dsm set to hbase then hbase entry will be generated.
+dsm set to hdfs means generate csv for each product browsed.
+dsm set to hbase means generate hbase entry for each product browsed.</xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
 				<xs:restriction base="xs:string">
 					<xs:enumeration value="hdfs"/>
 					<xs:enumeration value="hbase"/>
