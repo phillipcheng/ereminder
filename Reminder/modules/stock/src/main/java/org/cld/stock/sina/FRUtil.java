@@ -47,13 +47,20 @@ public class FRUtil {
 		return str;
 	}
 	
+	public static List<String> colTableToCSV(List<String> vl, int colnum, boolean genHeader){
+		return colTableToCSV(vl, colnum, genHeader, ColTableAsCSV.DATA_TYPE_NUMBER);
+	}
+	
 	/**
+	 * example
+	 * k1 v1 v2 v3
+	 * k2 v1 v2 v3
 	 * 
-	 * @param vl: rows by rows
-	 * @param colnum
+	 * @param vl: column table to csv. a column is a row in the table
+	 * @param colnum: how many columns in the page table: e.g. colnum = 3
 	 * @return
 	 */
-	public static List<String> tableRowToCSV(List<String> vl, int colnum, boolean genHeader){
+	public static List<String> colTableToCSV(List<String> vl, int colnum, boolean genHeader, String dataType){
 		List<String> retList = new ArrayList<String>();
 		if (vl!=null){
 			for (int i=0; i<colnum; i++){
@@ -64,7 +71,14 @@ public class FRUtil {
 				}
 				while (j<vl.size()){
 					String str = vl.get(j);
-					str = FRUtil.getFRNumber(str);
+					if (ColTableAsCSV.DATA_TYPE_NUMBER.equals(dataType)){
+						str = FRUtil.getFRNumber(str);
+					}else if (ColTableAsCSV.DATA_TYPE_TEXT.equals(dataType)){
+						//replace comma and new line for string
+						str = str.replace(",", "\\,").replaceAll("\\r\\n|\\r|\\n", " ");
+					}else{
+						logger.error(String.format("str type not supported. %s", dataType));
+					}
 					if (j>i){
 						sb.append(",");
 					}
@@ -75,6 +89,40 @@ public class FRUtil {
 				retList.add(sb.toString());
 			}
 		}
+		return retList;
+	}
+	
+	/**
+	 * 
+	 * @param vl: row table to csv
+	 * @param colnum
+	 * @return
+	 */
+	public static List<String> rowTableToCSV(List<String> vl, int colnum, boolean hasHeader){
+		List<String> retList = new ArrayList<String>();
+		if (vl!=null){
+			StringBuffer sb = null;
+			for (int i=0; i<vl.size(); i++){
+				int row = i / colnum;
+				int coln = i % colnum;
+				if (row==0 && hasHeader || row>0){
+					if (coln == 0){
+						if (sb!=null){
+							retList.add(sb.toString());
+						}
+						sb = new StringBuffer();
+					}
+					if (coln>0){
+						sb.append(",");
+					}
+					sb.append(vl.get(i));
+				}
+			}
+			if (sb!=null){
+				retList.add(sb.toString());
+			}
+		}
+		
 		return retList;
 	}
 }

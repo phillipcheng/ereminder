@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
+import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.CrawledItemId;
 import org.cld.datastore.entity.Price;
@@ -82,8 +83,11 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 		
 		BrowseDetailType bdt = getBrowseDetailTask(this.getName()).getBrowsePrdTaskType();
 		bdt.isMonitorPrice();
-		//since the start url is get from xml file, so un-escape is needed
-		this.startURL=StringEscapeUtils.unescapeXml(bdt.getBaseBrowseTask().getStartUrl());
+		//start url only used by product list analyze generate a list of product analyze by API
+		//since the start url is get from xml file, so un-escape is needed,
+		//Just for display and id purpose, since for list type parameters, the value is wrong, it should be generated into a list of start url
+		//this.startURL= (String) CrawlTaskEval.eval(bdt.getBaseBrowseTask().getStartUrl(), params);
+		this.startURL = bdt.getBaseBrowseTask().getStartUrl().getValue();
 		this.productType = tasks.getProductType();
 		if (tasks.getSkipUrl()!=null){
 			int size = tasks.getSkipUrl().size();
@@ -98,6 +102,8 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 					putParam(pt.getName(), pt.getValue());
 				}else if (VarType.INT == pt.getType()){
 					putParam(pt.getName(), Integer.parseInt(pt.getValue()));
+				}else if (VarType.BOOLEAN == pt.getType()){
+					putParam(pt.getName(), Boolean.parseBoolean(pt.getValue()));
 				}else{
 					logger.error(String.format("default value type not support for param : %s", pt.getName()));
 				}
@@ -107,12 +113,10 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 	
 	private static void addFullUrl(ParsedBrowsePrd pbpTemplate, Map<String, Object> singleValueParams, 
 			List<String> startUrlList, List<String> cachePageList){
-		String fullUrl = StringUtil.fillParams(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl(), 
-				singleValueParams, "[", "]");
+		String fullUrl = (String) CrawlTaskEval.eval(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl(), singleValueParams);
 		startUrlList.add(fullUrl);
 		if (pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getCachePage()!=null){
-			String fullCachePage = StringUtil.fillParams(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getCachePage(), 
-					singleValueParams, "[", "]");
+			String fullCachePage = (String) CrawlTaskEval.eval(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getCachePage(), singleValueParams);
 			cachePageList.add(fullCachePage);
 		}
 	}
@@ -187,7 +191,8 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 				addFullUrl(pbpTemplate, singleValueParams, startUrlList, cachePageList);
 			}
 		}else{
-			startUrlList.add(task.getStartURL());
+			//no parameter, just a string
+			startUrlList.add(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl().getValue());
 		}
 		
 		//cache page if needed

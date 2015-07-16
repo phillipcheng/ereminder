@@ -13,6 +13,7 @@ import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlServerNode;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.mgr.CategoryAnalyze;
+import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.datacrawl.mgr.EmptyListProcessor;
 import org.cld.datacrawl.task.BrowseCategoryTaskConf;
 import org.cld.datacrawl.task.BrowseDetailTaskConf;
@@ -156,7 +157,7 @@ public class CrawlTestUtil{
 		SiteRuntime srt = getSRT(siteconfid, cconf, rootTaskId);
 		
 		if (startUrl==null){//using start url defined
-			startUrl = srt.getBdt().getLeafBrowseCatTask().getBaseBrowseTask().getStartUrl();
+			startUrl = srt.getBdt().getLeafBrowseCatTask().getBaseBrowseTask().getStartUrl().getValue();
 		}
 		Category category = new Category(new CrawledItemId(
 				CategoryAnalyzeUtil.getCatId(startUrl, srt.getBdt().getParsedTaskDef()), 
@@ -218,7 +219,8 @@ public class CrawlTestUtil{
 		logger.debug("set start url for cat navigate.");
 		srt.getBct().setPageNum(pageNum);
 		if (catUrl==null || "".equals(catUrl)){
-			srt.getBct().setStartURL(srt.getBct().getRootBrowseCatTask().getBaseBrowseTask().getStartUrl());
+			String startUrl = (String) CrawlTaskEval.eval(srt.getBct().getRootBrowseCatTask().getBaseBrowseTask().getStartUrl(), inparams);
+			srt.getBct().setStartURL(startUrl);
 		}else{
 			srt.getBct().setStartURL(catUrl);
 		}

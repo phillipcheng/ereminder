@@ -79,7 +79,8 @@ public class TestSinaStock extends TestBase{
 			String stockid = sid.substring(2);
 			for (Task t: tl){
 				Task t1 = t.clone(getClass().getClassLoader());
-				t1.putAllParams(params);
+				if (params!=null)
+					t1.putAllParams(params);
 				t1.putParam("stockid", stockid);
 				tlist.add(t1);
 			}
@@ -87,6 +88,7 @@ public class TestSinaStock extends TestBase{
 		//TODO fill the mapreduce task name
 		CrawlUtil.hadoopExecuteCrawlTasks(this.getPropFile(), cconf, tlist, null, outputDir);
 	}
+	
 	/***
 	 * Stock ids
 	 * */
@@ -98,9 +100,124 @@ public class TestSinaStock extends TestBase{
 		params.put("category_id", "hs_a");
 		browsePrd(StockConfig.SINA_STOCK_IDS + ".xml", null, params);
 	}
+
+	/*****
+	 * Market history 行情走势
+	 **/
+	//crawl market history to hdfs/hive
+	@Test
+	public void run_browse_market_history() {
+		String[] ids = getStockIdByMarketId(marketId);
+		ETLUtil.getDataFromStartYearQuarter(ids, cconf, this.getPropFile(), StockConfig.SINA_STOCK_MARKET_HISTORY);
+	}
+	
+	//merge all stocks' market history into one file per quarter
+	@Test
+	public void run_merge_market_history() throws Exception {
+		ETLUtil.mergeMarketHistoryByQuarter(cconf, 1990, 1, 2015, 3);
+	}
+	
+	//crawl market for specific quarter(s) to hdfs/hive
+	public void run_browse_market_quarter(int year, int quarter){
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("year", year);
+		params.put("quarter", quarter);
+		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_MARKET_HISTORY, params, null);
+	}
+	@Test
+	public void run_browse_market_quarter() throws Exception {
+		int year=2015;
+		int quarter=2;
+		run_browse_market_quarter(year, quarter);
+	}
+	@Test
+	public void run_browse_market_cur_quarter(){
+		int[] cyq = DateTimeUtil.getYearQuarter(new Date());
+		run_browse_market_quarter(cyq[0], cyq[1]);
+	}
+	public void run_merge_market_history_quarter(int year, int quarter) throws Exception {
+		ETLUtil.mergeMarketHistoryByQuarter(cconf, year, quarter, year, quarter);
+	}
 	
 	/****
-	 * financial report
+	 * Corp info 公司资料
+	 * */
+	//crawl corp info to hbase, we need this
+	@Test
+	public void run_browse_corp_info() throws Exception {
+		//set output to null needs followup, can be merged, actually we need hbase data
+		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_CORP_INFO, null, null);
+	}
+	
+	//convert corp info to hdfs/hive
+	@Test
+	public void run_corp_info_to_csv() throws Exception{
+		HBaseToCSVMapperLauncher.genCSVFromHbase(this.getPropFile(), 
+				itemsFolder + "/" + StockConfig.SINA_STOCK_CORP_INFO, 
+				StockConfig.SINA_STOCK_CORP_INFO, 
+				null, 
+				"org.cld.stock.sina.CorpInfoToCSV");
+	}
+	
+	/**
+	 * Corp Manager
+	 */
+	@Test
+	public void run_corp_manager(){
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("history", true);
+		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_CORP_MANAGER, 
+				paramMap, StockConfig.SINA_STOCK_CORP_MANAGER);
+	}
+	
+	/***
+	 * 发行分配
+	 */
+	@Test
+	public void run_issue_sharebonus(){
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_ISSUE_SHAREBONUS, 
+				paramMap, StockConfig.SINA_STOCK_ISSUE_SHAREBONUS);
+	}
+	
+	/***********
+	 * 股本股东
+	 */
+	@Test //Stock Structure
+	public void run_stock_structure(){
+		String[] ids = getStockIdByMarketId(marketId);
+		ETLUtil.getDataFromStartYear(ids, cconf, this.getPropFile(), 
+				StockConfig.SINA_STOCK_STOCK_STRUCTURE, 
+				StockConfig.SINA_STOCK_STOCK_STRUCTURE);
+	}
+	
+	@Test //Stock holder
+	public void run_stock_holder(){
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("history", true);
+		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_STOCK_HOLDER, 
+				paramMap, StockConfig.SINA_STOCK_STOCK_HOLDER);
+	}
+	
+	@Test //Circulate Stock holder
+	public void run_circulate_stock_holder(){
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("history", true);
+		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_STOCK_HOLDER_CIRCULATE, 
+				paramMap, StockConfig.SINA_STOCK_STOCK_HOLDER_CIRCULATE);
+	}
+
+	@Test //Fund Stock holder
+	public void run_fund_stock_holder(){
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("history", true);
+		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_STOCK_HOLDER_FUND, 
+				paramMap, StockConfig.SINA_STOCK_STOCK_HOLDER_FUND);
+	}
+	
+	
+	/****
+	 * 财务数据
 	 */
 	//crawl financial report history by market to hdfs
 	@Test
@@ -155,67 +272,7 @@ public class TestSinaStock extends TestBase{
 		run_browse_fr_quarter(year, quarter);
 	}
 	
-	/****
-	 * Corp info
-	 * */
-	//crawl corp info to hbase, we need this
-	@Test
-	public void run_browse_corp_info() throws Exception {
-		//set output to null needs followup, can be merged, actually we need hbase data
-		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_CORP_INFO, null, null);
-	}
-	
-	//convert corp info to hdfs/hive
-	@Test
-	public void run_corp_info_to_csv() throws Exception{
-		HBaseToCSVMapperLauncher.genCSVFromHbase(this.getPropFile(), 
-				itemsFolder + "/" + StockConfig.SINA_STOCK_CORP_INFO, 
-				StockConfig.SINA_STOCK_CORP_INFO, 
-				null, 
-				"org.cld.stock.sina.CorpInfoToCSV");
-	}
-	
-	/*****
-	 * Market history
-	 **/
-	//crawl market history to hdfs/hive
-	@Test
-	public void run_browse_market_history() {
-		String[] ids = getStockIdByMarketId(marketId);
-		ETLUtil.getDataFromStartYearQuarter(ids, cconf, this.getPropFile(), StockConfig.SINA_STOCK_MARKET_HISTORY);
-	}
-	
-	//merge all stocks' market history into one file per quarter
-	@Test
-	public void run_merge_market_history() throws Exception {
-		ETLUtil.mergeMarketHistoryByQuarter(cconf, 1990, 1, 2015, 3);
-	}
-	
-	//crawl market for specific quarter(s) to hdfs/hive
-	public void run_browse_market_quarter(int year, int quarter){
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("year", year);
-		params.put("quarter", quarter);
-		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_MARKET_HISTORY, params, null);
-	}
-	@Test
-	public void run_browse_market_quarter() throws Exception {
-		int year=2015;
-		int quarter=2;
-		run_browse_market_quarter(year, quarter);
-	}
-	@Test
-	public void run_browse_market_cur_quarter(){
-		int[] cyq = DateTimeUtil.getYearQuarter(new Date());
-		run_browse_market_quarter(cyq[0], cyq[1]);
-	}
-	public void run_merge_market_history_quarter(int year, int quarter) throws Exception {
-		ETLUtil.mergeMarketHistoryByQuarter(cconf, year, quarter, year, quarter);
-	}
-	
-	/******
-	 * FR FootNote
-	 */
+	//FR FootNote
 	@Test
 	public void run_browse_fr_footnote_history(){
 		//need follow up
@@ -236,18 +293,14 @@ public class TestSinaStock extends TestBase{
 		}
 	}
 	
-	/***
-	 * Achievement Notice
-	 */
+	//Achievement Notice
 	@Test
 	public void run_fr_achievenotice(){
 		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_FR_AchieveNotice, null, 
 				StockConfig.SINA_STOCK_FR_AchieveNotice);
 	}
 	
-	/***
-	 * Finance Guideline
-	 * */
+	//Finance Guideline
 	@Test
 	public void run_fr_finance_guideline(){
 		String[] ids = getStockIdByMarketId(marketId);
@@ -256,9 +309,7 @@ public class TestSinaStock extends TestBase{
 				StockConfig.SINA_STOCK_FR_FINANCE_GUIDELINE_YEAR);
 	}
 	
-	/***
-	 * Asset Devalue
-	 * */
+	//Asset Devalue
 	@Test
 	public void run_fr_assetdevalue(){
 		String[] ids = getStockIdByMarketId(marketId);
@@ -267,38 +318,22 @@ public class TestSinaStock extends TestBase{
 				StockConfig.SINA_STOCK_FR_ASSETDEVALUE_YEAR);
 	}
 	
-	/***
-	 * Befenit Change 股东权益增减 data has some problem only 2013 and 2014
-	 * */
 	
-	/***
-	 * Bad Account same as Asset Devalue
-	 * */
-	
-	/**
-	 * Stock Structure
-	 */
-	@Test
-	public void run_stock_structure(){
-		String[] ids = getStockIdByMarketId(marketId);
-		ETLUtil.getDataFromStartYear(ids, cconf, this.getPropFile(), 
-				StockConfig.SINA_STOCK_STOCK_STRUCTURE, 
-				StockConfig.SINA_STOCK_STOCK_STRUCTURE);
-	}
-	
-	/**
-	 * Stock Structure
-	 */
-	@Test
-	public void run_stock_holder(){
-		Map<String, Object> paramMap = new HashMap<String, Object>();
-		paramMap.put("history", true);
-		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_STOCK_HOLDER, 
-				paramMap, StockConfig.SINA_STOCK_STOCK_HOLDER);
-	}
+
 	
 	//////Tests
 	//show title
+	//test browse sina-stock-market-history bpt
+	@Test
+	public void test_sina_stock_holder_genheader() throws Exception{
+		cconf.setUpSite(StockConfig.SINA_STOCK_STOCK_HOLDER+".xml", null);
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("stockid", "600000");
+		params.put("history", true);
+		params.put("GenHeader", true);
+		browsePrd(StockConfig.SINA_STOCK_STOCK_HOLDER+".xml", null, params);
+	}
+	
 	@Test
 	public void test_sina_convert_txt_to_csv_with_header() throws Exception {
 		String[] sids = new String[]{"600000","601766"};

@@ -1,16 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" 
-	rootVolume="999990" 
-	storeId="sina-stock-fr-quarter-ProfitStatement" 
-	productType="default">
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="sina-stock-fr-quarter-ProfitStatement" productType="default">
 	<PrdTask>
-		<baseBrowseTask
-		startUrl="http://money.finance.sina.com.cn/corp/go.php/vFD_ProfitStatement/stockid/[stockid]/ctrl/[year]/displaytype/4.phtml" 
-		enableJS="true" 
-		taskName="profitstatement">
+		<baseBrowseTask enableJS="true" taskName="profitstatement">
 			<param name="stockid"/>
 			<param name="year"/>
 			<param name="quarter"/>
+			<startUrl value="http://money.finance.sina.com.cn/corp/go.php/vFD_ProfitStatement/stockid/[stockid]/ctrl/[year]/displaytype/4.phtml"/>
 			<userAttribute name="id">
 				<value value="stockid + '_' + year + '_' + quarter" toType="string" fromType="expression"/>
 			</userAttribute>

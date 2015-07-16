@@ -10,9 +10,9 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.etl.fci.ICrawlItemToCSV;
 
-public class MultiTableColumnNumberAsCSV implements ICrawlItemToCSV{
+public class SpreadColTableAsCSV implements ICrawlItemToCSV{
 	
-	private static Logger logger =  LogManager.getLogger(MultiTableColumnNumberAsCSV.class);
+	private static Logger logger =  LogManager.getLogger(SpreadColTableAsCSV.class);
 
 	public static final String FIELD_NAME_KEYID="stockid";
 	public static final String FIELD_NAME_DATA="data";
@@ -20,8 +20,17 @@ public class MultiTableColumnNumberAsCSV implements ICrawlItemToCSV{
 	public static final String FIELD_NAME_ROWNUM="RowNum";//of the 1st table (full table)
 	
 	public static final String KEY_GENHEADER="GenHeader";
-	
-	//column to csv
+	/****
+	 * example:
+	 * k1 v1 v2 v3
+	 * k2 v1 v2 v3
+	 * 
+	 * k1 v1 v2 v3
+	 * k2 v1 v2 v3
+	 * colnum: 3
+	 * rownum: 2
+	 */
+	//spread column table(s) to csv
 	@Override
 	public List<String[]> getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		String keyid = (String) ci.getParam(FIELD_NAME_KEYID);
@@ -44,12 +53,12 @@ public class MultiTableColumnNumberAsCSV implements ICrawlItemToCSV{
 				oneTableValues = ls.subList(startIdx, endIdx);
 				startIdx +=valueFullTable;
 				endIdx +=valueFullTable;
-				csvs.addAll(FRUtil.tableRowToCSV(oneTableValues, colnum, genHeader));
+				csvs.addAll(FRUtil.colTableToCSV(oneTableValues, colnum, genHeader));
 			}
 			oneTableValues = ls.subList(startIdx, ls.size());
 			int leftItems = ls.size()-startIdx;
 			int leftCol = leftItems/rownum;
-			csvs.addAll(FRUtil.tableRowToCSV(oneTableValues, leftCol, genHeader));
+			csvs.addAll(FRUtil.colTableToCSV(oneTableValues, leftCol, genHeader));
 		}
 		
 		List<String[]> retlist = new ArrayList<String[]>();

@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
+import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.datastore.entity.Category;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
@@ -80,7 +81,7 @@ public class BrowseCategoryTaskConf extends Task implements Serializable{
 		super.setUp(tasks, pluginClassLoader, params);
 		BrowseCatType bct = tasks.getCatTask().get(0);
 		//since the start url is get from xml file, so un-escape is needed
-		this.startURL=StringEscapeUtils.unescapeXml(bct.getBaseBrowseTask().getStartUrl());
+		this.startURL=(String) CrawlTaskEval.eval(bct.getBaseBrowseTask().getStartUrl(), params);
 		this.setStoreId(tasks.getStoreId());
 	}
 	

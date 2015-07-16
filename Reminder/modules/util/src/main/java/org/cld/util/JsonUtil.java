@@ -53,6 +53,8 @@ public class JsonUtil {
 					jobj.put(key, val);
 				}else if (val instanceof Integer){
 					jobj.put(key, val);
+				}else if (val instanceof Boolean){
+					jobj.put(key, val);
 				}else{
 					logger.warn(String.format("type not supported for json serialization: %s:%s", key, val));
 				}

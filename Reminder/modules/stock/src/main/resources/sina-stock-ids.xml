@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" 
-	rootVolume="999990" 
-	storeId="sina-stock-ids" 
-	productType="default">
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="sina-stock-ids" productType="default">
 	<PrdTask nextPage="//div[@id='list_pages_top2']/a[last()]" tryPattern="false">
-		<baseBrowseTask 
-		startUrl="http://money.finance.sina.com.cn/mkt/#[category_id]"
-		enableJS="true"
-		taskName="stock-list">
+		<baseBrowseTask enableJS="true" taskName="stock-list">
 			<param name="category_id"/>
+			<startUrl value="http://money.finance.sina.com.cn/mkt/#[category_id]"/>
 			<userAttribute name="ids">
 				<value value="//div[@id='tbl_wrap']/table[1]/tbody/tr/th[1]/a/text()" toType="externalList"/>
 			</userAttribute>

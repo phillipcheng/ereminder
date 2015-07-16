@@ -119,6 +119,8 @@ public class Task implements Comparable<Task>, Serializable{
 				if (val!=null){
 					if (val instanceof String){
 						paramValues+=val.toString();
+					}else if (val instanceof Boolean){
+						paramValues+=val.toString();
 					}else{
 						logger.warn(String.format("type %s of value %s not supported to be included in the id.", val.getClass(), val.toString()));
 					}

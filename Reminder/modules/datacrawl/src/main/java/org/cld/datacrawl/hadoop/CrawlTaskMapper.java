@@ -61,7 +61,7 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 							String outkey=v[0];
 							String outvalue=v[1];
 							String outfilePrefix=v[2];
-							mos.write(CsvReformatMapredLauncher.NAMED_OUTPUT, 
+							mos.write(HadoopTaskLauncher.NAMED_OUTPUT_TXT, 
 									new Text(outkey), new Text(outvalue), outfilePrefix);
 						}
 					}

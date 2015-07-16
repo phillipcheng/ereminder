@@ -5,14 +5,17 @@
 	productType="default">
 	<PrdTask>
 		<baseBrowseTask
-		startUrl="&amp; http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_StockHolder/stockid/ &amp; + stockid + history ? &amp;.phtml&amp; : &amp;/displaytype/30.phtml&amp;"
 		enableJS="true" 
 		taskName="stock-holder"
 		dsm="hdfs">
 			<param name="stockid"/>
 			<param name="history" type="boolean" value="false"/>
+			<startUrl value="'http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_StockHolder/stockid/' + stockid + (history ? '.phtml' : '/displaytype/30.phtml')" fromType="expression"></startUrl>
 			<userAttribute name="id">
 				<value value="stockid" toType="string" fromScope="param"/>
+			</userAttribute>
+			<userAttribute name="data">
+				<value value="//div[@id='con02-2']/table[2]/tbody/tr[count(td)>1]/td" toType="list"/>
 			</userAttribute>
 			<userAttribute name="ColNum">
 				<value value="5" toType="int" />
@@ -21,7 +24,7 @@
 				<value value="5" toType="int" />
 			</userAttribute>
 			<userAttribute name="RowKeyFromColIdx">
-				<value value="0" toType="int"/>
+				<value value="0" toType="list" toEntryType="int"/>
 			</userAttribute>
 			<userAttribute name="SectionSepValue">
 				<value value="截至日期" toType="string"/>
@@ -31,6 +34,12 @@
 			</userAttribute>
 			<userAttribute name="RowCsvName">
 				<value value="TopStockHolder" toType="string"/>
+			</userAttribute>
+			<userAttribute name="ColDataType">
+				<value value="Number" toType="string"/>
+			</userAttribute>
+			<userAttribute name="RowDataType">
+				<value value="String" toType="string"/>
 			</userAttribute>
 			<csvtransform transformClass="org.cld.stock.sina.ColTableRowTableAsCSV" multipleOutput="true"/>
 		</baseBrowseTask>

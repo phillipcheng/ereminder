@@ -45,6 +45,7 @@ public class CrawlTaskEval {
 	private static Logger logger =  LogManager.getLogger(CrawlTaskEval.class);
 
 	private static Map<String, SafeSimpleDateFormat> dfMap = new HashMap<String, SafeSimpleDateFormat>();
+	public static final String LIST_VALUE_SEP=",";
 	
 	public static int getIntValue(Object value, String valueExp){
 		if (value instanceof Integer){
@@ -88,6 +89,83 @@ public class CrawlTaskEval {
 			}
 		}
 		return null;
+	}
+	
+	//get the value from value string according toValueType
+	public static Object getValue(ValueType vt, String valueExp){
+		Object value = null;
+		//perform pre-process
+		ValueType.StrPreprocess sp = vt.getStrPreprocess();
+		if (sp!=null){
+			valueExp = StringUtil.getStringBetweenFirstPreFirstPost(valueExp, sp.getTrimPre(), sp.getTrimPost());
+			valueExp = valueExp.trim();
+		}
+		if (vt.getToType()!=null){
+			if (VarType.DATE==vt.getToType()){
+				String format = vt.getFormat();
+				SafeSimpleDateFormat sdf=null;
+				if (dfMap.containsKey(format)){
+					sdf = dfMap.get(format);
+				}else{
+					sdf = new SafeSimpleDateFormat(format);
+					dfMap.put(format, sdf);
+				}
+				try {
+					Date d = sdf.parse(valueExp);
+					if (!format.contains("yy")){
+						//if no year set, using current year
+						d.setYear(new Date().getYear());
+					}
+					value = d;
+				} catch (ParseException e) {
+					logger.error(String.format("date: %s can't be parsed using format: %s.", 
+							valueExp, format), e);
+				}
+			}else if (VarType.INT == vt.getToType()){
+				valueExp = valueExp.replaceAll("\\D+","");
+				value = Integer.parseInt(valueExp);
+			}else if (VarType.FLOAT == vt.getToType()){
+				value = Float.parseFloat(valueExp);
+			}else if (VarType.STRING == vt.getToType()){
+				value = valueExp;
+			}else if (VarType.URL == vt.getToType()){
+				value = valueExp;
+			}else if (VarType.LIST == vt.getToType()){
+				String[] vs = valueExp.split(LIST_VALUE_SEP);
+				List<Object> vl = new ArrayList<Object>();
+				for (String v:vs){
+					if (VarType.STRING == vt.getToEntryType()){
+						vl.add(v);
+					}else if (VarType.INT == vt.getToEntryType()){
+						vl.add(Integer.parseInt(v));
+					}else{
+						logger.error(String.format("unsupported toEntryType %s.", vt.getToEntryType()));
+					}
+				}
+				return vl;
+			}else{
+				logger.error(String.format("toType not supported: %s", vt.getToType()));
+			}
+		}else{
+			//treated as string
+			value = valueExp;
+		}
+		
+		return value;
+	}
+	
+	//evalue value without using page, xpath
+	public static Object eval(ValueType vt, Map<String, Object> params){
+		//transform from value
+		String valueExp = null;
+		if (VarType.EXPRESSION == vt.getFromType()){
+			valueExp = (String) ScriptEngineUtil.eval(vt.getValue(), VarType.STRING, params);
+		}else{
+			//for simple [parameter] replacement
+			valueExp = StringUtil.fillParams(vt.getValue(), params, ConfKey.PARAM_PRE, ConfKey.PARAM_POST);
+		}
+		//get value from valueExp
+		return getValue(vt, valueExp);
 	}
 	
 	public static Object eval(DomNode page, ValueType vt, CrawlConf cconf, Map<String, Object> params) throws InterruptedException {
@@ -175,6 +253,7 @@ public class CrawlTaskEval {
 	private static void processXpath(ValueType vt, String xpathValue, Map<String, List<? extends DomNode>> pageMap
 			, CrawlConf cconf, List<List> rxpathListResultList, List<List<HtmlPage>> rpagelistList, List<HtmlPage> rpageList
 			, List<String> valueExpList, Map<String, Object> params) throws InterruptedException{
+		//process fromType="XPATH"
 		List<? extends DomNode> pages = null;
 		if (vt.getBasePage()==null){
 			//if not specified, then evaluate on the current page of the map
@@ -365,49 +444,7 @@ public class CrawlTaskEval {
 		for (String valueExp1:valueExpList){
 			Object value = null;
 			if (valueExp1!=null){
-				//perform pre-process
-				ValueType.StrPreprocess sp = vt.getStrPreprocess();
-				if (sp!=null){
-					valueExp1 = StringUtil.getStringBetweenFirstPreFirstPost(valueExp1, sp.getTrimPre(), sp.getTrimPost());
-					valueExp1.trim();
-				}
-				if (vt.getToType()!=null){
-					if (VarType.DATE==vt.getToType()){
-						String format = vt.getFormat();
-						SafeSimpleDateFormat sdf=null;
-						if (dfMap.containsKey(format)){
-							sdf = dfMap.get(format);
-						}else{
-							sdf = new SafeSimpleDateFormat(format);
-							dfMap.put(format, sdf);
-						}
-						try {
-							Date d = sdf.parse(valueExp1);
-							if (!format.contains("yy")){
-								//if no year set, using current year
-								d.setYear(new Date().getYear());
-							}
-							value = d;
-						} catch (ParseException e) {
-							logger.error(String.format("date: %s can't be parsed using format: %s.", 
-									valueExp1, format), e);
-						}
-					}else if (VarType.INT == vt.getToType()){
-						valueExp1 = valueExp1.replaceAll("\\D+","");
-						value = Integer.parseInt(valueExp1);
-					}else if (VarType.FLOAT == vt.getToType()){
-						value = Float.parseFloat(valueExp1);
-					}else if (VarType.STRING == vt.getToType()){
-						value = valueExp1;
-					}else if (VarType.URL == vt.getToType()){
-						value = valueExp1;
-					}else{
-						logger.error(String.format("toType not supported: %s", vt.getToType()));
-					}
-				}else{
-					//treated as string
-					value = valueExp1;
-				}
+				value = getValue(vt, valueExp1);
 			}else{
 				value = null;
 			}
