@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" 
+	rootVolume="999990" 
+	storeId="sina-stock-stock-holder-circulate" 
+	productType="default">
+	<PrdTask>
+		<baseBrowseTask
+		enableJS="true" 
+		taskName="stock-holder-circulate"
+		dsm="hdfs">
+			<param name="stockid"/>
+			<param name="history" type="boolean" value="false"/>
+			<startUrl value="'http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CirculateStockHolder/stockid/' + stockid + (history ? '.phtml' : '/displaytype/30.phtml')" fromType="expression"></startUrl>
+			<userAttribute name="id">
+				<value value="stockid" toType="string" fromScope="param"/>
+			</userAttribute>
+			<userAttribute name="data">
+				<value value="//div[@id='con02-3']/table[2]/tbody/tr[count(td)>1]/td" toType="list"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="2" toType="int" />
+			</userAttribute>
+			<userAttribute name="RowNum">
+				<value value="5" toType="int" />
+			</userAttribute>
+			<userAttribute name="RowKeyFromColIdx">
+				<value value="0,1" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="SectionSepValue">
+				<value value="截止日期" toType="string"/>
+			</userAttribute>
+			<userAttribute name="RowCsvName">
+				<value value="TopCirculateStockHolder" toType="string"/>
+			</userAttribute>
+			<userAttribute name="ColDataType">
+				<value value="Number" toType="string"/>
+			</userAttribute>
+			<userAttribute name="RowDataType">
+				<value value="String" toType="string"/>
+			</userAttribute>
+			<csvtransform transformClass="org.cld.stock.sina.ColTableRowTableAsCSV" multipleOutput="true"/>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>
