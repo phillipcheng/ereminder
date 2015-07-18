@@ -8,74 +8,84 @@
 			<userAttribute name="id">
 				<value value="stockid" fromScope="param"/>
 			</userAttribute>
-			<userAttribute name="accountRecievable">
+			<userAttribute name="RowCsvName">
+				<value value="account,inventory,recievableAging,tax,incomeStructureByIndustry,incomeStructureByProduct,incomeStructureByRegion" toType="list"/>
+			</userAttribute>
+			
+			<userAttribute name="data1">
 				<value value="//div[@id='con03-0']/table[1]/tbody[1]/tr/td" toType="list"/>
 			</userAttribute>
-			<userAttribute name="accountRecievableRowSpan">
-				<value value="//div[@id='con03-0']/table[1]/tbody[1]/tr/td[1]/@rowspan" toType="list"/>
+			
+			<userAttribute name="RowSpan1">
+				<value value="//div[@id='con03-0']/table[1]/tbody[1]/tr/td[1]/@rowspan" toType="list" toEntryType="int"/>
 			</userAttribute>
-			<userAttribute name="accountRecievableColNum">
+			
+			<userAttribute name="ColNum1">
 				<value value="count(//div[@id='con03-0']/table[1]/tbody[1]/tr[1]/td)" toType="int"/>
 			</userAttribute>
 			
-			<userAttribute name="inventory">
+			<userAttribute name="data2">
 				<value value="//div[@id='con03-2']/table[1]/tbody[1]/tr/td" toType="list"/>
 			</userAttribute>
-			<userAttribute name="inventoryRowSpan">
-				<value value="//div[@id='con03-2']/table[1]/tbody[1]/tr/td[1]/@rowspan" toType="list"/>
+			
+			<userAttribute name="RowSpan2">
+				<value value="//div[@id='con03-2']/table[1]/tbody[1]/tr/td[1]/@rowspan" toType="list" toEntryType="int"/>
 			</userAttribute>
-			<userAttribute name="inventoryColNum">
+			<userAttribute name="ColNum2">
 				<value value="count(//div[@id='con03-2']/table[1]/tbody[1]/tr[1]/td)" toType="int"/>
 			</userAttribute>
 			
-			<userAttribute name="recievableAging">
+			<userAttribute name="data3">
 				<value value="//div[@id='con03-3']/table[1]/tbody[1]/tr/td" toType="list"/>
 			</userAttribute>
-			<userAttribute name="recievableAgingRowSpan">
-				<value value="//div[@id='con03-3']/table[1]/tbody[1]/tr/td[1]/@rowspan" toType="list"/>
+			<userAttribute name="RowSpan3">
+				<value value="//div[@id='con03-3']/table[1]/tbody[1]/tr/td[1]/@rowspan" toType="list" toEntryType="int"/>
 			</userAttribute>
-			<userAttribute name="recievableAgingColNum">
+			<userAttribute name="ColNum3">
 				<value value="count(//div[@id='con03-3']/table[1]/tbody[1]/tr[1]/td)" toType="int"/>
 			</userAttribute>
 			
-			<userAttribute name="tax">
+			<userAttribute name="data4">
 				<value value="//div[@id='con03-4']/table[1]/tbody[1]/tr/td" toType="list"/>
 			</userAttribute>
-			<userAttribute name="taxRowSpan">
-				<value value="//div[@id='con03-4']/table[1]/tbody[1]/tr/td[1]/@rowspan" toType="list"/>
+			<userAttribute name="RowSpan4">
+				<value value="//div[@id='con03-4']/table[1]/tbody[1]/tr/td[1]/@rowspan" toType="list" toEntryType="int"/>
 			</userAttribute>
-			<userAttribute name="taxColNum">
+			<userAttribute name="ColNum4">
 				<value value="count(//div[@id='con03-4']/table[1]/tbody[1]/tr[1]/td)" toType="int"/>
 			</userAttribute>
 			
-			<userAttribute name="incomeStructureByIndustry">
+			<userAttribute name="data5">
 				<value value="//div[@id='con03-5']/table[1]/tbody[1]/tr/td" toType="list"/>
 			</userAttribute>
-			<userAttribute name="incomeStructureByIndustryRowSpan">
-				<value value="//div[@id='con03-5']/table[1]/tbody[1]/tr/td[1]/@rowspan" toType="list"/>
+			<userAttribute name="RowSpan5">
+				<value value="//div[@id='con03-5']/table[1]/tbody[1]/tr/td[1]/@rowspan" toType="list" toEntryType="int"/>
 			</userAttribute>
-			<userAttribute name="incomeStructureByIndustryColNum">
+			<userAttribute name="ColNum5">
 				<value value="count(//div[@id='con03-5']/table[1]/tbody[1]/tr[1]/td)" toType="int"/>
 			</userAttribute>
 			
-			<userAttribute name="incomeStructureByProduct">
+			<userAttribute name="data6">
 				<value value="//div[@id='con03-5']/table[2]/tbody[1]/tr/td" toType="list"/>
 			</userAttribute>
-			<userAttribute name="incomeStructureByProductRowSpan">
-				<value value="//div[@id='con03-5']/table[2]/tbody[1]/tr/td[1]/@rowspan" toType="list"/>
+			<userAttribute name="RowSpan6">
+				<value value="//div[@id='con03-5']/table[2]/tbody[1]/tr/td[1]/@rowspan" toType="list" toEntryType="int"/>
 			</userAttribute>
-			<userAttribute name="incomeStructureByProductColNum">
+			<userAttribute name="ColNum6">
 				<value value="count(//div[@id='con03-5']/table[2]/tbody[1]/tr[1]/td)" toType="int"/>
 			</userAttribute>
-			<userAttribute name="incomeStructureByRegion">
+			
+			<userAttribute name="data7">
 				<value value="//div[@id='con03-5']/table[3]/tbody[1]/tr/td" toType="list"/>
 			</userAttribute>
-			<userAttribute name="incomeStructureByRegionRowSpan">
-				<value value="//div[@id='con03-5']/table[3]/tbody[1]/tr/td[1]/@rowspan" toType="list"/>
+			<userAttribute name="RowSpan7">
+				<value value="//div[@id='con03-5']/table[3]/tbody[1]/tr/td[1]/@rowspan" toType="list" toEntryType="int"/>
 			</userAttribute>
-			<userAttribute name="incomeStructureByRegionColNum">
+			<userAttribute name="ColNum7">
 				<value value="count(//div[@id='con03-5']/table[3]/tbody[1]/tr[1]/td)" toType="int"/>
 			</userAttribute>
+			
+			<csvtransform transformClass="org.cld.etl.csv.MultiVarRowTablesToCSV" multipleOutput="true"/>
 		</baseBrowseTask>
 	</PrdTask>
 </Tasks>

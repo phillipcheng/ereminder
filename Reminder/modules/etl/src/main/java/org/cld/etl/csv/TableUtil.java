@@ -1,4 +1,4 @@
-package org.cld.stock.sina;
+package org.cld.etl.csv;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,18 +8,18 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class FRUtil {
-	private static Logger logger =  LogManager.getLogger(FRUtil.class);
+public class TableUtil {
+	private static Logger logger =  LogManager.getLogger(TableUtil.class);
 	
 	public static final Map<String, Integer> unitMap = new HashMap<String, Integer>();
+	public static final String[] units = new String[]{"万股","百万","万元","千元","元","（元）"};
+	public static final int[] numUnits = new int[]{10000,1000000,10000,1000,1,1};
+	
 	static {
-		unitMap.put("元", 1);
-		unitMap.put("千元", 1000);
-		unitMap.put("万元", 10000);
-		unitMap.put("百万", 1000000);
-		unitMap.put("万股", 10000);
+		for (int i=0; i<units.length; i++){
+			unitMap.put(units[i], numUnits[i]);
+		}
 	}
-	public static final String[] units = new String[]{"万股","百万","万元","千元","元"};
 	
 	public static String getFRNumber(String instr){
 		String str = instr;
@@ -47,10 +47,21 @@ public class FRUtil {
 		return str;
 	}
 	
-	public static List<String> colTableToCSV(List<String> vl, int colnum, boolean genHeader){
-		return colTableToCSV(vl, colnum, genHeader, ColTableAsCSV.DATA_TYPE_NUMBER);
+	public static List<String> colTableToCSV(List<String> vl, int colnum, boolean hasHeader, boolean genHeader){
+		return colTableToCSV(vl, colnum, hasHeader, genHeader, ColTableAsCSV.DATA_TYPE_NUMBER);
 	}
 	
+	public static String getValue(String v, String dataType){
+		if (ColTableAsCSV.DATA_TYPE_NUMBER.equals(dataType)){
+			v = TableUtil.getFRNumber(v);
+		}else if (ColTableAsCSV.DATA_TYPE_TEXT.equals(dataType)){
+			//replace comma and new line for string
+			v = v.replace(",", "\\,").replaceAll("\\r\\n|\\r|\\n", " ");
+		}else{
+			logger.error(String.format("str type not supported. %s", dataType));
+		}
+		return v;
+	}
 	/**
 	 * example
 	 * k1 v1 v2 v3
@@ -60,25 +71,19 @@ public class FRUtil {
 	 * @param colnum: how many columns in the page table: e.g. colnum = 3
 	 * @return
 	 */
-	public static List<String> colTableToCSV(List<String> vl, int colnum, boolean genHeader, String dataType){
+	public static List<String> colTableToCSV(List<String> vl, int colnum, boolean hasHeader, 
+			boolean genHeader, String dataType){
 		List<String> retList = new ArrayList<String>();
 		if (vl!=null){
 			for (int i=0; i<colnum; i++){
 				StringBuffer sb = new StringBuffer();
 				int j=i;
-				if (i==0 && !genHeader){
+				if (hasHeader && i==0 && !genHeader){
 					continue;
 				}
 				while (j<vl.size()){
 					String str = vl.get(j);
-					if (ColTableAsCSV.DATA_TYPE_NUMBER.equals(dataType)){
-						str = FRUtil.getFRNumber(str);
-					}else if (ColTableAsCSV.DATA_TYPE_TEXT.equals(dataType)){
-						//replace comma and new line for string
-						str = str.replace(",", "\\,").replaceAll("\\r\\n|\\r|\\n", " ");
-					}else{
-						logger.error(String.format("str type not supported. %s", dataType));
-					}
+					str = getValue(str, dataType);
 					if (j>i){
 						sb.append(",");
 					}
@@ -98,14 +103,16 @@ public class FRUtil {
 	 * @param colnum
 	 * @return
 	 */
-	public static List<String> rowTableToCSV(List<String> vl, int colnum, boolean hasHeader){
+	public static List<String> rowTableToCSV(List<String> vl, int colnum, boolean hasHeader, String dataType){
 		List<String> retList = new ArrayList<String>();
 		if (vl!=null){
 			StringBuffer sb = null;
+			int row=0;
+			int coln=0;
 			for (int i=0; i<vl.size(); i++){
-				int row = i / colnum;
-				int coln = i % colnum;
-				if (row==0 && hasHeader || row>0){
+				row = i / colnum;
+				coln = i % colnum;
+				if (row==0 && !hasHeader || row>0){//has header skip first row
 					if (coln == 0){
 						if (sb!=null){
 							retList.add(sb.toString());
@@ -115,10 +122,11 @@ public class FRUtil {
 					if (coln>0){
 						sb.append(",");
 					}
-					sb.append(vl.get(i));
+					String v = getValue(vl.get(i), dataType);
+					sb.append(v);
 				}
 			}
-			if (sb!=null){
+			if (sb!=null && (coln==(colnum-1))){// a full line
 				retList.add(sb.toString());
 			}
 		}

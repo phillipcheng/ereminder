@@ -14,7 +14,13 @@
 				<value value="count(//table[@id='ProfitStatementNewTable0']/tbody/tr[1]/td)" toType="int"/>
 			</userAttribute>
 			<userAttribute name="data" optional="true">
-				<value value="quarterAvail>quarter? &quot;//table[@id='ProfitStatementNewTable0']/tbody/tr/td[&quot; + (quarterAvail + 1 - quarter) + &quot;]&quot; : null" toType="list" fromType="expression"/>
+				<value value="quarterAvail>quarter? &quot;//table[@id='ProfitStatementNewTable0']/tbody/tr[count(td)>1]/td[&quot; + (quarterAvail + 1 - quarter) + &quot;]&quot; : null" toType="list" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="1" toType="int"/>
+			</userAttribute>
+			<userAttribute name="HasHeader">
+				<value value="false" toType="boolean"/>
 			</userAttribute>
 			<pageVerify operator="!=">
 				<lhs value="//table[@id='ProfitStatementNewTable0']/tbody/tr/td">
@@ -22,6 +28,7 @@
 				<rhs value="null">
 				</rhs>
 			</pageVerify>
+			<csvtransform transformClass="org.cld.etl.csv.ColTableAsCSV"/>
 		</baseBrowseTask>
 	</PrdTask>
 </Tasks>

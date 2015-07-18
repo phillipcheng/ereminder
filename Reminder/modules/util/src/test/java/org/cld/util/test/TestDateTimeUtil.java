@@ -3,7 +3,9 @@ package org.cld.util.test;
 import static org.junit.Assert.*;
 
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedList;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,11 +13,22 @@ import org.cld.util.DateTimeRange;
 import org.cld.util.DateTimeUtil;
 import org.junit.Test;
 
-public class TestTimeUtil {
+public class TestDateTimeUtil {
 	
 
-	public static final Logger logger = LogManager.getLogger(TestTimeUtil.class);
+	public static final Logger logger = LogManager.getLogger(TestDateTimeUtil.class);
+	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
+	@Test
+	public void testGetWorkingDaysList() throws ParseException{
+		Date fromDate = sdf.parse("2014-12-19");
+		Date toDate = sdf.parse("2015-1-20");
+		
+		LinkedList<Date> dll = DateTimeUtil.getWorkingDayList(fromDate, toDate);
+		
+		logger.info("dll:" + dll);
+		
+	}
 	/*
 	 * TODO adding MdHms_DF support
 	 * 2013年1月14日10:00到2013年1月21日09:59:59

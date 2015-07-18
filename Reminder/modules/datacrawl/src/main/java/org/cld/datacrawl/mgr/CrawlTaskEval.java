@@ -126,6 +126,8 @@ public class CrawlTaskEval {
 				value = Integer.parseInt(valueExp);
 			}else if (VarType.FLOAT == vt.getToType()){
 				value = Float.parseFloat(valueExp);
+			}else if (VarType.BOOLEAN == vt.getToType()){
+				value = Boolean.parseBoolean(valueExp);
 			}else if (VarType.STRING == vt.getToType()){
 				value = valueExp;
 			}else if (VarType.URL == vt.getToType()){
@@ -284,6 +286,13 @@ public class CrawlTaskEval {
 									convertedList.add(finalString);
 								}
 							}
+						}else if (vt.getToEntryType()==VarType.INT){
+							for (Object entry:xpathListResult){
+								String finalString = getStringValue(entry);
+								if (finalString!=null){
+									convertedList.add(Integer.parseInt(finalString));
+								}
+							}
 						}else if (vt.getToEntryType()==VarType.FILE){
 							if (fileSaveDir==null && vt.getToDirectory()!=null){
 								fileSaveDir = (String) ScriptEngineUtil.eval(vt.getToDirectory(), VarType.STRING, params);
@@ -295,6 +304,8 @@ public class CrawlTaskEval {
 								convertedList.add(url);
 							}
 						}else{
+							logger.warn(String.format(
+									"unsupported toEntryType %s for fromType xpath and toType list", vt.getToEntryType()));
 							convertedList = xpathListResult;
 						}
 						rxpathListResultList.add(convertedList); //return list of element, no further processing

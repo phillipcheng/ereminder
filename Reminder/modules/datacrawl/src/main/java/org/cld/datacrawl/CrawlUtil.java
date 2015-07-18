@@ -148,6 +148,15 @@ public class CrawlUtil {
 		}
 		
 	}
+	
+	/**
+	 * 
+	 * @param crawlPropertyFile
+	 * @param cconf
+	 * @param tlist
+	 * @param sourceName: task file output name as well as the task name
+	 * @param hdfsOutputDir
+	 */
 	public static void hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, 
 			String sourceName, String hdfsOutputDir){
 		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();

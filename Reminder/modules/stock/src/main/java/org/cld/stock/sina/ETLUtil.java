@@ -4,6 +4,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -16,35 +18,95 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
-import org.cld.datacrawl.task.TabularCSVConvertTask;
 import org.cld.datacrawl.task.TestTaskConf;
 import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.DateTimeUtil;
-import org.json.JSONArray;
 
 public class ETLUtil {
 	
 	private static Logger logger =  LogManager.getLogger(ETLUtil.class);
+	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
-	public static int[] getStartYearQuarterByStockId(String stockid, CrawlConf cconf){
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	public static Date getIPODateByStockId(String stockid, CrawlConf cconf){
 		//get the IPODate
 		CrawledItem corpInfo = cconf.getDsm("hbase").getCrawledItem(stockid, StockConfig.SINA_STOCK_CORP_INFO, null);
-		List<String> fnList = (List<String>)corpInfo.getParam(CorpInfoToCSV.FIELD_NAME_ATTR);
+		List<String> fnList = (List<String>)corpInfo.getParam(StockConfig.SINA_STOCK_DATA);
 		String ipoDateStr = fnList.get(StockConfig.IPO_DATE_IDX).trim();
 		String foundDateStr = fnList.get(StockConfig.FOUND_DATE_IDX).trim();
-		int[] yq = DateTimeUtil.getYearQuarter(ipoDateStr, sdf);
-		if (yq==null){
+		Date d = DateTimeUtil.getDate(ipoDateStr, sdf);
+		if (d==null){
 			logger.warn("wrong ipo date found:" + ipoDateStr + ", for stock:" + stockid + ", try found date:" + foundDateStr);
-			yq = DateTimeUtil.getYearQuarter(foundDateStr, sdf);
-			if (yq==null)
+			d = DateTimeUtil.getDate(foundDateStr, sdf);
+			if (d==null)
 				logger.warn("wrong found date found:" + foundDateStr + ", for stock:" + stockid);	
 		}
-		return yq;
+		return d;
 	}
+	
+	public static int[] getStartYearQuarterByStockId(String stockid, CrawlConf cconf){
+		Date d = getIPODateByStockId(stockid, cconf);
+		return DateTimeUtil.getYearQuarter(d);
+	}
+	
+	/**
+	 * 
+	 * @param ids
+	 * @param cconf
+	 * @param propfile
+	 * @param confName
+	 * @param minStartDate: if specified, min start date
+	 */
+	public static void getDataFromStartDate(String[] ids, CrawlConf cconf, String propfile, String confName, 
+			Date minStartDate){
+		List<Task> tlist = new ArrayList<Task>();
+		LinkedList<Date> cacheDates = new LinkedList<Date>();
+		for (String id: ids){
+			String trimmedId = id.substring(2);
+			Date fDate = getIPODateByStockId(trimmedId, cconf);
+			if (minStartDate!=null){
+				if (fDate.before(minStartDate)){
+					fDate = minStartDate;
+				}
+			}
+			logger.debug("ipo date:" + fDate);
+			//update cache if necessary
+			Date cacheFirstDate = null;
+			if (!cacheDates.isEmpty())
+				cacheFirstDate = cacheDates.getFirst();
+			else
+				cacheFirstDate = new Date();
+			LinkedList<Date> dll = DateTimeUtil.getWorkingDayList(fDate, cacheFirstDate);
+			cacheDates.addAll(0, dll);
+			//get dates from cache
+			Date firstWorkingDay = null;
+			if (DateTimeUtil.isWorkingDay(fDate)){
+				firstWorkingDay = fDate;
+			}else{
+				firstWorkingDay = DateTimeUtil.nextWorkingDay(fDate);
+			}
+			int idx = cacheDates.indexOf(firstWorkingDay);
+			if (idx==-1){
+				logger.error("cache dates do not contains:" + firstWorkingDay);
+			}else{
+				Iterator<Date> tryDates = cacheDates.listIterator(idx);
+				while(tryDates.hasNext()){
+					Date d = tryDates.next();
+					logger.debug("try date:" + d);
+					String dstr = sdf.format(d);
+					TestTaskConf ttc = new TestTaskConf(false, browse_type.bpt, confName, confName +".xml");
+					ttc.putParam("stockid", id);
+					ttc.putParam("date", dstr);
+					tlist.add(ttc);
+				}
+			}
+		}
+		logger.info("sending out:" + tlist.size() + " tasks.");
+		CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, null, null);
+	}
+	
 	public static void getDataFromStartYearQuarter(String[] ids, CrawlConf cconf, String propfile, String confName) {
 		List<Task> tlist = new ArrayList<Task>();
 		for (int i=0; i<ids.length; i++){
@@ -86,8 +148,7 @@ public class ETLUtil {
 			}
 		}
 		logger.info("sending out:" + tlist.size() + " tasks.");
-		CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, 
-				null, null);
+		CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, null, null);
 	}
 	
 	public static void mergeMarketHistoryByQuarter(CrawlConf cconf, int fromYear, 

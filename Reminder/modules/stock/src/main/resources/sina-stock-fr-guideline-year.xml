@@ -15,7 +15,7 @@
 			<userAttribute name="data">
 				<value value="//table[@id='BalanceSheetNewTable0']/tbody/tr[count(td)>1]/td" toType="list"/>
 			</userAttribute>
-			<csvtransform transformClass="org.cld.stock.sina.ColTableAsCSV"/>
+			<csvtransform transformClass="org.cld.etl.csv.ColTableAsCSV"/>
 		</baseBrowseTask>
 	</PrdTask>
 </Tasks>

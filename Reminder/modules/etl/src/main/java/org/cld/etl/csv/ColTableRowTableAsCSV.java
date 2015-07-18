@@ -1,4 +1,4 @@
-package org.cld.stock.sina;
+package org.cld.etl.csv;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,21 +13,12 @@ public class ColTableRowTableAsCSV implements ICrawlItemToCSV{
 	
 	private static Logger logger =  LogManager.getLogger(ColTableRowTableAsCSV.class);
 
-	public static final String DATA_TYPE_NUMBER="Number";
-	public static final String DATA_TYPE_STRING="String";
-	
-	public static final String FIELD_NAME_KEYID="stockid";
-	public static final String FIELD_NAME_DATA="data";
-	public static final String KEY_GENHEADER="GenHeader";
-	
-	public static final String FIELD_NAME_COLNUM="ColNum";//number of fields for the col table
 	public static final String FIELD_NAME_COLCSV="ColCsvName";//number of col csv file
 	public static final String FIELD_NAME_COLDataType="ColDataType";//data type of column table
 	
 	public static final String FIELD_NAME_SECSEPVALUE="SectionSepValue";//value to separate col table and row table
 	public static final String FIELD_NAME_RowKeyFromColIdx ="RowKeyFromColIdx";//the attribute(s) needs to put in the row table from col tables
 	
-	public static final String FIELD_NAME_ROWNUM="RowNum";//number of fields for the row table
 	public static final String FIELD_NAME_ROWCSV="RowCsvName";//number of row csv file
 	public static final String FIELD_NAME_ROWDataType="RowDataType";//data type of row table
 	
@@ -52,7 +43,7 @@ public class ColTableRowTableAsCSV implements ICrawlItemToCSV{
 		//for column table
 		int colnum = 0;
 		List<Integer> rkfcIdx = null;
-		String coldatatype = DATA_TYPE_STRING;
+		String coldatatype = ICrawlItemToCSV.DATA_TYPE_TEXT;
 		String colcsvname = null;
 		Integer colnumObj = (Integer) ci.getParam(FIELD_NAME_COLNUM);
 		if (colnumObj!=null){
@@ -70,7 +61,7 @@ public class ColTableRowTableAsCSV implements ICrawlItemToCSV{
 		int rownum = (int) ci.getParam(FIELD_NAME_ROWNUM);
 		String ssv = (String) ci.getParam(FIELD_NAME_SECSEPVALUE);
 		String rowcsvname = (String) ci.getParam(FIELD_NAME_ROWCSV);
-		String rowdatatype = DATA_TYPE_STRING;
+		String rowdatatype = ICrawlItemToCSV.DATA_TYPE_TEXT;
 		String dt = (String)ci.getParam(FIELD_NAME_ROWDataType);
 		if (dt!=null){
 			rowdatatype = dt;

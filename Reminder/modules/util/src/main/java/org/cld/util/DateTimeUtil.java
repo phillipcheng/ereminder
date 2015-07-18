@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -52,6 +53,31 @@ public class DateTimeUtil {
 	public static final SimpleDateFormat MdHm_DF= new SimpleDateFormat(MdHm_DateFormat, chinaLocale);
 	public static final SimpleDateFormat MdHms_DF= new SimpleDateFormat(MdHms_DateFormat, chinaLocale);
 	
+	//include fromDate, not including toDate [fromDate, toDate)
+	public static LinkedList<Date> getWorkingDayList(Date fromDate, Date toDate){
+		LinkedList<Date> dll = new LinkedList<Date>();
+		Calendar c = Calendar.getInstance();
+		c.setTime(fromDate);
+		while (c.getTime().before(toDate)){
+			int dow = c.get(Calendar.DAY_OF_WEEK);
+			if (dow!=Calendar.SUNDAY && dow!=Calendar.SATURDAY){
+				dll.add(c.getTime());
+			}
+			c.add(Calendar.DATE, 1);
+		}
+		return dll;
+	}
+	
+	public static Date getDate(String date, SimpleDateFormat sdf){
+		try {
+			Date d = sdf.parse(date);
+			return d;
+		}catch(Exception e){
+			logger.error(e.getMessage());
+			return null;
+		}
+	}
+	
 	//return like [2011,1] for year 2011, first quarter
 	public static int[] getYearQuarter(String date, SimpleDateFormat sdf){
 		try {
@@ -71,9 +97,7 @@ public class DateTimeUtil {
 		int quarter = (month-1)/3+1; //map 1-12 to 1-4
 		return new int[]{year, quarter};
 	}
-	/*
-	 * 
-	 */
+	
 	public static Date getDate(String value){
 		try {
 			return yMd_DF.parse(value);
@@ -158,6 +182,18 @@ public class DateTimeUtil {
 			c.add(Calendar.DAY_OF_YEAR, 1); //roll to next day
 		}
 		return c.getTime();
+	}
+	
+	
+	public static boolean isWorkingDay(Date day){
+		Calendar c = Calendar.getInstance();
+		c.setTime(day);
+		int weekday = c.get(Calendar.DAY_OF_WEEK);
+		if (weekday == Calendar.SATURDAY || weekday == Calendar.SUNDAY){
+			return false;
+		}else{
+			return true;
+		}
 	}
 	
 	public static Date yesterday(Date day){

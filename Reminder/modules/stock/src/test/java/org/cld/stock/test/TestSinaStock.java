@@ -1,173 +1,110 @@
 package org.cld.stock.test;
 
-import java.util.ArrayList;
-import java.util.Date;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.cld.util.DateTimeUtil;
-
-import org.cld.datastore.entity.CrawledItem;
-
-import org.cld.taskmgr.entity.Task;
-
-import org.cld.etl.csv.CsvReformatMapredLauncher;
-import org.cld.etl.fci.HBaseToCSVMapperLauncher;
-
 import org.cld.datacrawl.CrawlClientNode;
-import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.task.TabularCSVConvertTask;
-import org.cld.datacrawl.test.TestBase;
-
 import org.cld.stock.sina.ETLUtil;
-import org.cld.stock.sina.FRFootNoteToCSV;
+import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.StockConfig;
-
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestSinaStock extends TestBase{
+public class TestSinaStock {
 	
 	public static final String MarketId_HS_A ="hs_a"; //hu sheng A gu
 	public static final String MarketId_Test = "test";
+	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
 	private String marketId = MarketId_Test;
+	private String propFile = "client1-v2.properties";
 	
+	private SinaStockBase ssb;
+
 	public TestSinaStock(){
 		super();
 	}
 	
-	public void setUp(String propFile){
-		super.setProp(propFile);
-		this.propFile = propFile;
-		this.itemsFolder = this.cconf.getTaskMgr().getHadoopCrawledItemFolder();
-	}
-	
-	private String propFile = "client1-v2.properties";
-	private String itemsFolder;
-	
 	@Before
 	public void setUp(){
-		super.setProp(propFile);
-		itemsFolder = this.cconf.getTaskMgr().getHadoopCrawledItemFolder();
+		ssb = new SinaStockBase(propFile, marketId);
+		ssb.getCconf().getTaskMgr().getHadoopCrawledItemFolder();
 	}
-	
-	public String[] getStockIdByMarketId(String marketId){
-		if (MarketId_Test.equals(marketId)){
-			return new String[]{"sh600000", "sh601766", "sz000001"};
-		}else{
-			CrawledItem ci = cconf.getDsm("hbase").getCrawledItem(marketId, StockConfig.SINA_STOCK_IDS, null);
-			ci.fromParamData();
-			List<String> ids = (List<String>) ci.getParam("ids");
-			String[] idarray = new String[ids.size()];
-			idarray = ids.toArray(idarray);
-			return idarray;
-		}
-	}
-	
-	public void run_all_id_by_task(String marketId, String confName, Map<String, Object> params, String outputDir){
-		String[] idarray = getStockIdByMarketId(marketId);
-		String confFileName = confName + ".xml";
-		List<Task> tl = new ArrayList<Task>();
-		if (confFileName!=null){
-			tl = cconf.setUpSite(confFileName, null);
-		}
-		List<Task> tlist = new ArrayList<Task>();
-		for (int i=0; i<idarray.length; i++){
-			String sid = idarray[i];
-			String stockid = sid.substring(2);
-			for (Task t: tl){
-				Task t1 = t.clone(getClass().getClassLoader());
-				if (params!=null)
-					t1.putAllParams(params);
-				t1.putParam("stockid", stockid);
-				tlist.add(t1);
-			}
-		}
-		//TODO fill the mapreduce task name
-		CrawlUtil.hadoopExecuteCrawlTasks(this.getPropFile(), cconf, tlist, null, outputDir);
-	}
-	
+		
 	/***
 	 * Stock ids
 	 * */
 	//get all stockids by market
 	@Test
 	public void run_browse_idlist() throws Exception{
-		cconf.setUpSite(StockConfig.SINA_STOCK_IDS + ".xml", null);
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("category_id", "hs_a");
-		browsePrd(StockConfig.SINA_STOCK_IDS + ".xml", null, params);
+		ssb.run_browse_idlist();
 	}
 
 	/*****
 	 * Market history 行情走势
 	 **/
+	//成交明细
+	@Test
+	public void run_browse_tradedetail() throws ParseException{
+		ssb.run_browse_tradedetail("2015-7-12");
+	}
+	
+	//融资融券
+	@Test
+	public void run_browse_market_rzrq() throws ParseException{
+		ssb.run_browse_market_rzrq("2015-7-12");
+	}
+	
+	//历史交易
 	//crawl market history to hdfs/hive
 	@Test
 	public void run_browse_market_history() {
-		String[] ids = getStockIdByMarketId(marketId);
-		ETLUtil.getDataFromStartYearQuarter(ids, cconf, this.getPropFile(), StockConfig.SINA_STOCK_MARKET_HISTORY);
+		ssb.run_browse_market_history();
 	}
 	
 	//merge all stocks' market history into one file per quarter
 	@Test
 	public void run_merge_market_history() throws Exception {
-		ETLUtil.mergeMarketHistoryByQuarter(cconf, 1990, 1, 2015, 3);
+		ETLUtil.mergeMarketHistoryByQuarter(ssb.getCconf(), 1990, 1, 2015, 3);
 	}
-	
-	//crawl market for specific quarter(s) to hdfs/hive
-	public void run_browse_market_quarter(int year, int quarter){
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("year", year);
-		params.put("quarter", quarter);
-		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_MARKET_HISTORY, params, null);
-	}
+
 	@Test
 	public void run_browse_market_quarter() throws Exception {
-		int year=2015;
-		int quarter=2;
-		run_browse_market_quarter(year, quarter);
+		ssb.run_browse_market_quarter(2015, 2);
 	}
+
 	@Test
-	public void run_browse_market_cur_quarter(){
-		int[] cyq = DateTimeUtil.getYearQuarter(new Date());
-		run_browse_market_quarter(cyq[0], cyq[1]);
+	public void run_merge_market_history_quarter() throws Exception {
+		ETLUtil.mergeMarketHistoryByQuarter(ssb.getCconf(), 2015, 2, 2015, 2);
 	}
-	public void run_merge_market_history_quarter(int year, int quarter) throws Exception {
-		ETLUtil.mergeMarketHistoryByQuarter(cconf, year, quarter, year, quarter);
-	}
-	
+
 	/****
 	 * Corp info 公司资料
 	 * */
-	//crawl corp info to hbase, we need this
 	@Test
 	public void run_browse_corp_info() throws Exception {
-		//set output to null needs followup, can be merged, actually we need hbase data
-		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_CORP_INFO, null, null);
+		ssb.run_browse_corp_info();
 	}
 	
-	//convert corp info to hdfs/hive
-	@Test
-	public void run_corp_info_to_csv() throws Exception{
-		HBaseToCSVMapperLauncher.genCSVFromHbase(this.getPropFile(), 
-				itemsFolder + "/" + StockConfig.SINA_STOCK_CORP_INFO, 
-				StockConfig.SINA_STOCK_CORP_INFO, 
-				null, 
-				"org.cld.stock.sina.CorpInfoToCSV");
-	}
-	
-	/**
-	 * Corp Manager
-	 */
+	//Corp Manager
 	@Test
 	public void run_corp_manager(){
-		Map<String, Object> paramMap = new HashMap<String, Object>();
-		paramMap.put("history", true);
-		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_CORP_MANAGER, 
-				paramMap, StockConfig.SINA_STOCK_CORP_MANAGER);
+		ssb.run_corp_manager(true);
+	}
+	
+	//Corp Related
+	@Test
+	public void run_corp_related(){
+		ssb.run_corp_related();
+	}
+	
+	//Corp Related other
+	@Test
+	public void run_corp_related_other(){
+		ssb.run_corp_related_other();
 	}
 	
 	/***
@@ -175,9 +112,7 @@ public class TestSinaStock extends TestBase{
 	 */
 	@Test
 	public void run_issue_sharebonus(){
-		Map<String, Object> paramMap = new HashMap<String, Object>();
-		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_ISSUE_SHAREBONUS, 
-				paramMap, StockConfig.SINA_STOCK_ISSUE_SHAREBONUS);
+		ssb.run_issue_sharebonus();
 	}
 	
 	/***********
@@ -185,34 +120,22 @@ public class TestSinaStock extends TestBase{
 	 */
 	@Test //Stock Structure
 	public void run_stock_structure(){
-		String[] ids = getStockIdByMarketId(marketId);
-		ETLUtil.getDataFromStartYear(ids, cconf, this.getPropFile(), 
-				StockConfig.SINA_STOCK_STOCK_STRUCTURE, 
-				StockConfig.SINA_STOCK_STOCK_STRUCTURE);
+		ssb.run_stock_structure();
 	}
 	
 	@Test //Stock holder
 	public void run_stock_holder(){
-		Map<String, Object> paramMap = new HashMap<String, Object>();
-		paramMap.put("history", true);
-		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_STOCK_HOLDER, 
-				paramMap, StockConfig.SINA_STOCK_STOCK_HOLDER);
+		ssb.run_stock_holder(true);
 	}
 	
 	@Test //Circulate Stock holder
 	public void run_circulate_stock_holder(){
-		Map<String, Object> paramMap = new HashMap<String, Object>();
-		paramMap.put("history", true);
-		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_STOCK_HOLDER_CIRCULATE, 
-				paramMap, StockConfig.SINA_STOCK_STOCK_HOLDER_CIRCULATE);
+		ssb.run_circulate_stock_holder(true);
 	}
 
 	@Test //Fund Stock holder
 	public void run_fund_stock_holder(){
-		Map<String, Object> paramMap = new HashMap<String, Object>();
-		paramMap.put("history", true);
-		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_STOCK_HOLDER_FUND, 
-				paramMap, StockConfig.SINA_STOCK_STOCK_HOLDER_FUND);
+		ssb.run_fund_stock_holder(true);
 	}
 	
 	
@@ -222,102 +145,48 @@ public class TestSinaStock extends TestBase{
 	//crawl financial report history by market to hdfs
 	@Test
 	public void run_browse_fr_history() throws Exception {
-		//set output to null, needs follow up etl
-		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_FR_HISTORY, null, null);
+		ssb.run_browse_fr_history();
 		
 	}
 	//fr history convert to csv/hive
 	@Test
 	public void run_convert_fr_history_tabular_to_csv() throws Exception {
-		String[] ids = getStockIdByMarketId(marketId);
-		List<Task> tlist = new ArrayList<Task>();
-		for (int i=0; i<ids.length; i++){
-			String sid = ids[i];
-			String stockid = sid.substring(2);
-			for (String subFR: StockConfig.subFR){
-				TabularCSVConvertTask ct = new TabularCSVConvertTask(stockid, 
-						StockConfig.SINA_STOCK_FR_HISTORY + "/" + subFR, 
-						StockConfig.SINA_STOCK_FR_HISTORY_OUT+ "/" + subFR);
-				tlist.add(ct);
-			}
-		}
-		//TODO fill the mapred task name
-		CrawlUtil.hadoopExecuteCrawlTasks(this.getPropFile(), cconf, tlist, null, null);
+		ssb.run_convert_fr_history_tabular_to_csv();
 	}
 	//fr history reformat from split by stockid to split by quarter
 	@Test
 	public void run_fr_reformat() throws Exception{
-		for (String subFR: StockConfig.subFR){
-			CsvReformatMapredLauncher.format(this.getPropFile(), 
-					itemsFolder + "/" + StockConfig.SINA_STOCK_FR_HISTORY_OUT + "/" + subFR, 
-					1, 
-					itemsFolder  + "/" + StockConfig.SINA_STOCK_FR_HISTORY_QUARTER_OUT + "/" + subFR);
-		}
-	}
-	public void run_browse_fr_quarter(int year, int quarter){
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("year", year);
-		params.put("quarter", quarter);
-		for (String subFR:StockConfig.subFR){
-			String confFileName = StockConfig.SINA_STOCK_FR_QUARTER + "-" + subFR;
-			String outputDir = StockConfig.SINA_STOCK_FR_QUARTER + "-" + subFR + "/" + year + "_" + quarter;
-			run_all_id_by_task(marketId, confFileName, params, outputDir);
-		}
+		ssb.run_fr_reformat();
 	}
 	//crawl finance report for specific quarter(s)
 	@Test
 	public void run_browse_fr_quarter() throws Exception {
-		int year = 2015;
-		int quarter = 1;
-		run_browse_fr_quarter(year, quarter);
+		ssb.run_browse_fr_quarter(2015, 1);
 	}
 	
 	//FR FootNote
 	@Test
 	public void run_browse_fr_footnote_history(){
-		//need follow up
-		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_FR_FOOTNOTE, null, null);
-	}
-	@Test
-	public void run_fr_footnote_to_csv(){
-		for (String subArea:FRFootNoteToCSV.FootNoteSubArea){
-			Map<String, Object> params = new HashMap<String, Object>();
-			params.put(FRFootNoteToCSV.FR_FOOTNOTE_ATTR_NAME, subArea);
-			HBaseToCSVMapperLauncher.genCSVFromHbase(
-					this.getPropFile(), 
-					itemsFolder + "/" + StockConfig.SINA_STOCK_FR_FOOTNOTE + "/" + subArea, 
-					StockConfig.SINA_STOCK_FR_FOOTNOTE, 
-					null, 
-					"org.cld.stock.sina.FRFootNoteToCSV", 
-					params);
-		}
+		ssb.run_browse_fr_footnote_history();
 	}
 	
 	//Achievement Notice
 	@Test
 	public void run_fr_achievenotice(){
-		run_all_id_by_task(marketId, StockConfig.SINA_STOCK_FR_AchieveNotice, null, 
-				StockConfig.SINA_STOCK_FR_AchieveNotice);
+		ssb.run_fr_achievenotice();
 	}
 	
 	//Finance Guideline
 	@Test
 	public void run_fr_finance_guideline(){
-		String[] ids = getStockIdByMarketId(marketId);
-		ETLUtil.getDataFromStartYear(ids, cconf, this.getPropFile(), 
-				StockConfig.SINA_STOCK_FR_FINANCE_GUIDELINE_YEAR, 
-				StockConfig.SINA_STOCK_FR_FINANCE_GUIDELINE_YEAR);
+		ssb.run_fr_finance_guideline();
 	}
 	
 	//Asset Devalue
 	@Test
 	public void run_fr_assetdevalue(){
-		String[] ids = getStockIdByMarketId(marketId);
-		ETLUtil.getDataFromStartYear(ids, cconf, this.getPropFile(), 
-				StockConfig.SINA_STOCK_FR_ASSETDEVALUE_YEAR, 
-				StockConfig.SINA_STOCK_FR_ASSETDEVALUE_YEAR);
+		ssb.run_fr_assetdevalue();
 	}
-	
 	
 
 	
@@ -326,12 +195,12 @@ public class TestSinaStock extends TestBase{
 	//test browse sina-stock-market-history bpt
 	@Test
 	public void test_sina_stock_holder_genheader() throws Exception{
-		cconf.setUpSite(StockConfig.SINA_STOCK_STOCK_HOLDER+".xml", null);
+		ssb.getCconf().setUpSite(StockConfig.SINA_STOCK_STOCK_HOLDER+".xml", null);
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("stockid", "600000");
 		params.put("history", true);
 		params.put("GenHeader", true);
-		browsePrd(StockConfig.SINA_STOCK_STOCK_HOLDER+".xml", null, params);
+		ssb.browsePrd(StockConfig.SINA_STOCK_STOCK_HOLDER+".xml", null, params);
 	}
 	
 	@Test
@@ -340,7 +209,7 @@ public class TestSinaStock extends TestBase{
 		for (String sid:sids){
 			TabularCSVConvertTask ct = new TabularCSVConvertTask(sid, true);
 			Map<String, Object> params = new HashMap<String, Object>();
-			params.put(CrawlClientNode.TASK_RUN_PARAM_CCONF, cconf);
+			params.put(CrawlClientNode.TASK_RUN_PARAM_CCONF, ssb.getCconf());
 			ct.runMyself(params, null);
 		}
 	}
@@ -351,89 +220,51 @@ public class TestSinaStock extends TestBase{
 		for (String sid:sids){
 			Map<String, Object> params = new HashMap<String, Object>();
 			params.put("stockid", sid);
-			params.put(CrawlClientNode.TASK_RUN_PARAM_CCONF, cconf);
-			browsePrd(StockConfig.SINA_STOCK_FR_FOOTNOTE+".xml", null, params);
+			params.put(CrawlClientNode.TASK_RUN_PARAM_CCONF, ssb.getCconf());
+			ssb.browsePrd(StockConfig.SINA_STOCK_FR_FOOTNOTE+".xml", null, params);
 		}
 	}
 	
 	//test browse sina-stock-market-history bpt
 	@Test
 	public void test_sina_browse_prd_market_history() throws Exception{
-		cconf.setUpSite(StockConfig.SINA_STOCK_MARKET_HISTORY+".xml", null);
+		ssb.getCconf().setUpSite(StockConfig.SINA_STOCK_MARKET_HISTORY+".xml", null);
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("stockid", "600000");
 		params.put("year", "1999");
 		params.put("quarter", "4");
-		browsePrd(StockConfig.SINA_STOCK_MARKET_HISTORY+".xml", null, params);
+		ssb.browsePrd(StockConfig.SINA_STOCK_MARKET_HISTORY+".xml", null, params);
 		params.put("year", "2014");
-		browsePrd(StockConfig.SINA_STOCK_MARKET_HISTORY+".xml", null, params);
+		ssb.browsePrd(StockConfig.SINA_STOCK_MARKET_HISTORY+".xml", null, params);
 	}
 	
 	//test browse single corp-info bpt
 	@Test
 	public void test_browse_corp_info() throws Exception{
-		cconf.setUpSite(StockConfig.SINA_STOCK_CORP_INFO +".xml", null);
+		ssb.getCconf().setUpSite(StockConfig.SINA_STOCK_CORP_INFO +".xml", null);
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("stockid", "000001");
-		browsePrd(StockConfig.SINA_STOCK_CORP_INFO +".xml", null, params);
+		ssb.browsePrd(StockConfig.SINA_STOCK_CORP_INFO +".xml", null, params);
 	}
 	//test browse achievement notice
 	@Test
 	public void test_browse_achieve_notice() throws Exception{
-		cconf.setUpSite(StockConfig.SINA_STOCK_FR_AchieveNotice +".xml", null);
+		ssb.getCconf().setUpSite(StockConfig.SINA_STOCK_FR_AchieveNotice +".xml", null);
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("stockid", "000001");
-		browsePrd(StockConfig.SINA_STOCK_FR_AchieveNotice +".xml", null, params);
+		ssb.browsePrd(StockConfig.SINA_STOCK_FR_AchieveNotice +".xml", null, params);
 	}
 	
 	//test browse single stock quarter fr
 	@Test
 	public void test_sina_browse_financial_report_quarter() throws Exception {
-		cconf.setUpSite(StockConfig.SINA_STOCK_FR_QUARTER+"-" + StockConfig.subFR[0] +".xml", null);
+		ssb.getCconf().setUpSite(StockConfig.SINA_STOCK_FR_QUARTER+"-" + StockConfig.subFR[0] +".xml", null);
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("stockid", "600000");
 		params.put("year", 2015);
 		params.put("quarter", 2);
-		browsePrd(StockConfig.SINA_STOCK_FR_QUARTER+"-" + StockConfig.subFR[0] +".xml", null, params);
+		ssb.browsePrd(StockConfig.SINA_STOCK_FR_QUARTER+"-" + StockConfig.subFR[0] +".xml", null, params);
 		params.put("quarter", 1);
-		browsePrd(StockConfig.SINA_STOCK_FR_QUARTER+"-" + StockConfig.subFR[0] +".xml", null, params);
-	}
-	
-	
-	public static final String browse_market_quarter = "brs-mkt-qut";
-	public static final String merge_market_quarter = "mrg-mkt-qut";
-	public static final String browse_fr_quarter = "brs-fr-qut";
-	
-	public static void main(String[] args) throws Exception {
-		int year = 2015;
-		int quarter = 1;
-		String cmd="";
-		String propFile="";
-		if (args.length>=1){
-			propFile = args[0];
-		}
-		TestSinaStock tss = new TestSinaStock();
-		tss.setProp(propFile);
-		
-		if (args.length>=2){
-			cmd = args[1];
-		}
-		if (args.length>=3){
-			year = Integer.parseInt(args[2]);
-			quarter = Integer.parseInt(args[3]);
-		}else{
-			if (cmd.endsWith("-qut")){
-				logger.info("please input year, quarter");
-				return;
-			}
-		}
-		
-		if (browse_market_quarter.equals(cmd)){
-			tss.run_browse_market_quarter(year, quarter);
-		}else if (merge_market_quarter.equals(cmd)){
-			tss.run_merge_market_history_quarter(year, quarter);
-		}else if (browse_fr_quarter.equals(cmd)){
-			tss.run_browse_fr_quarter(year, quarter);
-		}
+		ssb.browsePrd(StockConfig.SINA_STOCK_FR_QUARTER+"-" + StockConfig.subFR[0] +".xml", null, params);
 	}
 }

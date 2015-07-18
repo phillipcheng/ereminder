@@ -13,7 +13,7 @@
 			<userAttribute name="id">
 				<value value="stockid" toType="string" fromScope="param"/>
 			</userAttribute>
-			<userAttribute name="RowNum">
+			<userAttribute name="ColNum">
 				<value value="9,11" toType="list" toEntryType="int" />
 			</userAttribute>
 			<userAttribute name="data1">
@@ -25,7 +25,7 @@
 			<userAttribute name="RowCsvName">
 				<value value="dividend,allotted" toType="list" toEntryType="string" />
 			</userAttribute>
-			<csvtransform transformClass="org.cld.stock.sina.MultiRowTablesAsCSV" multipleOutput="true"/>
+			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" multipleOutput="true"/>
 		</baseBrowseTask>
 	</PrdTask>
 </Tasks>

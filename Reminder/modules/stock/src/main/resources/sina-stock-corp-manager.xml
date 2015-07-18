@@ -26,7 +26,7 @@
 			<userAttribute name="RowCsvName">
 				<value value="CorpManager" toType="string"/>
 			</userAttribute>
-			<csvtransform transformClass="org.cld.stock.sina.ColTableRowTableAsCSV" multipleOutput="true"/>
+			<csvtransform transformClass="org.cld.etl.csv.ColTableRowTableAsCSV" multipleOutput="true"/>
 		</baseBrowseTask>
 	</PrdTask>
 </Tasks>

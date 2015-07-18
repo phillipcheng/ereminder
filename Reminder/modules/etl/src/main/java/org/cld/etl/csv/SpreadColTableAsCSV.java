@@ -1,7 +1,6 @@
-package org.cld.stock.sina;
+package org.cld.etl.csv;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -14,12 +13,8 @@ public class SpreadColTableAsCSV implements ICrawlItemToCSV{
 	
 	private static Logger logger =  LogManager.getLogger(SpreadColTableAsCSV.class);
 
-	public static final String FIELD_NAME_KEYID="stockid";
-	public static final String FIELD_NAME_DATA="data";
-	public static final String FIELD_NAME_COLNUM="ColNum";//of the 1st table (full table)
-	public static final String FIELD_NAME_ROWNUM="RowNum";//of the 1st table (full table)
 	
-	public static final String KEY_GENHEADER="GenHeader";
+	
 	/****
 	 * example:
 	 * k1 v1 v2 v3
@@ -37,7 +32,11 @@ public class SpreadColTableAsCSV implements ICrawlItemToCSV{
 		List<String> ls = (List<String>)ci.getParam(FIELD_NAME_DATA);
 		int colnum = (int) ci.getParam(FIELD_NAME_COLNUM);
 		int rownum = (int) ci.getParam(FIELD_NAME_ROWNUM);
-		
+		boolean hasHeader=true;
+		Boolean bHasHeader = (Boolean)ci.getParam(KEY_HASHEADER);
+		if (bHasHeader!=null){
+			hasHeader = bHasHeader.booleanValue();
+		}
 		boolean genHeader = false;
 		Boolean bGenHeader = (Boolean) ci.getParam(KEY_GENHEADER);
 		if (bGenHeader!=null){
@@ -53,12 +52,12 @@ public class SpreadColTableAsCSV implements ICrawlItemToCSV{
 				oneTableValues = ls.subList(startIdx, endIdx);
 				startIdx +=valueFullTable;
 				endIdx +=valueFullTable;
-				csvs.addAll(FRUtil.colTableToCSV(oneTableValues, colnum, genHeader));
+				csvs.addAll(TableUtil.colTableToCSV(oneTableValues, colnum, hasHeader, genHeader));
 			}
 			oneTableValues = ls.subList(startIdx, ls.size());
 			int leftItems = ls.size()-startIdx;
 			int leftCol = leftItems/rownum;
-			csvs.addAll(FRUtil.colTableToCSV(oneTableValues, leftCol, genHeader));
+			csvs.addAll(TableUtil.colTableToCSV(oneTableValues, leftCol, hasHeader, genHeader));
 		}
 		
 		List<String[]> retlist = new ArrayList<String[]>();
