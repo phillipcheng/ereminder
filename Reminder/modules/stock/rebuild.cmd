@@ -1,3 +1,2 @@
 call mvn -f ../pom.xml install -Dmaven.test.skip=true 
-call mvn -f pom.xml install -Dmaven.test.skip=true  
-call mvn -f pom.xml test
+call mvn -f pom.xml install -Dmaven.test.skip=true
