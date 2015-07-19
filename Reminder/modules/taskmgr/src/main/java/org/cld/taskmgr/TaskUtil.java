@@ -1,7 +1,9 @@
 package org.cld.taskmgr;
 
 import java.rmi.RemoteException;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -15,7 +17,12 @@ import org.apache.logging.log4j.Logger;
 import org.cld.taskmgr.client.ClientNodeImpl;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskPersistMgr;
+import org.cld.util.SafeSimpleDateFormat;
+import org.cld.util.StringUtil;
 import org.cld.util.distribute.SimpleNodeConf;
+import org.xml.mytaskdef.ConfKey;
+import org.xml.taskdef.ValueType;
+import org.xml.taskdef.VarType;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
@@ -23,7 +30,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
 public class TaskUtil {
-
+	private static Map<String, SafeSimpleDateFormat> dfMap = new HashMap<String, SafeSimpleDateFormat>();
+	public static final String LIST_VALUE_SEP=",";
 	private static Logger logger =  LogManager.getLogger(TaskUtil.class);
 	
 	public static Set<Task> convertToSet(List<Task> tl){
@@ -134,5 +142,85 @@ public class TaskUtil {
 		NodeConf nc = null;
 		nc = new NodeConf(properties);
 		return nc;
+	}
+	
+
+	//get the value from value string according toValueType
+	public static Object getValue(ValueType vt, String valueExp){
+		Object value = null;
+		//perform pre-process
+		ValueType.StrPreprocess sp = vt.getStrPreprocess();
+		if (sp!=null){
+			valueExp = StringUtil.getStringBetweenFirstPreFirstPost(valueExp, sp.getTrimPre(), sp.getTrimPost());
+			valueExp = valueExp.trim();
+		}
+		if (vt.getToType()!=null){
+			if (VarType.DATE==vt.getToType()){
+				String format = vt.getFormat();
+				SafeSimpleDateFormat sdf=null;
+				if (dfMap.containsKey(format)){
+					sdf = dfMap.get(format);
+				}else{
+					sdf = new SafeSimpleDateFormat(format);
+					dfMap.put(format, sdf);
+				}
+				try {
+					Date d = sdf.parse(valueExp);
+					if (!format.contains("yy")){
+						//if no year set, using current year
+						d.setYear(new Date().getYear());
+					}
+					value = d;
+				} catch (ParseException e) {
+					logger.error(String.format("date: %s can't be parsed using format: %s.", 
+							valueExp, format), e);
+				}
+			}else if (VarType.INT == vt.getToType()){
+				valueExp = valueExp.replaceAll("\\D+","");
+				value = Integer.parseInt(valueExp);
+			}else if (VarType.FLOAT == vt.getToType()){
+				value = Float.parseFloat(valueExp);
+			}else if (VarType.BOOLEAN == vt.getToType()){
+				value = Boolean.parseBoolean(valueExp);
+			}else if (VarType.STRING == vt.getToType()){
+				value = valueExp;
+			}else if (VarType.URL == vt.getToType()){
+				value = valueExp;
+			}else if (VarType.LIST == vt.getToType()){
+				String[] vs = valueExp.split(LIST_VALUE_SEP);
+				List<Object> vl = new ArrayList<Object>();
+				for (String v:vs){
+					if (VarType.STRING == vt.getToEntryType()){
+						vl.add(v);
+					}else if (VarType.INT == vt.getToEntryType()){
+						vl.add(Integer.parseInt(v));
+					}else{
+						logger.error(String.format("unsupported toEntryType %s.", vt.getToEntryType()));
+					}
+				}
+				return vl;
+			}else{
+				logger.error(String.format("toType not supported: %s", vt.getToType()));
+			}
+		}else{
+			//treated as string
+			value = valueExp;
+		}
+		
+		return value;
+	}
+	
+	//evalue value without using page, xpath
+	public static Object eval(ValueType vt, Map<String, Object> params){
+		//transform from value
+		String valueExp = null;
+		if (VarType.EXPRESSION == vt.getFromType()){
+			valueExp = (String) ScriptEngineUtil.eval(vt.getValue(), VarType.STRING, params);
+		}else{
+			//for simple [parameter] replacement
+			valueExp = StringUtil.fillParams(vt.getValue(), params, ConfKey.PARAM_PRE, ConfKey.PARAM_POST);
+		}
+		//get value from valueExp
+		return getValue(vt, valueExp);
 	}
 }

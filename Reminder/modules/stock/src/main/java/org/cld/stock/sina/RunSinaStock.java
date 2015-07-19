@@ -21,6 +21,15 @@ public class RunSinaStock {
 			if ("brs_ids".equals(cmd)){
 				ssb.run_browse_idlist();
 			}
+			//run already generated task
+			else if ("run_task".equals(cmd)){
+				if (args.length>=argIdx+1){
+					String taskName = args[argIdx];
+					ssb.run_task(taskName);
+				}else{
+					System.out.println("propFile marketId 'false' 'brs_tradedetail' ?startDate?");
+				}
+			}
 			//行情走势
 			else if ("brs_tradedetail".equals(cmd)){
 				if (allHistory){

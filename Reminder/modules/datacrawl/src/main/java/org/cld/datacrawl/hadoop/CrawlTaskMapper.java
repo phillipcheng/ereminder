@@ -71,9 +71,7 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 			}else{//for other types
 				List<Task> tl = t.runMyself(crawlTaskParams, null);
 				if (tl!=null && tl.size()>0){
-					boolean multipleOutput= CrawlUtil.hasMultipleOutput(tl);//guess this from tl
-					HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), tl, 
-							hadoopCrawlTaskParams, null, t.getId(), multipleOutput);
+					HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), tl, hadoopCrawlTaskParams, null);
 				}
 				logger.info(String.format("I finished and send out %d tasks.", tl!=null?tl.size():0));
 			}

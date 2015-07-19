@@ -1,15 +1,17 @@
 package org.cld.taskmgr.hadoop;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -27,11 +29,45 @@ import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.IdUtil;
 import org.cld.util.StringUtil;
+import org.xml.mytaskdef.ParsedBrowsePrd;
+import org.xml.taskdef.BrowseTaskType;
 
 public class HadoopTaskLauncher {
 
 	private static Logger logger =  LogManager.getLogger(HadoopTaskLauncher.class);
 	public static final String NAMED_OUTPUT_TXT = "txt";
+	
+	public static boolean hasMultipleOutput(Task t){
+		ParsedBrowsePrd pbp = t.getBrowseDetailTask(t.getName());
+		if (pbp!=null){
+			BrowseTaskType btt = pbp.getBrowsePrdTaskType().getBaseBrowseTask();
+			if (btt!=null){
+				return btt.getCsvtransform().isMultipleOutput();
+			}else{
+				return false;
+			}
+		}else{
+			return false;
+		}
+	}
+	
+	public static String getOutputDir(Task t){
+		ParsedBrowsePrd pbp = t.getBrowseDetailTask(t.getName());
+		if (pbp!=null){
+			BrowseTaskType btt = pbp.getBrowsePrdTaskType().getBaseBrowseTask();
+			if (btt!=null){
+				if (btt.getCsvtransform()!=null){
+					return (String)TaskUtil.eval(btt.getCsvtransform().getOutputDir(), t.getParamMap());
+				}else{
+					return null;
+				}
+			}else{
+				return null;
+			}
+		}else{
+			return null;
+		}
+	}
 	
 	public static Configuration getHadoopConf(NodeConf nc){
 		//all the site config should go here, since we can't point the etc/hadoop folder which contains the site config
@@ -84,17 +120,18 @@ public class HadoopTaskLauncher {
 		return sourceName;
 	}
 	
+	
 	/**
 	 * send the taskList to the cluster
 	 * @param nc
 	 * @param taskList
 	 * @param params
-	 * @param sourceName: the source/generator name, used as the generated task info file name
+	 * @param sourceName: the source/generator name, used as the generated task info file name, if taskList is null, the file already exists, just use it
 	 * @param hdfsOutputDir
 	 * @param multipleOutput
 	 */
 	public static void executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> params, 
-			String sourceName, String hdfsOutputDir, boolean multipleOutput){
+			String sourceName){
 		TaskMgr taskMgr = nc.getTaskMgr();
 		Configuration conf = getHadoopConf(nc);
 		//generate task list file
@@ -102,19 +139,43 @@ public class HadoopTaskLauncher {
 		try {
 			//generate the task file
 			fs = FileSystem.get(conf);
-			StringBuffer fileContent = new StringBuffer();
-			for (Task t: taskList){
-				String fn = TaskUtil.taskToJson(t);
-				fileContent.append(fn).append("\n");
+			String taskFileName = null;
+			String hdfsOutputDir = null;
+			boolean multipleOutput = false;
+			if (taskList!=null){
+				StringBuffer fileContent = new StringBuffer();
+				for (Task t: taskList){
+					String fn = TaskUtil.taskToJson(t);
+					fileContent.append(fn).append("\n");
+				}
+				if (sourceName==null) sourceName = getSourceName(taskList);
+				String escapedName = StringUtil.escapeFileName(sourceName);
+				taskFileName = taskMgr.getHdfsTaskFolder() + "/" + IdUtil.getId(escapedName);
+				logger.info(String.format("task file: %s with length %d generated.", taskFileName, fileContent.length()));
+				Path fileNamePath = new Path(taskFileName);
+				FSDataOutputStream fin = fs.create(fileNamePath);
+				fin.writeBytes(fileContent.toString());
+				fin.close();
+				Task t0 = taskList.get(0);
+				multipleOutput = hasMultipleOutput(t0);
+				hdfsOutputDir = getOutputDir(t0);
+			}else if (sourceName!=null){
+				taskFileName = taskMgr.getHdfsTaskFolder() + "/" + sourceName;
+				Path taskPath = new Path(taskFileName);
+				if (fs.exists(taskPath)){
+					FSDataInputStream input = fs.open(taskPath);
+					String firstTaskStr = (new BufferedReader(new InputStreamReader(input))).readLine();
+					input.close();
+					Task t0 = TaskUtil.taskFromJson(firstTaskStr);
+					multipleOutput = hasMultipleOutput(t0);
+					hdfsOutputDir = getOutputDir(t0);
+				}else{
+					logger.error(String.format("task file %s not exist.", taskFileName));
+				}
+			}else{
+				logger.error("tasklist and sourceName can't be both null.");
+				return;
 			}
-			if (sourceName==null) sourceName = getSourceName(taskList);
-			String escapedName = StringUtil.escapeFileName(sourceName);
-			String fileName = taskMgr.getHdfsTaskFolder() + "/" + IdUtil.getId(escapedName);
-			logger.info(String.format("task file: %s with length %d generated.", fileName, fileContent.length()));
-			Path fileNamePath = new Path(fileName);
-			FSDataOutputStream fin = fs.create(fileNamePath);
-			fin.writeBytes(fileContent.toString());
-			fin.close();
 			
 			//submit to the hadoop cluster
 			for(String key: params.keySet()){
@@ -144,7 +205,7 @@ public class HadoopTaskLauncher {
 			job.setInputFormatClass(NLineInputFormat.class);
 			if (multipleOutput)
 				MultipleOutputs.addNamedOutput(job, NAMED_OUTPUT_TXT, TextOutputFormat.class, Text.class, Text.class);
-			Path in = new Path(fileName);
+			Path in = new Path(taskFileName);
 			FileInputFormat.addInputPath(job, in);
 			if (hdfsOutputDir!=null){
 				Path out = new Path(taskMgr.getHadoopCrawledItemFolder() + "/" + hdfsOutputDir);

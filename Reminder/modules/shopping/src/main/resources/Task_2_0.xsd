@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:element name="Tasks" type="TasksType"/>
 	<xs:simpleType name="VarType">
@@ -80,12 +81,11 @@
 		<xs:sequence>
 			<xs:element name="strPreprocess" minOccurs="0">
 				<xs:complexType>
-					<xs:attribute name="trimPre" type="xs:string" />
-					<xs:attribute name="trimPost" type="xs:string" />
+					<xs:attribute name="trimPre" type="xs:string"/>
+					<xs:attribute name="trimPost" type="xs:string"/>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="sampleUrl" type="xs:string" minOccurs="0"
-				maxOccurs="unbounded">
+			<xs:element name="sampleUrl" type="xs:string" minOccurs="0" maxOccurs="unbounded">
 				<xs:annotation>
 					<xs:documentation>
 						multiple sample provided for toType is Page or
@@ -93,8 +93,7 @@
 					</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="pageVerify" type="BinaryBoolOp"
-				minOccurs="0" maxOccurs="unbounded">
+			<xs:element name="pageVerify" type="BinaryBoolOp" minOccurs="0" maxOccurs="unbounded">
 				<xs:annotation>
 					<xs:documentation>
 						string to verify if page or pagelist type, for
@@ -103,7 +102,7 @@
 				</xs:annotation>
 			</xs:element>
 		</xs:sequence>
-		<xs:attribute name="fromScope" type="ScopeType" />
+		<xs:attribute name="fromScope" type="ScopeType"/>
 		<xs:attribute name="fromType" type="VarType" use="optional">
 			<xs:annotation>
 				<xs:documentation>
@@ -111,7 +110,7 @@
 				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
-		<xs:attribute name="value" type="xs:string" use="required" />
+		<xs:attribute name="value" type="xs:string" use="required"/>
 		<xs:attribute name="toType" type="VarType" use="optional">
 			<xs:annotation>
 				<xs:documentation>
@@ -119,8 +118,7 @@
 				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
-		<xs:attribute name="toEntryType" type="VarType" use="optional"
-			default="string">
+		<xs:attribute name="toEntryType" type="VarType" use="optional" default="string">
 			<xs:annotation>
 				<xs:documentation>
 					the type of the entry in the list if toType is list
@@ -160,7 +158,8 @@
 		<xs:attribute name="optional" type="xs:boolean" use="optional" default="false">
 			<xs:annotation>
 				<xs:documentation>when optional is true, means if this variable fromType is xpath, this is optional</xs:documentation>
-			</xs:annotation></xs:attribute>
+			</xs:annotation>
+		</xs:attribute>
 	</xs:complexType>
 	<xs:complexType name="BrowseTaskType">
 		<xs:sequence>
@@ -194,11 +193,9 @@
 					</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="idUrlMappingFirstPage" type="RegExpType"
-				minOccurs="0" />
-			<xs:element name="itemName" type="ValueType" minOccurs="0" />
-			<xs:element name="csvtransform" type="CsvTransformType"
-				maxOccurs="1" minOccurs="0">
+			<xs:element name="idUrlMappingFirstPage" type="RegExpType" minOccurs="0"/>
+			<xs:element name="itemName" type="ValueType" minOccurs="0"/>
+			<xs:element name="csvtransform" type="CsvTransformType" minOccurs="0">
 				<xs:annotation>
 					<xs:documentation>
 						the org.etl.fci.ICrawlItemToCSV class: when dsm
@@ -235,12 +232,12 @@
 		<xs:attribute name="enableJS" type="xs:boolean" use="optional" default="false"/>
 		<xs:attribute name="skipJS" type="xs:string" use="optional"/>
 		<xs:attribute name="dsm">
-            <xs:annotation>
-            	<xs:documentation>csvtransform set means generate csv for the whole batch of browse prd tasks. if dsm not set, that is all, if dsm set to hbase then hbase entry will be generated.
+			<xs:annotation>
+				<xs:documentation>csvtransform set means generate csv for the whole batch of browse prd tasks. if dsm not set, that is all, if dsm set to hbase then hbase entry will be generated.
 dsm set to hdfs means generate csv for each product browsed.
 dsm set to hbase means generate hbase entry for each product browsed.</xs:documentation>
-            </xs:annotation>
-            <xs:simpleType>
+			</xs:annotation>
+			<xs:simpleType>
 				<xs:restriction base="xs:string">
 					<xs:enumeration value="hdfs"/>
 					<xs:enumeration value="hbase"/>
@@ -285,24 +282,23 @@ if also not set, then 1 task browsing all items will be generated.
 	</xs:complexType>
 	<xs:complexType name="BrowseDetailType">
 		<xs:sequence>
-			<xs:element name="baseBrowseTask" type="BrowseTaskType" />
-			<xs:element name="firstPageClickStream"
-				type="ClickStreamType" minOccurs="0">
+			<xs:element name="baseBrowseTask" type="BrowseTaskType"/>
+			<xs:element name="firstPageClickStream" type="ClickStreamType" minOccurs="0">
 				<xs:annotation>
 					<xs:documentation>
 						the click stream to the 1st page of the book
 					</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="totalPage" type="ValueType" minOccurs="0" />
-			<xs:element name="nextPage" type="ValueType" maxOccurs="1" minOccurs="0"></xs:element>
-			<xs:element name="lastPageCondition" type="BinaryBoolOp" maxOccurs="1" minOccurs="0"></xs:element>
-		</xs:sequence>
+			<xs:element name="totalPage" type="ValueType" minOccurs="0"/>
+			<xs:element name="nextPage" type="ValueType" minOccurs="0"/>
+			<xs:element name="lastPageCondition" type="BinaryBoolOp" minOccurs="0"/>
+		</xs:sequence>
 		<xs:attribute name="tryPattern" type="xs:boolean" use="optional" default="true">
 			<xs:annotation>
 				<xs:documentation>tryPattern for external list type variable, for the value on each page. if there is a total page specified, then tryPattern will be default to true, if not want this, set this to false.</xs:documentation>
 			</xs:annotation>
-		</xs:attribute>
+		</xs:attribute>
 		<xs:attribute name="monitorPrice" type="xs:boolean" use="optional" default="false"/>
 		<xs:attribute name="processType" type="BDTProcessType" use="optional" default="inline">
 			<xs:annotation>
@@ -361,7 +357,7 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 			<xs:annotation>
 				<xs:documentation>for input/set, the nameType defaults to XPATH, for get the nameType defaults to string</xs:documentation>
 			</xs:annotation>
-		</xs:attribute>
+		</xs:attribute>
 	</xs:complexType>
 	<xs:complexType name="RegExpType">
 		<xs:sequence>
@@ -523,9 +519,11 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 		</xs:sequence>
 		<xs:attribute name="waitTime" type="xs:int"/>
 	</xs:complexType>
-
 	<xs:complexType name="CsvTransformType">
-        <xs:attribute name="transformClass" type="xs:string"></xs:attribute>
-        <xs:attribute name="multipleOutput" type="xs:boolean" use="optional" default="false"></xs:attribute>
+		<xs:sequence>
+			<xs:element name="outputDir" type="ValueType"/>
+		</xs:sequence>
+		<xs:attribute name="transformClass" type="xs:string" use="required"/>
+		<xs:attribute name="multipleOutput" type="xs:boolean" use="optional" default="false"/>
 	</xs:complexType>
 </xs:schema>

@@ -19,6 +19,7 @@ import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.datacrawl.mgr.TargetPrdInvoke;
 import org.cld.datastore.entity.Product;
 import org.cld.taskmgr.ScriptEngineUtil;
+import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 import org.xml.taskdef.AttributeType;
 import org.xml.taskdef.BrowseCatType;
@@ -116,7 +117,7 @@ public class ProductListAnalyzeUtil {
 							paramValueMap.put(pv.getParamName(), listVal);
 						}
 					}
-					String startUrl = (String) CrawlTaskEval.eval(pbptTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl(), paramValueMap);
+					String startUrl = (String) TaskUtil.eval(pbptTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl(), paramValueMap);
 					TargetPrdInvoke spo = new TargetPrdInvoke(taskName, startUrl, paramValueMap);
 					targetPrdInvokeList.add(spo);
 				}

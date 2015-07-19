@@ -22,6 +22,7 @@ import org.cld.datastore.entity.CrawledItemId;
 import org.cld.datastore.entity.Price;
 import org.cld.datastore.entity.Product;
 import org.cld.pagea.general.ProductListAnalyzeUtil;
+import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.cld.util.StringUtil;
@@ -113,10 +114,10 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 	
 	private static void addFullUrl(ParsedBrowsePrd pbpTemplate, Map<String, Object> singleValueParams, 
 			List<String> startUrlList, List<String> cachePageList){
-		String fullUrl = (String) CrawlTaskEval.eval(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl(), singleValueParams);
+		String fullUrl = (String) TaskUtil.eval(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl(), singleValueParams);
 		startUrlList.add(fullUrl);
 		if (pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getCachePage()!=null){
-			String fullCachePage = (String) CrawlTaskEval.eval(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getCachePage(), singleValueParams);
+			String fullCachePage = (String) TaskUtil.eval(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getCachePage(), singleValueParams);
 			cachePageList.add(fullCachePage);
 		}
 	}

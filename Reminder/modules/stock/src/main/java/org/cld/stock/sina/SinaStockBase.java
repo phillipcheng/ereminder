@@ -56,6 +56,10 @@ public class SinaStockBase extends TestBase{
 		params.put("category_id", "hs_a");
 		browsePrd(StockConfig.SINA_STOCK_IDS + ".xml", null, params);
 	}
+	
+	public void run_task(String taskFileName){
+		CrawlUtil.hadoopExecuteCrawlTasks(this.propFile, cconf, null, taskFileName);
+	}
 
 	/*****
 	 * 行情走势
@@ -70,15 +74,13 @@ public class SinaStockBase extends TestBase{
 	//融资融券
 	public void run_browse_market_rzrq(String fromDate) throws ParseException{
 		Date startDate = ETLUtil.sdf.parse(fromDate); 
-		ETLUtil.runTaskByStartDate(startDate, cconf, this.getPropFile(), StockConfig.SINA_STOCK_MARKET_RZRQ, 
-				null, StockConfig.SINA_STOCK_MARKET_RZRQ);
+		ETLUtil.runTaskByStartDate(startDate, cconf, this.getPropFile(), StockConfig.SINA_STOCK_MARKET_RZRQ, null);
 	}
 	
 	//大宗交易
 	public void run_browse_market_dzjy(String fromDate) throws ParseException{
 		Date startDate = ETLUtil.sdf.parse(fromDate);
-		ETLUtil.runTaskByStartDate(startDate, cconf, this.getPropFile(), StockConfig.SINA_STOCK_MARKET_DZJY, 
-				null, StockConfig.SINA_STOCK_MARKET_DZJY);
+		ETLUtil.runTaskByStartDate(startDate, cconf, this.getPropFile(), StockConfig.SINA_STOCK_MARKET_DZJY, null);
 	}
 	
 	//历史交易
@@ -98,7 +100,7 @@ public class SinaStockBase extends TestBase{
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("year", year);
 		params.put("quarter", quarter);
-		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_MARKET_HISTORY, params, null);
+		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_MARKET_HISTORY, params);
 	}
 	public void run_browse_market_cur_quarter(){
 		int[] cyq = DateTimeUtil.getYearQuarter(new Date());
@@ -115,36 +117,31 @@ public class SinaStockBase extends TestBase{
 	//Corp info: crawl corp info to hbase and batch csv
 	public void run_browse_corp_info() throws Exception {
 		//set output to null needs followup, can be merged, actually we need hbase data
-		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_CORP_INFO, 
-				null, StockConfig.SINA_STOCK_CORP_INFO);
+		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_CORP_INFO, null);
 	}
 	
 	//Corp Manager
 	public void run_corp_manager(boolean allHistory){
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put("history", allHistory);
-		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_CORP_MANAGER, 
-				paramMap, StockConfig.SINA_STOCK_CORP_MANAGER);
+		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_CORP_MANAGER, paramMap);
 	}
 	
 	//Corp Related
 	public void run_corp_related(){
-		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_CORP_RELATED, 
-				null, StockConfig.SINA_STOCK_CORP_RELATED);
+		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_CORP_RELATED, null);
 	}
 	
 	//Corp Related other
 	public void run_corp_related_other(){
-		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_CORP_RELATED_OTHER, 
-				null, StockConfig.SINA_STOCK_CORP_RELATED_OTHER);
+		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_CORP_RELATED_OTHER, null);
 	}
 	
 	/***
 	 * 发行分配
 	 */
 	public void run_issue_sharebonus(){
-		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_ISSUE_SHAREBONUS, 
-				null, StockConfig.SINA_STOCK_ISSUE_SHAREBONUS);
+		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_ISSUE_SHAREBONUS, null);
 	}
 	
 	/***********
@@ -152,33 +149,28 @@ public class SinaStockBase extends TestBase{
 	 */
 	//Stock Structure
 	public void run_stock_structure(){
-		ETLUtil.runTaskByMarketIdStartYear(marketId, cconf, this.getPropFile(), 
-				StockConfig.SINA_STOCK_STOCK_STRUCTURE, 
-				StockConfig.SINA_STOCK_STOCK_STRUCTURE);
+		ETLUtil.runTaskByMarketIdStartYear(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_STOCK_STRUCTURE);
 	}
 	
 	//Stock holder
 	public void run_stock_holder(boolean allHistory){
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put("history", allHistory);
-		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_STOCK_HOLDER, 
-				paramMap, StockConfig.SINA_STOCK_STOCK_HOLDER);
+		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_STOCK_HOLDER, paramMap);
 	}
 	
 	//Circulate Stock holder
 	public void run_circulate_stock_holder(boolean allHistory){
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put("history", allHistory);
-		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_STOCK_HOLDER_CIRCULATE, 
-				paramMap, StockConfig.SINA_STOCK_STOCK_HOLDER_CIRCULATE);
+		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_STOCK_HOLDER_CIRCULATE, paramMap);
 	}
 
 	//Fund Stock holder
 	public void run_fund_stock_holder(boolean allHistory){
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put("history", true);
-		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_STOCK_HOLDER_FUND, 
-				paramMap, StockConfig.SINA_STOCK_STOCK_HOLDER_FUND);
+		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_STOCK_HOLDER_FUND, paramMap);
 	}
 	
 	
@@ -188,7 +180,7 @@ public class SinaStockBase extends TestBase{
 	//crawl financial report history by market to hdfs
 	public void run_browse_fr_history() throws Exception {
 		//set output to null, needs follow up etl
-		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_FR_HISTORY, null, null);
+		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_FR_HISTORY, null);
 		
 	}
 	//fr history convert to csv/hive
@@ -206,7 +198,7 @@ public class SinaStockBase extends TestBase{
 			}
 		}
 		//TODO fill the mapred task name
-		CrawlUtil.hadoopExecuteCrawlTasks(this.getPropFile(), cconf, tlist, null, null);
+		CrawlUtil.hadoopExecuteCrawlTasks(this.getPropFile(), cconf, tlist, null);
 	}
 	//fr history reformat from split by stockid to split by quarter
 	public void run_fr_reformat() throws Exception{
@@ -223,34 +215,29 @@ public class SinaStockBase extends TestBase{
 		params.put("quarter", quarter);
 		for (String subFR:StockConfig.subFR){
 			String confFileName = StockConfig.SINA_STOCK_FR_QUARTER + "-" + subFR;
-			String outputDir = StockConfig.SINA_STOCK_FR_QUARTER + "-" + subFR + "/" + year + "_" + quarter;
-			ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), confFileName, params, outputDir);
+			ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), confFileName, params);
 		}
 	}
 	
 	//FR FootNote
 	public void run_browse_fr_footnote_history(){
-		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_FR_FOOTNOTE, 
-				null, StockConfig.SINA_STOCK_FR_FOOTNOTE);
+		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_FR_FOOTNOTE, null);
 	}
 	
 	//Achievement Notice
 	public void run_fr_achievenotice(){
-		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_FR_AchieveNotice, null, 
-				StockConfig.SINA_STOCK_FR_AchieveNotice);
+		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_FR_AchieveNotice, null);
 	}
 	
 	//Finance Guideline
 	public void run_fr_finance_guideline(){
 		ETLUtil.runTaskByMarketIdStartYear(marketId, cconf, this.getPropFile(), 
-				StockConfig.SINA_STOCK_FR_FINANCE_GUIDELINE_YEAR, 
 				StockConfig.SINA_STOCK_FR_FINANCE_GUIDELINE_YEAR);
 	}
 	
 	//Asset Devalue
 	public void run_fr_assetdevalue(){
 		ETLUtil.runTaskByMarketIdStartYear(marketId, cconf, this.getPropFile(), 
-				StockConfig.SINA_STOCK_FR_ASSETDEVALUE_YEAR, 
 				StockConfig.SINA_STOCK_FR_ASSETDEVALUE_YEAR);
 	}
 }

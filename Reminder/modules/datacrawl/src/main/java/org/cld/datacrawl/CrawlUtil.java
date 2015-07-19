@@ -129,26 +129,6 @@ public class CrawlUtil {
 		}
 	}	
 	
-	public static boolean hasMultipleOutput(List<Task> tl){
-		Task t = tl.get(0);
-		if (t instanceof BrowseProductTaskConf){
-			ParsedBrowsePrd pbp = t.getBrowseDetailTask(t.getName());
-			if (pbp!=null){
-				BrowseTaskType btt = pbp.getBrowsePrdTaskType().getBaseBrowseTask();
-				if (btt!=null){
-					return btt.getCsvtransform().isMultipleOutput();
-				}else{
-					return false;
-				}
-			}else{
-				return false;
-			}
-		}else{
-			return false;
-		}
-		
-	}
-	
 	/**
 	 * 
 	 * @param crawlPropertyFile
@@ -158,12 +138,11 @@ public class CrawlUtil {
 	 * @param hdfsOutputDir
 	 */
 	public static void hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, 
-			String sourceName, String hdfsOutputDir){
+			String sourceName){
 		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();
 		hadoopCrawlTaskParams.put(CRAWL_PROPERTIES, crawlPropertyFile);
-		boolean multipleOutput = hasMultipleOutput(tlist);
 		HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), tlist, hadoopCrawlTaskParams, 
-				sourceName, hdfsOutputDir, multipleOutput);
+				sourceName);
 	}
 	
 	public static void downloadPage(CrawlConf cconf, String url, String fileName, String fileSaveDir){

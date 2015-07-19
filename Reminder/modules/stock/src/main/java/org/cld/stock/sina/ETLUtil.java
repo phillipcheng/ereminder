@@ -100,7 +100,7 @@ public class ETLUtil {
 	}
 	
 	public static void runTaskByStartDate(Date startDate, CrawlConf cconf, String propfile, String confName, 
-			Map<String, Object> params, String outputDir){
+			Map<String, Object> params){
 		List<Task> tl = new ArrayList<Task>();
 		String confFileName = confName + ".xml";
 		if (confFileName!=null){
@@ -132,11 +132,11 @@ public class ETLUtil {
 			taskParams.putAll(params);
 		String taskName = ETLUtil.getTaskName(calledMethod, taskParams);
 		logger.info("sending out:" + tlist.size() + " tasks.");
-		CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName, outputDir);
+		CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName);
 	}
 	
 	public static void runTaskByMarket(String marketId, CrawlConf cconf, String propfile, String confName, 
-			Map<String, Object> params, String outputDir){
+			Map<String, Object> params){
 		String[] idarray = ETLUtil.getStockIdByMarketId(marketId, cconf);
 		String confFileName = confName + ".xml";
 		List<Task> tl = new ArrayList<Task>();
@@ -162,7 +162,7 @@ public class ETLUtil {
 		if (params!=null)
 			taskParams.putAll(params);
 		String taskName = ETLUtil.getTaskName(calledMethod, taskParams);
-		CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName, outputDir);
+		CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName);
 	}
 	
 	/**
@@ -223,7 +223,7 @@ public class ETLUtil {
 						taskParams.put(BatchId_Key, batchId);
 						String taskName = ETLUtil.getTaskName(calledMethod, taskParams);
 						logger.info(String.format("sending out:%d tasks for hadoop task %s.", tlist.size(), taskName));
-						CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName, null);
+						CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName);
 						
 						tlist = new ArrayList<Task>(); 
 						batchId++;
@@ -237,7 +237,7 @@ public class ETLUtil {
 		taskParams.put(BatchId_Key, batchId);
 		String taskName = ETLUtil.getTaskName(calledMethod, taskParams);
 		logger.info(String.format("sending out:%d tasks for hadoop task %s.", tlist.size(), taskName));
-		CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName, null);
+		CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName);
 	}
 	
 	public static void runTaskByMarketIdStartQuarter(String marketId, CrawlConf cconf, String propfile, String confName) {
@@ -285,15 +285,11 @@ public class ETLUtil {
 		taskParams.put(MarketId_Key, marketId);
 		String taskName = ETLUtil.getTaskName(calledMethod, taskParams);
 		logger.info(String.format("sending out:%d tasks for hadoop task %s.", tlist.size(), taskName));
-		CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName, null);
+		CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName);
 	}
 	
 	public static void runTaskByMarketIdStartYear(String marketId, CrawlConf cconf, String propfile, 
-			String confName, String outputDirPrefix) {
-		if (outputDirPrefix==null){
-			logger.error("Please provide outputDirPrefix.");
-			return;
-		}
+			String confName) {
 		String[] ids = getStockIdByMarketId(marketId, cconf);
 		Map<Integer, List<Task>> taskByYear = new HashMap<Integer, List<Task>>();
 		String confFileName = confName + ".xml";
@@ -332,7 +328,7 @@ public class ETLUtil {
 			taskParams.put(StartYear_Key, year);
 			String taskName = ETLUtil.getTaskName(calledMethod, taskParams);
 			logger.info(String.format("sending out:%d tasks for hadoop task %s.", tlist.size(), taskName));
-			CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName, outputDirPrefix + "/" + year);
+			CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName);
 		}
 	}
 	

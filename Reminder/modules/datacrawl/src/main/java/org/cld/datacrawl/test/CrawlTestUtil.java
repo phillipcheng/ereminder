@@ -219,7 +219,7 @@ public class CrawlTestUtil{
 		logger.debug("set start url for cat navigate.");
 		srt.getBct().setPageNum(pageNum);
 		if (catUrl==null || "".equals(catUrl)){
-			String startUrl = (String) CrawlTaskEval.eval(srt.getBct().getRootBrowseCatTask().getBaseBrowseTask().getStartUrl(), inparams);
+			String startUrl = (String) TaskUtil.eval(srt.getBct().getRootBrowseCatTask().getBaseBrowseTask().getStartUrl(), inparams);
 			srt.getBct().setStartURL(startUrl);
 		}else{
 			srt.getBct().setStartURL(catUrl);
@@ -290,7 +290,7 @@ public class CrawlTestUtil{
 			}
 		}else if (cconf.getNodeConf().getTaskMgrFramework().equals(NodeConf.tmframework_hadoop)){
 			if (tl.size()>0){
-				CrawlUtil.hadoopExecuteCrawlTasks(propFile, cconf, tl, null, null);
+				CrawlUtil.hadoopExecuteCrawlTasks(propFile, cconf, tl, null);
 			}
 		}else{
 			logger.error("unsupported taskMgrFramework.");
