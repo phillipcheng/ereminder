@@ -43,6 +43,10 @@ public class TestSinaStock {
 		ssb.run_browse_idlist();
 	}
 
+	@Test
+	public void run_task_1() throws Exception{
+		ssb.run_task("run_corp_manager_2015_07_19_12_14_47_437_history_true_MarketId_test_");
+	}
 	/*****
 	 * Market history 行情走势
 	 **/

@@ -7,12 +7,14 @@ public class ReflectUtil {
 	 * @param depth depth in the call stack (0 means current method, 1 means call method, ...)
 	 * @return method name
 	 */
-	public static String getMethodName(final int depth)
+	public static String getMethodName()
 	{
 	  final StackTraceElement[] ste = Thread.currentThread().getStackTrace();
 
-	  //System. out.println(ste[ste.length-depth].getClassName()+"#"+ste[ste.length-depth].getMethodName());
-	  // return ste[ste.length - depth].getMethodName();  //Wrong, fails for depth = 0
-	  return ste[ste.length - 1 - depth].getMethodName(); //Thank you Tom Tresansky
+	  //0 is getStackTrace
+	  //1 is getMethodName
+	  //2 is runTaskByXXX
+	  //3 is the method call runTaskByXX
+	  return ste[3].getMethodName(); //Thank you Tom Tresansky
 	}
 }

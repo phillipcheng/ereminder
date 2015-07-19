@@ -58,7 +58,7 @@ public class SinaStockBase extends TestBase{
 	}
 	
 	public void run_task(String taskFileName){
-		CrawlUtil.hadoopExecuteCrawlTasks(this.propFile, cconf, null, taskFileName);
+		CrawlUtil.hadoopExecuteCrawlTasksByFile(this.propFile, cconf, taskFileName);
 	}
 
 	/*****

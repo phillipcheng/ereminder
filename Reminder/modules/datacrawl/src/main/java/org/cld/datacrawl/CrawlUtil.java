@@ -135,7 +135,6 @@ public class CrawlUtil {
 	 * @param cconf
 	 * @param tlist
 	 * @param sourceName: task file output name as well as the task name
-	 * @param hdfsOutputDir
 	 */
 	public static void hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, 
 			String sourceName){
@@ -143,6 +142,15 @@ public class CrawlUtil {
 		hadoopCrawlTaskParams.put(CRAWL_PROPERTIES, crawlPropertyFile);
 		HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), tlist, hadoopCrawlTaskParams, 
 				sourceName);
+	}
+	
+	public static void hadoopExecuteCrawlTasksByFile(String crawlPropertyFile, CrawlConf cconf, String sourceName){
+		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();
+		hadoopCrawlTaskParams.put(CRAWL_PROPERTIES, crawlPropertyFile);
+		Map<String, Object> cconfParams = new HashMap<String, Object>();
+		cconfParams.put(CrawlClientNode.TASK_RUN_PARAM_CCONF, cconf);
+		HadoopTaskLauncher.executeTasksByFile(cconf.getNodeConf(), hadoopCrawlTaskParams, 
+				sourceName, cconfParams);
 	}
 	
 	public static void downloadPage(CrawlConf cconf, String url, String fileName, String fileSaveDir){

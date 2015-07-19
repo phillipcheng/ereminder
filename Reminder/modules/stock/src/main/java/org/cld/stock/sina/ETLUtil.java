@@ -61,6 +61,7 @@ public class ETLUtil {
 			}else{
 				sb.append("null");
 			}
+			sb.append("_");
 		}
 		return sb.toString();
 	}
@@ -125,7 +126,7 @@ public class ETLUtil {
 				tlist.add(t1);
 			}
 		}
-		String calledMethod = ReflectUtil.getMethodName(1);
+		String calledMethod = ReflectUtil.getMethodName();
 		Map<String, Object> taskParams = new HashMap<String, Object>();
 		taskParams.put(StartDate_Key, startDate);
 		if (params!=null)
@@ -156,7 +157,7 @@ public class ETLUtil {
 				tlist.add(t1);
 			}
 		}
-		String calledMethod = ReflectUtil.getMethodName(1);
+		String calledMethod = ReflectUtil.getMethodName();
 		Map<String, Object> taskParams = new HashMap<String, Object>();
 		taskParams.put(MarketId_Key, marketId);
 		if (params!=null)
@@ -217,7 +218,7 @@ public class ETLUtil {
 					tlist.add(ttc);
 					//since tlist can be very large, generate job in between
 					if (tlist.size()>100000){
-						String calledMethod = ReflectUtil.getMethodName(1);
+						String calledMethod = ReflectUtil.getMethodName();
 						Map<String, Object> taskParams = new HashMap<String, Object>();
 						taskParams.put(MarketId_Key, marketId);
 						taskParams.put(BatchId_Key, batchId);
@@ -231,7 +232,7 @@ public class ETLUtil {
 				}
 			}
 		}
-		String calledMethod = ReflectUtil.getMethodName(1);
+		String calledMethod = ReflectUtil.getMethodName();
 		Map<String, Object> taskParams = new HashMap<String, Object>();
 		taskParams.put(MarketId_Key, marketId);
 		taskParams.put(BatchId_Key, batchId);
@@ -280,7 +281,7 @@ public class ETLUtil {
 				}
 			}
 		}
-		String calledMethod = ReflectUtil.getMethodName(1);
+		String calledMethod = ReflectUtil.getMethodName();
 		Map<String, Object> taskParams = new HashMap<String, Object>();
 		taskParams.put(MarketId_Key, marketId);
 		String taskName = ETLUtil.getTaskName(calledMethod, taskParams);
@@ -322,7 +323,7 @@ public class ETLUtil {
 		
 		for (int year:taskByYear.keySet()){
 			List<Task> tlist = taskByYear.get(year);
-			String calledMethod = ReflectUtil.getMethodName(1);
+			String calledMethod = ReflectUtil.getMethodName();
 			Map<String, Object> taskParams = new HashMap<String, Object>();
 			taskParams.put(MarketId_Key, marketId);
 			taskParams.put(StartYear_Key, year);

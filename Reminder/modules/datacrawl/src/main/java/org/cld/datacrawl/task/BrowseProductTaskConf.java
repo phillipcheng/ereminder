@@ -267,7 +267,6 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 		if (taskTemplate!=null){
 			this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
 			WebClient wc = CrawlUtil.getWebClient(cconf, taskTemplate.skipUrls, taskTemplate.enableJS);
-			
 			return browseProduct(this, cconf, wc, this.getStoreId(), null, this.getName(), this.getParamMap(), true);
 		}else{
 			logger.error(String.format("task %s not found in config.", getName()));
@@ -287,5 +286,16 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 	}
 	public void setProductType(String productType) {
 		this.productType = productType;
+	}
+	
+	@Override
+	public void initParsedTaskDef(Map<String, Object> params){
+		CrawlConf cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
+		BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
+		if (taskTemplate!=null){
+			this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
+		}else{
+			logger.error(String.format("task %s not found in taskMgr.", getName()));
+		}
 	}
 }

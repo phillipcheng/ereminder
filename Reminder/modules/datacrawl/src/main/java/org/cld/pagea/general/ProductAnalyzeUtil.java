@@ -228,8 +228,11 @@ public class ProductAnalyzeUtil {
 		}
 		boolean externalistFinished=false;
 		HtmlPage curPage = (HtmlPage) pageMap.get(ConfKey.CURRENT_PAGE).get(0);
-		boolean finalPage= BinaryBoolOpEval.eval(curPage, cconf, bdt.getLastPageCondition(), 
+		boolean finalPage=true;
+		if (bdt.getLastPageCondition()!=null){
+			finalPage= BinaryBoolOpEval.eval(curPage, cconf, bdt.getLastPageCondition(), 
 				product.getParamMap());
+		}
 		int curPageNum = 1;
 		//(totalPage not set or curPage less than totalPage) & curPage not null & not final & not finished
 		while ((totalPage==-1 || curPageNum<=totalPage) && curPage!=null && !finalPage && !externalistFinished){

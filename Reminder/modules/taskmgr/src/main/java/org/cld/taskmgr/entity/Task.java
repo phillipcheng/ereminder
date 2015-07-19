@@ -6,7 +6,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.regex.Matcher;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
@@ -23,14 +22,10 @@ import org.apache.logging.log4j.Logger;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.util.JsonUtil;
 import org.h2.util.StringUtils;
-import org.json.JSONObject;
 import org.xml.mytaskdef.BrowseCatInst;
-import org.xml.mytaskdef.IdUrlMapping;
-import org.xml.mytaskdef.ParsedBrowseCat;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 import org.xml.mytaskdef.ParsedTasksDef;
 import org.xml.taskdef.BrowseCatType;
-import org.xml.taskdef.BrowseDetailType;
 import org.xml.taskdef.TasksType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -321,5 +316,9 @@ public class Task implements Comparable<Task>, Serializable{
 	@JsonIgnore
 	public ParsedBrowsePrd getBrowseDetailTask(String taskName){
 		return parsedTaskDef.getBrowseDetailTask(taskName);
+	}
+	
+	public void initParsedTaskDef(Map<String, Object> params){
+		
 	}
 }

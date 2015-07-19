@@ -120,17 +120,7 @@ public class HadoopTaskLauncher {
 		return sourceName;
 	}
 	
-	
-	/**
-	 * send the taskList to the cluster
-	 * @param nc
-	 * @param taskList
-	 * @param params
-	 * @param sourceName: the source/generator name, used as the generated task info file name, if taskList is null, the file already exists, just use it
-	 * @param hdfsOutputDir
-	 * @param multipleOutput
-	 */
-	public static void executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> params, 
+	public static void executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> hadoopParams, 
 			String sourceName){
 		TaskMgr taskMgr = nc.getTaskMgr();
 		Configuration conf = getHadoopConf(nc);
@@ -142,48 +132,82 @@ public class HadoopTaskLauncher {
 			String taskFileName = null;
 			String hdfsOutputDir = null;
 			boolean multipleOutput = false;
-			if (taskList!=null){
-				StringBuffer fileContent = new StringBuffer();
-				for (Task t: taskList){
-					String fn = TaskUtil.taskToJson(t);
-					fileContent.append(fn).append("\n");
-				}
-				if (sourceName==null) sourceName = getSourceName(taskList);
-				String escapedName = StringUtil.escapeFileName(sourceName);
-				taskFileName = taskMgr.getHdfsTaskFolder() + "/" + IdUtil.getId(escapedName);
-				logger.info(String.format("task file: %s with length %d generated.", taskFileName, fileContent.length()));
-				Path fileNamePath = new Path(taskFileName);
-				FSDataOutputStream fin = fs.create(fileNamePath);
-				fin.writeBytes(fileContent.toString());
-				fin.close();
-				Task t0 = taskList.get(0);
+			StringBuffer fileContent = new StringBuffer();
+			for (Task t: taskList){
+				String fn = TaskUtil.taskToJson(t);
+				fileContent.append(fn).append("\n");
+			}
+			if (sourceName==null) sourceName = getSourceName(taskList);
+			String escapedName = StringUtil.escapeFileName(sourceName);
+			taskFileName = taskMgr.getHdfsTaskFolder() + "/" + escapedName;
+			logger.info(String.format("task file: %s with length %d generated.", taskFileName, fileContent.length()));
+			Path fileNamePath = new Path(taskFileName);
+			FSDataOutputStream fin = fs.create(fileNamePath);
+			fin.writeBytes(fileContent.toString());
+			fin.close();
+			Task t0 = taskList.get(0);
+			multipleOutput = hasMultipleOutput(t0);
+			hdfsOutputDir = getOutputDir(t0);
+			executeTasks(nc, hadoopParams, fs, taskFileName, hdfsOutputDir, multipleOutput);
+		}catch (Exception e) {
+			logger.error("", e);
+		}
+			
+	}
+	
+	public static void executeTasksByFile(NodeConf nc, Map<String, String> hadoopParams, 
+			String sourceName, Map<String, Object> cconfMap){
+		TaskMgr taskMgr = nc.getTaskMgr();
+		Configuration conf = getHadoopConf(nc);
+		//generate task list file
+		FileSystem fs;
+		try {
+			//generate the task file
+			fs = FileSystem.get(conf);
+			String taskFileName = null;
+			String hdfsOutputDir = null;
+			boolean multipleOutput = false;
+			
+			taskFileName = taskMgr.getHdfsTaskFolder() + "/" + sourceName;
+			Path taskPath = new Path(taskFileName);
+			if (fs.exists(taskPath)){
+				FSDataInputStream input = fs.open(taskPath);
+				String firstTaskStr = (new BufferedReader(new InputStreamReader(input))).readLine();
+				input.close();
+				Task t0 = TaskUtil.taskFromJson(firstTaskStr);
+				t0.initParsedTaskDef(cconfMap);
 				multipleOutput = hasMultipleOutput(t0);
 				hdfsOutputDir = getOutputDir(t0);
-			}else if (sourceName!=null){
-				taskFileName = taskMgr.getHdfsTaskFolder() + "/" + sourceName;
-				Path taskPath = new Path(taskFileName);
-				if (fs.exists(taskPath)){
-					FSDataInputStream input = fs.open(taskPath);
-					String firstTaskStr = (new BufferedReader(new InputStreamReader(input))).readLine();
-					input.close();
-					Task t0 = TaskUtil.taskFromJson(firstTaskStr);
-					multipleOutput = hasMultipleOutput(t0);
-					hdfsOutputDir = getOutputDir(t0);
-				}else{
-					logger.error(String.format("task file %s not exist.", taskFileName));
-				}
+				executeTasks(nc, hadoopParams,fs, taskFileName, hdfsOutputDir, multipleOutput);
 			}else{
-				logger.error("tasklist and sourceName can't be both null.");
-				return;
+				logger.error(String.format("task file %s not exist.", taskFileName));
 			}
-			
+		}catch (Exception e) {
+			logger.error("", e);
+		}
+	}
+	
+	/**
+	 * send the taskList to the cluster
+	 * @param nc
+	 * @param taskList
+	 * @param hadoopParams
+	 * @param sourceName: the source/generator name, used as the generated task info file name, if taskList is null, the file already exists, just use it
+	 * @param hdfsOutputDir
+	 * @param multipleOutput
+	 */
+	public static void executeTasks(NodeConf nc, Map<String, String> hadoopParams, FileSystem fs, String taskFileName,
+			String hdfsOutputDir, boolean multipleOutput){
+		try{
+			TaskMgr taskMgr = nc.getTaskMgr();
+			Configuration conf = getHadoopConf(nc);
 			//submit to the hadoop cluster
-			for(String key: params.keySet()){
-				conf.set(key, params.get(key));
-				logger.info(String.format("add conf entry: %s, %s", key, params.get(key)));
+			for(String key: hadoopParams.keySet()){
+				conf.set(key, hadoopParams.get(key));
+				logger.info(String.format("add conf entry: %s, %s", key, hadoopParams.get(key)));
 			}
 			
-			Job job = Job.getInstance(conf, sourceName);
+			Job job = Job.getInstance(conf, taskFileName);
 			//add app specific jars to classpath
 			if (nc.getTaskMgr().getYarnAppCp()!=null){
 				for (String s: nc.getTaskMgr().getYarnAppCp()){
