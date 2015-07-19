@@ -291,11 +291,15 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 	@Override
 	public void initParsedTaskDef(Map<String, Object> params){
 		CrawlConf cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
-		BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
-		if (taskTemplate!=null){
-			this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
+		if (getName()!=null){
+			BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
+			if (taskTemplate!=null){
+				this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
+			}else{
+				logger.error(String.format("task %s not found in taskMgr.", getName()));
+			}
 		}else{
-			logger.error(String.format("task %s not found in taskMgr.", getName()));
+			
 		}
 	}
 }

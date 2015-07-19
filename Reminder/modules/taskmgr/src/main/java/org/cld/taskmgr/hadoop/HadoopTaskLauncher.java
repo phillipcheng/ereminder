@@ -42,7 +42,11 @@ public class HadoopTaskLauncher {
 		if (pbp!=null){
 			BrowseTaskType btt = pbp.getBrowsePrdTaskType().getBaseBrowseTask();
 			if (btt!=null){
-				return btt.getCsvtransform().isMultipleOutput();
+				if (btt.getCsvtransform()!=null)
+					return btt.getCsvtransform().isMultipleOutput();
+				else{
+					return false;
+				}
 			}else{
 				return false;
 			}
@@ -175,6 +179,8 @@ public class HadoopTaskLauncher {
 				String firstTaskStr = (new BufferedReader(new InputStreamReader(input))).readLine();
 				input.close();
 				Task t0 = TaskUtil.taskFromJson(firstTaskStr);
+				logger.debug("firstTaskStr:" + firstTaskStr);
+				logger.debug("t0:" + t0.toString());
 				t0.initParsedTaskDef(cconfMap);
 				multipleOutput = hasMultipleOutput(t0);
 				hdfsOutputDir = getOutputDir(t0);
