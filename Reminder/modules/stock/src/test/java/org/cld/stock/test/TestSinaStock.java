@@ -57,6 +57,11 @@ public class TestSinaStock {
 	public void run_browse_market_rzrq() throws ParseException{
 		ssb.run_browse_market_rzrq("2015-7-12");
 	}
+	//大宗交易
+	@Test
+	public void run_browse_market_dzjy() throws ParseException{
+		ssb.run_browse_market_dzjy("2015-07-12");
+	}
 	
 	//历史交易
 	//crawl market history to hdfs/hive
@@ -191,8 +196,26 @@ public class TestSinaStock {
 
 	
 	//////Tests
-	//show title
-	//test browse sina-stock-market-history bpt
+	@Test
+	public void test_sina_market_dzjy_1() throws Exception{
+		ssb.getCconf().setUpSite(StockConfig.SINA_STOCK_MARKET_DZJY+".xml", null);
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("date", "2015-07-13");//2 pages
+		ssb.browsePrd(StockConfig.SINA_STOCK_MARKET_DZJY+".xml", null, params);
+		
+		params = new HashMap<String, Object>();
+		params.put("date", "2010-07-09");//1 page
+		ssb.browsePrd(StockConfig.SINA_STOCK_MARKET_DZJY+".xml", null, params);
+	}
+	
+	@Test
+	public void test_sina_market_dzjy_2() throws Exception{//no page
+		ssb.getCconf().setUpSite(StockConfig.SINA_STOCK_MARKET_DZJY+".xml", null);
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("date", "2015-07-12");
+		ssb.browsePrd(StockConfig.SINA_STOCK_MARKET_DZJY+".xml", null, params);
+	}
+	
 	@Test
 	public void test_sina_stock_holder_genheader() throws Exception{
 		ssb.getCconf().setUpSite(StockConfig.SINA_STOCK_STOCK_HOLDER+".xml", null);

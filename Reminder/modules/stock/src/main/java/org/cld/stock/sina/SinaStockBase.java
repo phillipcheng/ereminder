@@ -28,6 +28,7 @@ public class SinaStockBase extends TestBase{
 	public static final int HS_A_START_YEAR=1990;
 	public static final String HS_A_FIRST_DATE_DETAIL_TRADE="2004-10-1";
 	public static final String HS_A_FIRST_DATE_RZRQ="2012-11-12";
+	public static final String HS_A_FIRST_DATE_DZJY="2003-01-08";
 	
 	private String marketId = ETLUtil.MarketId_Test;
 	private String propFile = "client1-v2.properties";
@@ -71,6 +72,13 @@ public class SinaStockBase extends TestBase{
 		Date startDate = ETLUtil.sdf.parse(fromDate); 
 		ETLUtil.runTaskByStartDate(startDate, cconf, this.getPropFile(), StockConfig.SINA_STOCK_MARKET_RZRQ, 
 				null, StockConfig.SINA_STOCK_MARKET_RZRQ);
+	}
+	
+	//大宗交易
+	public void run_browse_market_dzjy(String fromDate) throws ParseException{
+		Date startDate = ETLUtil.sdf.parse(fromDate);
+		ETLUtil.runTaskByStartDate(startDate, cconf, this.getPropFile(), StockConfig.SINA_STOCK_MARKET_DZJY, 
+				null, StockConfig.SINA_STOCK_MARKET_DZJY);
 	}
 	
 	//历史交易

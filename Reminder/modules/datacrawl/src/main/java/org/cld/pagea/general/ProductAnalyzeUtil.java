@@ -21,6 +21,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlSpan;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.NextPage;
 import org.cld.datacrawl.ProductConf;
+import org.cld.datacrawl.mgr.BinaryBoolOpEval;
 import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.datacrawl.util.HtmlPageResult;
 import org.cld.datacrawl.util.HtmlUnitUtil;
@@ -50,7 +51,7 @@ public class ProductAnalyzeUtil {
 			List<AttributeType> attrlist = taskDef.getBrowsePrdTaskType().getBaseBrowseTask().getUserAttribute();
 			//page verifications
 			for (AttributeType attr: attrlist){
-				if (!attr.isOptional()){
+				if (!attr.getValue().isOptional()){
 					String xpath = TasksTypeUtil.getXPath(attr.getValue(), task.getParamMap());
 					if (xpath!=null)
 						xpathList.add(xpath);
@@ -62,9 +63,9 @@ public class ProductAnalyzeUtil {
 				if (xpath!=null)
 					xpathList.add(xpath);
 			}
-			String np = taskDef.getBrowsePrdTaskType().getNextPage();
-			if (np!=null && np.contains("/")){
-				xpathList.add(np);
+			ValueType np = taskDef.getBrowsePrdTaskType().getNextPage();
+			if (np!=null && !np.isOptional() && np.getValue().contains("/")){
+				xpathList.add(np.getValue());
 			}
 			if (xpathList.size()>0)
 				return xpathList.toArray(new String[xpathList.size()]);
@@ -141,23 +142,13 @@ public class ProductAnalyzeUtil {
 		return pageMap;
 	}
 	
-	private static boolean checkFinalPage(String finalExp, Map<String, Object> variables){
-		if (finalExp==null)
-			return false;
-		else{
-			Boolean bool = (Boolean)ScriptEngineUtil.eval(finalExp, VarType.BOOLEAN, variables);
-			return bool.booleanValue();
-		}
-	}
-	
 	private static HtmlPage getNextPage(WebClient wc, HtmlPage curPage, Task task, 
 			ParsedBrowsePrd taskDef, CrawlConf cconf) throws InterruptedException{
 		BrowseDetailType bdt = taskDef.getBrowsePrdTaskType();
 		if (bdt.getNextPage()!=null){
 			HtmlElement nextPageEle = null ;
 			String url = null;
-			
-			DomNamespaceNode dnsn = curPage.getFirstByXPath(bdt.getNextPage());
+			DomNamespaceNode dnsn = curPage.getFirstByXPath(bdt.getNextPage().getValue());
 			if (dnsn==null){
 				logger.info(String.format("next page xpath %s not found on page %s.", bdt.getNextPage(), curPage.getUrl().toExternalForm()));
 				return null;
@@ -236,8 +227,9 @@ public class ProductAnalyzeUtil {
 			tryPattern = bdt.isTryPattern();
 		}
 		boolean externalistFinished=false;
-		boolean finalPage=checkFinalPage(bdt.getLastPageCondition(), product.getParamMap());
 		HtmlPage curPage = (HtmlPage) pageMap.get(ConfKey.CURRENT_PAGE).get(0);
+		boolean finalPage= BinaryBoolOpEval.eval(curPage, cconf, bdt.getLastPageCondition(), 
+				product.getParamMap());
 		int curPageNum = 1;
 		//(totalPage not set or curPage less than totalPage) & curPage not null & not final & not finished
 		while ((totalPage==-1 || curPageNum<=totalPage) && curPage!=null && !finalPage && !externalistFinished){
@@ -249,15 +241,22 @@ public class ProductAnalyzeUtil {
 					product.getParamMap(), cconf, task.getParamMap(), tryPattern);
 			if (externalistFinished)
 				break;
-			finalPage = checkFinalPage(bdt.getLastPageCondition(), product.getParamMap());
-			if (finalPage)
-				break;
 			curPage=getNextPage(wc, curPage, task, taskDef, cconf);
 			curPageNum ++;
 			logger.info("curPageNum:" + curPageNum + ", totalPage:" + totalPage);
 			logger.debug(product.getParamMap());
+			finalPage = BinaryBoolOpEval.eval(curPage, cconf, bdt.getLastPageCondition(), 
+					product.getParamMap());
 		}
 		
+		if (finalPage){
+			//operate on the final page
+			List<HtmlPage> pagelist = new ArrayList<HtmlPage>();
+			pagelist.add(curPage);
+			pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
+			CrawlTaskEval.setUserAttributes(pageMap, bdt.getBaseBrowseTask().getUserAttribute(), 
+					product.getParamMap(), cconf, task.getParamMap(), tryPattern);
+		}
 		if (finalPage || externalistFinished){
 			product.setCompleted(true);
 		}

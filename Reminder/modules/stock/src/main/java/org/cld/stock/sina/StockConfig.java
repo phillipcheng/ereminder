@@ -7,6 +7,7 @@ public class StockConfig {
 	public static final String SINA_STOCK_MARKET_HISTORY="sina-stock-market-history";
 	public static final String SINA_STOCK_TRADE_DETAIL="sina-stock-market-tradedetail";
 	public static final String SINA_STOCK_MARKET_RZRQ="sina-stock-market-rzrq";
+	public static final String SINA_STOCK_MARKET_DZJY="sina-stock-market-dzjy";
 	//corp material
 	public static final String SINA_STOCK_CORP_INFO="sina-stock-corp-info";
 	public static final String SINA_STOCK_CORP_MANAGER="sina-stock-corp-manager";

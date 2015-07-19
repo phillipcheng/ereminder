@@ -80,58 +80,87 @@
 		<xs:sequence>
 			<xs:element name="strPreprocess" minOccurs="0">
 				<xs:complexType>
-					<xs:attribute name="trimPre" type="xs:string"/>
-					<xs:attribute name="trimPost" type="xs:string"/>
+					<xs:attribute name="trimPre" type="xs:string" />
+					<xs:attribute name="trimPost" type="xs:string" />
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="sampleUrl" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+			<xs:element name="sampleUrl" type="xs:string" minOccurs="0"
+				maxOccurs="unbounded">
 				<xs:annotation>
-					<xs:documentation>multiple sample provided for toType is Page or Pagelist</xs:documentation>
+					<xs:documentation>
+						multiple sample provided for toType is Page or
+						Pagelist
+					</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="pageVerify" type="BinaryBoolOp" minOccurs="0" maxOccurs="unbounded">
+			<xs:element name="pageVerify" type="BinaryBoolOp"
+				minOccurs="0" maxOccurs="unbounded">
 				<xs:annotation>
-					<xs:documentation>string to verify if page or pagelist type, for pagelist, this is also a list, 1-1 mapping.</xs:documentation>
+					<xs:documentation>
+						string to verify if page or pagelist type, for
+						pagelist, this is also a list, 1-1 mapping.
+					</xs:documentation>
 				</xs:annotation>
 			</xs:element>
 		</xs:sequence>
-		<xs:attribute name="fromScope" type="ScopeType"/>
+		<xs:attribute name="fromScope" type="ScopeType" />
 		<xs:attribute name="fromType" type="VarType" use="optional">
 			<xs:annotation>
-				<xs:documentation>the value's input type, default to xpath</xs:documentation>
+				<xs:documentation>
+					the value's input type, default to xpath
+				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
-		<xs:attribute name="value" type="xs:string" use="required"/>
+		<xs:attribute name="value" type="xs:string" use="required" />
 		<xs:attribute name="toType" type="VarType" use="optional">
 			<xs:annotation>
-				<xs:documentation>the type of the interpret result</xs:documentation>
+				<xs:documentation>
+					the type of the interpret result
+				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
-		<xs:attribute name="toEntryType" type="VarType" use="optional" default="string">
+		<xs:attribute name="toEntryType" type="VarType" use="optional"
+			default="string">
 			<xs:annotation>
-				<xs:documentation>the type of the entry in the list if toType is list type</xs:documentation>
+				<xs:documentation>
+					the type of the entry in the list if toType is list
+					type
+				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 		<xs:attribute name="toDirectory">
 			<xs:annotation>
-				<xs:documentation>only for toEntryType is File, expression</xs:documentation>
+				<xs:documentation>
+					only for toEntryType is File, expression
+				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 		<xs:attribute name="basePage" type="xs:string" use="optional">
 			<xs:annotation>
-				<xs:documentation>based on which page, to eval this xpath</xs:documentation>
+				<xs:documentation>
+					based on which page, to eval this xpath
+				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 		<xs:attribute name="enableJS" type="xs:boolean">
 			<xs:annotation>
-				<xs:documentation>used with toType=page, if null, reusing previous wc setting</xs:documentation>
+				<xs:documentation>
+					used with toType=page, if null, reusing previous wc
+					setting
+				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 		<xs:attribute name="format" type="xs:string" use="optional">
 			<xs:annotation>
-				<xs:documentation>used with toType=date</xs:documentation>
+				<xs:documentation>
+					used with toType=date
+				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
+		<xs:attribute name="optional" type="xs:boolean" use="optional" default="false">
+			<xs:annotation>
+				<xs:documentation>when optional is true, means if this variable fromType is xpath, this is optional</xs:documentation>
+			</xs:annotation></xs:attribute>
 	</xs:complexType>
 	<xs:complexType name="BrowseTaskType">
 		<xs:sequence>
@@ -256,25 +285,24 @@ if also not set, then 1 task browsing all items will be generated.
 	</xs:complexType>
 	<xs:complexType name="BrowseDetailType">
 		<xs:sequence>
-			<xs:element name="baseBrowseTask" type="BrowseTaskType"/>
-			<xs:element name="firstPageClickStream" type="ClickStreamType" minOccurs="0">
+			<xs:element name="baseBrowseTask" type="BrowseTaskType" />
+			<xs:element name="firstPageClickStream"
+				type="ClickStreamType" minOccurs="0">
 				<xs:annotation>
-					<xs:documentation>the click stream to the 1st page of the book</xs:documentation>
+					<xs:documentation>
+						the click stream to the 1st page of the book
+					</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="totalPage" type="ValueType" minOccurs="0"/>
-		</xs:sequence>
-		<xs:attribute name="nextPage" type="xs:string"/>
+			<xs:element name="totalPage" type="ValueType" minOccurs="0" />
+			<xs:element name="nextPage" type="ValueType" maxOccurs="1" minOccurs="0"></xs:element>
+			<xs:element name="lastPageCondition" type="BinaryBoolOp" maxOccurs="1" minOccurs="0"></xs:element>
+		</xs:sequence>
 		<xs:attribute name="tryPattern" type="xs:boolean" use="optional" default="true">
 			<xs:annotation>
 				<xs:documentation>tryPattern for external list type variable, for the value on each page. if there is a total page specified, then tryPattern will be default to true, if not want this, set this to false.</xs:documentation>
 			</xs:annotation>
-		</xs:attribute>
-		<xs:attribute name="lastPageCondition" type="xs:string" use="optional">
-			<xs:annotation>
-				<xs:documentation>boolean expression</xs:documentation>
-			</xs:annotation>
-		</xs:attribute>
+		</xs:attribute>
 		<xs:attribute name="monitorPrice" type="xs:boolean" use="optional" default="false"/>
 		<xs:attribute name="processType" type="BDTProcessType" use="optional" default="inline">
 			<xs:annotation>
@@ -333,12 +361,7 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 			<xs:annotation>
 				<xs:documentation>for input/set, the nameType defaults to XPATH, for get the nameType defaults to string</xs:documentation>
 			</xs:annotation>
-		</xs:attribute>
-		<xs:attribute name="optional" type="xs:boolean" use="optional" default="false">
-			<xs:annotation>
-				<xs:documentation>if false, its existance will not be used in the page retrieval verification, default is false, so default will be used in verification</xs:documentation>
-			</xs:annotation>
-		</xs:attribute>
+		</xs:attribute>
 	</xs:complexType>
 	<xs:complexType name="RegExpType">
 		<xs:sequence>

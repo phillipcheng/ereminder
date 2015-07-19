@@ -128,7 +128,8 @@ public class ETLUtil {
 		String calledMethod = ReflectUtil.getMethodName(1);
 		Map<String, Object> taskParams = new HashMap<String, Object>();
 		taskParams.put(StartDate_Key, startDate);
-		taskParams.putAll(params);
+		if (params!=null)
+			taskParams.putAll(params);
 		String taskName = ETLUtil.getTaskName(calledMethod, taskParams);
 		logger.info("sending out:" + tlist.size() + " tasks.");
 		CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName, outputDir);
@@ -158,7 +159,8 @@ public class ETLUtil {
 		String calledMethod = ReflectUtil.getMethodName(1);
 		Map<String, Object> taskParams = new HashMap<String, Object>();
 		taskParams.put(MarketId_Key, marketId);
-		taskParams.putAll(params);
+		if (params!=null)
+			taskParams.putAll(params);
 		String taskName = ETLUtil.getTaskName(calledMethod, taskParams);
 		CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName, outputDir);
 	}
