@@ -75,7 +75,8 @@ public class TaskMgr {
 	private String[] yarnAppCp = null;
 	private String hadoopCrawledItemFolder=null;
 	private int crawlTasksPerMapper = 1;
-	
+	private Map<String, String> hadoopConfigs = new HashMap<String,String>();
+
 
 	public static final String taskType_Key = "task.type";
 	public static final String taskName_Key="task.name";
@@ -267,6 +268,8 @@ public class TaskMgr {
 							}
 						}
 					}
+				}else if (key.startsWith("yarn.") || key.startsWith("mapred.") || key.startsWith("mapreduce.")){
+					hadoopConfigs.put(key, strVal);
 				}
 			}
 		}catch(Exception e){
@@ -542,5 +545,9 @@ public class TaskMgr {
 
 	public void setYarnAppCp(String[] yarnAppCp) {
 		this.yarnAppCp = yarnAppCp;
+	}
+	
+	public Map<String, String> getHadoopConfigs() {
+		return hadoopConfigs;
 	}
 }

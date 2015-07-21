@@ -53,13 +53,13 @@ public class TestSinaStock {
 	//成交明细
 	@Test
 	public void run_browse_tradedetail() throws ParseException{
-		ssb.run_browse_tradedetail("2015-7-12");
+		ssb.run_browse_tradedetail("2015-07-16");
 	}
 	
 	//融资融券
 	@Test
 	public void run_browse_market_rzrq() throws ParseException{
-		ssb.run_browse_market_rzrq("2015-7-12");
+		ssb.run_browse_market_rzrq("2015-07-12");
 	}
 	//大宗交易
 	@Test

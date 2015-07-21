@@ -11,7 +11,7 @@ productType="default">
 			<param name="stockid"/>
 			<param name="date"/>
 			<startUrl value="http://market.finance.sina.com.cn/downxls.php?date=[date]&amp;symbol=[stockid]"/>
-			<cachePage value="trade_detail/[stockid]_[date].xls"/>
+			<cachePage value="'trade_detail/' + date.substring(0,4) + '/' + date.substring(5,7) + '/' + date.substring(8,10) + '/' + stockid + '_' + date + '.xls'" fromType="expression"/>
 			<!-- date=2008-08-18 symbol=sh601766 -->
 		</baseBrowseTask>
 	</PrdTask>

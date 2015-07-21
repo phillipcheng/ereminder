@@ -84,23 +84,16 @@ public class HadoopTaskLauncher {
 			conf.set("yarn.resourcemanager.hostname", host);
 			conf.set("mapreduce.framework.name", "yarn");
 			conf.set("yarn.nodemanager.aux-services", "mapreduce_shuffle");
-			
-			/*
-			conf.set("yarn.application.classpath", taskMgr.getYarnAppCp());
-			//or
-			Collection<String> yarncps = conf.getStringCollection("yarn.application.classpath");
-			if (taskMgr.getYarnAppCp()!=null && !yarncps.contains(taskMgr.getYarnAppCp())){
-				yarncps.add(taskMgr.getYarnAppCp());
-				conf.setStrings("yarn.application.classpath", yarncps.toArray(new String[yarncps.size()]));
-			}
-			logger.debug(String.format("the yarn classpaths is:%s", conf.get("yarn.application.classpath")));
-			*/
 		}
 		conf.set("fs.default.name", taskMgr.getHdfsDefaultName());
-		conf.set("mapreduce.tasktracker.map.tasks.maximum", nc.getThreadSize() + "");
 		conf.set("mapred.textoutputformat.separator", ",");//default is tab
 		conf.set("mapreduce.task.timeout", "0");
 		conf.setInt(NLineInputFormat.LINES_PER_MAP, taskMgr.getCrawlTasksPerMapper());
+		for (String key:taskMgr.getHadoopConfigs().keySet()){
+			String value = taskMgr.getHadoopConfigs().get(key);
+			conf.set(key, value);
+			logger.info(String.format("key:%s, value:%s", key, value));
+		}
 		return conf;
 	}
 	
