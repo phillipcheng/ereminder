@@ -64,7 +64,7 @@ public class TestSinaStock {
 	//大宗交易
 	@Test
 	public void run_browse_market_dzjy() throws ParseException{
-		ssb.run_browse_market_dzjy("2015-07-12");
+		ssb.run_browse_market_dzjy("2014-07-01");
 	}
 	
 	//历史交易
