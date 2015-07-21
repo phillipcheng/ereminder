@@ -4,13 +4,14 @@ public class StockConfig {
 	//file name of the xml conf and the store id as well
 	public static final String SINA_STOCK_IDS ="sina-stock-ids";
 	//market
-	public static final String SINA_STOCK_MARKET_HISTORY="sina-stock-market-history";
-	public static final String SINA_STOCK_TRADE_DETAIL="sina-stock-market-tradedetail";
-	public static final String SINA_STOCK_MARKET_RZRQ="sina-stock-market-rzrq";
-	public static final String SINA_STOCK_MARKET_DZJY="sina-stock-market-dzjy";
+	public static final String SINA_STOCK_MARKET_HISTORY="sina-stock-market-history";//历史交易
+	public static final String SINA_STOCK_TRADE_DETAIL="sina-stock-market-tradedetail";//成交明细
+	public static final String SINA_STOCK_MARKET_RZRQ="sina-stock-market-rzrq";//融资融券
+	public static final String SINA_STOCK_MARKET_DZJY="sina-stock-market-dzjy";//大宗交易
+	public static final String SINA_STOCK_MARKET_FQ="sina-stock-market-fq"; //复权
 	//corp material
-	public static final String SINA_STOCK_CORP_INFO="sina-stock-corp-info";
-	public static final String SINA_STOCK_CORP_MANAGER="sina-stock-corp-manager";
+	public static final String SINA_STOCK_CORP_INFO="sina-stock-corp-info";//
+	public static final String SINA_STOCK_CORP_MANAGER="sina-stock-corp-manager";//
 	public static final String SINA_STOCK_CORP_RELATED="sina-stock-corp-related";
 	public static final String SINA_STOCK_CORP_RELATED_OTHER="sina-stock-corp-related-other";
 	public static final String SINA_STOCK_DATA="data";

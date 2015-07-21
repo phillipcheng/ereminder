@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="sina-stock-market-fq" productType="default">
+	<!-- HS_A market allows rzrq since 2012/11/12 -->
+	<PrdTask tryPattern="false">
+		<baseBrowseTask enableJS="true" taskName="market-fq" dsm="hdfs">
+			<param name="stockid"/>
+			<param name="year"/>
+			<param name="quarter"/>
+			<param name="HasHeader" type="boolean" value="true"/>
+			<startUrl value="http://vip.stock.finance.sina.com.cn/corp/go.php/vMS_FuQuanMarketHistory/stockid/[stockid].phtml?year=[year]&amp;jidu=[quarter]"/>
+			<userAttribute name="id">
+				<value value="stockid + '_' + year + '_' + quarter" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="8" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="data1">
+				<value value="//table[@id='FundHoldSharesTable']/tbody/tr/td" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="RowCsvName">
+				<value value="fq" toType="list"/>
+			</userAttribute>
+			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" multipleOutput="true">
+				<outputDir value="sina-stock-market-fq"/>
+			</csvtransform>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>

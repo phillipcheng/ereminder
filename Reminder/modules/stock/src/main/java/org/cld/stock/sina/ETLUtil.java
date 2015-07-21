@@ -117,7 +117,6 @@ public class ETLUtil {
 		Iterator<Date> tryDates = dll.listIterator();
 		while(tryDates.hasNext()){
 			Date d = tryDates.next();
-			logger.debug("try date:" + d);
 			String dstr = sdf.format(d);
 			for (Task t: tl){
 				Task t1 = t.clone(ETLUtil.class.getClassLoader());
@@ -279,6 +278,11 @@ public class ETLUtil {
 					for (quarter=startQ;quarter<=endQ;quarter++){
 						TestTaskConf ttc = new TestTaskConf(false, browse_type.bpt, 
 								confName, confName +".xml");
+						
+						Map<String, Object> cconfParams = new HashMap<String, Object>();
+						cconfParams.put(CrawlClientNode.TASK_RUN_PARAM_CCONF, cconf);
+						ttc.initParsedTaskDef(cconfParams);
+						
 						ttc.putParam("stockid", stockid);
 						ttc.putParam("year", year+"");
 						ttc.putParam("quarter", quarter+"");
@@ -336,46 +340,6 @@ public class ETLUtil {
 			String taskName = ETLUtil.getTaskName(calledMethod, taskParams);
 			logger.info(String.format("sending out:%d tasks for hadoop task %s.", tlist.size(), taskName));
 			CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName);
-		}
-	}
-	
-	public static void mergeMarketHistoryByQuarter(CrawlConf cconf, int fromYear, 
-			int fromQuarter, int toYear, int toQuarter) throws Exception {
-		int year;
-		int quarter;
-		Configuration conf = HadoopTaskLauncher.getHadoopConf(cconf.getNodeConf());
-		FileSystem fs = FileSystem.get(conf);
-		for (year=toYear; year>=fromYear; year--){
-			int startQ=1;
-			int endQ=4;
-			if (year==fromYear){//from Year
-				startQ = fromQuarter;
-			}else if (year==toYear){//to Year
-				endQ=toQuarter;
-			}
-			
-			for (quarter=startQ; quarter<=endQ; quarter++){
-				String itemFolder = cconf.getTaskMgr().getHadoopCrawledItemFolder()+"/";
-				Path ppat = new Path(itemFolder + StockConfig.SINA_STOCK_MARKET_HISTORY+"/"+"*_phtml_year_"+year+"_jidu_"+quarter);
-				FileStatus[] files = fs.globStatus(ppat);
-				if (files.length>1){
-					Path[] paths = new Path[files.length];
-					for (int i=0; i<files.length; i++){
-						paths[i]=files[i].getPath();
-					}
-					Path tmp = new Path(itemFolder + StockConfig.SINA_STOCK_MARKET_HISTORY +"-tmp/"+year+"-"+quarter);
-					if (fs.exists(tmp)){
-						fs.delete(tmp, true);
-					}
-					fs.mkdirs(tmp);
-					FileUtil.copy(fs, paths, fs, tmp, false, true, conf);
-					Path output = new Path(itemFolder + StockConfig.SINA_STOCK_MARKET_HISTORY+"-output/"+year+"-"+quarter);
-					if (fs.exists(output)){
-						fs.delete(output, true);
-					}
-					FileUtil.copyMerge(fs, tmp, fs, output, false, conf, "");
-				}
-			}
 		}
 	}
 }

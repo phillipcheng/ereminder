@@ -65,18 +65,6 @@ public class RunSinaStock {
 						System.out.println("propFile marketId 'false' 'brs_mkt_history' ?year? ?quarter?");
 					}
 				}
-			}else if ("mrg_mkt_history".equals(cmd)){
-				if (allHistory){
-					ssb.run_merge_market_history();
-				}else{
-					if (args.length>argIdx+2){
-						int year=Integer.parseInt(args[argIdx]);
-						int quarter = Integer.parseInt(args[argIdx+1]);
-						ssb.run_merge_market_history_quarter(year, quarter);
-					}else{
-						System.out.println("propFile marketId 'false' 'mrg_mkt_history' ?year? ?quarter?");
-					}
-				}
 			}
 			//公司资料
 			else if ("brs_corp_info".equals(cmd)){

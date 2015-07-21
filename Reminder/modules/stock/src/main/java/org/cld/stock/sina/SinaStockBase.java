@@ -83,31 +83,24 @@ public class SinaStockBase extends TestBase{
 		ETLUtil.runTaskByStartDate(startDate, cconf, this.getPropFile(), StockConfig.SINA_STOCK_MARKET_DZJY, null);
 	}
 	
+	//复权交易
+	public void run_browse_market_fq_history() throws ParseException{//all history data
+		ETLUtil.runTaskByMarketIdStartQuarter(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_MARKET_FQ);
+	}
+	
 	//历史交易
-	//crawl market history to hdfs/hive
-	public void run_browse_market_history() {
+	public void run_browse_market_history() {//all history data
 		ETLUtil.runTaskByMarketIdStartQuarter(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_MARKET_HISTORY);
 	}
-	
-	//merge all stocks' market history into one file per quarter
-	public void run_merge_market_history() throws Exception {
-		int[] cyq = DateTimeUtil.getYearQuarter(new Date());
-		ETLUtil.mergeMarketHistoryByQuarter(cconf, HS_A_START_YEAR, 1, cyq[0], cyq[1]);
-	}
-	
-	//crawl market for specific quarter(s) to hdfs/hive
-	public void run_browse_market_quarter(int year, int quarter){
+	public void run_browse_market_quarter(int year, int quarter){//for specific quarter(s)
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("year", year);
 		params.put("quarter", quarter);
 		ETLUtil.runTaskByMarket(marketId, cconf, this.getPropFile(), StockConfig.SINA_STOCK_MARKET_HISTORY, params);
 	}
-	public void run_browse_market_cur_quarter(){
+	public void run_browse_market_cur_quarter(){//for current quarter
 		int[] cyq = DateTimeUtil.getYearQuarter(new Date());
 		run_browse_market_quarter(cyq[0], cyq[1]);
-	}
-	public void run_merge_market_history_quarter(int year, int quarter) throws Exception {
-		ETLUtil.mergeMarketHistoryByQuarter(cconf, year, quarter, year, quarter);
 	}
 	
 	

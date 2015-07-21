@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.task.TabularCSVConvertTask;
-import org.cld.stock.sina.ETLUtil;
 import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.StockConfig;
 import org.junit.Before;
@@ -66,28 +65,21 @@ public class TestSinaStock {
 	public void run_browse_market_dzjy() throws ParseException{
 		ssb.run_browse_market_dzjy("2014-07-01");
 	}
+	//复权交易
+	@Test
+	public void run_browse_market_fq_history() throws ParseException {
+		ssb.run_browse_market_fq_history();
+	}
 	
 	//历史交易
-	//crawl market history to hdfs/hive
 	@Test
 	public void run_browse_market_history() {
 		ssb.run_browse_market_history();
-	}
-	
-	//merge all stocks' market history into one file per quarter
-	@Test
-	public void run_merge_market_history() throws Exception {
-		ETLUtil.mergeMarketHistoryByQuarter(ssb.getCconf(), 1990, 1, 2015, 3);
 	}
 
 	@Test
 	public void run_browse_market_quarter() throws Exception {
 		ssb.run_browse_market_quarter(2015, 2);
-	}
-
-	@Test
-	public void run_merge_market_history_quarter() throws Exception {
-		ETLUtil.mergeMarketHistoryByQuarter(ssb.getCconf(), 2015, 2, 2015, 2);
 	}
 
 	/****
