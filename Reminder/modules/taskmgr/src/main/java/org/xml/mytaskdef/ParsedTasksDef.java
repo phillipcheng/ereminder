@@ -9,7 +9,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.xml.taskdef.BrowseCatType;
 import org.xml.taskdef.BrowseDetailType;
+import org.xml.taskdef.BrowseTaskType;
 import org.xml.taskdef.ClickStreamType;
+import org.xml.taskdef.ParamType;
 import org.xml.taskdef.RedirectType;
 import org.xml.taskdef.RegExpType;
 import org.xml.taskdef.TasksType;
@@ -22,6 +24,7 @@ public class ParsedTasksDef {
 
 	private static Logger logger =  LogManager.getLogger(ParsedTasksDef.class);
 	
+	transient Map<String, BrowseTaskType> allBrowseTasks = new HashMap<String, BrowseTaskType>();
 	transient Map<String, ParsedBrowseCat> parsedBCMap = new HashMap<String, ParsedBrowseCat>();
 	transient TasksType tasksDef;
 	transient BrowseCatType leafBrowseCatTask;
@@ -33,6 +36,7 @@ public class ParsedTasksDef {
 	transient Map<String, ClickStreamType> landingUrlMap = new HashMap<String, ClickStreamType>();
 	//from stream name to loginClickStream
 	transient Map<String, ClickStreamType> clickStreamMap = new HashMap<String, ClickStreamType>();
+	
 	
 	public ClickStreamType getLoginClickStream(String landingUrl){
 		for (String key: landingUrlMap.keySet()){
@@ -80,6 +84,7 @@ public class ParsedTasksDef {
 			if (i==size-1){
 				leafBrowseCatTask = bc;
 			}
+			allBrowseTasks.put(bc.getBaseBrowseTask().getTaskName(), bc.getBaseBrowseTask());
 		}
 		
 		List<BrowseDetailType> bptList = tasks.getPrdTask();
@@ -95,6 +100,7 @@ public class ParsedTasksDef {
 				if (bptList.size()>1)
 					logger.error(String.format("browse prd task name not specified among a list of prd tasks for site: %s", tasks.getStoreId()));
 			}
+			allBrowseTasks.put(bpt.getBaseBrowseTask().getTaskName(), bpt.getBaseBrowseTask());
 		}
 		
 		skipUrls = new String[tasks.getSkipUrl().size()];
@@ -170,6 +176,15 @@ public class ParsedTasksDef {
 				logger.error(String.format("browse product task %s not found.", taskName));
 			}
 			return pbp;
+		}
+	}
+	
+	public BrowseTaskType getBrowseTask(String taskName){
+		//if taskName is null, usually from TestTask return first
+		if (taskName==null){
+			return (BrowseTaskType) allBrowseTasks.values().toArray()[0];
+		}else{
+			return allBrowseTasks.get(taskName);
 		}
 	}
 }

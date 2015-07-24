@@ -56,7 +56,7 @@ public class AbstractHbaseToCSVMapper extends TableMapper<Text, Text>{
 			}
 			
 			try{
-				ICrawlItemToCSV tocsv = (ICrawlItemToCSV) Class.forName(toCSVClazz).newInstance();
+				AbstractCrawlItemToCSV tocsv = (AbstractCrawlItemToCSV) Class.forName(toCSVClazz).newInstance();
 				String outputId = id;
 				if (m!=null){
 					outputId = m.group(1);

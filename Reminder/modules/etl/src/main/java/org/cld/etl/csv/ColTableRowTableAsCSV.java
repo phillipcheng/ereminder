@@ -1,26 +1,48 @@
 package org.cld.etl.csv;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.entity.CrawledItem;
-import org.cld.etl.fci.ICrawlItemToCSV;
+import org.cld.etl.fci.AbstractCrawlItemToCSV;
 
-public class ColTableRowTableAsCSV implements ICrawlItemToCSV{
+/**
+ * 1 Colum Table followed by 1 Row Table
+ * 
+ * For example:
+ * 
+ * C1Name C1Value
+ * C2Name C2Value
+ * 
+ * r1, v1, v2
+ * r2, v1, v2
+ * 
+ * C1Name C1Value
+ * C2Name C2Value
+ * 
+ * r1, v1, v2
+ * r2, v1, v2
+ * r3, v1, v2
+ * r4, v1, v2
+ * 
+ * Column Table can disappear, then becomes spead row table
+ * SectionSepValue is r1
+ * 
+ */
+public class ColTableRowTableAsCSV extends AbstractCrawlItemToCSV{
 	
 	private static Logger logger =  LogManager.getLogger(ColTableRowTableAsCSV.class);
 
-	public static final String FIELD_NAME_COLCSV="ColCsvName";//number of col csv file
 	public static final String FIELD_NAME_COLDataType="ColDataType";//data type of column table
-	
 	public static final String FIELD_NAME_SECSEPVALUE="SectionSepValue";//value to separate col table and row table
 	public static final String FIELD_NAME_RowKeyFromColIdx ="RowKeyFromColIdx";//the attribute(s) needs to put in the row table from col tables
 	
-	public static final String FIELD_NAME_ROWCSV="RowCsvName";//number of row csv file
-	public static final String FIELD_NAME_ROWDataType="RowDataType";//data type of row table
+	public static final String FIELD_NAME_ROWDataType="RowDataType";//data type of row tables
+	
 	
 	public static String processV(String v, String dt){
 		if (DATA_TYPE_NUMBER.equals(dt)){
@@ -32,18 +54,25 @@ public class ColTableRowTableAsCSV implements ICrawlItemToCSV{
 	//column to csv
 	@Override
 	public List<String[]> getCSV(CrawledItem ci, Map<String, Object> paramMap) {
+		init(ci, paramMap);
+		
 		String keyid = (String) ci.getParam(FIELD_NAME_KEYID);
+		
+		int colDateIdx = -1;
+		if (ci.getParam(FIELD_NAME_ColDateIdx)!=null){
+			colDateIdx = (int) ci.getParam(FIELD_NAME_ColDateIdx);
+		};
+		int rowDateIdx = -1;
+		if (ci.getParam(FIELD_NAME_RowDateIdx)!=null){
+			rowDateIdx = (int) ci.getParam(FIELD_NAME_RowDateIdx);
+		};
+
 		List<String> ls = (List<String>)ci.getParam(FIELD_NAME_DATA);
-		boolean genHeader = false;
-		Boolean bGenHeader = (Boolean) ci.getParam(KEY_GENHEADER);
-		if (bGenHeader!=null){
-			genHeader = bGenHeader.booleanValue();
-		}
 		boolean hasColumnTable = true;
 		//for column table
 		int colnum = 0;
 		List<Integer> rkfcIdx = null;
-		String coldatatype = ICrawlItemToCSV.DATA_TYPE_TEXT;
+		String coldatatype = AbstractCrawlItemToCSV.DATA_TYPE_TEXT;
 		String colcsvname = null;
 		Integer colnumObj = (Integer) ci.getParam(FIELD_NAME_COLNUM);
 		if (colnumObj!=null){
@@ -61,7 +90,7 @@ public class ColTableRowTableAsCSV implements ICrawlItemToCSV{
 		int rownum = (int) ci.getParam(FIELD_NAME_ROWNUM);
 		String ssv = (String) ci.getParam(FIELD_NAME_SECSEPVALUE);
 		String rowcsvname = (String) ci.getParam(FIELD_NAME_ROWCSV);
-		String rowdatatype = ICrawlItemToCSV.DATA_TYPE_TEXT;
+		String rowdatatype = AbstractCrawlItemToCSV.DATA_TYPE_TEXT;
 		String dt = (String)ci.getParam(FIELD_NAME_ROWDataType);
 		if (dt!=null){
 			rowdatatype = dt;
@@ -74,6 +103,7 @@ public class ColTableRowTableAsCSV implements ICrawlItemToCSV{
 			int iter=0;
 			int idx=0;
 			do {
+				boolean skipRowTables = false;
 				List<String> rkfcValues = new ArrayList<String>();
 				List<String> rkfcKeys = new ArrayList<String>();
 				if (hasColumnTable){
@@ -82,83 +112,111 @@ public class ColTableRowTableAsCSV implements ICrawlItemToCSV{
 					StringBuffer ksb = new StringBuffer();
 					//collect column
 					for (int i=0; i<colnum; i++){
-						if (i>0){
-							sb.append(",");
-							if (iter==0){
-								ksb.append(",");
-							}
-						}
 						String k = ls.get(idx+2*i);
-						if (iter==0){
-							ksb.append(k);
-						}
-						
 						v = ls.get(idx+2*i+1);
 						v = processV(v, coldatatype);
 						if (rkfcIdx.contains(i)){
 							rkfcValues.add(v);
 							rkfcKeys.add(k);
 						}
+						
+						if (i==colDateIdx && !checkDate(v)){//skip this line
+							sb = null;
+							skipRowTables = true;
+							break;
+						}
+						if (i>0){
+							sb.append(",");
+							if (iter==0){
+								ksb.append(",");
+							}
+						}
+						if (iter==0){
+							ksb.append(k);
+						}
+						
 						sb.append(v);//get the value
 					}
 					if (genHeader && iter==0){
 						colString.add(ksb.toString());
 					}
-					colString.add("coltable:" + sb.toString());
-					logger.debug(sb.toString());
-					
+					if (sb!=null){
+						colString.add(sb.toString());
+					}
 					idx += colnum * 2;
 				}
-				int rowIdx=0;
+				int rowIdx=0; //index of row
 				while (idx<ls.size() && (!ssv.equals(ls.get(idx).trim()) || rowIdx==0)){
-					StringBuffer sb = new StringBuffer();
-					if (rowIdx==0){
-						if (hasColumnTable){
-							int p=0;
-							for (String rkfck:rkfcKeys){
-								if (p>0){
+					if (!skipRowTables){
+						StringBuffer sb = new StringBuffer();
+						if (rowIdx==0){//gen header
+							int p=0; //index of attribute within combined row
+							if (hasColumnTable){
+								for (String rkfck:rkfcKeys){
+									if (p>0){
+										sb.append(",");
+									}
+									sb.append(rkfck);
+									p++;
+								}
+							}
+							for (int j=0; j<rownum; j++){
+								String v = ls.get(idx++);
+								if (hasColumnTable)
+									sb.append(",");
+								else if (j>0){
 									sb.append(",");
 								}
-								sb.append(rkfck);
+								
+								sb.append(v);
 								p++;
 							}
-						}
-						for (int j=0; j<rownum; j++){
-							if (hasColumnTable)
-								sb.append(",");
-							else if (j>0){
-								sb.append(",");
+							if (genHeader && iter==0){
+								rowString.add(sb.toString());
+								//logger.debug("rowtable keys:" + sb.toString());
 							}
-							String v = ls.get(idx++);
-							sb.append(v);
-						}
-						if (genHeader && iter==0){
-							rowString.add(sb.toString());
-							logger.debug("rowtable keys:" + sb.toString());
+						}else{
+							int p=0;//index of attribute within combined row
+							boolean skipRow = false;
+							if (hasColumnTable){
+								for (String rkfcv:rkfcValues){
+									if (p==rowDateIdx && !checkDate(rkfcv)){//skip this line
+										sb = null;//clean line
+										idx = idx + rownum;//
+										skipRow=true;
+										break;
+									}
+									if (p>0){
+										sb.append(",");
+									}
+									sb.append(rkfcv);
+									p++;
+								}
+							}
+							if (!skipRow){
+								for (int j=0; j<rownum; j++){
+									String v = ls.get(idx++);
+									if (p==rowDateIdx && !checkDate(v)){//skip this line
+										sb = null;//clean line
+										idx = idx -1 + rownum - j;//idx does not need to reset, since idx has been ++, so remove 1 first
+										break;
+									}
+									if (hasColumnTable)
+										sb.append(",");
+									else if (j>0){
+										sb.append(",");
+									}
+									v = processV(v, rowdatatype);
+									sb.append(v);
+									p++;
+								}
+								if (sb!=null){
+									rowString.add(sb.toString());
+								}
+							}
 						}
 					}else{
-						if (hasColumnTable){
-							int k=0;
-							for (String rkfcv:rkfcValues){
-								if (k>0){
-									sb.append(",");
-								}
-								sb.append(rkfcv);
-								k++;
-							}
-						}
-						for (int j=0; j<rownum; j++){
-							if (hasColumnTable)
-								sb.append(",");
-							else if (j>0){
-								sb.append(",");
-							}
-							String v = ls.get(idx++);
-							v = processV(v, rowdatatype);
-							sb.append(v);
-						}
-						rowString.add(sb.toString());
-						logger.debug("rowtable values:" + sb.toString());
+						idx = idx + rownum;//
 					}
 					rowIdx++;
 				}

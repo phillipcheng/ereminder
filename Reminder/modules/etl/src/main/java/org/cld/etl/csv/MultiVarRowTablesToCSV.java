@@ -7,9 +7,9 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.entity.CrawledItem;
-import org.cld.etl.fci.ICrawlItemToCSV;
+import org.cld.etl.fci.AbstractCrawlItemToCSV;
 
-public class MultiVarRowTablesToCSV implements ICrawlItemToCSV{
+public class MultiVarRowTablesToCSV extends AbstractCrawlItemToCSV{
 	
 	private static Logger logger =  LogManager.getLogger(MultiVarRowTablesToCSV.class);
 	
@@ -29,14 +29,15 @@ public class MultiVarRowTablesToCSV implements ICrawlItemToCSV{
 	//row to csv
 	@Override
 	public List<String[]> getCSV(CrawledItem ci, Map<String, Object> paramMap) {
+		init(ci, paramMap);
+		
 		String stockid = (String) ci.getParam(FIELD_NAME_KEYID);
 		List<String> csvnames = (List<String>)ci.getParam(FIELD_NAME_ROWCSV);
 		List<Integer> cnl = new ArrayList<Integer>();
-		boolean genHeader = false;
-		Boolean bGenHeader = (Boolean) ci.getParam(KEY_GENHEADER);
-		if (bGenHeader!=null){
-			genHeader = bGenHeader.booleanValue();
-		}
+		List<Integer> rowDateIdxList = null;
+		if (ci.getParam(FIELD_NAME_RowDateIdx)!=null){
+			rowDateIdxList = (List<Integer>) ci.getParam(FIELD_NAME_RowDateIdx);
+		};
 		
 		List<String[]> retlist = new ArrayList<String[]>();
 		for (int i=0; i<csvnames.size(); i++){
@@ -44,7 +45,10 @@ public class MultiVarRowTablesToCSV implements ICrawlItemToCSV{
 			List<String> vl = (List<String>)ci.getParam(FIELD_NAME_DATA+(i+1));
 			List<Integer> rsvl = (List<Integer>)ci.getParam(FIELD_NAME_ROWSPAN+(i+1));
 			int colNum = (Integer)ci.getParam(FIELD_NAME_COLNUM+(i+1));
-			
+			int rowDateIdx=-1;
+			if (rowDateIdxList!=null){
+				rowDateIdx = rowDateIdxList.get(i);
+			}
 			StringBuffer sb = new StringBuffer();
 			try{
 				if (vl!=null && rsvl!=null){
@@ -62,15 +66,23 @@ public class MultiVarRowTablesToCSV implements ICrawlItemToCSV{
 					int row =0;
 					while (idx<vl.size()){
 						int rs = rsvl.get(row++);
-						String date = vl.get(idx++);
+						String v1 = vl.get(idx++);
+						if (rowDateIdx==0 && !checkDate(v1)){//skip the whole row span block
+							idx += rs*(colNum-1);
+							continue;
+						}
 						for (int k=0; k<rs; k++){
 							sb = new StringBuffer();
-							sb.append(date);
+							sb.append(v1);
 							for (int j=0; j<colNum-1; j++){
 								sb.append(",");
 								String v = vl.get(idx++);
-								//replace comma and new line for csv string
-								v = v.replace(",", "\\,").replaceAll("\\r\\n|\\r|\\n", " ");
+								if ((j+1)==rowDateIdx && !checkDate(v)){
+									sb = new StringBuffer();//clean buffer
+									idx = idx -1 + colNum-1-j;//skip to next line
+									break;
+								}
+								v = v.replace(",", "\\,").replaceAll("\\r\\n|\\r|\\n", " ");//replace comma and new line for csv string
 								sb.append(v);
 							}
 							retlist.add(new String[]{stockid, sb.toString(), csvname});

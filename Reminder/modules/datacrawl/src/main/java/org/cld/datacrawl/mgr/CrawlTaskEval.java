@@ -349,6 +349,8 @@ public class CrawlTaskEval {
 				String ret = (String) ScriptEngineUtil.eval(vt.getValue(), VarType.STRING, params);
 				if (ret!=null && ret.contains("/")){
 					processXpath(vt, ret, pageMap, cconf, rxpathListResultList, rpagelistList, rpageList, valueExpList, params);
+				}else{
+					valueExpList.add(ret);
 				}
 			}else if (VarType.URL == fromType){
 				List<? extends DomNode> currentPages = pageMap.get(ConfKey.CURRENT_PAGE);

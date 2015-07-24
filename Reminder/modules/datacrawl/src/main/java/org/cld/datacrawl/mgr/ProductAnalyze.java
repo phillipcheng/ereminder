@@ -14,6 +14,7 @@ import org.cld.taskmgr.entity.Task;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.NextPage;
 import org.cld.datastore.api.DataStoreManager;
+import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.Product;
 import org.cld.datastore.impl.HdfsDataStoreManagerImpl;
 import org.cld.datacrawl.util.HtmlPageResult;
@@ -22,7 +23,7 @@ import org.cld.datacrawl.util.VerifyPage;
 import org.cld.datacrawl.util.VerifyPageByBoolOp;
 import org.cld.datacrawl.util.VerifyPageByBoolOpXPath;
 import org.cld.datacrawl.util.VerifyPageByXPath;
-import org.cld.etl.fci.ICrawlItemToCSV;
+import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.BrowseDetailType;
@@ -54,7 +55,7 @@ public class ProductAnalyze{
 	 * @return the csv[] to return
 	 * @throws InterruptedException
 	 */
-	public List<String[]> addProduct(WebClient wc, String url, Product product, Product lastProduct, Task task, 
+	public CrawledItem addProduct(WebClient wc, String url, Product product, Product lastProduct, Task task, 
 			ParsedBrowsePrd taskDef, CrawlConf cconf, boolean retCsv) 
 			throws InterruptedException{
 		BrowseDetailType bdt = taskDef.getBrowsePrdTaskType();
@@ -99,14 +100,14 @@ public class ProductAnalyze{
 				if (csvTransform!=null){
 					//do the transform and set to crawledItem.csv
 					try {
-						ICrawlItemToCSV cicsv = (ICrawlItemToCSV) 
+						AbstractCrawlItemToCSV cicsv = (AbstractCrawlItemToCSV) 
 								Class.forName(csvTransform.getTransformClass()).newInstance();
 						List<String[]> csv = cicsv.getCSV(product, null);
 						product.setCsvValue(csv);
 						if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm())){
 							dsManager.addCrawledItem(product, lastProduct, bdt.getBaseBrowseTask());
 						}
-						if (retCsv) return csv;
+						if (retCsv) return product;
 					} catch (Exception e) {
 						e.printStackTrace();
 					}

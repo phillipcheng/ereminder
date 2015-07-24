@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:element name="Tasks" type="TasksType"/>
 	<xs:simpleType name="VarType">
@@ -46,6 +51,13 @@
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="inline"/>
 			<xs:enumeration value="genbpt"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="CsvOutputType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="byId"/>
+			<xs:enumeration value="byJobSingle"/>
+			<xs:enumeration value="byJobMulti"/>
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:complexType name="ParamType">
@@ -197,11 +209,7 @@
 			<xs:element name="itemName" type="ValueType" minOccurs="0"/>
 			<xs:element name="csvtransform" type="CsvTransformType" minOccurs="0">
 				<xs:annotation>
-					<xs:documentation>
-						the org.etl.fci.ICrawlItemToCSV class: when dsm
-						is hdfs, will transform the crawledItem into a
-						list of csv lines, and will be saved to hdfs
-					</xs:documentation>
+					<xs:documentation>ICrawlItemToCSV impl. will transform the crawledItem into a list of csv lines, and save to hdfs			</xs:documentation>
 				</xs:annotation>
 			</xs:element>
 		</xs:sequence>
@@ -524,6 +532,6 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 			<xs:element name="outputDir" type="ValueType"/>
 		</xs:sequence>
 		<xs:attribute name="transformClass" type="xs:string" use="required"/>
-		<xs:attribute name="multipleOutput" type="xs:boolean" use="optional" default="false"/>
+		<xs:attribute name="outputType" type="CsvOutputType" use="required"/>
 	</xs:complexType>
 </xs:schema>

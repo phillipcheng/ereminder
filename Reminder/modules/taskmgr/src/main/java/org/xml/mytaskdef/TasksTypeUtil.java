@@ -44,7 +44,7 @@ public class TasksTypeUtil {
 	public static String getXPath(ValueType vt, Map<String,Object> params){
 		if (vt.getFromType() == VarType.XPATH){
 			return vt.getValue();
-		}else if (vt.getFromType()==VarType.STRING && vt.getValue().contains("/")){
+		}else if ((vt.getFromType()==VarType.STRING || vt.getFromType()==null) && vt.getValue().contains("/")){
 			return vt.getValue();
 		}else if (vt.getFromType() == VarType.EXPRESSION){
 			//try evaluate

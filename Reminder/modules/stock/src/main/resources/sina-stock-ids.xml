@@ -4,10 +4,10 @@
 <Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="sina-stock-ids" productType="default">
 	<PrdTask tryPattern="false">
 		<baseBrowseTask enableJS="true" taskName="stock-list">
-			<param name="category_id"/>
-			<startUrl value="http://money.finance.sina.com.cn/mkt/#[category_id]"/>
+			<param name="marketId"/>
+			<startUrl value="http://money.finance.sina.com.cn/mkt/#[marketId]"/>
 			<userAttribute name="ids">
-				<value value="//div[@id='tbl_wrap']/table[1]/tbody/tr/th[1]/a/text()" toType="externalList"/>
+				<value value="//div[@id='tbl_wrap']/table[1]/tbody/tr[@style='']/th[1]/a/text()" toType="externalList"/>
 			</userAttribute>
 			<idUrlMapping>
 				<Token value="http://money.finance.sina.com.cn/mkt/#" name="prefix" type="string"/>
@@ -15,6 +15,6 @@
 			</idUrlMapping>
 		</baseBrowseTask>
 		<totalPage value="//div[@id='list_pages_top2']/a[last()-1]/text()" toType="int"/>
-		<nextPage value="//div[@id='list_pages_top2']/a[last()]"/>
+		<nextPage value="//div[@id='list_pages_top2']/*[text()='下一页']"/>
 	</PrdTask>
 </Tasks>

@@ -235,24 +235,37 @@ public class ProductAnalyzeUtil {
 		}
 		int curPageNum = 1;
 		//(totalPage not set or curPage less than totalPage) & curPage not null & not final & not finished
-		while ((totalPage==-1 || curPageNum<=totalPage) && curPage!=null && !finalPage && !externalistFinished){
-			//eval on curPage again
-			List<HtmlPage> pagelist = new ArrayList<HtmlPage>();
-			pagelist.add(curPage);
-			pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
-			externalistFinished = CrawlTaskEval.setUserAttributes(pageMap, bdt.getBaseBrowseTask().getUserAttribute(), 
-					product.getParamMap(), cconf, task.getParamMap(), tryPattern);
-			if (externalistFinished)
+		boolean useTotalPage=false;
+		while (curPage!=null && !externalistFinished){
+			boolean goon=false;
+			if (curPageNum<=totalPage){//count page 1st priority
+				goon= true;
+				useTotalPage=true;
+			} else if (!useTotalPage && !finalPage){//use final page condition
+				goon = true;
+			}
+			if (goon){
+				//eval on curPage again
+				List<HtmlPage> pagelist = new ArrayList<HtmlPage>();
+				pagelist.add(curPage);
+				pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
+				externalistFinished = CrawlTaskEval.setUserAttributes(pageMap, bdt.getBaseBrowseTask().getUserAttribute(), 
+						product.getParamMap(), cconf, task.getParamMap(), tryPattern);
+				if (externalistFinished)
+					break;
+				curPage=getNextPage(wc, curPage, task, taskDef, cconf);
+				curPageNum ++;
+				logger.info("curPageNum:" + curPageNum + ", totalPage:" + totalPage);
+				logger.debug(product.getParamMap());
+				if (bdt.getLastPageCondition()!=null){
+					finalPage = BinaryBoolOpEval.eval(curPage, cconf, bdt.getLastPageCondition(), product.getParamMap());
+				}
+			}else{
 				break;
-			curPage=getNextPage(wc, curPage, task, taskDef, cconf);
-			curPageNum ++;
-			logger.info("curPageNum:" + curPageNum + ", totalPage:" + totalPage);
-			logger.debug(product.getParamMap());
-			finalPage = BinaryBoolOpEval.eval(curPage, cconf, bdt.getLastPageCondition(), 
-					product.getParamMap());
+			}
 		}
 		
-		if (finalPage){
+		if (finalPage && curPage!=null){
 			//operate on the final page
 			List<HtmlPage> pagelist = new ArrayList<HtmlPage>();
 			pagelist.add(curPage);

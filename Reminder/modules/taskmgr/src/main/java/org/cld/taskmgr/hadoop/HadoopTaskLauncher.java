@@ -27,10 +27,10 @@ import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
-import org.cld.util.IdUtil;
 import org.cld.util.StringUtil;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 import org.xml.taskdef.BrowseTaskType;
+import org.xml.taskdef.CsvOutputType;
 
 public class HadoopTaskLauncher {
 
@@ -38,16 +38,14 @@ public class HadoopTaskLauncher {
 	public static final String NAMED_OUTPUT_TXT = "txt";
 	
 	public static boolean hasMultipleOutput(Task t){
-		ParsedBrowsePrd pbp = t.getBrowseDetailTask(t.getName());
-		if (pbp!=null){
-			BrowseTaskType btt = pbp.getBrowsePrdTaskType().getBaseBrowseTask();
-			if (btt!=null){
-				if (btt.getCsvtransform()!=null)
-					return btt.getCsvtransform().isMultipleOutput();
-				else{
-					return false;
-				}
-			}else{
+		if (t.getParsedTaskDef()==null){//not a browse task
+			return false;
+		}
+		BrowseTaskType btt = t.getBrowseTask(t.getName());
+		if (btt!=null){
+			if (btt.getCsvtransform()!=null)
+				return (CsvOutputType.BY_JOB_MULTI == btt.getCsvtransform().getOutputType());
+			else{
 				return false;
 			}
 		}else{
@@ -56,6 +54,9 @@ public class HadoopTaskLauncher {
 	}
 	
 	public static String getOutputDir(Task t){
+		if (t.getParsedTaskDef()==null){//not a browse task
+			return null;
+		}
 		ParsedBrowsePrd pbp = t.getBrowseDetailTask(t.getName());
 		if (pbp!=null){
 			BrowseTaskType btt = pbp.getBrowsePrdTaskType().getBaseBrowseTask();

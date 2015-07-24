@@ -473,7 +473,7 @@ public class HtmlUnitUtil {
 									synchronized(page){
 										page.wait(waitTime);//wait for the necessary js done
 										logger.warn(String.format("wait for the expected value come out, wait %d times, max %d times", innerloop, maxloop));
-										logger.debug(page.asText());
+										//logger.debug(page.asText());
 									}
 									innerloop++;
 									result.setErrorCode(HtmlPageResult.VERIFY_FAILED);

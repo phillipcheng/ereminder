@@ -19,6 +19,7 @@ import javax.persistence.Table;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.datastore.entity.CrawledItem;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.util.JsonUtil;
 import org.h2.util.StringUtils;
@@ -26,10 +27,12 @@ import org.xml.mytaskdef.BrowseCatInst;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 import org.xml.mytaskdef.ParsedTasksDef;
 import org.xml.taskdef.BrowseCatType;
+import org.xml.taskdef.BrowseTaskType;
 import org.xml.taskdef.TasksType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.gargoylesoftware.htmlunit.WebClient;
 
 @Entity
 @Inheritance(strategy=InheritanceType.SINGLE_TABLE)
@@ -60,7 +63,7 @@ public class Task implements Comparable<Task>, Serializable{
 	private boolean start=false; //true for start task
 	@Id
 	private String id;	//run time instance id, to be defined by sub-class usually
-	private String storeId;
+	protected String storeId;
 	private String name; //task name
 	private String rootTaskId;
 	@Column(insertable=false, updatable=false, length = 100)
@@ -183,6 +186,11 @@ public class Task implements Comparable<Task>, Serializable{
 	public List<Task> runMyself(Map<String, Object> params, TaskStat ts) throws InterruptedException{
 		logger.info("super runMyself do nothing.");
 		return new ArrayList<Task>();
+	}
+	
+	public CrawledItem runMyselfWithOutput(Map<String, Object> params) throws InterruptedException{
+		logger.info("super runMyselfWithOutput do nothing.");
+		return null;
 	}
 	
 	public String getId() {
@@ -320,5 +328,9 @@ public class Task implements Comparable<Task>, Serializable{
 	
 	public void initParsedTaskDef(Map<String, Object> params){
 		
+	}
+	
+	public BrowseTaskType getBrowseTask(String taskName){
+		return getParsedTaskDef().getBrowseTask(taskName);
 	}
 }

@@ -1,10 +1,14 @@
 package org.cld.datacrawl.hadoop;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
@@ -13,12 +17,14 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
-import org.cld.datacrawl.task.BrowseProductTaskConf;
 import org.cld.datacrawl.test.CrawlTestUtil;
-import org.cld.etl.csv.CsvReformatMapredLauncher;
+import org.cld.datastore.entity.CrawledItem;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
+import org.xml.taskdef.BrowseTaskType;
+import org.xml.taskdef.CsvOutputType;
+import org.xml.taskdef.CsvTransformType;
 
 public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 	
@@ -35,7 +41,6 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 			cconf = CrawlTestUtil.getCConf(propFile);
 		}
 		mos = new MultipleOutputs<Text,Text>(context);
-		
 	}
 	
 	@Override
@@ -48,32 +53,87 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();
 		hadoopCrawlTaskParams.put(CrawlUtil.CRAWL_PROPERTIES, context.getConfiguration().get(CrawlUtil.CRAWL_PROPERTIES));
 		try{
-			if (t instanceof BrowseProductTaskConf){
-				BrowseProductTaskConf bpt = (BrowseProductTaskConf) t;
-				List<String[]> csv = bpt.runMyselfFromMapred(crawlTaskParams);
-				if (csv!=null){
-					for (String[] v: csv){
-						if (v.length==2){
-							if (v[1]!=null && !"".equals(v[1])){
-								context.write(new Text(v[0]), new Text(v[1]));
-							}
-						}else if (v.length==3){
-							String outkey=v[0];
-							String outvalue=v[1];
-							String outfilePrefix=v[2];
-							mos.write(HadoopTaskLauncher.NAMED_OUTPUT_TXT, 
-									new Text(outkey), new Text(outvalue), outfilePrefix);
-						}
-					}
-				}else{
-					//called from mapred, but no output specified.
-				}
-			}else{//for other types
+			t.initParsedTaskDef(crawlTaskParams);
+			BrowseTaskType btt = null;
+			CsvTransformType csvtrans = null;
+			if (t.getParsedTaskDef()==null){
+				//not browse task
+			}else{
+				btt = t.getBrowseTask(t.getName());
+				csvtrans = btt.getCsvtransform();
+			}
+			if (csvtrans==null){
 				List<Task> tl = t.runMyself(crawlTaskParams, null);
 				if (tl!=null && tl.size()>0){
 					HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), tl, hadoopCrawlTaskParams, null);
 				}
 				logger.info(String.format("I finished and send out %d tasks.", tl!=null?tl.size():0));
+			}else {
+				CrawledItem ci = t.runMyselfWithOutput(crawlTaskParams);
+				CsvOutputType cot = csvtrans.getOutputType();
+				List<String[]> csv = ci.getCsvValue();
+				String outputDirPrefix=null;
+				if (csv!=null){
+					Map<String, BufferedWriter> hdfsByIdOutputMap = new HashMap<String, BufferedWriter>();
+					FileSystem fs = null;
+					try{
+						if (cot == CsvOutputType.BY_ID){
+							fs = FileSystem.get(context.getConfiguration());
+							outputDirPrefix = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" +
+									HadoopTaskLauncher.getOutputDir(t) + "/" + ci.getId().getId();
+						}
+						for (String[] v: csv){
+							if (v.length==2){
+								if (v[1]!=null && !"".equals(v[1])){
+									String csvkey = v[0];
+									String csvvalue = v[1];
+									if (cot != CsvOutputType.BY_ID){
+										context.write(new Text(csvkey), new Text(csvvalue));
+									}else{
+										//
+										String outputFile = outputDirPrefix;
+										BufferedWriter br = null;
+										if (hdfsByIdOutputMap.containsKey(outputFile)){
+											br = hdfsByIdOutputMap.get(outputFile);
+										}else{
+											br = new BufferedWriter(new OutputStreamWriter(fs.create(new Path(outputFile),true)));
+											hdfsByIdOutputMap.put(outputFile, br);
+										}
+										br.write(csvkey + "," + csvvalue + "\n");
+									}
+								}
+							}else if (v.length==3){
+								String outkey=v[0];
+								String outvalue=v[1];
+								String outfilePrefix=v[2];
+								if (cot == CsvOutputType.BY_JOB_MULTI){
+									mos.write(HadoopTaskLauncher.NAMED_OUTPUT_TXT, 
+											new Text(outkey), new Text(outvalue), outfilePrefix);
+								}else if (cot == CsvOutputType.BY_JOB_SINGLE){
+									context.write(new Text(outkey), new Text(outvalue));
+								}else if (cot == CsvOutputType.BY_ID){
+									String outputFile = outputDirPrefix + "_" + outfilePrefix;
+									BufferedWriter br = null;
+									if (hdfsByIdOutputMap.containsKey(outputFile)){
+										br = hdfsByIdOutputMap.get(outputFile);
+									}else{
+										br = new BufferedWriter(new OutputStreamWriter(fs.create(new Path(outputFile),true)));
+										hdfsByIdOutputMap.put(outputFile, br);
+									}
+									br.write(outkey + "," + outvalue + "\n");
+								}
+							}else{
+								logger.error("wrong number of csv length: not 2 and 3 but:" + v.length);
+							}
+						}
+					}finally{
+						for (BufferedWriter br: hdfsByIdOutputMap.values()){
+							br.close();
+						}
+					}
+				}else{
+					//called from mapred, but no output specified.
+				}
 			}
 		}catch(RuntimeException re){
 			logger.error("runtime excpetion caught, mark this job error.", re);

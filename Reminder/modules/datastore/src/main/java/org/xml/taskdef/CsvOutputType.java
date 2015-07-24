@@ -14,31 +14,34 @@ import javax.xml.bind.annotation.XmlType;
 
 
 /**
- * <p>Java class for BDTProcessType.
+ * <p>Java class for CsvOutputType.
  * 
  * <p>The following schema fragment specifies the expected content contained within this class.
  * <p>
  * <pre>
- * &lt;simpleType name="BDTProcessType">
+ * &lt;simpleType name="CsvOutputType">
  *   &lt;restriction base="{http://www.w3.org/2001/XMLSchema}string">
- *     &lt;enumeration value="inline"/>
- *     &lt;enumeration value="genbpt"/>
+ *     &lt;enumeration value="byId"/>
+ *     &lt;enumeration value="byJobSingle"/>
+ *     &lt;enumeration value="byJobMulti"/>
  *   &lt;/restriction>
  * &lt;/simpleType>
  * </pre>
  * 
  */
-@XmlType(name = "BDTProcessType")
+@XmlType(name = "CsvOutputType")
 @XmlEnum
-public enum BDTProcessType {
+public enum CsvOutputType {
 
-    @XmlEnumValue("inline")
-    INLINE("inline"),
-    @XmlEnumValue("genbpt")
-    GENBPT("genbpt");
+    @XmlEnumValue("byId")
+    BY_ID("byId"),
+    @XmlEnumValue("byJobSingle")
+    BY_JOB_SINGLE("byJobSingle"),
+    @XmlEnumValue("byJobMulti")
+    BY_JOB_MULTI("byJobMulti");
     private final String value;
 
-    BDTProcessType(String v) {
+    CsvOutputType(String v) {
         value = v;
     }
 
@@ -46,8 +49,8 @@ public enum BDTProcessType {
         return value;
     }
 
-    public static BDTProcessType fromValue(String v) {
-        for (BDTProcessType c: BDTProcessType.values()) {
+    public static CsvOutputType fromValue(String v) {
+        for (CsvOutputType c: CsvOutputType.values()) {
             if (c.value.equals(v)) {
                 return c;
             }

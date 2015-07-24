@@ -24,7 +24,7 @@ import org.xml.taskdef.TasksType;
 
 @Entity
 @DiscriminatorValue("org.cld.datacrawl.task.BrowseDetailTaskConf")
-public class BrowseDetailTaskConf extends Task implements Serializable{
+public class BrowseDetailTaskConf extends CrawlTaskConf implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 	

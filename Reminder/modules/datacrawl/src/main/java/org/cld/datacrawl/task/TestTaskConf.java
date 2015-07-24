@@ -19,11 +19,10 @@ import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
-import org.xml.mytaskdef.ParsedTasksDef;
 
 @Entity
 @DiscriminatorValue("org.cld.datacrawl.task.TestTaskConf")
-public class TestTaskConf extends Task implements Serializable{
+public class TestTaskConf extends CrawlTaskConf implements Serializable{
 	private static final long serialVersionUID = 1L;
 
 	private static Logger logger =  LogManager.getLogger(TestTaskConf.class);
@@ -149,16 +148,5 @@ public class TestTaskConf extends Task implements Serializable{
 
 	public void setTaskType(browse_type taskType) {
 		this.taskType = taskType;
-	}
-	
-	@Override
-	public void initParsedTaskDef(Map<String, Object> params){
-		CrawlConf cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
-		ParsedTasksDef ptd = cconf.getTaskMgr().getParsedTasksDef(siteconfid);
-		if (ptd!=null){
-			this.setParsedTaskDef(ptd);
-		}else{
-			logger.error(String.format("site %s not found in taskMgr.", siteconfid));
-		}
 	}
 }

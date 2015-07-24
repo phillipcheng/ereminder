@@ -6,32 +6,23 @@
 			<param name="stockid" direction="out"/>
 			<param name="year"/>
 			<param name="quarter"/>
+			<param name="HasHeader" type="boolean" value="true"/>
 			<startUrl value="http://vip.stock.finance.sina.com.cn/corp/go.php/vMS_MarketHistory/stockid/[stockid].phtml?year=[year]&amp;jidu=[quarter]"/>
-			<userAttribute name="date">
-				<value value="//table[@id='FundHoldSharesTable']/tbody/tr[position()>2]/td[1]/div[1]" toType="list"/>
+			<userAttribute name="id">
+				<value value="stockid + '_' + year + '_' + quarter" fromType="expression"/>
 			</userAttribute>
-			<userAttribute name="open">
-				<value value="//table[@id='FundHoldSharesTable']/tbody/tr[position()>2]/td[2]/div[1]" toType="list"/>
+			<userAttribute name="ColNum">
+				<value value="7" toType="list" toEntryType="int"/>
 			</userAttribute>
-			<userAttribute name="high">
-				<value value="//table[@id='FundHoldSharesTable']/tbody/tr[position()>2]/td[3]/div[1]" toType="list"/>
+			<userAttribute name="data1">
+				<value value="//table[@id='FundHoldSharesTable']/tbody/tr/td" toType="list" toEntryType="string"/>
 			</userAttribute>
-			<userAttribute name="close">
-				<value value="//table[@id='FundHoldSharesTable']/tbody/tr[position()>2]/td[4]/div[1]" toType="list"/>
+			<userAttribute name="RowCsvName">
+				<value value="mh" toType="list"/>
 			</userAttribute>
-			<userAttribute name="low">
-				<value value="//table[@id='FundHoldSharesTable']/tbody/tr[position()>2]/td[5]/div[1]" toType="list"/>
-			</userAttribute>
-			<userAttribute name="volume">
-				<value value="//table[@id='FundHoldSharesTable']/tbody/tr[position()>2]/td[6]/div[1]" toType="list"/>
-			</userAttribute>
-			<userAttribute name="tvolume">
-				<value value="//table[@id='FundHoldSharesTable']/tbody/tr[position()>2]/td[7]/div[1]" toType="list"/>
-			</userAttribute>
-			<idUrlMapping>
-				<Token value="http://vip.stock.finance.sina.com.cn/corp/go.php/vMS_MarketHistory/stockid/" name="prefix" type="string"/>
-				<Token value=".*" name="id" type="regexp"/>
-			</idUrlMapping>
+			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byJobSingle"><!-- 1 quarter 1 file -->
+				<outputDir value="sina-stock-market-history/[year]_[quarter]"/>
+			</csvtransform>
 		</baseBrowseTask>
 		<totalPage value="1" toType="int"/>
 	</PrdTask>

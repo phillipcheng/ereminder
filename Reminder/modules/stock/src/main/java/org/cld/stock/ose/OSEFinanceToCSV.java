@@ -7,11 +7,11 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.entity.CrawledItem;
-import org.cld.etl.fci.ICrawlItemToCSV;
+import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.cld.util.StringUtil;
 import org.json.JSONArray;
 
-public class OSEFinanceToCSV implements ICrawlItemToCSV{
+public class OSEFinanceToCSV extends AbstractCrawlItemToCSV{
 	
 	private static Logger logger =  LogManager.getLogger(OSEFinanceToCSV.class);
 	public static final String value_sep = ",";

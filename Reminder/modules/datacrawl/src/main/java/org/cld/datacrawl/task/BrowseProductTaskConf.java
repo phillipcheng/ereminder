@@ -1,6 +1,7 @@
 package org.cld.datacrawl.task;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -18,6 +19,7 @@ import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.datastore.api.DataStoreManager;
+import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.CrawledItemId;
 import org.cld.datastore.entity.Price;
 import org.cld.datastore.entity.Product;
@@ -36,11 +38,11 @@ import com.gargoylesoftware.htmlunit.WebClient;
 
 @Entity
 @DiscriminatorValue("org.cld.datacrawl.task.BrowseProductTaskConf")
-public class BrowseProductTaskConf extends Task implements Serializable{
+public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable{
 	private static final long serialVersionUID = 1L;
 
 	private static Logger logger =  LogManager.getLogger(BrowseProductTaskConf.class);
-	
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	//configurable values
 	private String startURL;
 	private String productType;
@@ -105,8 +107,22 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 					putParam(pt.getName(), Integer.parseInt(pt.getValue()));
 				}else if (VarType.BOOLEAN == pt.getType()){
 					putParam(pt.getName(), Boolean.parseBoolean(pt.getValue()));
+				}else if (VarType.DATE == pt.getType()){
+					try{
+						putParam(pt.getName(), sdf.parse(pt.getValue()));
+					}catch(Exception e){
+						logger.error("", e);
+					}
 				}else{
 					logger.error(String.format("default value type not support for param : %s", pt.getName()));
+				}
+			}else{
+				if (VarType.INT == pt.getType()){
+					putParam(pt.getName(), -1);
+				}else if (VarType.BOOLEAN == pt.getType()){
+					putParam(pt.getName(), true);
+				}else {
+					putParam(pt.getName(), null);
 				}
 			}
 		}
@@ -131,14 +147,13 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 	 * @param catId: the category this product belongs to
 	 * @param startUrl
 	 * @param taskName:
-	 * @param
 	 * @return
 	 * @throws InterruptedException
 	 */
-	public static List<String[]> browseProduct(BrowseProductTaskConf task, CrawlConf cconf, WebClient wc, String storeId, 
+	public static CrawledItem browseProduct(BrowseProductTaskConf task, CrawlConf cconf, WebClient wc, String storeId, 
 			String catId, String taskName, Map<String, Object> params, boolean retcsv) 
 			throws InterruptedException{
-		List<String[]> csv = null;
+		CrawledItem ci = null;
 		Product lastProduct = null;
 		Product thisProduct = null;
 		ParsedBrowsePrd pbpTemplate = task.getBrowseDetailTask(taskName);
@@ -159,11 +174,7 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 			for (ParamType pv:plist){
 				if (pv.getType()!=VarType.LIST){
 					Object val = params.get(pv.getName());
-					if (val!=null){
-						singleValueParams.put(pv.getName(), params.get(pv.getName()));
-					}else{
-						logger.error(String.format("param %s has no value.", pv.getName()));
-					}
+					singleValueParams.put(pv.getName(), params.get(pv.getName()));
 				}else{
 					listTypeParams.add(pv);
 				}
@@ -211,6 +222,7 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 				//lastProduct = CrawlPersistMgr.getProduct(cconf.getCrawlSF(), internalId);
 				if (dsManager!=null){
 					lastProduct = (Product) dsManager.getCrawledItem(internalId, storeId, Product.class);
+					ci = lastProduct;
 				}
 				if (lastProduct != null){
 					//belong to more categories
@@ -221,7 +233,7 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 						thisProduct = cconf.getProductInstance(task.getTasks().getProductType());
 						CrawledItemId pid = new CrawledItemId(internalId, storeId, new Date());
 						thisProduct.setId(pid);
-						csv = cconf.getPa().addProduct(wc, startUrl, thisProduct, lastProduct, 
+						ci = cconf.getPa().addProduct(wc, startUrl, thisProduct, lastProduct, 
 								task, pbpTemplate, cconf, retcsv);
 					}
 					//get 1st browse prd task's monitor price definition
@@ -234,7 +246,7 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 					CrawledItemId pid = new CrawledItemId(internalId, storeId, new Date());
 					thisProduct.setId(pid);
 					thisProduct.addCat(catId);
-					csv = cconf.getPa().addProduct(wc, startUrl, thisProduct, null, task, pbpTemplate, cconf, retcsv);
+					ci = cconf.getPa().addProduct(wc, startUrl, thisProduct, null, task, pbpTemplate, cconf, retcsv);
 					//get 1st browse prd task's monitor price definition
 					if (task.getBrowseDetailTask(null).getBrowsePrdTaskType().isMonitorPrice()){
 						//
@@ -242,7 +254,7 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 				}
 			}
 		}
-		return csv;
+		return ci;
 	}
 	
 	@Override
@@ -259,7 +271,8 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 		return new ArrayList<Task>();
 	}
 	
-	public List<String[]> runMyselfFromMapred(Map<String, Object> params) throws InterruptedException{
+	@Override
+	public CrawledItem runMyselfWithOutput(Map<String, Object> params) throws InterruptedException{
 		//adding the runtime params
 		this.putAllParams(params);
 		CrawlConf cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
@@ -286,20 +299,5 @@ public class BrowseProductTaskConf extends Task implements Serializable{
 	}
 	public void setProductType(String productType) {
 		this.productType = productType;
-	}
-	
-	@Override
-	public void initParsedTaskDef(Map<String, Object> params){
-		CrawlConf cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
-		if (getName()!=null){
-			BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
-			if (taskTemplate!=null){
-				this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
-			}else{
-				logger.error(String.format("task %s not found in taskMgr.", getName()));
-			}
-		}else{
-			
-		}
 	}
 }

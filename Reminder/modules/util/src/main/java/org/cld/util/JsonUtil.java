@@ -1,6 +1,8 @@
 package org.cld.util;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -15,6 +17,7 @@ public class JsonUtil {
 	private static Logger logger =  LogManager.getLogger(JsonUtil.class);
 	
 	//
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	public static JSONObject getJsonDataFromSingleParameterFunctionCall(String input){
 		Pattern p = Pattern.compile("\\((.*?)\\)");
 		Matcher m = p.matcher(input);
@@ -43,20 +46,27 @@ public class JsonUtil {
 		if (params!=null){
 			for (String key: params.keySet()){
 				Object val = params.get(key);
-				if (val instanceof String){
-					jobj.put(key, (String)val);
-				}else if (val instanceof Float){
-					jobj.put(key, ((Float) val).floatValue());
-				}else if (val instanceof List){
-					jobj.put(key, toJsonArray((List)val));
-				}else if (val instanceof JSONArray){
-					jobj.put(key, val);
-				}else if (val instanceof Integer){
-					jobj.put(key, val);
-				}else if (val instanceof Boolean){
-					jobj.put(key, val);
-				}else{
-					logger.warn(String.format("type not supported for json serialization: %s:%s", key, val));
+				if (val == null){
+					jobj.put(key, JSONObject.NULL);
+				}else {
+					if (val instanceof String){
+						jobj.put(key, (String)val);
+					}else if (val instanceof Float){
+						jobj.put(key, ((Float) val).floatValue());
+					}else if (val instanceof List){
+						jobj.put(key, toJsonArray((List)val));
+					}else if (val instanceof JSONArray){
+						jobj.put(key, val);
+					}else if (val instanceof Integer){
+						jobj.put(key, val);
+					}else if (val instanceof Boolean){
+						jobj.put(key, val);
+					}else if (val instanceof Date){
+						String sd = sdf.format(val);
+						jobj.put(key, sd);
+					}else{
+						logger.warn(String.format("type not supported for json serialization: %s:%s", key, val));
+					}
 				}
 			}
 		}
@@ -80,6 +90,8 @@ public class JsonUtil {
 							   } 
 							}
 							params.put(name, listdata);
+						}else if (o == JSONObject.NULL){
+							params.put(name, null);
 						}else{
 							params.put(name, o);
 						}

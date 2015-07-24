@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @DiscriminatorValue("org.cld.datacrawl.task.BrowseCategoryTaskConf")
-public class BrowseCategoryTaskConf extends Task implements Serializable{
+public class BrowseCategoryTaskConf extends CrawlTaskConf implements Serializable{
 	private static final long serialVersionUID = 1L;
 
 	private static Logger logger =  LogManager.getLogger(BrowseCategoryTaskConf.class);

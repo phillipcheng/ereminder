@@ -94,7 +94,7 @@ public class DateTimeUtil {
 		calInst.setTime(d);
 		int year = calInst.get(Calendar.YEAR);
 		int month = calInst.get(Calendar.MONTH);
-		int quarter = (month-1)/3+1; //map 1-12 to 1-4
+		int quarter = (month)/3+1; //map 1-12 to 1-4
 		return new int[]{year, quarter};
 	}
 	
