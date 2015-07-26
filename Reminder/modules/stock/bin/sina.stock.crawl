@@ -1,10 +1,10 @@
 1) cleanup hbase
 2) cleanup hdfs
 
-3) runsinamain.sh run_browse_idlist  //not needed for test
+3) get the id list from official sites (沪深)
 
-7) runsinamain.sh run_browse_corp_info
-8) runsinamain.sh run_corp_info_to_csv  //need the hbase data
+4) runsinamain.sh run_browse_corp_info
+5) adding the 退市 info since corp_info has no 退市 date
 
 9) runsinamain.sh brs_tradedetail
 4) runsinamain.sh run_browse_fr_history

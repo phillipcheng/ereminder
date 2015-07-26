@@ -36,6 +36,7 @@ public class HadoopTaskLauncher {
 
 	private static Logger logger =  LogManager.getLogger(HadoopTaskLauncher.class);
 	public static final String NAMED_OUTPUT_TXT = "txt";
+	private static final int DEFAULT_MB_MEM=256;
 	
 	public static boolean hasMultipleOutput(Task t){
 		if (t.getParsedTaskDef()==null){//not a browse task
@@ -57,20 +58,27 @@ public class HadoopTaskLauncher {
 		if (t.getParsedTaskDef()==null){//not a browse task
 			return null;
 		}
-		ParsedBrowsePrd pbp = t.getBrowseDetailTask(t.getName());
-		if (pbp!=null){
-			BrowseTaskType btt = pbp.getBrowsePrdTaskType().getBaseBrowseTask();
-			if (btt!=null){
-				if (btt.getCsvtransform()!=null){
-					return (String)TaskUtil.eval(btt.getCsvtransform().getOutputDir(), t.getParamMap());
-				}else{
-					return null;
-				}
+		BrowseTaskType btt = t.getBrowseTask(t.getName());
+		if (btt!=null){
+			if (btt.getCsvtransform()!=null){
+				return (String)TaskUtil.eval(btt.getCsvtransform().getOutputDir(), t.getParamMap());
 			}else{
 				return null;
 			}
 		}else{
 			return null;
+		}
+	}
+	
+	public static int getMbMemory(Task t){
+		if (t.getParsedTaskDef()==null){//not a browse task
+			return DEFAULT_MB_MEM;
+		}
+		BrowseTaskType btt = t.getBrowseTask(t.getName());
+		if (btt!=null){
+			return btt.getMbMemoryNeeded();
+		}else{
+			return DEFAULT_MB_MEM;
 		}
 	}
 	
@@ -128,8 +136,6 @@ public class HadoopTaskLauncher {
 			//generate the task file
 			fs = FileSystem.get(conf);
 			String taskFileName = null;
-			String hdfsOutputDir = null;
-			boolean multipleOutput = false;
 			StringBuffer fileContent = new StringBuffer();
 			for (Task t: taskList){
 				String fn = TaskUtil.taskToJson(t);
@@ -143,10 +149,7 @@ public class HadoopTaskLauncher {
 			FSDataOutputStream fin = fs.create(fileNamePath);
 			fin.writeBytes(fileContent.toString());
 			fin.close();
-			Task t0 = taskList.get(0);
-			multipleOutput = hasMultipleOutput(t0);
-			hdfsOutputDir = getOutputDir(t0);
-			executeTasks(nc, hadoopParams, fs, taskFileName, hdfsOutputDir, multipleOutput);
+			executeTasks(nc, hadoopParams, fs, taskFileName, taskList.get(0));
 		}catch (Exception e) {
 			logger.error("", e);
 		}
@@ -163,8 +166,6 @@ public class HadoopTaskLauncher {
 			//generate the task file
 			fs = FileSystem.get(conf);
 			String taskFileName = null;
-			String hdfsOutputDir = null;
-			boolean multipleOutput = false;
 			
 			taskFileName = taskMgr.getHdfsTaskFolder() + "/" + sourceName;
 			Path taskPath = new Path(taskFileName);
@@ -176,9 +177,7 @@ public class HadoopTaskLauncher {
 				logger.debug("firstTaskStr:" + firstTaskStr);
 				logger.debug("t0:" + t0.toString());
 				t0.initParsedTaskDef(cconfMap);
-				multipleOutput = hasMultipleOutput(t0);
-				hdfsOutputDir = getOutputDir(t0);
-				executeTasks(nc, hadoopParams,fs, taskFileName, hdfsOutputDir, multipleOutput);
+				executeTasks(nc, hadoopParams,fs, taskFileName, t0);
 			}else{
 				logger.error(String.format("task file %s not exist.", taskFileName));
 			}
@@ -196,8 +195,7 @@ public class HadoopTaskLauncher {
 	 * @param hdfsOutputDir
 	 * @param multipleOutput
 	 */
-	public static void executeTasks(NodeConf nc, Map<String, String> hadoopParams, FileSystem fs, String taskFileName,
-			String hdfsOutputDir, boolean multipleOutput){
+	public static void executeTasks(NodeConf nc, Map<String, String> hadoopParams, FileSystem fs, String taskFileName, Task t){
 		try{
 			TaskMgr taskMgr = nc.getTaskMgr();
 			Configuration conf = getHadoopConf(nc);
@@ -206,6 +204,10 @@ public class HadoopTaskLauncher {
 				conf.set(key, hadoopParams.get(key));
 				logger.info(String.format("add conf entry: %s, %s", key, hadoopParams.get(key)));
 			}
+			boolean multipleOutput = hasMultipleOutput(t);
+			String hdfsOutputDir = getOutputDir(t);
+			int mbMem = getMbMemory(t);
+			conf.setInt("mapreduce.map.memory.mb", mbMem);
 			
 			Job job = Job.getInstance(conf, taskFileName);
 			//add app specific jars to classpath
@@ -221,6 +223,8 @@ public class HadoopTaskLauncher {
 			}
 			String className = taskMgr.getHadoopTaskMapperClassName();
 			Class<? extends Mapper> mapperClazz = (Class<? extends Mapper>) Class.forName(className);
+
+
 			job.setJarByClass(mapperClazz);
 			job.setMapperClass(mapperClazz);
 			job.setNumReduceTasks(0);//no reducer

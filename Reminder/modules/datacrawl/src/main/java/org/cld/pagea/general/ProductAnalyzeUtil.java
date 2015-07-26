@@ -251,12 +251,12 @@ public class ProductAnalyzeUtil {
 				pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
 				externalistFinished = CrawlTaskEval.setUserAttributes(pageMap, bdt.getBaseBrowseTask().getUserAttribute(), 
 						product.getParamMap(), cconf, task.getParamMap(), tryPattern);
+				logger.info("curPageNum:" + curPageNum + ", totalPage:" + totalPage);
+				logger.debug(product.getParamMap());
 				if (externalistFinished)
 					break;
 				curPage=getNextPage(wc, curPage, task, taskDef, cconf);
 				curPageNum ++;
-				logger.info("curPageNum:" + curPageNum + ", totalPage:" + totalPage);
-				logger.debug(product.getParamMap());
 				if (bdt.getLastPageCondition()!=null){
 					finalPage = BinaryBoolOpEval.eval(curPage, cconf, bdt.getLastPageCondition(), product.getParamMap());
 				}
@@ -265,13 +265,15 @@ public class ProductAnalyzeUtil {
 			}
 		}
 		
-		if (finalPage && curPage!=null){
+		if (finalPage && curPage!=null && curPageNum<=totalPage){
 			//operate on the final page
 			List<HtmlPage> pagelist = new ArrayList<HtmlPage>();
 			pagelist.add(curPage);
 			pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
 			CrawlTaskEval.setUserAttributes(pageMap, bdt.getBaseBrowseTask().getUserAttribute(), 
 					product.getParamMap(), cconf, task.getParamMap(), tryPattern);
+			logger.info("curPageNum:" + curPageNum + ", totalPage:" + totalPage);
+			logger.debug(product.getParamMap());
 		}
 		if (finalPage || externalistFinished){
 			product.setCompleted(true);

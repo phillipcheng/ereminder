@@ -24,7 +24,6 @@ public class ETLUtil {
 	
 	//for task name
 	public static final String BatchId_Key="BatchId";
-	public static final String MarketId_Key="MarketId";
 	
 	//parameters define in the browseTask
 	public static final String PK_STOCKID="stockid";
@@ -33,6 +32,7 @@ public class ETLUtil {
 	public static final String PK_END_DATE="endDate";
 	public static final String PK_YEAR="year";
 	public static final String PK_QUARTER="quarter";
+	public static final String PK_MARKETID="marketId";
 	
 	
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -111,12 +111,15 @@ public class ETLUtil {
 			return null;
 		}
 	}
-	//stockid:						runTaskByMarket
-	//date:							runTaskByDate
-	//stockid, date:				runTaskByMarketDate
-	//stockid, startDate, endDate:	runTaskByMarket
-	//stockid, year:				runTaskByMarketYear
-	//stockid, year, quarter:		runTaskByMarketYearQuarter
+	
+	//params in the task def:						method
+	//stockid:										runTaskByStock
+	//date:											runTaskByDate
+	//stockid, date:								runTaskByStockDate
+	//stockid, startDate, endDate:					runTaskByStock
+	//stockid, year, startDate, endDate:			runTaskByStockYear
+	//stockid, year, quarter, startDate, endDate:	runTaskByStockYearQuarter
+	//marketid:										runTaskByMarket
 	//confName is command
 	public static void runTaskByCmd(String marketId, CrawlConf cconf, String propfile, String confName, Map<String, Object> params) {
 		List<Task> tl = new ArrayList<Task>();
@@ -132,26 +135,37 @@ public class ETLUtil {
 				if (btt.getParamMap().containsKey(PK_YEAR) && btt.getParamMap().containsKey(PK_QUARTER)){
 					Date sd = getDate(PK_START_DATE, params);
 					Date ed = getDate(PK_END_DATE, params);
-					runTaskByMarketYearQuarter(marketId, cconf, propfile, t, sd, ed, confName);
+					runTaskByStockYearQuarter(marketId, cconf, propfile, t, sd, ed, confName);
 				}else if (btt.getParamMap().containsKey(PK_YEAR)){
 					Date sd = getDate(PK_START_DATE, params);
 					Date ed = getDate(PK_END_DATE, params);
-					runTaskByMarketYear(marketId, cconf, propfile, t, sd, ed, confName);
+					runTaskByStockYear(marketId, cconf, propfile, t, sd, ed, confName);
 				}else if (btt.getParamMap().containsKey(PK_START_DATE) && btt.getParamMap().containsKey(PK_END_DATE)){
-					runTaskByMarket(marketId, cconf, propfile, t, params, confName);
+					runTaskByStock(marketId, cconf, propfile, t, params, confName);
 				}else if (btt.getParamMap().containsKey(PK_DATE)){
 					Date sd = getDate(PK_START_DATE, params);
 					Date ed = getDate(PK_END_DATE, params);
-					runTaskByMarketDate(marketId, sd, ed, cconf, propfile, t, confName);
+					runTaskByStockDate(marketId, sd, ed, cconf, propfile, t, confName);
 				}else{
-					runTaskByMarket(marketId, cconf, propfile, t, params, confName);
+					runTaskByStock(marketId, cconf, propfile, t, params, confName);
 				}
+			}else if (btt.getParamMap().containsKey(PK_MARKETID)){
+				params.put(PK_MARKETID, marketId);
+				runTaskByMarket(cconf, propfile, t, confName, params);
 			}else{
 				Date sd = getDate(PK_START_DATE, params);
 				Date ed = getDate(PK_END_DATE, params);
 				runTaskByDate(sd, ed, cconf, propfile, t, params, confName);
 			}
 		}
+	}
+	
+	private static void runTaskByMarket(CrawlConf cconf, String propfile, Task t, String calledMethod, Map<String, Object> params){
+		List<Task> tlist = new ArrayList<Task>();
+		t.putAllParams(params);
+		tlist.add(t);
+		String taskName = ETLUtil.getTaskName(calledMethod, t.getParamMap());
+		CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName);
 	}
 	
 	private static void runTaskByDate(Date startDate, Date endDate, CrawlConf cconf, String propfile, Task t, 
@@ -184,7 +198,7 @@ public class ETLUtil {
 		CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName);
 	}
 	
-	private static void runTaskByMarket(String marketId, CrawlConf cconf, String propfile, Task t, 
+	private static void runTaskByStock(String marketId, CrawlConf cconf, String propfile, Task t, 
 			Map<String, Object> params, String calledMethod){
 		String[] idarray = ETLUtil.getStockIdByMarketId(marketId, cconf);
 		List<Task> tlist = new ArrayList<Task>();
@@ -198,7 +212,7 @@ public class ETLUtil {
 			tlist.add(t1);
 		}
 		Map<String, Object> taskParams = new HashMap<String, Object>();
-		taskParams.put(MarketId_Key, marketId);
+		taskParams.put(PK_MARKETID, marketId);
 		if (params!=null)
 			taskParams.putAll(params);
 		String taskName = ETLUtil.getTaskName(calledMethod, taskParams);
@@ -213,7 +227,7 @@ public class ETLUtil {
 	 * @param confName
 	 * @param minStartDate: if specified, min start date
 	 */
-	private static void runTaskByMarketDate(String marketId, Date startDate, Date endDate, 
+	private static void runTaskByStockDate(String marketId, Date startDate, Date endDate, 
 			CrawlConf cconf, String propfile, Task t, String calledMethod){
 		String[] ids = getStockIdByMarketId(marketId, cconf);
 		List<Task> tlist = new ArrayList<Task>();
@@ -263,8 +277,10 @@ public class ETLUtil {
 					//since tlist can be very large, generate job in between
 					if (tlist.size()>100000){
 						Map<String, Object> taskParams = new HashMap<String, Object>();
-						taskParams.put(MarketId_Key, marketId);
+						taskParams.put(PK_MARKETID, marketId);
 						taskParams.put(BatchId_Key, batchId);
+						taskParams.put(PK_START_DATE, startDate);
+						taskParams.put(PK_END_DATE, endDate);
 						String taskName = ETLUtil.getTaskName(calledMethod, taskParams);
 						logger.info(String.format("sending out:%d tasks for hadoop task %s.", tlist.size(), taskName));
 						CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName);
@@ -276,7 +292,7 @@ public class ETLUtil {
 			}
 		}
 		Map<String, Object> taskParams = new HashMap<String, Object>();
-		taskParams.put(MarketId_Key, marketId);
+		taskParams.put(PK_MARKETID, marketId);
 		taskParams.put(BatchId_Key, batchId);
 		String taskName = ETLUtil.getTaskName(calledMethod, taskParams);
 		logger.info(String.format("sending out:%d tasks for hadoop task %s.", tlist.size(), taskName));
@@ -285,14 +301,14 @@ public class ETLUtil {
 	
 	//if startYear|startQuarter <=0 from IPO year
 	//if endYear|endQuarter <=0, from current time
-	private static void runTaskByMarketYearQuarter(String marketId, CrawlConf cconf, String propfile, Task t, 
+	private static void runTaskByStockYearQuarter(String marketId, CrawlConf cconf, String propfile, Task t, 
 			Date startDate, Date endDate, String calledMethod) {
 		String[] ids = getStockIdByMarketId(marketId, cconf);
 		Map<String, List<String>> stockIdByYQ = new HashMap<String, List<String>>();
 		for (int i=0; i<ids.length; i++){
+			int startYear, startQuarter, endYear, endQuarter;
 			String sid = ids[i];
 			String stockid = sid.substring(2);
-			int startYear, startQuarter, endYear, endQuarter;
 			if (startDate == null){
 				int[] yq = getStartYearQuarterByStockId(stockid, cconf);
 				startYear = yq[0];
@@ -303,7 +319,7 @@ public class ETLUtil {
 				startQuarter = yq[1];
 			}
 			if (endDate == null){
-				int[] cyq = DateTimeUtil.getYearQuarter(new Date());
+				int[] cyq = DateTimeUtil.getYearQuarter(new Date());//TODO set to delist time, if has
 				endYear = cyq[0];
 				endQuarter = cyq[1];
 			}else{
@@ -345,8 +361,8 @@ public class ETLUtil {
 			}
 		}
 		for (String yearQuarter:stockIdByYQ.keySet()){
-			String year = yearQuarter.substring(0, 4);
-			String quarter = yearQuarter.substring(5);
+			int year = Integer.parseInt(yearQuarter.substring(0, 4));
+			int quarter = Integer.parseInt(yearQuarter.substring(5));
 			List<String> slist = stockIdByYQ.get(yearQuarter);
 			List<Task> tlist = new ArrayList<Task>();
 			for (String sid:slist){
@@ -357,7 +373,7 @@ public class ETLUtil {
 				tlist.add(t1);
 			}
 			Map<String, Object> taskParams = new HashMap<String, Object>();
-			taskParams.put(MarketId_Key, marketId);
+			taskParams.put(PK_MARKETID, marketId);
 			taskParams.put("year", year);
 			taskParams.put("quarter", quarter);
 			String taskName = ETLUtil.getTaskName(calledMethod, taskParams);
@@ -367,7 +383,7 @@ public class ETLUtil {
 	}
 	
 	//startYear <=0 means from IPO year
-	private static void runTaskByMarketYear(String marketId, CrawlConf cconf, String propfile, Task t, 
+	private static void runTaskByStockYear(String marketId, CrawlConf cconf, String propfile, Task t, 
 			Date startDate, Date endDate, String calledMethod) {
 		String[] ids = getStockIdByMarketId(marketId, cconf);
 		Map<Integer, List<Task>> taskByYear = new HashMap<Integer, List<Task>>();
@@ -407,7 +423,7 @@ public class ETLUtil {
 		for (int year:taskByYear.keySet()){
 			List<Task> tlist = taskByYear.get(year);
 			Map<String, Object> taskParams = new HashMap<String, Object>();
-			taskParams.put(MarketId_Key, marketId);
+			taskParams.put(PK_MARKETID, marketId);
 			taskParams.put(PK_YEAR, year);
 			String taskName = ETLUtil.getTaskName(calledMethod, taskParams);
 			logger.info(String.format("sending out:%d tasks for hadoop task %s.", tlist.size(), taskName));

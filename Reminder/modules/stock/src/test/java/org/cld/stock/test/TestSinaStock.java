@@ -1,9 +1,21 @@
 package org.cld.stock.test;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,6 +25,9 @@ import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.StockConfig;
 import org.junit.Before;
 import org.junit.Test;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 public class TestSinaStock {
 	private static Logger logger =  LogManager.getLogger(TestSinaStock.class);
@@ -44,7 +59,7 @@ public class TestSinaStock {
 	//get all stockids by market
 	@Test
 	public void run_browse_idlist() throws Exception{
-		ssb.run_browse_idlist("hs_a");
+		ssb.run_cmd(StockConfig.SINA_STOCK_IDS, MarketId_HS_A, null, null);
 	}
 
 	@Test
@@ -365,5 +380,27 @@ public class TestSinaStock {
 		ssb.browsePrd(StockConfig.SINA_STOCK_FR_QUARTER+"-" + StockConfig.subFR[0] +".xml", null, params);
 		params.put("quarter", 1);
 		ssb.browsePrd(StockConfig.SINA_STOCK_FR_QUARTER+"-" + StockConfig.subFR[0] +".xml", null, params);
+	}
+	
+	@Test
+	public void testXpath() throws Exception{
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		InputSource is = new InputSource(new BufferedReader(new InputStreamReader(new FileInputStream("C:\\Users\\cheyi\\Downloads\\ac.xls"), "GBK")));
+		Document doc = builder.parse(is);
+		XPathFactory xPathfactory = XPathFactory.newInstance();
+		XPath xpath = xPathfactory.newXPath();
+		XPathExpression expr = xpath.compile("//table/tr/td");
+		NodeList nl =(NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+		for (int i=0; i<nl.getLength(); i++){
+			logger.info(nl.item(i).getTextContent());
+		}
+	}
+	@Test
+	public void testSZAIds() throws Exception{
+		ssb.getCconf().setUpSite("szse-stock-ids.xml", null);
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("date", "2015-07-25");
+		ssb.browsePrd("szse-stock-ids.xml", null, params);
 	}
 }
