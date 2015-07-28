@@ -23,10 +23,10 @@
 				<value value="mh" toType="list"/>
 			</userAttribute>
 			<userAttribute name="RowDateIdx">
-				<value value="0" toType="int"/><!-- 日期 -->
+				<value value="0" toType="list" toEntryType="int"/><!-- 日期 -->
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byJobSingle"><!-- 1 quarter 1 file -->
-				<outputDir value="sina-stock-market-history/[year]_[quarter]"/>
+				<outputDir value="sina-stock-market-history/[year]_[quarter]_[startDate]_[endDate]"/>
 			</csvtransform>
 		</baseBrowseTask>
 		<totalPage value="1" toType="int"/>

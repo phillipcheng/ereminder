@@ -113,13 +113,13 @@ public class ETLUtil {
 	}
 	
 	//params in the task def:						method
-	//stockid:										runTaskByStock
-	//date:											runTaskByDate
-	//stockid, date:								runTaskByStockDate
-	//stockid, startDate, endDate:					runTaskByStock
-	//stockid, year, startDate, endDate:			runTaskByStockYear
-	//stockid, year, quarter, startDate, endDate:	runTaskByStockYearQuarter
-	//marketid:										runTaskByMarket
+	//stockid, year, quarter, startDate, endDate:	runTaskByStockYearQuarter	filter on the yar, quarter page
+	//stockid, year, 		  startDate, endDate:	runTaskByStockYear			filter on the year page
+	//stockid,				  startDate, endDate:	runTaskByStock				filter on the overall page
+	//stockid, date:								runTaskByStockDate			filter by url
+	//stockid:										runTaskByStock				filter by stockid
+	//date:											runTaskByDate				filter by url for all stock
+	//marketid:										runTaskByMarket				
 	//confName is command
 	public static void runTaskByCmd(String marketId, CrawlConf cconf, String propfile, String confName, Map<String, Object> params) {
 		List<Task> tl = new ArrayList<Task>();
@@ -132,14 +132,16 @@ public class ETLUtil {
 			t.initParsedTaskDef(params);
 			ParsedBrowsePrd btt = t.getBrowseDetailTask(t.getName());
 			if (btt.getParamMap().containsKey(PK_STOCKID)){
-				if (btt.getParamMap().containsKey(PK_YEAR) && btt.getParamMap().containsKey(PK_QUARTER)){
+				if (btt.getParamMap().containsKey(PK_YEAR) && btt.getParamMap().containsKey(PK_QUARTER) && 
+						btt.getParamMap().containsKey(PK_START_DATE) && btt.getParamMap().containsKey(PK_END_DATE)){
 					Date sd = getDate(PK_START_DATE, params);
 					Date ed = getDate(PK_END_DATE, params);
-					runTaskByStockYearQuarter(marketId, cconf, propfile, t, sd, ed, confName);
-				}else if (btt.getParamMap().containsKey(PK_YEAR)){
+					runTaskByStockYearQuarter(marketId, cconf, propfile, t, sd, ed, confName, params);
+				}else if (btt.getParamMap().containsKey(PK_YEAR) && 
+						btt.getParamMap().containsKey(PK_START_DATE) && btt.getParamMap().containsKey(PK_END_DATE)){
 					Date sd = getDate(PK_START_DATE, params);
 					Date ed = getDate(PK_END_DATE, params);
-					runTaskByStockYear(marketId, cconf, propfile, t, sd, ed, confName);
+					runTaskByStockYear(marketId, cconf, propfile, t, sd, ed, confName, params);
 				}else if (btt.getParamMap().containsKey(PK_START_DATE) && btt.getParamMap().containsKey(PK_END_DATE)){
 					runTaskByStock(marketId, cconf, propfile, t, params, confName);
 				}else if (btt.getParamMap().containsKey(PK_DATE)){
@@ -302,7 +304,7 @@ public class ETLUtil {
 	//if startYear|startQuarter <=0 from IPO year
 	//if endYear|endQuarter <=0, from current time
 	private static void runTaskByStockYearQuarter(String marketId, CrawlConf cconf, String propfile, Task t, 
-			Date startDate, Date endDate, String calledMethod) {
+			Date startDate, Date endDate, String calledMethod, Map<String, Object> params) {
 		String[] ids = getStockIdByMarketId(marketId, cconf);
 		Map<String, List<String>> stockIdByYQ = new HashMap<String, List<String>>();
 		for (int i=0; i<ids.length; i++){
@@ -323,7 +325,7 @@ public class ETLUtil {
 				endYear = cyq[0];
 				endQuarter = cyq[1];
 			}else{
-				int[] yq = DateTimeUtil.getYearQuarter(startDate);
+				int[] yq = DateTimeUtil.getYearQuarter(endDate);
 				endYear = yq[0];
 				endQuarter = yq[1];
 			}
@@ -370,6 +372,7 @@ public class ETLUtil {
 				t1.putParam("stockid", sid);
 				t1.putParam("year", year);
 				t1.putParam("quarter", quarter);
+				t1.putAllParams(params);
 				tlist.add(t1);
 			}
 			Map<String, Object> taskParams = new HashMap<String, Object>();
@@ -384,7 +387,7 @@ public class ETLUtil {
 	
 	//startYear <=0 means from IPO year
 	private static void runTaskByStockYear(String marketId, CrawlConf cconf, String propfile, Task t, 
-			Date startDate, Date endDate, String calledMethod) {
+			Date startDate, Date endDate, String calledMethod, Map<String, Object> params) {
 		String[] ids = getStockIdByMarketId(marketId, cconf);
 		Map<Integer, List<Task>> taskByYear = new HashMap<Integer, List<Task>>();
 		for (int i=0; i<ids.length; i++){
@@ -411,6 +414,7 @@ public class ETLUtil {
 				Task t1 = t.clone(ETLUtil.class.getClassLoader());
 				t1.putParam("stockid", stockid);
 				t1.putParam("year", year);
+				t1.putAllParams(params);
 				List<Task> tl = taskByYear.get(year);
 				if (tl==null){
 					tl = new ArrayList<Task>();

@@ -6,6 +6,8 @@
 			<param name="stockid"/>
 			<param name="year"/>
 			<param name="quarter"/>
+			<param name="startDate" type="string"/>
+			<param name="endDate" type="string"/>
 			<param name="HasHeader" type="boolean" value="true"/>
 			<startUrl value="http://vip.stock.finance.sina.com.cn/corp/go.php/vMS_FuQuanMarketHistory/stockid/[stockid].phtml?year=[year]&amp;jidu=[quarter]"/>
 			<userAttribute name="id">
@@ -20,8 +22,11 @@
 			<userAttribute name="RowCsvName">
 				<value value="fq" toType="list"/>
 			</userAttribute>
+			<userAttribute name="RowDateIdx">
+				<value value="0" toType="list" toEntryType="int"/><!-- 日期 -->
+			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byJobSingle"><!-- 1 quarter 1 file -->
-				<outputDir value="sina-stock-market-fq/[year]_[quarter]"/>
+				<outputDir value="sina-stock-market-fq/[year]_[quarter]_[startDate]_[endDate]"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

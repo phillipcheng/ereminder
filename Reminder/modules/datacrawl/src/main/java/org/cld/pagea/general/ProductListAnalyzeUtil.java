@@ -169,6 +169,9 @@ public class ProductListAnalyzeUtil {
 					if (nvt.getValue().getFromScope()==ScopeType.PARAM){
 						id = (String) task.getParamMap().get(nvt.getValue().getValue());
 						return id;
+					}else if (nvt.getValue().getFromScope()==ScopeType.CONST){
+						id = nvt.getValue().getValue();
+						return id;
 					}else if (nvt.getValue().getFromType()==VarType.EXPRESSION){
 						Object ret = ScriptEngineUtil.eval(nvt.getValue().getValue(), VarType.STRING, task.getParamMap());
 						return (String)ret;

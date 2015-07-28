@@ -265,7 +265,7 @@ public class ProductAnalyzeUtil {
 			}
 		}
 		
-		if (finalPage && curPage!=null && curPageNum<=totalPage){
+		if (finalPage && curPage!=null && curPageNum<=totalPage||curPageNum==1){
 			//operate on the final page
 			List<HtmlPage> pagelist = new ArrayList<HtmlPage>();
 			pagelist.add(curPage);

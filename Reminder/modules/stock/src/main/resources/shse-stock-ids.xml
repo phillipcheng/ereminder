@@ -2,30 +2,47 @@
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="shse-stock-id" productType="default">
-	<PrdTask>
-		<baseBrowseTask enableJS="true" taskName="shstockid">
-			<startUrl value="http://www.sse.com.cn/assortment/stock/list/name/"/>
-			<userAttribute name="columns">
-				<value value="//table[@id='dateList_container']/tbody/tr[position()&gt;1]/td[1]/a/text()" basePage="tabs" toType="externalList"/>
+	<PrdTask tryPattern="false">
+		<baseBrowseTask enableJS="true" taskName="shA-trading-ids">
+			<startUrl value="http://biz.sse.com.cn/sseportal/webapp/datapresent/SSEQueryStockInfoAct?reportName=BizCompStockInfoRpt"/>
+			<userAttribute name="id">
+				<value value="'shA-trading-ids_'+date" fromType="expression"/>
 			</userAttribute>
-			<idUrlMapping>
-				<Token value="http://www.sse.com.cn/assortment/stock/list/name/" name="id" type="string"/>
-			</idUrlMapping>
+			<userAttribute name="ids">
+				<value value="//table[@bgcolor='#337fb2']/tbody/tr[position()&gt;1]/td[1]/a/text()" toType="externalList"/>
+			</userAttribute>
 		</baseBrowseTask>
-		<firstPageClickStream>
-			<link>
-				<nextpage>
-					<successNextPage name="tab1">
-						<value value="//ul[@id='tab_table_treasury']/li[2]/a">
-							<pageVerify operator="!=">
-								<lhs value="//table[@id='dateList_container']/tbody/tr[@class='tr_odd data']"/>
-								<rhs value="null"/>
-							</pageVerify>
-						</value>
-					</successNextPage>
-				</nextpage>
-			</link>
-		</firstPageClickStream>
-		<nextPage value="//a[@id='dateList_container_next']"/>
+		<totalPage value="//td[@class='nextpage']/strong[2]/text()" toType="int"></totalPage>
+		<nextPage value="//td[@class='nextpage']/a[last()]"/>
+	</PrdTask>
+	<PrdTask tryPattern="false">
+		<baseBrowseTask enableJS="true" taskName="shA-suspend-ids">
+			<startUrl value="http://biz.sse.com.cn/sseportal/webapp/datapresent/SSEQueryStockInfoAct?keyword=&amp;reportName=BizCompStockInfoRpt&amp;PRODUCTID=&amp;PRODUCTJP=&amp;PRODUCTNAME=&amp;CURSOR=1&amp;tab_flg=4"/>
+			<userAttribute name="id">
+				<value value="'shA-suspend-ids_'+date" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="ids">
+				<value value="//table[@bgcolor='#337fb2']/tbody/tr[position()&gt;1]/td[1]/a/text()" toType="list"/>
+			</userAttribute>
+			<userAttribute name="suspendDate">
+				<value value="//table[@bgcolor='#337fb2']/tbody/tr[position()&gt;1]/td[4]/text()" toType="list"/>
+			</userAttribute>
+		</baseBrowseTask>
+		<totalPage value="1" toType="int"></totalPage>
+	</PrdTask>
+	<PrdTask tryPattern="false">
+		<baseBrowseTask enableJS="true" taskName="shA-delisted-ids">
+			<startUrl value="http://biz.sse.com.cn/sseportal/webapp/datapresent/SSEQueryStockInfoAct?keyword=&amp;reportName=BizCompStockInfoRpt&amp;PRODUCTID=&amp;PRODUCTJP=&amp;PRODUCTNAME=&amp;CURSOR=1&amp;tab_flg=5"/>
+			<userAttribute name="id">
+				<value value="'shA-delisted-ids_'+date" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="ids">
+				<value value="//table[@bgcolor='#337fb2']/tbody/tr[position()&gt;1]/td[1]/a/text()" toType="list"/>
+			</userAttribute>
+			<userAttribute name="delistDate">
+				<value value="//table[@bgcolor='#337fb2']/tbody/tr[position()&gt;1]/td[4]/text()" toType="list"/>
+			</userAttribute>
+		</baseBrowseTask>
+		<totalPage value="1" toType="int"></totalPage>
 	</PrdTask>
 </Tasks>
