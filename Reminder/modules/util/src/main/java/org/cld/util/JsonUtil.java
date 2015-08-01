@@ -1,8 +1,11 @@
 package org.cld.util;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -11,6 +14,7 @@ import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class JsonUtil {
@@ -29,77 +33,79 @@ public class JsonUtil {
 		}
 	}
 	
-	public static JSONArray toJsonArray(List list){
-		JSONArray js = new JSONArray();
-		for (Object obj:list){
-			if (obj instanceof List){
-				js.put(toJsonArray((List)obj));
-			}else{
-				js.put(obj);
+	//there is util from map to json object then to string
+	public static String toJsonStringFromMap(Map<String, Object> params){
+		//
+		List<String> removeKeys = new ArrayList<String>();
+		for (String key: params.keySet()){
+			Object o = params.get(key);
+			if (!(o instanceof Serializable)){
+				removeKeys.add(key);
 			}
 		}
-		return js;
-	}
-	
-	public static String toJsonString(Map<String, Object> params){
-		JSONObject jobj = new JSONObject();
-		if (params!=null){
-			for (String key: params.keySet()){
-				Object val = params.get(key);
-				if (val == null){
-					jobj.put(key, JSONObject.NULL);
-				}else {
-					if (val instanceof String){
-						jobj.put(key, (String)val);
-					}else if (val instanceof Float){
-						jobj.put(key, ((Float) val).floatValue());
-					}else if (val instanceof List){
-						jobj.put(key, toJsonArray((List)val));
-					}else if (val instanceof JSONArray){
-						jobj.put(key, val);
-					}else if (val instanceof Integer){
-						jobj.put(key, val);
-					}else if (val instanceof Boolean){
-						jobj.put(key, val);
-					}else if (val instanceof Date){
-						String sd = sdf.format(val);
-						jobj.put(key, sd);
-					}else{
-						logger.warn(String.format("type not supported for json serialization: %s:%s", key, val));
-					}
-				}
-			}
+		for (String key: removeKeys){
+			params.remove(key);
 		}
+		JSONObject jobj = new JSONObject(params);
 		return jobj.toString();
 	}
 	
-	public static void fromJsonString(String jsonString, Map<String, Object> params){
+	//there is no util from json object to java map
+	public static Map<String, Object> jsonToMap(JSONObject json) throws JSONException {
+	    Map<String, Object> retMap = new HashMap<String, Object>();
+
+	    if(json != JSONObject.NULL) {
+	        retMap = toMap(json);
+	    }
+	    return retMap;
+	}
+
+	public static Map<String, Object> toMap(JSONObject object) throws JSONException {
+	    Map<String, Object> map = new HashMap<String, Object>();
+
+	    Iterator<String> keysItr = object.keys();
+	    while(keysItr.hasNext()) {
+	        String key = keysItr.next();
+	        Object value = object.get(key);
+
+	        if(value instanceof JSONArray) {
+	            value = toList((JSONArray) value);
+	        }
+
+	        else if(value instanceof JSONObject) {
+	            value = toMap((JSONObject) value);
+	        }
+	        map.put(key, value);
+	    }
+	    return map;
+	}
+
+	public static List<Object> toList(JSONArray array) throws JSONException {
+	    List<Object> list = new ArrayList<Object>();
+	    for(int i = 0; i < array.length(); i++) {
+	        Object value = array.get(i);
+	        if(value instanceof JSONArray) {
+	            value = toList((JSONArray) value);
+	        }
+
+	        else if(value instanceof JSONObject) {
+	            value = toMap((JSONObject) value);
+	        }
+	        list.add(value);
+	    }
+	    return list;
+	}
+	
+	public static Map<String, Object> fromJsonStringToMap(String jsonString){
 		if (jsonString!=null){
 			try{
 				JSONObject jobj = new JSONObject(jsonString);
-				String[] names = JSONObject.getNames(jobj);
-				if (names!=null){
-					for (String name:names){
-						Object o = jobj.opt(name);
-						if (o instanceof JSONArray){
-							List<String> listdata = new ArrayList<String>();     
-							JSONArray jArray = (JSONArray)o; 
-							if (jArray != null) { 
-							   for (int i=0;i<jArray.length();i++){ 
-							    listdata.add(jArray.get(i).toString());
-							   } 
-							}
-							params.put(name, listdata);
-						}else if (o == JSONObject.NULL){
-							params.put(name, null);
-						}else{
-							params.put(name, o);
-						}
-					}
-				}
+				return jsonToMap(jobj);
 			}catch(Exception e){
 				logger.error("the paramData is:" + jsonString, e);
 			}
 		}
+		return null;
 	}
+	
 }

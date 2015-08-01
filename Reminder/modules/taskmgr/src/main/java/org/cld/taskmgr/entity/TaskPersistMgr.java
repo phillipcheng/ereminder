@@ -19,8 +19,6 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.Transformers;
 
-
-
 public class TaskPersistMgr {
 	private static Logger logger = LogManager.getLogger(TaskPersistMgr.class);
 	
@@ -58,8 +56,6 @@ public class TaskPersistMgr {
 		Session session = sf.openSession();
 		try{
 			Task t = (Task) session.get("org.cld.taskmgr.entity.Task", tid);
-			if (t!=null)
-				t.fromParamData();
 			return t;
 		}finally{
 			session.close();
@@ -72,33 +68,6 @@ public class TaskPersistMgr {
 		}
 	}
 	
-	public static List<Task> getMyDistributableTasks(SessionFactory sessionFactory, String taskType, String nodeId) {
-		Session session = sessionFactory.openSession();
-		
-		try {
-			Query query = session.getNamedQuery("getMyDistributableTasks").setString("nodeId", nodeId);
-			query = query.setString("taskType", taskType);
-			List<Task> plist = query.list();
-			expandTasks(plist);
-			return plist;
-		}finally{
-			session.close();
-		}
-	}
-	
-	public static List<Task> getMyTasks(SessionFactory sessionFactory, String nodeId) {
-		Session session = sessionFactory.openSession();
-		
-		try {
-			Query query = session.getNamedQuery("getMyTasks").setString("nodeId", nodeId);
-			List<Task> plist = query.list();
-			expandTasks(plist);
-			return plist;
-		}finally{
-			session.close();
-		}
-	}
-	
 	public static List<Task> getAllTask(SessionFactory sessionFactory) {
 		Session session = sessionFactory.openSession();
 		try {
@@ -106,37 +75,6 @@ public class TaskPersistMgr {
 			List<Task> plist = query.list();
 			expandTasks(plist);
 			return plist;
-		}finally{
-			session.close();
-		}
-	}
-	
-	public static List<String> getMyTaskIDs(SessionFactory sessionFactory, String nodeId) {
-		Session session = sessionFactory.openSession();
-		
-		try {
-			Query query = session.getNamedQuery("getMyTaskIDs").setString("nodeId", nodeId);
-			List<String> plist = query.list();
-			return plist;
-		}finally{
-			session.close();
-		}
-	}
-	
-	public static boolean removeMyTasks(SessionFactory sessionFactory, String nodeId){
-		Session session = sessionFactory.openSession();
-		Transaction tr = session.beginTransaction();
-		try {
-			tr.begin();
-			Query query = session.getNamedQuery("removeMyTasks").setString("nodeId", nodeId);
-			int i = query.executeUpdate();
-			logger.info(i + " tasks deleted.");
-			tr.commit();
-			return true;
-		}catch(Throwable t){
-			logger.warn("throwable caught while remove my tasks." + nodeId, t);
-			tr.rollback();
-			return false;
 		}finally{
 			session.close();
 		}
@@ -198,46 +136,6 @@ public class TaskPersistMgr {
 			session.close();
 		}
 	}
-	
-	/**
-	 * move tasks tl in db from fromNodeId to toNodeId
-	 * @param sessionFactory
-	 * @param tkl: task key list
-	 * @param toNodeId
-	 * @param fromNodeId
-	 * @return
-	 */
-	public static boolean moveTasks(SessionFactory sessionFactory, List<String> tkl, String toNodeId){
-		logger.debug("move tasks in db:" + tkl + ", to nodeId:" + toNodeId);
-		if (tkl.size()>0){			
-			Session session = sessionFactory.openSession();
-			Transaction tr = session.beginTransaction();
-			try {
-				tr.begin();
-				List<Query> querys = QueryUtil.getQuerys(session, "moveTasks", "tidList", tkl, BATCH_SIZE);
-				int updateRows = 0;
-				for (int i=0; i<querys.size(); i++){
-					Query q = querys.get(i);
-					q = q.setString("toNodeId", toNodeId);
-					int rows = q.executeUpdate();
-					logger.info("updated rows:" + rows);
-					updateRows += rows;
-				}
-				
-				logger.info(updateRows + " tasks updated.");
-				
-				tr.commit();
-				return true;
-			}catch(Throwable t){
-				logger.warn("throwable caught while moveTasks for:" + tkl, t);
-				tr.rollback();
-				return false;
-			}finally{
-				session.close();
-			}
-		}
-		return true;
-	}
 	/**
 	 * 
 	 * @param sessionFactory
@@ -271,40 +169,8 @@ public class TaskPersistMgr {
 		}
 	}
 	
-	////////broken page 
-	public static boolean updateBP(SessionFactory sessionFactory, List<BrokenPage> bplist){
-		Session session = sessionFactory.openSession();
-		Transaction tr = session.beginTransaction();
-		try {
-			tr.begin();
-			for (int i=0; i<bplist.size(); i++){
-				BrokenPage bp = bplist.get(i);
-				Query query = session.getNamedQuery("getBPByURL").setString("URL", bp.getUrl());			
-				query.setMaxResults(1);
-				BrokenPage oldBP = (BrokenPage)query.uniqueResult();
-				if (oldBP!=null){
-					//update the isLeaf and time only, should not update other fields like itemNum
-					oldBP.setLastUpdateTime(new Date());
-					oldBP.setCount(oldBP.getCount() + bp.getCount());
-					session.update(oldBP);
-				}else{
-					bp.setLastUpdateTime(new Date());
-					session.save(bp);
-				}
-			}
-			tr.commit();
-			return true;
-		}catch(Throwable t){
-			logger.error("throwable caught while updateBP for:" + bplist, t);
-			tr.rollback();
-			return false;
-		}finally{
-			session.close();
-		}
-	}
-	
 	/////////////////////////////
-	/////// for Task Stat
+	//// Task Stat
 	/////////////////////////////
 	public static boolean removeAllBS(SessionFactory sessionFactory){
 		Session session = sessionFactory.openSession();
@@ -332,43 +198,7 @@ public class TaskPersistMgr {
 	 * @return
 	 */
 	public static boolean addOrUpdateTS(SessionFactory sf, TaskStat ts) {
-		Session session = sf.openSession();
-		Transaction tr = session.beginTransaction();
-		try {
-			tr.begin();			
-			Query query = session.getNamedQuery("getStatByID").setParameter("tid", ts.getTsKey().getTid());
-			query = query.setInteger("runRound", ts.getTsKey().getRunRound());
-			query.setMaxResults(1);
-			TaskStat stat = (TaskStat) query.uniqueResult();
-			if (stat!=null){
-				//set last update date
-				stat.add(ts);
-				stat.setLastUpdateDate(new Date());
-				stat.setLatest(true);
-				stat.setStatus(ts.getStatus());
-				session.update(stat);				
-			}else{
-				Query queryLatest = session.getNamedQuery("getLatestStatByID").setParameter("tid", ts.getTsKey().getTid());
-				queryLatest.setMaxResults(1);
-				TaskStat lastStat = (TaskStat) queryLatest.uniqueResult();
-				if (lastStat!=null){
-					lastStat.setLatest(false);
-					session.save(lastStat);
-				}
-				//adding
-				ts.setLastUpdateDate(ts.getStartDate());
-				ts.setLatest(true);
-				session.save(ts);
-			}
-			tr.commit();
-			return true;
-		}catch(Throwable t){
-			logger.warn("throwable caught while addOrUpdateBrowseStat for:" + ts.getTsKey(), t);
-			tr.rollback();
-			return false;
-		}finally{
-			session.close();
-		}		
+		return true;	
 	}
 	
 	/**
@@ -376,21 +206,8 @@ public class TaskPersistMgr {
 	 * @return null for not found
 	 * @throws DBException, means db exception occurs
 	 */
-	public static TaskStat getStat(SessionFactory sessionFactory, TSKey key) throws DBException {
-		Session session = sessionFactory.openSession();
-		
-		try {
-			Query query = session.getNamedQuery("getStatByID").setString("ttype", key.getTid());
-			query = query.setInteger("runRound", key.getRunRound());
-			query.setMaxResults(1);
-			TaskStat stat = (TaskStat) query.uniqueResult();					
-			return stat;
-		}catch(Throwable t){
-			logger.warn("throwable caught while getStat:" +  key, t);
-			throw new DBException(t);
-		}finally{
-			session.close();
-		}
+	public static TaskStat getStat(SessionFactory sessionFactory, String key) throws DBException {
+		return null;
 	}
 	
 	/**
@@ -460,26 +277,6 @@ public class TaskPersistMgr {
 		}
 		if (tryNum == maxTry){
 			logger.error("max error reached when addOrUpdateBS." + bcStat, dbt);
-			return false;
-		}
-		
-		List<BrokenPage> bplist = bcStat.getBPL();
-		
-		
-		tryNum=0;
-		dbt = null;		
-		while (tryNum < maxTry){
-			try {
-				TaskPersistMgr.updateBP(sf, bplist);
-				break;
-			}catch(Throwable t){
-				logger.info("throwable in updateBP" ,t);
-				tryNum++;
-				dbt=t;
-			}
-		}
-		if (tryNum == maxTry){
-			logger.error("max error reached when updateBP." + bcStat, dbt);
 			return false;
 		}
 		

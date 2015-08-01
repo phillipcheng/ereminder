@@ -8,29 +8,23 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.CrawlServerNode;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.mgr.CategoryAnalyze;
-import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.datacrawl.mgr.EmptyListProcessor;
 import org.cld.datacrawl.task.BrowseCategoryTaskConf;
 import org.cld.datacrawl.task.BrowseDetailTaskConf;
 import org.cld.datacrawl.task.BrowseProductTaskConf;
-import org.cld.datacrawl.task.BrsCatStat;
-import org.cld.datacrawl.task.BrsDetailStat;
 import org.cld.datacrawl.task.InvokeTaskTaskConf;
 import org.cld.datacrawl.util.SomePageErrorException;
 import org.cld.datastore.entity.Category;
 import org.cld.datastore.entity.CrawledItemId;
 import org.cld.pagea.general.CategoryAnalyzeUtil;
 import org.cld.taskmgr.NodeConf;
+import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskUtil;
-import org.cld.taskmgr.client.ClientNodeImpl;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
-import org.cld.taskmgr.server.ServerNodeImpl;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -71,53 +65,11 @@ public class CrawlTestUtil{
 		return cconf;
 	}
 	
-	public static CrawlServerNode getCSNode(String serverProperties){
-		NodeConf nc = null;
-		CrawlConf cconf = null;
-		ServerNodeImpl tn;
-		CrawlServerNode csn;
-		
-		nc = new NodeConf(serverProperties);
-		cconf = new CrawlConf(serverProperties, nc);
-		tn = new ServerNodeImpl(nc);
-		CrawlUtil.setupSessionFactory(nc, cconf);
-		tn.setTaskMgrSF(cconf.getTaskSF());
-
-		csn = (CrawlServerNode)tn.getASN();
-		csn.setServerNode(tn);
-		csn.setCConf(cconf);
-		return csn;
-	}
-	
-	//
-	public static CrawlClientNode getCCNode(String clientProperties){
-		NodeConf nc = null;
-		CrawlConf cconf = null;
-		ClientNodeImpl tn;
-		CrawlClientNode ctn;
-		
-		nc = new NodeConf(clientProperties);
-		cconf = new CrawlConf(clientProperties, nc);
-		tn = new ClientNodeImpl(nc);
-		
-		if (cconf.getDsm(CrawlConf.crawlDsManager_Value_Hibernate)!=null){
-			CrawlUtil.setupSessionFactory(nc, cconf);
-			tn.getTaskInstanceManager().setTaskSF(cconf.getTaskSF());
-		}
-		ctn = (CrawlClientNode)tn.getACN();
-		ctn.setTaskNode(tn);
-		ctn.setCConf(cconf);
-		return ctn;
-	}
-	
 	private static void setupSRT(SiteRuntime srt, CrawlConf cconf, String rootTaskId){
 		if (srt.getBct()!=null)
 			srt.getBct().setRootTaskId(rootTaskId);
 		if (srt.getBdt()!=null)
 			srt.getBdt().setRootTaskId(rootTaskId);
-		
-		srt.bctBS = new BrsCatStat("1");
-		srt.bdtBS = new BrsDetailStat("1");
 		
 		srt.ca = cconf.getCa();
 		srt.la = cconf.getLa();
@@ -180,20 +132,20 @@ public class CrawlTestUtil{
 	}
 	
 	public static void catNavigate(String siteconfid, String confFileName, CrawlConf cconf, 
-			String rootTaskId, CrawlClientNode ccnode, String propFile) 
+			String rootTaskId, String propFile) 
 			throws InterruptedException{
-		catNavigate(siteconfid, confFileName, null, browse_type.one_path, cconf, rootTaskId, null, ccnode, propFile, 0);
+		catNavigate(siteconfid, confFileName, null, browse_type.one_path, cconf, rootTaskId, null, propFile, 0);
 	}
 	//defaults to startUrl and 1 path type
 	public static void catNavigate(String siteconfid, String confFileName, CrawlConf cconf, 
-			String rootTaskId, CrawlClientNode ccnode, String propFile, int pageNum) 
+			String rootTaskId, String propFile, int pageNum) 
 			throws InterruptedException{
-		catNavigate(siteconfid, confFileName, null, browse_type.one_path, cconf, rootTaskId, null, ccnode, propFile, pageNum);
+		catNavigate(siteconfid, confFileName, null, browse_type.one_path, cconf, rootTaskId, null, propFile, pageNum);
 	}
 	
 	public static void catNavigate(String siteconfid, String confFileName, String catUrl, browse_type type, 
-			CrawlConf cconf, String rootTaskId, CrawlClientNode ccnode, String propFile, int pageNum) throws InterruptedException {
-		catNavigate(siteconfid, confFileName, catUrl, type, cconf, rootTaskId, null, ccnode, propFile, pageNum);
+			CrawlConf cconf, String rootTaskId, String propFile, int pageNum) throws InterruptedException {
+		catNavigate(siteconfid, confFileName, catUrl, type, cconf, rootTaskId, null, propFile, pageNum);
 	}
 	
 	/**
@@ -209,7 +161,7 @@ public class CrawlTestUtil{
 	 * @throws Exception
 	 */
 	public static void catNavigate(String siteconfid, String confFileName, String catUrl, browse_type type, 
-			CrawlConf cconf, String rootTaskId, Map<String, Object> inparams, CrawlClientNode ccnode, String propFile, int pageNum) 
+			CrawlConf cconf, String rootTaskId, Map<String, Object> inparams, String propFile, int pageNum) 
 			throws InterruptedException {
 		if (confFileName!=null){
 			cconf.setUpSite(confFileName, null);
@@ -227,7 +179,7 @@ public class CrawlTestUtil{
 		List<Task> taskList = new ArrayList<Task>();
 		if (type == browse_type.recursive){
 			taskList.add(srt.getBct());
-			executeTasks(taskList, cconf, ccnode, propFile);
+			executeTasks(taskList, cconf, propFile);
 		}else{
 			taskList = srt.ca.navigateCategory(srt.getBct(), srt.bctBS, cconf);
 			logger.info("stat:" + srt.bctBS);
@@ -238,7 +190,7 @@ public class CrawlTestUtil{
 					Task t = taskList.remove(0);
 					t.setRootTaskId(rootTaskId);
 					Map<String, Object> params = new HashMap<String, Object>();
-					params.put(CrawlClientNode.TASK_RUN_PARAM_CCONF, cconf);
+					params.put(TaskMgr.TASK_RUN_PARAM_CCONF, cconf);
 					if (inparams!=null)
 						params.putAll(inparams);
 					if (t instanceof BrowseCategoryTaskConf){
@@ -266,7 +218,7 @@ public class CrawlTestUtil{
 						logger.error("task type not supported:" + t);
 					}
 				}
-				executeTasks(bdttl, cconf, ccnode, propFile);
+				executeTasks(bdttl, cconf, propFile);
 			}
 		}
 	}
@@ -276,19 +228,8 @@ public class CrawlTestUtil{
 	 * ccnode specific to old taskmgr
 	 * propFile specific to hadoop taskmgr
 	 */
-	public static void executeTasks(List<Task> tl, CrawlConf cconf, CrawlClientNode ccnode, String propFile){
-		if (cconf.getNodeConf().getTaskMgrFramework().equals(NodeConf.tmframework_old)){
-			if (ccnode!=null){
-				TaskUtil.executeTasks(ccnode.getTaskNode(), tl);
-				while(!ccnode.getTaskNode().getTaskInstanceManager().getRunningTasks().isEmpty()){
-					try {
-						Thread.sleep(2000);
-					} catch (InterruptedException e) {
-						logger.warn(e);
-					}
-				}
-			}
-		}else if (cconf.getNodeConf().getTaskMgrFramework().equals(NodeConf.tmframework_hadoop)){
+	public static void executeTasks(List<Task> tl, CrawlConf cconf, String propFile){
+		if (cconf.getNodeConf().getTaskMgrFramework().equals(NodeConf.tmframework_hadoop)){
 			if (tl.size()>0){
 				CrawlUtil.hadoopExecuteCrawlTasks(propFile, cconf, tl, null);
 			}
@@ -314,7 +255,7 @@ public class CrawlTestUtil{
 			tl = cconf.setUpSite(confFileName, null);
 		}
 		Map<String, Object> params= new HashMap<String, Object>();
-		params.put(CrawlClientNode.TASK_RUN_PARAM_CCONF, cconf);
+		params.put(TaskMgr.TASK_RUN_PARAM_CCONF, cconf);
 		if (inparams!=null)
 			params.putAll(inparams);
 		for (Task t: tl){
@@ -341,17 +282,12 @@ public class CrawlTestUtil{
 			tl = cconf.setUpSite(confFileName, null);
 		}
 		Map<String, Object> params = new HashMap<String, Object>();
-		params.put(CrawlClientNode.TASK_RUN_PARAM_CCONF, cconf);
+		params.put(TaskMgr.TASK_RUN_PARAM_CCONF, cconf);
 		for (Task t: tl){
 			InvokeTaskTaskConf itt = (InvokeTaskTaskConf)t;
 			List<Task> ntl = itt.runMyself(params, null);
 			for (Task nt:ntl){
 				TaskStat ts = null;
-				if (nt instanceof BrowseDetailTaskConf){
-					ts = new BrsDetailStat("1"); 
-				}else if (nt instanceof BrowseCategoryTaskConf){
-					ts = new BrsCatStat("1");
-				}
 				nt.runMyself(params, ts);
 			}
 		}

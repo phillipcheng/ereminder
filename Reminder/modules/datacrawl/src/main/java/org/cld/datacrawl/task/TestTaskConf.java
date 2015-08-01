@@ -13,10 +13,10 @@ import javax.persistence.Entity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
-import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
+import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 
@@ -77,7 +77,7 @@ public class TestTaskConf extends CrawlTaskConf implements Serializable{
 
 	@Override
 	public List<Task> runMyself(Map<String, Object> params, TaskStat ts) throws InterruptedException{	
-		CrawlConf cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
+		CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
 		String startUrl = getStartURL();
 		ThreadContext.put("taskid", getId());
 		try{
@@ -90,7 +90,7 @@ public class TestTaskConf extends CrawlTaskConf implements Serializable{
 			}
 			browse_type taskType = getTaskType();
 			if (taskType==browse_type.one_path){
-				CrawlTestUtil.catNavigate(siteconfid, null, cconf, getId(), null, null);
+				CrawlTestUtil.catNavigate(siteconfid, null, cconf, getId(), null);
 			}else if (taskType == browse_type.bct){
 				CrawlTestUtil.catNavigate(siteconfid, null, startUrl, 
 						browse_type.recursive, cconf, getId(), null, null, 0);

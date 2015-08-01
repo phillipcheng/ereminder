@@ -31,11 +31,11 @@ public class DSMTest {
 
 		CrawledItemId cid = new CrawledItemId(catId, storeId, new Date());
 		Category c = new Category(cid, "default");
-		manager.addCrawledItem(c, null, null);
+		manager.addUpdateCrawledItem(c, null);
 		
 		CrawledItemId pid = new CrawledItemId(productId, storeId, new Date());
 		Product product = new Product(pid, "default", productTitle, originalPrice, price);
-		manager.addCrawledItem(product, null, null);
+		manager.addUpdateCrawledItem(product, null);
 
 		Product p = (Product) manager.getCrawledItem(productId, storeId, Product.class);
 		assertTrue(p.getOriginalPrice()==product.getOriginalPrice());

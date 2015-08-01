@@ -57,7 +57,7 @@ public class HBaseToCSVMapperLauncher {
 			conf.set(KEY_ToCSVClass, toCSVClazz);
 			if (paramMap!=null){
 				//serialize paramMap
-				String jsonStrParam = JsonUtil.toJsonString(paramMap);
+				String jsonStrParam = JsonUtil.toJsonStringFromMap(paramMap);
 				conf.set(KEY_PARAMMAP, jsonStrParam);
 			}
 			Scan scan = new Scan();

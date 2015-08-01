@@ -14,7 +14,6 @@ import javax.persistence.Entity;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.mgr.CrawlTaskEval;
@@ -24,6 +23,7 @@ import org.cld.datastore.entity.CrawledItemId;
 import org.cld.datastore.entity.Price;
 import org.cld.datastore.entity.Product;
 import org.cld.pagea.general.ProductListAnalyzeUtil;
+import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
@@ -261,7 +261,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 	public List<Task> runMyself(Map<String, Object> params, TaskStat ts) throws InterruptedException{
 		//adding the runtime params
 		this.putAllParams(params);
-		CrawlConf cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
+		CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
 		BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
 		this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
 		WebClient wc = CrawlUtil.getWebClient(cconf, taskTemplate.skipUrls, taskTemplate.enableJS);
@@ -275,7 +275,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 	public CrawledItem runMyselfWithOutput(Map<String, Object> params) throws InterruptedException{
 		//adding the runtime params
 		this.putAllParams(params);
-		CrawlConf cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
+		CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
 		BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
 		if (taskTemplate!=null){
 			this.setParsedTaskDef(taskTemplate.getParsedTaskDef());

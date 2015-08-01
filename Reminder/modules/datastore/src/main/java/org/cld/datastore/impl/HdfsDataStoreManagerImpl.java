@@ -113,7 +113,7 @@ public class HdfsDataStoreManagerImpl implements DataStoreManager{
 	}
 	
 	@Override
-	public boolean addCrawledItem(CrawledItem ci, CrawledItem oldCi, BrowseTaskType btt) {
+	public boolean addUpdateCrawledItem(CrawledItem ci, CrawledItem oldCi) {
 		//TODO pre-cache this
 		String fileName = ci.getId().getId(); //as file name
 		fileName = fileName.replaceAll("[^a-zA-Z0-9]", "_");

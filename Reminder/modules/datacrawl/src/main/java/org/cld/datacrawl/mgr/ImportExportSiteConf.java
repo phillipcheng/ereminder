@@ -11,19 +11,16 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.datastore.entity.SiteConf;
 
 public class ImportExportSiteConf {
 	private static Logger logger =  LogManager.getLogger(ImportExportSiteConf.class);
-	CrawlClientNode ccnode;
 	CrawlConf cconf;
 	
 	private ImportExportSiteConf(String clientProperties) {
-		ccnode = CrawlTestUtil.getCCNode(clientProperties);
-		cconf = ccnode.getCConf();
+		cconf = CrawlTestUtil.getCConf(clientProperties);
 	}
 	
 	public ImportExportSiteConf(){

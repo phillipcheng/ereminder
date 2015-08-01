@@ -14,7 +14,6 @@ import javax.persistence.Entity;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.taskmgr.entity.BrokenPage;
 import org.cld.taskmgr.entity.TaskStat;
 
 @Entity
@@ -46,12 +45,7 @@ public class BrsDetailStat extends TaskStat implements Serializable{
 	private int productSkipped; //skipped due to optimization, e.g. by cat
 	
 	
-	public BrsDetailStat(){
-		
-	}
-	
-	public BrsDetailStat(String tid){
-		super(tid);
+	public BrsDetailStat(){	
 	}
 	
 	
@@ -173,65 +167,7 @@ public class BrsDetailStat extends TaskStat implements Serializable{
 		return productBrowsed;
 	}
 
-	@Override
-	public void add(TaskStat ts){
-		BrsDetailStat bs = (BrsDetailStat)ts;
-		this.pageBrowsed+=bs.pageBrowsed;
-		this.productBrowsed+=bs.productBrowsed;
-		this.promoBrowsed+=bs.promoBrowsed;	
-		this.productScanned+=bs.productScanned;
-		
-		this.brokenListPage.addAll(bs.getBrokenListPages());
-		this.brokenDetailedPage.addAll(bs.getBrokenDetailedPages());
-		this.brokenPromotionPage.addAll(bs.getBrokenPromotionPages());
-		
-		this.productAdded+=bs.productAdded;
-		this.priceAdded+=bs.priceAdded;
-		this.promoteAdded+=bs.promoteAdded;
-		this.productAddFailed+=bs.productAddFailed;
-		this.priceAddFailed+=bs.priceAddFailed;
-		this.promoteAddFailed+=bs.promoteAddFailed;
-		
-		this.productSkipped+=bs.productSkipped;		
-	}
 	
-	@Override
-	public List<BrokenPage> getBPL(){
-		List<BrokenPage> bplist = new ArrayList<BrokenPage>();
-		BrokenPage bp = null;
-		Iterator<String> it = null;
-		
-		it = getBrokenDetailedPage().iterator();		
-		while (it.hasNext()){
-			String url = it.next();
-			bp = new BrokenPage();
-			bp.setUrl(url);
-			bp.setType(BrokenPage.TYPE_DETAIL);
-			bp.setCount(1);
-			bplist.add(bp);
-		}
-		
-		it = getBrokenListPage().iterator();		
-		while (it.hasNext()){
-			String url = it.next();
-			bp = new BrokenPage();
-			bp.setUrl(url);
-			bp.setType(BrokenPage.TYPE_LIST);
-			bp.setCount(1);
-			bplist.add(bp);
-		}
-		
-		it = getBrokenPromotionPage().iterator();		
-		while (it.hasNext()){
-			String url = it.next();
-			bp = new BrokenPage();
-			bp.setUrl(url);
-			bp.setType(BrokenPage.TYPE_PROM);
-			bp.setCount(1);
-			bplist.add(bp);
-		}
-		return bplist;
-	}
 	
 	public void clear(){
 		this.pageBrowsed=0;

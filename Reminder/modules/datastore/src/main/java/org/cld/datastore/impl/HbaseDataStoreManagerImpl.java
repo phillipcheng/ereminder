@@ -23,8 +23,8 @@ import org.cld.datastore.entity.Logs;
 import org.cld.datastore.entity.Price;
 import org.cld.datastore.entity.Product;
 import org.cld.datastore.entity.SiteConf;
-import org.xml.taskdef.BrowseTaskType;
 
+//for hbase, the createTime of CrawledItemId is not used.
 public class HbaseDataStoreManagerImpl implements DataStoreManager {
 
 	public static final String rowkey_sep = "|";
@@ -136,14 +136,7 @@ public class HbaseDataStoreManagerImpl implements DataStoreManager {
 
 
 	@Override
-	public boolean addCrawledItem(CrawledItem ci, CrawledItem oldCi, BrowseTaskType btt) {
-		ci.toParamData();
-		if (oldCi!=null)
-			oldCi.toParamData();
-		if (ci.contentEquals(oldCi)){
-			return false;
-		}
-		
+	public boolean addUpdateCrawledItem(CrawledItem ci, CrawledItem oldCi) {
         HTable table = null;
 		try {
 			table = new HTable(hbaseConf, CRAWLEDITEM_TABLE_NAME);

@@ -1,6 +1,5 @@
 package org.cld.datacrawl;
 
-import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -31,14 +30,14 @@ import org.cld.datastore.impl.HdfsDataStoreManagerImpl;
 import org.cld.datastore.impl.HibernateDataStoreManagerImpl;
 import org.cld.taskmgr.AppConf;
 import org.cld.taskmgr.NodeConf;
-import org.cld.taskmgr.NodeConfChangedEvent;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 
-public class CrawlConf implements AppConf, Serializable {
-	
-	private static final long serialVersionUID = 1L;
+import com.fasterxml.jackson.annotation.JsonIgnoreType;
+
+@JsonIgnoreType
+public class CrawlConf implements AppConf {
 
 	private static Logger logger =  LogManager.getLogger(CrawlConf.class);
 	
@@ -355,11 +354,6 @@ public class CrawlConf implements AppConf, Serializable {
 	
 	public void addListener(CrawlConfListener lis){
 		listeners.add(lis);
-	}	
-	
-	@Override
-	public void nodeConfChanged(NodeConfChangedEvent ncce) {
-		reload();		
 	}
 	
 	//must be sub-class of org.cld.datastore.entity.Product

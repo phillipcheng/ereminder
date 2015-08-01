@@ -10,12 +10,12 @@ import javax.persistence.Entity;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.util.SomePageErrorException;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.Category;
 import org.cld.pagea.general.CategoryAnalyzeUtil;
+import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.xml.mytaskdef.ParsedBrowsePrd;
@@ -81,7 +81,7 @@ public class BrowseDetailTaskConf extends CrawlTaskConf implements Serializable{
 		try {
 			//adding the runtime params
 			this.putAllParams(params);
-			CrawlConf cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
+			CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
 			
 			BrowseDetailTaskConf taskTemplate = (BrowseDetailTaskConf) cconf.getTaskMgr().getTask(getName());
 			ParsedBrowsePrd pbpTemplate = taskTemplate.getBrowseDetailTask(this.getName());

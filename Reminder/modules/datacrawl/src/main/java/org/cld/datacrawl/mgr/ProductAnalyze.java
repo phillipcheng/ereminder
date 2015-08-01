@@ -105,7 +105,7 @@ public class ProductAnalyze{
 						List<String[]> csv = cicsv.getCSV(product, null);
 						product.setCsvValue(csv);
 						if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm())){
-							dsManager.addCrawledItem(product, lastProduct, bdt.getBaseBrowseTask());
+							dsManager.addUpdateCrawledItem(product, lastProduct);
 						}
 						if (retCsv) return product;
 					} catch (Exception e) {
@@ -117,7 +117,7 @@ public class ProductAnalyze{
 					}
 				}
 				if (dsManager!=null)
-					dsManager.addCrawledItem(product, lastProduct, bdt.getBaseBrowseTask());	
+					dsManager.addUpdateCrawledItem(product, lastProduct);	
 			}
 		}else{
 			//do not need to browse the page

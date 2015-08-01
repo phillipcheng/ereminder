@@ -18,7 +18,6 @@ import org.cld.taskmgr.entity.TaskStat;
 import org.xml.taskdef.ParamValueType;
 import org.xml.taskdef.TaskInvokeType;
 import org.xml.taskdef.TasksType;
-import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
 
 
@@ -87,7 +86,7 @@ public class InvokeTaskTaskConf extends Task implements Serializable{
 	
 	@Override
 	public List<Task> runMyself(Map<String, Object> params, TaskStat ts) throws InterruptedException{
-		CrawlConf cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
+		CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
 		List<Task> tl = new ArrayList<Task>();
 		Task refTask = cconf.getTaskMgr().getTask(this.refTaskName);
 		if (refTask==null){

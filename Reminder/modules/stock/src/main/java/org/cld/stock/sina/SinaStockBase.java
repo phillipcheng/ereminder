@@ -3,17 +3,27 @@ package org.cld.stock.sina;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapreduce.JobStatus;
+import org.cld.datastore.api.DataStoreManager;
+import org.cld.datastore.entity.CrawledItem;
+import org.cld.datastore.entity.CrawledItemId;
 import org.cld.taskmgr.entity.Task;
+import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.etl.csv.CsvReformatMapredLauncher;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.task.TabularCSVConvertTask;
 import org.cld.datacrawl.test.TestBase;
+
+
 import org.cld.stock.sina.ETLUtil;
 import org.cld.stock.sina.StockConfig;
 
@@ -27,10 +37,20 @@ public class SinaStockBase extends TestBase{
 	public static String HS_A_FIRST_DATE_RZRQ= "2012-11-12";
 	public static String HS_A_FIRST_DATE_DZJY= "2003-01-08";
 	
-	
 	private String marketId = ETLUtil.MarketId_Test;
 	private String propFile = "client1-v2.properties";
 	private String itemsFolder;
+    
+	/*
+	RUNNING(1),
+    SUCCEEDED(2),
+    FAILED(3),
+    PREP(4),
+    KILLED(5);
+	*/
+	
+	private DataStoreManager dsm = null;
+	private JobClient jobClient = null;
 	
 	public SinaStockBase(String propFile, String marketId){
 		super();
@@ -38,6 +58,14 @@ public class SinaStockBase extends TestBase{
 		super.setProp(propFile);
 		this.propFile = propFile;
 		this.itemsFolder = this.cconf.getTaskMgr().getHadoopCrawledItemFolder();
+		String statusId = marketId + "_status";
+		dsm = this.cconf.getDsm(CrawlConf.crawlDsManager_Value_Hbase);
+		Configuration hconf = HadoopTaskLauncher.getHadoopConf(this.cconf.getNodeConf());
+		try {
+			jobClient = new JobClient(hconf);
+		}catch(Exception e){
+			logger.error("", e);
+		}
 	}
 	
 	public CrawlConf getCconf(){
@@ -85,38 +113,47 @@ public class SinaStockBase extends TestBase{
 			}
 		}
 		Map<String, Object> params = getDateParamMap(startDate, endDate);
-		ETLUtil.runTaskByCmd(marketId, cconf, this.getPropFile(), cmdName, params);
+		String[] jobIds = ETLUtil.runTaskByCmd(marketId, cconf, this.getPropFile(), cmdName, params);
+		
 	}
 	
-	/*****
-	 * 行情走势
-	 **/
-	//成交明细
-	//融资融券
-	//大宗交易
-	//复权交易
-	//历史交易
+	//
+	public void initFetch(String ed){
+		
+	}
+	//
+	public void updateFetch(String sd, String ed){
+		
+	}
+	//
+	public void updateTaskStatus(){
+		/*
+		for (String confName:taskStatus.keySet()){
+			Map<String, Map<String, Object>> allJobStatus = taskStatus.get(confName);
+			for (Map<String, Object> mjts: allJobStatus.values()){
+				Map<String, Integer> jobStatusMap = (Map<String, Integer>) mjts.get(KEY_JSM);
+				if (jobStatusMap!=null){
+					for (String jid: jobStatusMap.keySet()){
+						JobID jobId = JobID.forName(jid);
+						try{
+							RunningJob rjob = jobClient.getJob(jobId);
+							if (rjob!=null){
+								jobStatusMap.put(jid, rjob.getJobStatus().getState().getValue());
+							}else{
+								logger.info(String.format("job %s not found in jobClient.", jid));
+								//try history server
+							}
+						}catch(Exception e){
+							logger.error("", e);
+						}
+					}
+				}
+			}
+		}
+		dsm.addUpdateCrawledItem(crawlStatus, null);
+		*/
+	}
 	
-	/****
-	 * 公司资料
-	 * */
-	//公司简介: crawl corp info to hbase and batch csv
-	//公司高管
-	//相关证券 所属概念
-	//所属系别 所属指数
-	
-	/***
-	 * 发行分配
-	 */
-	//分红送配
-	
-	/***********
-	 * 股本股东
-	 */
-	//股本结构
-	//主要股东
-	//流通股东
-	//基金持股
 	
 	/****
 	 * 财务数据
@@ -155,10 +192,4 @@ public class SinaStockBase extends TestBase{
 					itemsFolder  + "/" + StockConfig.SINA_STOCK_FR_HISTORY_QUARTER_OUT + "/" + subFR);
 		}
 	}
-	//fr_quarter
-	
-	//财务指标
-	//现金流量表
-	//Finance Guideline
-	//Asset Devalue
 }

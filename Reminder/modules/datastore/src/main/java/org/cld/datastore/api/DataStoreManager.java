@@ -21,7 +21,7 @@ public interface DataStoreManager {
 	 * CrawledItem operations
 	 */
 	public CrawledItem getCrawledItem(String id, String dataSourceId, Class<? extends CrawledItem> crawledItemClazz);
-	public boolean addCrawledItem(CrawledItem ci, CrawledItem oldCi, BrowseTaskType btt);	
+	public boolean addUpdateCrawledItem(CrawledItem ci, CrawledItem oldCi);	
 
 	/***************************
 	 *  Price operations

@@ -6,7 +6,6 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.task.TestTaskConf;
 import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
@@ -16,8 +15,6 @@ import org.cld.taskmgr.entity.Task;
 
 public class TestBase {
 	protected static Logger logger =  LogManager.getLogger(TestBase.class);
-	
-	protected CrawlClientNode ccnode=null;
 	protected CrawlConf cconf;
 
 	private String pFile = null;	
@@ -39,15 +36,15 @@ public class TestBase {
 	private static String testTaskId="testTaskId";
 	
 	public void catNavigate(String confFileName) throws Exception{
-		CrawlTestUtil.catNavigate(getConfId(confFileName), confFileName, cconf, testTaskId, ccnode, pFile);
+		CrawlTestUtil.catNavigate(getConfId(confFileName), confFileName, cconf, testTaskId, pFile);
 	}
 	
 	public void catNavigate(String confFileName, String starturl, browse_type type) throws Exception{
-		CrawlTestUtil.catNavigate(getConfId(confFileName), confFileName, starturl, type, cconf, testTaskId, ccnode, pFile, 0);
+		CrawlTestUtil.catNavigate(getConfId(confFileName), confFileName, starturl, type, cconf, testTaskId, pFile, 0);
 	}
 	
 	public void catNavigate(String confFileName, String starturl, browse_type type, int pageNum) throws Exception{
-		CrawlTestUtil.catNavigate(getConfId(confFileName), confFileName, starturl, type, cconf, testTaskId, ccnode, pFile, pageNum);
+		CrawlTestUtil.catNavigate(getConfId(confFileName), confFileName, starturl, type, cconf, testTaskId, pFile, pageNum);
 	}
 	
 	public void runBDT(String confFileName, String startUrl, boolean turnPagesOnly) throws Exception{
@@ -78,7 +75,7 @@ public class TestBase {
 			selectedtaskids.add(tbt.getId());
 			tl.add(tbt);
 		}
-		CrawlTestUtil.executeTasks(tl, cconf, ccnode, pFile);
+		CrawlTestUtil.executeTasks(tl, cconf, pFile);
 	}
 	
 	public int getUnlockedAccounts(String landingUrl, String confName){

@@ -1,9 +1,7 @@
 package org.cld.taskmgr;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.StringReader;
-import java.net.JarURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,8 +10,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.xml.bind.JAXBContext;
@@ -22,9 +18,7 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 
-import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.api.DataStoreRSClient;
@@ -33,11 +27,8 @@ import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.xml.mytaskdef.ParsedTasksDef;
 import org.xml.taskdef.BrowseDetailType;
-import org.xml.taskdef.ParamValueType;
 import org.xml.taskdef.TaskInvokeType;
 import org.xml.taskdef.TasksType;
-
-import static org.cld.taskmgr.entity.Task.*;
 
 public class TaskMgr {
 
@@ -101,6 +92,8 @@ public class TaskMgr {
 	
 	private String masterConfFile;
 	private NodeConf nc;
+	
+	public static final String TASK_RUN_PARAM_CCONF="cconf";
 	
 	public TaskMgr(){
 	}
@@ -324,40 +317,6 @@ public class TaskMgr {
 				}
 			}
 			//
-			for (String key: oldTasksConf.keySet()){
-				if (!tasksConf.containsKey(key)){
-					NodeConfPropChangedEvent ncpce = new NodeConfPropChangedEvent();
-					ncpce.setPropName(TaskMgr.taskName_Key);
-					ncpce.setOpType(NodeConfPropChangedEvent.OP_REMOVE);
-					ncpce.setStrValue(key);
-					nc.fireNCPCEvent(ncpce);
-					logger.info("fire remove task event:" + ncpce);
-				}
-			}
-			for (String key : tasksConf.keySet()){
-				Task t = getTask(key);
-				if (!oldTasksConf.containsKey(key)){
-					NodeConfPropChangedEvent ncpce = new NodeConfPropChangedEvent();
-					ncpce.setPropName(TaskMgr.taskName_Key);
-					ncpce.setOpType(NodeConfPropChangedEvent.OP_ADD);
-					Task newTask = t.clone(pluginClassLoader);
-					ncpce.setObjectValue(newTask);					
-					nc.fireNCPCEvent(ncpce);
-				}else{
-					Task oldT = oldTasksConf.get(key);
-					if (oldT.getLastUpdateDate().before(t.getLastUpdateDate())){
-						//fire update
-						NodeConfPropChangedEvent ncpce = new NodeConfPropChangedEvent();
-						ncpce.setPropName(TaskMgr.taskName_Key);
-						ncpce.setOpType(NodeConfPropChangedEvent.OP_UPDATE);
-						Task newTask = t.clone(pluginClassLoader);
-						ncpce.setObjectValue(newTask);	
-						ncpce.setOldObjValue(oldT);
-						nc.fireNCPCEvent(ncpce);
-					}
-				}
-			}
-			//
 		}catch(Exception e){
 			logger.error("exception while read properties.", e);
 		}
@@ -406,11 +365,6 @@ public class TaskMgr {
 			String taskType = "org.cld.datacrawl.task.BrowseCategoryTaskConf";
 			Task bctTask = getTaskInstTemplate(taskType, tasks, pluginClassLoader, params, utime, siteconfid + "_bct");
 			if (bctTask!=null){
-				if (tasks.getCatTask().get(0).getBaseBrowseTask().getRerunInterim()==null){
-					//do not set
-				}else{
-					bctTask.setRerunInterim(tasks.getCatTask().get(0).getBaseBrowseTask().getRerunInterim());
-				}
 				bctTask.setStart(true);
 				bctTask.setNextTask(siteconfid + "_bdt");
 				tasksConf.put(bctTask.getName(), bctTask);

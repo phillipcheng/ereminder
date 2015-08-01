@@ -63,7 +63,6 @@ public class HibernateDataStoreManagerImpl implements DataStoreManager {
 			CrawledItem p = null;
 			if (results != null && !results.isEmpty()) {
 				p = (CrawledItem) results.get(0);
-				p.fromParamData();
 			}
 			return p;
 		} catch (Exception e) {
@@ -75,9 +74,7 @@ public class HibernateDataStoreManagerImpl implements DataStoreManager {
 	}
 
 	@Override
-	public boolean addCrawledItem(CrawledItem ci, CrawledItem oldCi,BrowseTaskType btt) {
-		//generate the json data param for the ci
-		ci.toParamData();
+	public boolean addUpdateCrawledItem(CrawledItem ci, CrawledItem oldCi) {
 		//compare with the oldCi
 		if (ci.contentEquals(oldCi))
 			return false;

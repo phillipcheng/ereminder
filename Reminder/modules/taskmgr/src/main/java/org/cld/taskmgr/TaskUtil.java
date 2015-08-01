@@ -1,5 +1,6 @@
 package org.cld.taskmgr;
 
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -14,7 +15,6 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.taskmgr.client.ClientNodeImpl;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskPersistMgr;
 import org.cld.util.SafeSimpleDateFormat;
@@ -78,23 +78,18 @@ public class TaskUtil {
 		return kl;
 	}
 	
-	public static Map<String, SimpleNodeConf> getSimpleNodeConfs(Map<String, NodeConf> ncs){
-		Map<String, SimpleNodeConf> sncMap = new HashMap<String, SimpleNodeConf>();
-		Iterator<String> keys = ncs.keySet().iterator();
-		while (keys.hasNext()){
-			String key = keys.next();
-			SimpleNodeConf snc = new SimpleNodeConf();
-			NodeConf nc = ncs.get(key);
-			snc.setNodeId(nc.getNodeId());
-			snc.setServer(nc.isServer());
-			snc.setThreadSize(nc.getThreadSize());
-			sncMap.put(key, snc);
-		}
-		return sncMap;
-	}
-	
 	public static String taskToJson(Task t){
-		t.toParamData();
+		//
+		List<String> removeKeys = new ArrayList<String>();
+		for (String key: t.getParamMap().keySet()){
+			Object o = t.getParamMap().get(key);
+			if (!(o instanceof Serializable)){
+				removeKeys.add(key);
+			}
+		}
+		for (String key: removeKeys){
+			t.getParamMap().remove(key);
+		}
 		ObjectWriter ow = new ObjectMapper().writer().with(new MinimalPrettyPrinter());
 		try {
 			String json = ow.writeValueAsString(t);
@@ -111,29 +106,11 @@ public class TaskUtil {
 			Task t = mapper.readValue(json, Task.class);
 			Class<? extends Task> clazz = (Class<? extends Task>) Class.forName(t.getTtype());
 			t =  mapper.readValue(json, clazz);
-			t.fromParamData();
+			//t.fromParamData();
 			return t;
 		} catch (Exception e) {
 			logger.error("", e);
 			return null;
-		}
-	}
-	
-	//send the taskList to the cluster
-	public static void executeTasks(ClientNodeImpl taskNode, List<Task> taskList){
-		Set<String> tks = TaskUtil.getKeySet(taskList);
-		TaskPersistMgr.addTasks(taskNode.getTaskInstanceManager().getTaskSF(), 
-				TaskUtil.convertToSet(taskList));
-		try {
-			if (taskNode.getSNI()!=null)
-				taskNode.getSNI().addTasks(taskNode.getNC().getNodeId(), tks);
-			else{
-				//if server not found add to my executor (client node)
-				List<String> tkl = TaskUtil.getKeyList(taskList);
-				taskNode.clientAddTasks(tkl);
-			}
-		} catch (RemoteException e) {
-			logger.error("", e);
 		}
 	}
 	

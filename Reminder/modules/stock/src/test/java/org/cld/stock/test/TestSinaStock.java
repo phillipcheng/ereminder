@@ -7,10 +7,10 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.task.TabularCSVConvertTask;
 import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.StockConfig;
+import org.cld.taskmgr.TaskMgr;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,7 +37,7 @@ public class TestSinaStock {
 		ssb = new SinaStockBase(propFile, marketId);
 		ssb.getCconf().getTaskMgr().getHadoopCrawledItemFolder();
 	}
-		
+
 	/***
 	 * Stock ids
 	 * */
@@ -97,8 +97,12 @@ public class TestSinaStock {
 	@Test
 	public void run_browse_market_fq_quarter3() throws ParseException {
 		String sd = "2015-06-15";
-		String ed = "2015-07-15";
+		String ed = "2015-06-20";
 		ssb.run_cmd(StockConfig.SINA_STOCK_MARKET_FQ, MarketId_Test, sd, ed);
+	}
+	@Test
+	public void test_updateStatus(){
+		ssb.updateTaskStatus();
 	}
 	
 	//历史交易
@@ -228,9 +232,9 @@ public class TestSinaStock {
 	//fr-quarter
 	@Test
 	public void run_browse_fr_quarter1() throws Exception {
-		for (String name: StockConfig.subFR){
-			ssb.run_cmd(StockConfig.SINA_STOCK_FR_QUARTER+"-"+name, MarketId_Test, END_DATE, null);
-		}
+		ssb.run_cmd(StockConfig.SINA_STOCK_FR_QUARTER_BALANCE_SHEET, MarketId_Test, END_DATE, null);
+		ssb.run_cmd(StockConfig.SINA_STOCK_FR_QUARTER_CASHFLOW, MarketId_Test, END_DATE, null);
+		ssb.run_cmd(StockConfig.SINA_STOCK_FR_QUARTER_PROFIT_STATEMENT, MarketId_Test, END_DATE, null);
 	}
 	//FR FootNote
 	@Test
@@ -284,6 +288,7 @@ public class TestSinaStock {
 		ssb.run_cmd(StockConfig.SINA_STOCK_FR_ASSETDEVALUE_YEAR, MarketId_Test, END_DATE, null);
 	}
 	
+	
 	//////Tests
 	@Test
 	public void test_sina_market_dzjy_1() throws Exception{
@@ -321,7 +326,7 @@ public class TestSinaStock {
 		for (String sid:sids){
 			TabularCSVConvertTask ct = new TabularCSVConvertTask(sid, true);
 			Map<String, Object> params = new HashMap<String, Object>();
-			params.put(CrawlClientNode.TASK_RUN_PARAM_CCONF, ssb.getCconf());
+			params.put(TaskMgr.TASK_RUN_PARAM_CCONF, ssb.getCconf());
 			ct.runMyself(params, null);
 		}
 	}
@@ -332,7 +337,7 @@ public class TestSinaStock {
 		for (String sid:sids){
 			Map<String, Object> params = new HashMap<String, Object>();
 			params.put("stockid", sid);
-			params.put(CrawlClientNode.TASK_RUN_PARAM_CCONF, ssb.getCconf());
+			params.put(TaskMgr.TASK_RUN_PARAM_CCONF, ssb.getCconf());
 			ssb.browsePrd(StockConfig.SINA_STOCK_FR_FOOTNOTE+".xml", null, params);
 		}
 	}
@@ -365,19 +370,6 @@ public class TestSinaStock {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("stockid", "000001");
 		ssb.browsePrd(StockConfig.SINA_STOCK_FR_AchieveNotice +".xml", null, params);
-	}
-	
-	//test browse single stock quarter fr
-	@Test
-	public void test_sina_browse_financial_report_quarter() throws Exception {
-		ssb.getCconf().setUpSite(StockConfig.SINA_STOCK_FR_QUARTER+"-" + StockConfig.subFR[0] +".xml", null);
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("stockid", "600000");
-		params.put("year", 2015);
-		params.put("quarter", 2);
-		ssb.browsePrd(StockConfig.SINA_STOCK_FR_QUARTER+"-" + StockConfig.subFR[0] +".xml", null, params);
-		params.put("quarter", 1);
-		ssb.browsePrd(StockConfig.SINA_STOCK_FR_QUARTER+"-" + StockConfig.subFR[0] +".xml", null, params);
 	}
 
 	@Test

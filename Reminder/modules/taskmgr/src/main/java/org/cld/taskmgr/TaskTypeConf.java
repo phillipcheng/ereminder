@@ -23,13 +23,11 @@ public class TaskTypeConf implements Serializable {
 	private String statImpl;
 	
 	private Class<Task> taskEntityClass;
-	private Class<RerunableTask> taskProcessClass;
 	private Class<TaskStat> taskStatClass;
 	
 	public String toString(){
 		return "name:" + name + "\n" +
 				"taskEntityClass:" + taskEntityClass + "\n" +
-				"taskProcessClass:" + taskProcessClass + "\n" +
 				"taskStatClass:" + taskStatClass + "\n";
 	}
 
@@ -63,14 +61,6 @@ public class TaskTypeConf implements Serializable {
 
 	public void setTaskEntityClass(Class<Task> taskEntityClass) {
 		this.taskEntityClass = taskEntityClass;
-	}
-
-	public Class<RerunableTask> getTaskProcessClass() {
-		return taskProcessClass;
-	}
-
-	public void setTaskProcessClass(Class<RerunableTask> taskProcessClass) {
-		this.taskProcessClass = taskProcessClass;
 	}
 
 	public String getStatImpl() {

@@ -32,7 +32,7 @@ public class HbaseCrawledItemTest {
 		ciid.setId(id);
 		ciid.setStoreId(storeid);
 		ci.setId(ciid);
-		ds.addCrawledItem(ci, null, null);
+		ds.addUpdateCrawledItem(ci, null);
 		
 		CrawledItem ci2 = ds.getCrawledItem(id, storeid, null);
 		logger.info("ci2 get from db:" + ci2);

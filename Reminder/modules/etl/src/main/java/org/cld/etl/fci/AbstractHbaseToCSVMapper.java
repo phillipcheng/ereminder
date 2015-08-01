@@ -49,10 +49,10 @@ public class AbstractHbaseToCSVMapper extends TableMapper<Text, Text>{
 				if (!m.matches())
 					return;
 			}
-			Map<String, Object> paramMap = new HashMap<String, Object>();
+			Map<String, Object> paramMap = null;
 			String jsonParam = conf.get(HBaseToCSVMapperLauncher.KEY_PARAMMAP);
 			if (jsonParam!=null){
-				JsonUtil.fromJsonString(jsonParam, paramMap);
+				paramMap = JsonUtil.fromJsonStringToMap(jsonParam);
 			}
 			
 			try{

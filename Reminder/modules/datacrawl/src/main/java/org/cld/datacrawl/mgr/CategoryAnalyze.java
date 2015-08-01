@@ -175,7 +175,7 @@ public class CategoryAnalyze {
 					CategoryAnalyzeUtil.setCatItemNum(category.getFullUrl(), catPage, category, bct, cconf);
 					//add one version if differ
 					if (dsManager!=null)
-						dsManager.addCrawledItem(category, bct.getOldCat(), bcdef.getBaseBrowseTask());
+						dsManager.addUpdateCrawledItem(category, bct.getOldCat());
 					return genBDTFromBCT(bct, category, cconf, bcdef);
 				}else{
 					int catPages = bct.getPageNum();
@@ -185,7 +185,7 @@ public class CategoryAnalyze {
 						catPages = category.getPageNum();
 						//only save the category for the 1st time
 						if (dsManager!=null)
-							dsManager.addCrawledItem(category, bct.getOldCat(), bcdef.getBaseBrowseTask());
+							dsManager.addUpdateCrawledItem(category, bct.getOldCat());
 					}
 	
 					if (catPages>1){

@@ -8,9 +8,6 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.cfg.Configuration;
-import org.xml.mytaskdef.ParsedBrowsePrd;
-import org.xml.taskdef.BrowseTaskType;
-
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.IncorrectnessListener;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
@@ -18,7 +15,6 @@ import com.gargoylesoftware.htmlunit.SilentCssErrorHandler;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebConnection;
 
-import org.cld.datacrawl.task.BrowseProductTaskConf;
 import org.cld.datastore.DBConf;
 import org.cld.datastore.DBFactory;
 import org.cld.datastore.impl.HibernateDataStoreManagerImpl;
@@ -94,7 +90,7 @@ public class CrawlUtil {
 		if (cconf.getDsm(CrawlConf.crawlDsManager_Value_Hibernate)!=null){
 			//fix up task session factory
 			DBConf taskDBConf = nc.getDBConf();
-			Configuration cfg = DBFactory.setUpCfg(nc.getNodeId(), TaskMgr.moduleName, taskDBConf);
+			Configuration cfg = DBFactory.setUpCfg(TaskMgr.moduleName, taskDBConf);
 			Iterator<TaskTypeConf> itTTC = cconf.getTaskMgr().getAllTaskTypes().iterator();
 			while (itTTC.hasNext()){
 				TaskTypeConf ttconf = itTTC.next();
@@ -102,10 +98,10 @@ public class CrawlUtil {
 				cfg.addAnnotatedClass(ttconf.getTaskEntityClass());
 				cfg.addAnnotatedClass(ttconf.getTaskStatClass());
 			}
-			DBFactory.setUpSF(cconf.getPluginClassLoader(), nc.getNodeId(), TaskMgr.moduleName, cfg);
+			DBFactory.setUpSF(cconf.getPluginClassLoader(), TaskMgr.moduleName, cfg);
 			
 			//fix up crawl session factory via API
-			Configuration hCfg = DBFactory.setUpCfg(nc.getNodeId(), DataCrawl.moduleName, cconf.getDBConf());
+			Configuration hCfg = DBFactory.setUpCfg(DataCrawl.moduleName, cconf.getDBConf());
 			Map<String, ProductConf> prdConfMap = cconf.getPrdConfMap();
 			Iterator<ProductConf> it = prdConfMap.values().iterator();
 			while (it.hasNext()){
@@ -114,9 +110,9 @@ public class CrawlUtil {
 				hCfg.addAnnotatedClass(pconf.getProductClass());
 				logger.debug("added annotated class:" + pconf.getProductClass());
 			}
-			DBFactory.setUpSF(cconf.getPluginClassLoader(), nc.getNodeId(), DataCrawl.moduleName, hCfg);
-			cconf.setTaskSF(DBFactory.getDBSF(nc.getNodeId(), TaskMgr.moduleName));
-			((HibernateDataStoreManagerImpl)cconf.getDsm(CrawlConf.crawlDsManager_Value_Hibernate)).setHibernateSF(DBFactory.getDBSF(nc.getNodeId(), DataCrawl.moduleName));
+			DBFactory.setUpSF(cconf.getPluginClassLoader(), DataCrawl.moduleName, hCfg);
+			cconf.setTaskSF(DBFactory.getDBSF(TaskMgr.moduleName));
+			((HibernateDataStoreManagerImpl)cconf.getDsm(CrawlConf.crawlDsManager_Value_Hibernate)).setHibernateSF(DBFactory.getDBSF(DataCrawl.moduleName));
 		}
 	}	
 	
@@ -124,8 +120,8 @@ public class CrawlUtil {
 		if (cconf.getDsm(CrawlConf.crawlDsManager_Value_Hibernate)!=null){
 			Configuration cfg = DBFactory.getDBCfg(nodeId, DataCrawl.moduleName);
 			cfg.addAnnotatedClass(prdConf.getProductClass());
-			DBFactory.setUpSF(cconf.getPluginClassLoader(), nodeId, DataCrawl.moduleName, cfg);
-			((HibernateDataStoreManagerImpl)cconf.getDsm(CrawlConf.crawlDsManager_Value_Hibernate)).setHibernateSF(DBFactory.getDBSF(nodeId, DataCrawl.moduleName));
+			DBFactory.setUpSF(cconf.getPluginClassLoader(), DataCrawl.moduleName, cfg);
+			((HibernateDataStoreManagerImpl)cconf.getDsm(CrawlConf.crawlDsManager_Value_Hibernate)).setHibernateSF(DBFactory.getDBSF(DataCrawl.moduleName));
 		}
 	}	
 	
@@ -135,21 +131,22 @@ public class CrawlUtil {
 	 * @param cconf
 	 * @param tlist
 	 * @param sourceName: task file output name as well as the task name
+	 * @return jobId
 	 */
-	public static void hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, 
+	public static String hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, 
 			String sourceName){
 		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();
 		hadoopCrawlTaskParams.put(CRAWL_PROPERTIES, crawlPropertyFile);
-		HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), tlist, hadoopCrawlTaskParams, 
+		return HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), tlist, hadoopCrawlTaskParams, 
 				sourceName);
 	}
 	
-	public static void hadoopExecuteCrawlTasksByFile(String crawlPropertyFile, CrawlConf cconf, String sourceName){
+	public static String hadoopExecuteCrawlTasksByFile(String crawlPropertyFile, CrawlConf cconf, String sourceName){
 		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();
 		hadoopCrawlTaskParams.put(CRAWL_PROPERTIES, crawlPropertyFile);
 		Map<String, Object> cconfParams = new HashMap<String, Object>();
-		cconfParams.put(CrawlClientNode.TASK_RUN_PARAM_CCONF, cconf);
-		HadoopTaskLauncher.executeTasksByFile(cconf.getNodeConf(), hadoopCrawlTaskParams, 
+		cconfParams.put(TaskMgr.TASK_RUN_PARAM_CCONF, cconf);
+		return HadoopTaskLauncher.executeTasksByFile(cconf.getNodeConf(), hadoopCrawlTaskParams, 
 				sourceName, cconfParams);
 	}
 	

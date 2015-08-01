@@ -17,9 +17,9 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.etl.csv.TabularCSVConverter;
+import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
@@ -95,7 +95,7 @@ public class TabularCSVConvertTask extends Task implements Serializable{
 	@Override
 	public List<Task> runMyself(Map<String, Object> params, TaskStat ts) throws InterruptedException{
 		try{
-			cconf = (CrawlConf) params.get(CrawlClientNode.TASK_RUN_PARAM_CCONF);
+			cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
 			FileSystem fs = FileSystem.get(HadoopTaskLauncher.getHadoopConf(cconf.getNodeConf()));
 			logger.info("process convert task: " + tableId);
 			String inF = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + inputFolder + "/";

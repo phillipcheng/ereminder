@@ -1,5 +1,7 @@
 package org.cld.datastore.entity;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.util.JsonUtil;
 import org.cld.util.StringUtil;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -36,7 +39,8 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 @Table(name = "CrawledItem")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CrawledItem {
-
+	public static final String CRAWLITEM_TYPE="org.cld.datastore.entity.CrawledItem";
+	
 	private static Logger logger =  LogManager.getLogger(CrawledItem.class);
 	
 	@JsonIgnore
@@ -47,7 +51,7 @@ public class CrawledItem {
 	protected String type;//discriminator type: category, product
 
 	@Column(name = "itemType")
-	protected String itemType; //the type of the product: book, stock, etc
+	protected String itemType; //the type of the product: default, book, stock, etc
 
 	@Column(name = "rootTaskId")
 	protected String rootTaskId;
@@ -67,7 +71,7 @@ public class CrawledItem {
 	@Column(name = "paramData", length = 80000)
 	private String paramData; //json format data of paramMap
 	
-	@JsonIgnore
+	//@JsonIgnore
 	private transient Map<String, Object> params = new TreeMap<String, Object>();//I need the order of keys
 	
 	private List<String[]> csvValue;//list of key,value pairs for hdfs to save
@@ -106,19 +110,19 @@ public class CrawledItem {
 	public Object getParam(String key){
 		return params.get(key);
 	}
-	@JsonIgnore
+	//@JsonIgnore
 	public Map<String, Object> getParamMap(){
 		return params;
 	}
 	
 	//serialize the paramMap to json param data, only selected types (now string) will be stored
 	public void toParamData(){
-		paramData = JsonUtil.toJsonString(params);
+		paramData = JsonUtil.toJsonStringFromMap(params);
 	}
 	
 	//deserialize
 	public void fromParamData(){
-		JsonUtil.fromJsonString(paramData, params);
+		params = JsonUtil.fromJsonStringToMap(paramData);
 	}
 	
 	@Override
@@ -147,7 +151,7 @@ public class CrawledItem {
 		return this.id.hashCode();
 	}
 	
-	@JsonIgnore
+	//@JsonIgnore
 	public CrawledItemId getId() {
 		return id;
 	}
@@ -218,8 +222,16 @@ public class CrawledItem {
 	
 	
 	public String toJson(boolean needParamToData){
-		if (needParamToData)
-			toParamData();
+		List<String> removeKeys = new ArrayList<String>();
+		for (String key: getParamMap().keySet()){
+			Object o = getParamMap().get(key);
+			if (!(o instanceof Serializable)){
+				removeKeys.add(key);
+			}
+		}
+		for (String key: removeKeys){
+			getParamMap().remove(key);
+		}
 		ObjectWriter ow = new ObjectMapper().writer().with(new MinimalPrettyPrinter());
 		try {
 			String json = ow.writeValueAsString(this);
@@ -236,7 +248,7 @@ public class CrawledItem {
 			CrawledItem ci =  mapper.readValue(json, CrawledItem.class);
 			Class<? extends CrawledItem> clazz = (Class<? extends CrawledItem>) Class.forName(ci.getType());
 			ci = mapper.readValue(json, clazz);
-			ci.fromParamData();
+			//ci.fromParamData();
 			return ci;
 		} catch (Exception e) {
 			logger.error("", e);

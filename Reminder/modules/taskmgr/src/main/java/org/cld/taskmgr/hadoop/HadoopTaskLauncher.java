@@ -126,7 +126,7 @@ public class HadoopTaskLauncher {
 		return sourceName;
 	}
 	
-	public static void executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> hadoopParams, 
+	public static String executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> hadoopParams, 
 			String sourceName){
 		TaskMgr taskMgr = nc.getTaskMgr();
 		Configuration conf = getHadoopConf(nc);
@@ -149,14 +149,14 @@ public class HadoopTaskLauncher {
 			FSDataOutputStream fin = fs.create(fileNamePath);
 			fin.writeBytes(fileContent.toString());
 			fin.close();
-			executeTasks(nc, hadoopParams, fs, taskFileName, taskList.get(0));
+			return executeTasks(nc, hadoopParams, fs, taskFileName, taskList.get(0));
 		}catch (Exception e) {
 			logger.error("", e);
 		}
-			
+		return null;
 	}
 	
-	public static void executeTasksByFile(NodeConf nc, Map<String, String> hadoopParams, 
+	public static String executeTasksByFile(NodeConf nc, Map<String, String> hadoopParams, 
 			String sourceName, Map<String, Object> cconfMap){
 		TaskMgr taskMgr = nc.getTaskMgr();
 		Configuration conf = getHadoopConf(nc);
@@ -177,13 +177,14 @@ public class HadoopTaskLauncher {
 				logger.debug("firstTaskStr:" + firstTaskStr);
 				logger.debug("t0:" + t0.toString());
 				t0.initParsedTaskDef(cconfMap);
-				executeTasks(nc, hadoopParams,fs, taskFileName, t0);
+				return executeTasks(nc, hadoopParams,fs, taskFileName, t0);
 			}else{
 				logger.error(String.format("task file %s not exist.", taskFileName));
 			}
 		}catch (Exception e) {
 			logger.error("", e);
 		}
+		return null;
 	}
 	
 	/**
@@ -194,8 +195,9 @@ public class HadoopTaskLauncher {
 	 * @param sourceName: the source/generator name, used as the generated task info file name, if taskList is null, the file already exists, just use it
 	 * @param hdfsOutputDir
 	 * @param multipleOutput
+	 * @return jobId
 	 */
-	public static void executeTasks(NodeConf nc, Map<String, String> hadoopParams, FileSystem fs, String taskFileName, Task t){
+	public static String executeTasks(NodeConf nc, Map<String, String> hadoopParams, FileSystem fs, String taskFileName, Task t){
 		try{
 			TaskMgr taskMgr = nc.getTaskMgr();
 			Configuration conf = getHadoopConf(nc);
@@ -247,8 +249,10 @@ public class HadoopTaskLauncher {
 			}else{
 				job.waitForCompletion(true);
 			}
+			return job.getJobID().toString();
 		} catch (Exception e) {
 			logger.error("", e);
+			return null;
 		}
 	}
 }

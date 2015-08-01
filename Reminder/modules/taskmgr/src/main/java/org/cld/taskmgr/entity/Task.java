@@ -32,7 +32,6 @@ import org.xml.taskdef.TasksType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.gargoylesoftware.htmlunit.WebClient;
 
 @Entity
 @Inheritance(strategy=InheritanceType.SINGLE_TABLE)
@@ -44,18 +43,12 @@ import com.gargoylesoftware.htmlunit.WebClient;
 @Table(name="TASK")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Task implements Comparable<Task>, Serializable{
-	public static final String TASK_KEY = "Task";
-	public static final String TASK_ATTR_NAME = "taskName";
-	public static final String TASK_ATTR_TYPE = "xsi:type";
-	public static final String TASK_ATTR_RERUN = "rerunInterim";
-	public static final String TASK_ATTR_STARTURL = "startUrl";
-	public static final String TASK_ATTR_IDURL = "idUrlMapping";
 	
 	private static Logger logger =  LogManager.getLogger(Task.class);
 	private static final long serialVersionUID = 1L;
+	
 	public static final String startTask_Key="start";
 	public static final String taskType_Key="task.type";
-	public static final String taskRerunInterim_Key="rerun.interim";
 	public static final String next_Key="next";
 	
 	public static final String END_TASK="end";
@@ -69,14 +62,12 @@ public class Task implements Comparable<Task>, Serializable{
 	@Column(insertable=false, updatable=false, length = 100)
 	private String ttype="task"; //task type
 	private String nextTask = END_TASK;
-	private int rerunInterim;//minutes waited before reschedule this task, for rerunable task, if not specified means "at once"
 	private Date lastUpdateDate;
 	private Date startDate;
-	private String nodeId;//assigned to which node to execute
 	private String paramData;
 
-	@JsonIgnore
-	private transient TreeMap<String, Object> paramMap = new TreeMap<String, Object>();
+	//@JsonIgnore
+	private transient Map<String, Object> paramMap = new TreeMap<String, Object>();
 
 	@JsonIgnore
 	private transient ParsedTasksDef parsedTaskDef;
@@ -99,10 +90,8 @@ public class Task implements Comparable<Task>, Serializable{
 		t.setRootTaskId(this.rootTaskId);
 		t.setTtype(this.ttype);
 		t.setNextTask(this.nextTask);
-		t.setRerunInterim(rerunInterim);
 		t.setLastUpdateDate(lastUpdateDate);
 		t.setStartDate(startDate);
-		t.setNodeId(nodeId);
 		t.setParamData(paramData);
 		t.getParamMap().putAll(this.getParamMap());
 		t.setParsedTaskDef(parsedTaskDef);
@@ -143,14 +132,15 @@ public class Task implements Comparable<Task>, Serializable{
 		}
 	}
 	
+	
 	//serialize the paramMap to json param data, only selected types (now:string,int) will be stored
 	public void toParamData(){
-		paramData = JsonUtil.toJsonString(paramMap);
+		paramData = JsonUtil.toJsonStringFromMap(paramMap);
 	}
 	
 	//deserialize
 	public void fromParamData(){
-		JsonUtil.fromJsonString(paramData, paramMap);
+		paramMap = JsonUtil.fromJsonStringToMap(paramData);
 	}
 	
 	//id is enough, id is md5 of the content
@@ -167,8 +157,7 @@ public class Task implements Comparable<Task>, Serializable{
 		return id.hashCode();
 	}
 	public String toString(){
-		StringBuffer sb = new StringBuffer("id:" + getId() + ", name:" + getName() + ", ttype:" + getTtype() + 
-				", rerunInterim:" + this.getRerunInterim());
+		StringBuffer sb = new StringBuffer("id:" + getId() + ", name:" + getName() + ", ttype:" + getTtype());
 		sb.append(", paramData:" + paramData);
 		if (parsedTaskDef!=null)
 			sb.append(", parsedTaskDef:" + parsedTaskDef);
@@ -217,23 +206,11 @@ public class Task implements Comparable<Task>, Serializable{
 	public void setLastUpdateDate(Date lastUpdateDate) {
 		this.lastUpdateDate = lastUpdateDate;
 	}
-	public String getNodeId() {
-		return nodeId;
-	}
-	public void setNodeId(String nodeId) {
-		this.nodeId = nodeId;
-	}
 	public String getNextTask() {
 		return nextTask;
 	}
 	public void setNextTask(String nextTask) {
 		this.nextTask = nextTask;
-	}
-	public int getRerunInterim() {
-		return rerunInterim;
-	}
-	public void setRerunInterim(int rerunInterim) {
-		this.rerunInterim = rerunInterim;
 	}
 	public boolean isStart() {
 		return start;
@@ -263,8 +240,8 @@ public class Task implements Comparable<Task>, Serializable{
 	public void setStoreId(String storeId) {
 		this.storeId = storeId;
 	}
-	@JsonIgnore
-	public TreeMap<String, Object> getParamMap() {
+	//@JsonIgnore
+	public Map<String, Object> getParamMap() {
 		return paramMap;
 	}
 	public void putParam(String key, Object val) {
