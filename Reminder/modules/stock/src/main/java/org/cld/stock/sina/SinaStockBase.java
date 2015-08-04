@@ -44,6 +44,7 @@ public class SinaStockBase extends TestBase{
 	public static final String Test_D1 = "2015-07-10";
 	public static final String Test_D2 = "2015-07-20";//only increase date
 	public static final String Test_D3 = "2015-08-01";//also increase stock
+	public static final String Test_D4 = "2015-08-04";//only increase date
 	public static final String[] Test_D1_Stocks = new String[]{"sh600000", "sh601766"};
 	public static final String[] Test_D3_Stocks = new String[]{"sh600000", "sh601766", "sz000001"};
 	
@@ -90,7 +91,7 @@ public class SinaStockBase extends TestBase{
 		return paramMap;
 	}
 	
-	public void run_task(String taskFileName){
+	public void run_task(String[] taskFileName){
 		CrawlUtil.hadoopExecuteCrawlTasksByFile(this.propFile, cconf, taskFileName);
 	}
 	
@@ -162,12 +163,12 @@ public class SinaStockBase extends TestBase{
 				ci = new CrawledItem(CrawledItem.CRAWLITEM_TYPE, "default", 
 						new CrawledItemId(MarketId_Test, StockConfig.SINA_STOCK_IDS, endDate));
 				ci.addParam(KEY_IDS, Arrays.asList(Test_D1_Stocks));
-			}else if (d.equals(Test_D3)){
+			}else if (d.equals(Test_D3) || d.equals(Test_D4)){
 				ci = new CrawledItem(CrawledItem.CRAWLITEM_TYPE, "default", 
 						new CrawledItemId(MarketId_Test, StockConfig.SINA_STOCK_IDS, endDate));
 				ci.addParam(KEY_IDS, Arrays.asList(Test_D3_Stocks));
 			}else{
-				logger.error(String.format("test market only support %s, %s, %s", Test_D1, Test_D2, Test_D3));
+				logger.error(String.format("test market only support %s, %s, %s, %s", Test_D1, Test_D2, Test_D3, Test_D4));
 			}
 			return ci;
 		}

@@ -37,7 +37,8 @@ public class RunSinaStock {
 			if ("run_task".equals(cmd)){//run already generated task
 				if (args.length>=argIdx+1){
 					String taskName = args[argIdx];
-					ssb.run_task(taskName);
+					String[] taskNames = taskName.split(",");
+					ssb.run_task(taskNames);
 				}else{
 					System.out.println(getDefaultCmdLine() + " taskName");
 				}

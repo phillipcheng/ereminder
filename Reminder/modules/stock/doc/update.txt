@@ -18,3 +18,90 @@ ST warning:	27
 httpcore 4.3.3   => 4.4.1
 httpclient 4.3.3 =>4.5
 htmlunit 2.15 => 2.18
+
+
+Current count: 1, row: CmdStatus|test_2015-07-10|AllCmdRun
+
+Current count: 2, row: CmdStatus|test_2015-07-10|sina-stock-corp-info
+
+Current count: 3, row: CmdStatus|test_2015-07-10|sina-stock-corp-manager
+
+Current count: 4, row: CmdStatus|test_2015-07-10|sina-stock-corp-related
+
+Current count: 5, row: CmdStatus|test_2015-07-10|sina-stock-corp-related-other
+
+Current count: 6, row: CmdStatus|test_2015-07-10|sina-stock-fr-achievenotice|2015-07-10
+
+Current count: 7, row: CmdStatus|test_2015-07-10|sina-stock-fr-achievenotice|2015-07-20
+
+Current count: 8, row: CmdStatus|test_2015-07-10|sina-stock-fr-assetdevalue-year|2015-07-10
+
+Current count: 9, row: CmdStatus|test_2015-07-10|sina-stock-fr-assetdevalue-year|2015-07-20
+
+Current count: 10, row: CmdStatus|test_2015-07-10|sina-stock-fr-footnote|2015-07-10
+
+Current count: 11, row: CmdStatus|test_2015-07-10|sina-stock-fr-footnote|2015-07-20
+
+Current count: 12, row: CmdStatus|test_2015-07-10|sina-stock-fr-guideline-year|2015-07-10
+
+Current count: 13, row: CmdStatus|test_2015-07-10|sina-stock-fr-guideline-year|2015-07-20
+
+Current count: 14, row: CmdStatus|test_2015-07-10|sina-stock-fr-quarter-BalanceSheet|2015-07-10
+
+Current count: 15, row: CmdStatus|test_2015-07-10|sina-stock-fr-quarter-BalanceSheet|2015-07-20
+
+Current count: 16, row: CmdStatus|test_2015-07-10|sina-stock-fr-quarter-CashFlow|2015-07-10
+
+Current count: 17, row: CmdStatus|test_2015-07-10|sina-stock-fr-quarter-CashFlow|2015-07-20
+
+Current count: 18, row: CmdStatus|test_2015-07-10|sina-stock-fr-quarter-ProfitStatement|2015-07-10
+
+Current count: 19, row: CmdStatus|test_2015-07-10|sina-stock-fr-quarter-ProfitStatement|2015-07-20
+
+Current count: 20, row: CmdStatus|test_2015-07-10|sina-stock-issue-sharebonus|2015-07-10
+
+Current count: 21, row: CmdStatus|test_2015-07-10|sina-stock-issue-sharebonus|2015-07-20
+
+Current count: 22, row: CmdStatus|test_2015-07-10|sina-stock-market-dzjy|2015-07-10
+
+Current count: 23, row: CmdStatus|test_2015-07-10|sina-stock-market-dzjy|2015-07-20
+
+Current count: 24, row: CmdStatus|test_2015-07-10|sina-stock-market-fq|2015-07-10
+
+Current count: 25, row: CmdStatus|test_2015-07-10|sina-stock-market-fq|2015-07-20
+
+Current count: 26, row: CmdStatus|test_2015-07-10|sina-stock-market-history|2015-07-10
+
+Current count: 27, row: CmdStatus|test_2015-07-10|sina-stock-market-history|2015-07-20
+
+Current count: 28, row: CmdStatus|test_2015-07-10|sina-stock-market-rzrq|2015-07-10
+
+Current count: 29, row: CmdStatus|test_2015-07-10|sina-stock-market-rzrq|2015-07-20
+
+Current count: 30, row: CmdStatus|test_2015-07-10|sina-stock-market-tradedetail|2015-07-10
+
+Current count: 31, row: CmdStatus|test_2015-07-10|sina-stock-market-tradedetail|2015-07-20
+
+Current count: 32, row: CmdStatus|test_2015-07-10|sina-stock-stock-holder-circulate|2015-07-10
+
+Current count: 33, row: CmdStatus|test_2015-07-10|sina-stock-stock-holder-circulate|2015-07-20
+
+Current count: 34, row: CmdStatus|test_2015-07-10|sina-stock-stock-holder-fund|2015-07-10
+
+Current count: 35, row: CmdStatus|test_2015-07-10|sina-stock-stock-holder-fund|2015-07-20
+
+Current count: 36, row: CmdStatus|test_2015-07-10|sina-stock-stock-holder|2015-07-10
+
+Current count: 37, row: CmdStatus|test_2015-07-10|sina-stock-stock-holder|2015-07-20
+
+Current count: 38, row: CmdStatus|test_2015-07-10|sina-stock-stock-structure|2015-07-10
+
+Current count: 39, row: CmdStatus|test_2015-07-10|sina-stock-stock-structure|2015-07-20
+
+Current count: 40, row: CmdStatus|test|sina-stock-ids
+
+Current count: 41, row: sina-stock-corp-info|600000
+
+Current count: 42, row: sina-stock-corp-info|601766
+
+Current count: 43, row: sina-stock-ids|test_2015-07-10

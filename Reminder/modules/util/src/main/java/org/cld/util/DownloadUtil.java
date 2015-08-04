@@ -1,10 +1,8 @@
 package org.cld.util;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URL;
@@ -34,7 +32,7 @@ public class DownloadUtil {
 				is = website.openConnection(proxy).getInputStream();
 			}
 		}catch(Exception e){
-			logger.error("", e);
+			logger.warn("", e);
 		}
 		return is;
 	}
@@ -43,11 +41,20 @@ public class DownloadUtil {
 		InputStream is = null;
 		FileOutputStream fos = null;
 		try{
-			is = getInputStream(url, useProxy, proxyIp, port);
-			new File(directory).mkdirs();
-			ReadableByteChannel rbc = Channels.newChannel(is);
-			fos = new FileOutputStream(directory + File.separator + fileName);
-			fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+			int tryMax=3;
+			int tryNum=0;
+			while (is==null && tryNum<tryMax){
+				is = getInputStream(url, useProxy, proxyIp, port);
+				tryNum++;
+			}
+			if (is!=null){
+				new File(directory).mkdirs();
+				ReadableByteChannel rbc = Channels.newChannel(is);
+				fos = new FileOutputStream(directory + File.separator + fileName);
+				fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+			}else{
+				logger.error(String.format("try max %d reached.", tryNum));
+			}
 		}catch(Exception e){
 			logger.error("", e);
 		}finally{

@@ -79,17 +79,19 @@ public class StockConfig {
 		SINA_STOCK_FR_FINANCE_GUIDELINE_YEAR, //财务指标
 	};
 	
-	/*
 	public static String[] syncConf = new String[]{SINA_STOCK_CORP_INFO}; //other cmd need this result
 	public static String[] StaticConf = (String[]) ArrayUtils.addAll(corpConfs); //static
 	public static String[] allConf = (String[]) concatAll(corpConfs, tradeConfs, issueConfs, holderConfs, frConfs);
-	public static String[] DynamicConf = (String[]) ArrayUtils.removeElements(allConf, TimeLessConf);
-	*/
+	public static String[] DynamicConf = (String[]) ArrayUtils.removeElements(allConf, StaticConf);
+	
+	
 	//for testing
+	/*
 	public static String[] syncConf = new String[]{SINA_STOCK_CORP_INFO}; //other cmd need this result
 	public static String[] StaticConf = (String[]) ArrayUtils.addAll(corpConfs); //static
 	public static String[] allConf = (String[]) ArrayUtils.addAll(corpConfs, SINA_STOCK_MARKET_DZJY, SINA_STOCK_MARKET_FQ, SINA_STOCK_MARKET_HISTORY);
 	public static String[] DynamicConf = (String[])ArrayUtils.removeElements(allConf, StaticConf);
+	*/
 	
 	public static <T> T[] concatAll(T[] first, T[]... rest) {
 	  int totalLength = first.length;

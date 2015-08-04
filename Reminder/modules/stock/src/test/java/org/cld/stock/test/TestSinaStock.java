@@ -52,6 +52,7 @@ public class TestSinaStock {
 		Date ed = sdf.parse("2015-08-02");
 		ssb.run_browse_idlist(MarketId_HS_A, ed);
 	}
+	
 	@Test
 	public void testRunAllCmd1() throws Exception{
 		ssb.runAllCmd(SinaStockBase.Test_SD, SinaStockBase.Test_D1);

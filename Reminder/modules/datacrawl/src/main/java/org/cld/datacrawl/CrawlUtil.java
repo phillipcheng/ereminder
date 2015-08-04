@@ -141,7 +141,7 @@ public class CrawlUtil {
 				sourceName, sync);
 	}
 	
-	public static String hadoopExecuteCrawlTasksByFile(String crawlPropertyFile, CrawlConf cconf, String sourceName){
+	public static String hadoopExecuteCrawlTasksByFile(String crawlPropertyFile, CrawlConf cconf, String[] sourceName){
 		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();
 		hadoopCrawlTaskParams.put(CRAWL_PROPERTIES, crawlPropertyFile);
 		Map<String, Object> cconfParams = new HashMap<String, Object>();

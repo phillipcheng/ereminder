@@ -149,7 +149,7 @@ public class HadoopTaskLauncher {
 			FSDataOutputStream fin = fs.create(fileNamePath);
 			fin.writeBytes(fileContent.toString());
 			fin.close();
-			return executeTasks(nc, hadoopParams, fs, taskFileName, taskList.get(0), sync);
+			return executeTasks(nc, hadoopParams, fs, new String[]{taskFileName}, taskList.get(0), sync);
 		}catch (Exception e) {
 			logger.error("", e);
 		}
@@ -157,7 +157,7 @@ public class HadoopTaskLauncher {
 	}
 	
 	public static String executeTasksByFile(NodeConf nc, Map<String, String> hadoopParams, 
-			String sourceName, Map<String, Object> cconfMap){
+			String[] sourceName, Map<String, Object> cconfMap){
 		TaskMgr taskMgr = nc.getTaskMgr();
 		Configuration conf = getHadoopConf(nc);
 		//generate task list file
@@ -165,10 +165,11 @@ public class HadoopTaskLauncher {
 		try {
 			//generate the task file
 			fs = FileSystem.get(conf);
-			String taskFileName = null;
-			
-			taskFileName = taskMgr.getHdfsTaskFolder() + "/" + sourceName;
-			Path taskPath = new Path(taskFileName);
+			String[] taskFileName = new String[sourceName.length];
+			for (int i=0; i<taskFileName.length; i++){
+				taskFileName[i]= taskMgr.getHdfsTaskFolder() + "/" + sourceName[i];
+			}
+			Path taskPath = new Path(taskFileName[0]);
 			if (fs.exists(taskPath)){
 				FSDataInputStream input = fs.open(taskPath);
 				String firstTaskStr = (new BufferedReader(new InputStreamReader(input))).readLine();
@@ -179,7 +180,7 @@ public class HadoopTaskLauncher {
 				t0.initParsedTaskDef(cconfMap);
 				return executeTasks(nc, hadoopParams,fs, taskFileName, t0, false);
 			}else{
-				logger.error(String.format("task file %s not exist.", taskFileName));
+				logger.error(String.format("task file %s not exist.", taskFileName[0]));
 			}
 		}catch (Exception e) {
 			logger.error("", e);
@@ -198,7 +199,7 @@ public class HadoopTaskLauncher {
 	 * @return jobId
 	 */
 	public static String executeTasks(NodeConf nc, Map<String, String> hadoopParams, FileSystem fs, 
-			String taskFileName, Task t, boolean sync){
+			String[] taskFileName, Task t, boolean sync){
 		try{
 			TaskMgr taskMgr = nc.getTaskMgr();
 			Configuration conf = getHadoopConf(nc);
@@ -212,7 +213,7 @@ public class HadoopTaskLauncher {
 			int mbMem = getMbMemory(t);
 			conf.setInt("mapreduce.map.memory.mb", mbMem);
 			
-			Job job = Job.getInstance(conf, taskFileName);
+			Job job = Job.getInstance(conf, taskFileName[0]+"|"+taskFileName.length);
 			//add app specific jars to classpath
 			if (nc.getTaskMgr().getYarnAppCp()!=null){
 				for (String s: nc.getTaskMgr().getYarnAppCp()){
@@ -236,8 +237,10 @@ public class HadoopTaskLauncher {
 			job.setInputFormatClass(NLineInputFormat.class);
 			if (multipleOutput)
 				MultipleOutputs.addNamedOutput(job, NAMED_OUTPUT_TXT, TextOutputFormat.class, Text.class, Text.class);
-			Path in = new Path(taskFileName);
-			FileInputFormat.addInputPath(job, in);
+			for (String tfn:taskFileName){
+				Path in = new Path(tfn);
+				FileInputFormat.addInputPath(job, in);
+			}
 			if (hdfsOutputDir!=null){
 				Path out = new Path(taskMgr.getHadoopCrawledItemFolder() + "/" + hdfsOutputDir);
 				fs.delete(out, true);
