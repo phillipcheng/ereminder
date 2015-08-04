@@ -177,7 +177,7 @@ public class Task implements Comparable<Task>, Serializable{
 		return new ArrayList<Task>();
 	}
 	
-	public CrawledItem runMyselfWithOutput(Map<String, Object> params) throws InterruptedException{
+	public List<CrawledItem> runMyselfWithOutput(Map<String, Object> params, boolean addToDB) throws InterruptedException{
 		logger.info("super runMyselfWithOutput do nothing.");
 		return null;
 	}

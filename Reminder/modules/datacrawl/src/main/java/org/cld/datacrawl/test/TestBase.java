@@ -1,6 +1,7 @@
 package org.cld.datacrawl.test;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -10,6 +11,7 @@ import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.task.TestTaskConf;
 import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
 import org.cld.datacrawl.util.HtmlUnitUtil;
+import org.cld.datastore.entity.CrawledItem;
 import org.cld.taskmgr.entity.Task;
 
 
@@ -50,14 +52,15 @@ public class TestBase {
 	public void runBDT(String confFileName, String startUrl, boolean turnPagesOnly) throws Exception{
 		CrawlTestUtil.runBDT(getConfId(confFileName), confFileName, startUrl, turnPagesOnly, cconf, testTaskId);
 	}
-	public void browsePrd(String confName, String prdUrl) throws InterruptedException{
-		CrawlTestUtil.browsePrd(getConfId(confName), confName, prdUrl, cconf, testTaskId);
+	
+	public List<CrawledItem> browsePrd(String confName, String prdUrl, Date runDateTime, boolean addToDB) throws InterruptedException{
+		return CrawlTestUtil.browsePrd(getConfId(confName), confName, prdUrl, cconf, testTaskId, runDateTime, addToDB);
 	}
-	public void browsePrd(String confName, String prdUrl, Map<String, Object> params) throws InterruptedException{
-		CrawlTestUtil.browsePrd(getConfId(confName), confName, prdUrl, cconf, testTaskId, params);
+	public List<CrawledItem> browsePrd(String confName, String prdUrl, Map<String, Object> params, Date runDateTime, boolean addToDB) throws InterruptedException{
+		return CrawlTestUtil.browsePrd(getConfId(confName), confName, prdUrl, cconf, testTaskId, params, runDateTime, addToDB);
 	}
-	public void browsePrd(String confName, String prdUrl, String prdTaskName, Map<String, Object> params) throws InterruptedException{
-		CrawlTestUtil.browsePrd(getConfId(confName), confName, prdUrl, prdTaskName, cconf, testTaskId, params);
+	public List<CrawledItem> browsePrd(String confName, String prdUrl, String prdTaskName, Map<String, Object> params, Date runDateTime, boolean addToDB) throws InterruptedException{
+		return CrawlTestUtil.browsePrd(getConfId(confName), confName, prdUrl, prdTaskName, cconf, testTaskId, params, runDateTime, addToDB);
 	}
 	//sequential
 	public void regressionAll(String[] allConf) throws Exception{
@@ -125,7 +128,7 @@ public class TestBase {
 					}else if (TASK_TYPE_BDT.equals(taskType)){
 						tb.runBDT(siteconfName, starturl, false);
 					}else if (TASK_TYPE_BPT.equals(taskType)){
-						tb.browsePrd(siteconfName, starturl);
+						tb.browsePrd(siteconfName, starturl, new Date(), true);
 					}else{
 						logger.error(String.format("task type:%s not supported.", taskType));
 					}

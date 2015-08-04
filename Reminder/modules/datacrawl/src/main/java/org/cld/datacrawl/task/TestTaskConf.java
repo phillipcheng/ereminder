@@ -95,7 +95,7 @@ public class TestTaskConf extends CrawlTaskConf implements Serializable{
 				CrawlTestUtil.catNavigate(siteconfid, null, startUrl, 
 						browse_type.recursive, cconf, getId(), null, null, 0);
 			}else if (taskType == browse_type.bpt){
-				CrawlTestUtil.browsePrd(siteconfid, confXml, startUrl, cconf, getId(), this.getParamMap());
+				CrawlTestUtil.browsePrd(siteconfid, confXml, startUrl, cconf, getId(), this.getParamMap(), this.getStartDate(), true);
 			}else if (taskType == browse_type.bdt_turnpage_only){
 				CrawlTestUtil.runBDT(siteconfid, null, startUrl, true, cconf, getId());
 			}else if (taskType == browse_type.bdt){

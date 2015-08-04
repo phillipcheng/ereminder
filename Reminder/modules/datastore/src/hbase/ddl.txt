@@ -1,0 +1,12 @@
+create 'crawledItem', {NAME=>'cf', VERSIONS=>3}
+
+get 'crawledItem', 'store1|abc', {COLUMN=>'cf:data', VERSIONS=>3}
+scan 'crawledItem', {FILTER=>"PrefixFilter('store1')
+"}
+
+
+
+
+ÄãºÃ
+
+

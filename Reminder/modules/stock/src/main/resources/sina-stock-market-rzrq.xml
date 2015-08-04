@@ -4,6 +4,8 @@
 	<PrdTask tryPattern="false">
 		<baseBrowseTask enableJS="true" taskName="market-rzrq" dsm="hdfs">
 			<param name="date"/>
+			<param name="startDate" type="string"/>
+			<param name="endDate" type="string"/>
 			<param name="HasHeader" value="false" type="boolean"/>
 			<startUrl value="http://vip.stock.finance.sina.com.cn/q/go.php/vInvestConsult/kind/rzrq/index.phtml?tradedate=[date]"/>
 			<userAttribute name="id">
@@ -29,7 +31,7 @@
 				<value value="summary,detail" toType="list" toEntryType="string"/>
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byId"><!-- 2 file per day -->
-				<outputDir value="sina-stock-market-rzrq"/>
+				<outputDir value="sina-stock-market-rzrq/[startDate]_[endDate]"/>
 			</csvtransform>
 			<pageVerify operator="!=">
 				<lhs value="//table[@id='dataTable'][1]/tbody/tr/td"></lhs>

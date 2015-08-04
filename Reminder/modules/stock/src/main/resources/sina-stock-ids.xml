@@ -7,12 +7,11 @@
 			<userAttribute name="ids">
 				<value value="//div[@id='tbl_wrap']/table[1]/tbody/tr[@style='']/th[1]/a/text()" toType="externalList"/>
 			</userAttribute>
-			<idUrlMapping>
-				<Token value="http://money.finance.sina.com.cn/mkt/#" name="prefix" type="string"/>
-				<Token value="[a-z_]+" name="id" type="regexp"/>
-			</idUrlMapping>
+			<userAttribute name="id">
+				<value value="marketId" toType="string" fromType="expression"/>
+			</userAttribute>
 		</baseBrowseTask>
-		<totalPage value="//div[@id='list_pages_top2']/a[last()-1]/text()" toType="int"/>
-		<nextPage value="//div[@id='list_pages_top2']/*[text()='下一页']"/>
+		<totalPage value="//div[@id='list_pages_top2']/a[last()-1]/text()" toType="int" optional="true"/>
+		<nextPage value="//div[@id='list_pages_top2']/*[text()='下一页']" optional="true"/>
 	</PrdTask>
 </Tasks>

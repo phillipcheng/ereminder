@@ -1,6 +1,7 @@
 package org.cld.stock.test;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,12 +71,12 @@ public class TestOfficialStockExchange extends TestBase{
 		periodList.add(StockConst.sh_periodid_12m);
 		periodList.add(StockConst.sh_periodid_6m);
 		params.put("periodId", periodList);
-		browsePrd(SHSE_STOCK_BASICINFO, null, SHSE_PRDNAME_SEMIANNUAL, params);
+		browsePrd(SHSE_STOCK_BASICINFO, null, SHSE_PRDNAME_SEMIANNUAL, params, new Date(), true);
 		
 		periodList.clear();
 		periodList.add(StockConst.sh_periodid_3m);
 		periodList.add(StockConst.sh_periodid_9m);
-		browsePrd(SHSE_STOCK_BASICINFO, null, SHSE_PRDNAME_QUARTER, params);
+		browsePrd(SHSE_STOCK_BASICINFO, null, SHSE_PRDNAME_QUARTER, params, new Date(), true);
 	}
 	
 	@Test
@@ -87,7 +88,7 @@ public class TestOfficialStockExchange extends TestBase{
 		params.put("symbal", "002002");
 		params.put("periodId", periodList);//report type
 		params.put("startyear", "2010");
-		browsePrd(SZSE_STOCK_BASICINFO, null, params);
+		browsePrd(SZSE_STOCK_BASICINFO, null, params, new Date(), true);
 	}
 	
 	@Test
@@ -95,6 +96,6 @@ public class TestOfficialStockExchange extends TestBase{
 		cconf.setUpSite(HKSE_STOCK_BASICINFO, null);
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("symbal", "00001");
-		browsePrd(HKSE_STOCK_BASICINFO, null, params);
+		browsePrd(HKSE_STOCK_BASICINFO, null, params, new Date(), true);
 	}
 }

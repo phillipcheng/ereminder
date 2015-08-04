@@ -7,6 +7,8 @@
 	<PrdTask tryPattern="false">
 		<baseBrowseTask enableJS="true" taskName="market-dzjy" dsm="hdfs">
 			<param name="date"/>
+			<param name="startDate" type="string"/>
+			<param name="endDate" type="string"/>
 			<param name="HasHeader" type="boolean" value="false"/>
 			<startUrl value="http://vip.stock.finance.sina.com.cn/q/go.php/vInvestConsult/kind/dzjy/index.phtml?bdate=[date]&amp;edate=[date]&amp;num=20"/>
 			<userAttribute name="id">
@@ -26,7 +28,7 @@
 				<value value="dzjy" toType="list"/>
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byId"><!-- 1 date per file -->
-				<outputDir value="sina-stock-market-dzjy"/>
+				<outputDir value="sina-stock-market-dzjy/[startDate]_[endDate]"/>
 			</csvtransform>
 		</baseBrowseTask>
 		<nextPage optional="true" value="//div[@class='pages']/a[last()]">

@@ -51,7 +51,7 @@ public class ScriptEngineUtil {
 			}
 			return ret;
 		} catch (ScriptException e) {
-			logger.error(String.format("while eval %s", exp), e);
+			logger.error(String.format("while eval %s, var map is %s", exp, variables), e);
 			return null;
 		}
 	}

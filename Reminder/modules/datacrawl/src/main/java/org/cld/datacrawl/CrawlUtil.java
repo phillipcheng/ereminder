@@ -134,11 +134,11 @@ public class CrawlUtil {
 	 * @return jobId
 	 */
 	public static String hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, 
-			String sourceName){
+			String sourceName, boolean sync){
 		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();
 		hadoopCrawlTaskParams.put(CRAWL_PROPERTIES, crawlPropertyFile);
 		return HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), tlist, hadoopCrawlTaskParams, 
-				sourceName);
+				sourceName, sync);
 	}
 	
 	public static String hadoopExecuteCrawlTasksByFile(String crawlPropertyFile, CrawlConf cconf, String sourceName){
@@ -151,13 +151,9 @@ public class CrawlUtil {
 	}
 	
 	public static void downloadPage(CrawlConf cconf, String url, String fileName, String fileSaveDir){
-		if (NodeConf.tmframework_hadoop.equals(cconf.getNodeConf().getTaskMgrFramework())){
-			String finalSaveDir = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + fileSaveDir;
-			DownloadUtil.downloadFileToHdfs(url, cconf.isUseProxy(), cconf.getProxyIP(), cconf.getProxyPort(), 
-					finalSaveDir + "/" + fileName, cconf.getTaskMgr().getHdfsDefaultName());
-		}else{
-			DownloadUtil.downloadFile(url, cconf.isUseProxy(), cconf.getProxyIP(), cconf.getProxyPort(), 
-					fileSaveDir, fileName);
-		}
+		String finalSaveDir = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + fileSaveDir;
+		DownloadUtil.downloadFileToHdfs(url, cconf.isUseProxy(), cconf.getProxyIP(), cconf.getProxyPort(), 
+			finalSaveDir + "/" + fileName, cconf.getTaskMgr().getHdfsDefaultName());
+		
 	}
 }

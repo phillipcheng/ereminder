@@ -95,7 +95,7 @@ public class ProductListAnalyze implements ListProcessInf{
 				logger.debug(String.format("Task t:%s generated.", t));
 			}else if (processType == BDTProcessType.INLINE){
 				//execute browse product now
-				BrowseProductTaskConf.browseProduct(t, cconf, wc, storeId, catId, taskName, fullOutput.getInParams(), false);
+				BrowseProductTaskConf.browseProduct(t, cconf, wc, storeId, catId, taskName, fullOutput.getInParams(), false, t.getStartDate(), true);
 			}else{
 				logger.error("unsupported bdt process type.");
 			}

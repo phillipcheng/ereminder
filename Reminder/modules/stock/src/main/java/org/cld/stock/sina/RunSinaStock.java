@@ -44,7 +44,7 @@ public class RunSinaStock {
 			}else if ("run_cmd".equals(cmd)){
 				if (args.length>=argIdx+1){
 					String cmdName = args[argIdx];
-					ssb.run_cmd(cmdName, marketId, startDate, endDate);
+					ssb.runCmd(cmdName, marketId, startDate, endDate);
 				}else{
 					System.out.println(getDefaultCmdLine() + " cmdName");
 				}

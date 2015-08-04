@@ -58,7 +58,7 @@ public class ProductAnalyzeUtil {
 				}
 			}
 			ValueType tpVT = taskDef.getBrowsePrdTaskType().getTotalPage();
-			if (tpVT!=null){
+			if (tpVT!=null && !tpVT.isOptional() && tpVT.getValue().contains("/")){
 				String xpath = TasksTypeUtil.getXPath(tpVT, task.getParamMap());
 				if (xpath!=null)
 					xpathList.add(xpath);

@@ -18,6 +18,7 @@ import org.cld.datacrawl.task.BrowseProductTaskConf;
 import org.cld.datacrawl.task.InvokeTaskTaskConf;
 import org.cld.datacrawl.util.SomePageErrorException;
 import org.cld.datastore.entity.Category;
+import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.CrawledItemId;
 import org.cld.pagea.general.CategoryAnalyzeUtil;
 import org.cld.taskmgr.NodeConf;
@@ -231,25 +232,25 @@ public class CrawlTestUtil{
 	public static void executeTasks(List<Task> tl, CrawlConf cconf, String propFile){
 		if (cconf.getNodeConf().getTaskMgrFramework().equals(NodeConf.tmframework_hadoop)){
 			if (tl.size()>0){
-				CrawlUtil.hadoopExecuteCrawlTasks(propFile, cconf, tl, null);
+				CrawlUtil.hadoopExecuteCrawlTasks(propFile, cconf, tl, null, false);
 			}
 		}else{
 			logger.error("unsupported taskMgrFramework.");
 		}
 	}
 	
-	public static void browsePrd(String siteconfid, String confFileName, String url, 
-			CrawlConf cconf, String rootTaskId) throws InterruptedException{
-		browsePrd(siteconfid, confFileName, url, cconf, rootTaskId, null);
+	public static List<CrawledItem> browsePrd(String siteconfid, String confFileName, String url, 
+			CrawlConf cconf, String rootTaskId, Date runDateTime, boolean addToDB) throws InterruptedException{
+		return browsePrd(siteconfid, confFileName, url, cconf, rootTaskId, null, runDateTime, addToDB);
 	}
 	
-	public static void browsePrd(String siteconfid, String confFileName, String url, 
-			CrawlConf cconf, String rootTaskId, Map<String, Object> inparams) throws InterruptedException{
-		browsePrd(siteconfid, confFileName, url, null, cconf, rootTaskId, inparams);
+	public static List<CrawledItem> browsePrd(String siteconfid, String confFileName, String url, 
+			CrawlConf cconf, String rootTaskId, Map<String, Object> inparams, Date runDateTime, boolean addToDB) throws InterruptedException{
+		return browsePrd(siteconfid, confFileName, url, null, cconf, rootTaskId, inparams, runDateTime, addToDB);
 	}
 	
-	public static void browsePrd(String siteconfid, String confFileName, String url, String prdTaskName,
-			CrawlConf cconf, String rootTaskId, Map<String, Object> inparams) throws InterruptedException{
+	public static List<CrawledItem> browsePrd(String siteconfid, String confFileName, String url, String prdTaskName,
+			CrawlConf cconf, String rootTaskId, Map<String, Object> inparams, Date runDateTime, boolean addToDB) throws InterruptedException{
 		List<Task> tl = new ArrayList<Task>();
 		if (confFileName!=null){
 			tl = cconf.setUpSite(confFileName, null);
@@ -258,8 +259,10 @@ public class CrawlTestUtil{
 		params.put(TaskMgr.TASK_RUN_PARAM_CCONF, cconf);
 		if (inparams!=null)
 			params.putAll(inparams);
+		List<CrawledItem> cilist = new ArrayList<CrawledItem>();
 		for (Task t: tl){
 			if (t instanceof BrowseProductTaskConf){
+				t.setStartDate(runDateTime);
 				if (prdTaskName!=null){
 					if (!prdTaskName.equals(t.getName())){
 						continue;
@@ -270,13 +273,14 @@ public class CrawlTestUtil{
 					bpt.setStartURL(url);
 				}
 				bpt.setRootTaskId(rootTaskId);
-				bpt.runMyself(params, null);
+				cilist.addAll(bpt.runMyselfWithOutput(params, addToDB));
 			}
 		}
+		return cilist;
 	}
 	
 	//either myTaskName, which has been registered in the TaskMgr or confFileName
-	public static void invokeTask(String confFileName, CrawlConf cconf) throws Exception{
+	public static void invokeTask(String confFileName, CrawlConf cconf, Date runDateTime) throws Exception{
 		List<Task> tl = new ArrayList<Task>();
 		if (confFileName!=null){
 			tl = cconf.setUpSite(confFileName, null);

@@ -56,7 +56,7 @@ public class ProductAnalyze{
 	 * @throws InterruptedException
 	 */
 	public CrawledItem addProduct(WebClient wc, String url, Product product, Product lastProduct, Task task, 
-			ParsedBrowsePrd taskDef, CrawlConf cconf, boolean retCsv) 
+			ParsedBrowsePrd taskDef, CrawlConf cconf, boolean retCsv, boolean addToDB) 
 			throws InterruptedException{
 		BrowseDetailType bdt = taskDef.getBrowsePrdTaskType();
 		boolean monitorPrice = bdt.isMonitorPrice();
@@ -104,7 +104,7 @@ public class ProductAnalyze{
 								Class.forName(csvTransform.getTransformClass()).newInstance();
 						List<String[]> csv = cicsv.getCSV(product, null);
 						product.setCsvValue(csv);
-						if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm())){
+						if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm()) && addToDB){
 							dsManager.addUpdateCrawledItem(product, lastProduct);
 						}
 						if (retCsv) return product;
@@ -116,12 +116,12 @@ public class ProductAnalyze{
 						product.setCsvValue(HdfsDataStoreManagerImpl.getCSV(product, bdt.getBaseBrowseTask()));
 					}
 				}
-				if (dsManager!=null)
+				if (dsManager!=null && addToDB)
 					dsManager.addUpdateCrawledItem(product, lastProduct);	
 			}
 		}else{
 			//do not need to browse the page
 		}
-		return null;
+		return product;
 	}
 }

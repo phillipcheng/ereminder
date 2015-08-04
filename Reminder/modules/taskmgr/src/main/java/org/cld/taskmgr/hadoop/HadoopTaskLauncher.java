@@ -127,7 +127,7 @@ public class HadoopTaskLauncher {
 	}
 	
 	public static String executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> hadoopParams, 
-			String sourceName){
+			String sourceName, boolean sync){
 		TaskMgr taskMgr = nc.getTaskMgr();
 		Configuration conf = getHadoopConf(nc);
 		//generate task list file
@@ -149,7 +149,7 @@ public class HadoopTaskLauncher {
 			FSDataOutputStream fin = fs.create(fileNamePath);
 			fin.writeBytes(fileContent.toString());
 			fin.close();
-			return executeTasks(nc, hadoopParams, fs, taskFileName, taskList.get(0));
+			return executeTasks(nc, hadoopParams, fs, taskFileName, taskList.get(0), sync);
 		}catch (Exception e) {
 			logger.error("", e);
 		}
@@ -177,7 +177,7 @@ public class HadoopTaskLauncher {
 				logger.debug("firstTaskStr:" + firstTaskStr);
 				logger.debug("t0:" + t0.toString());
 				t0.initParsedTaskDef(cconfMap);
-				return executeTasks(nc, hadoopParams,fs, taskFileName, t0);
+				return executeTasks(nc, hadoopParams,fs, taskFileName, t0, false);
 			}else{
 				logger.error(String.format("task file %s not exist.", taskFileName));
 			}
@@ -197,7 +197,8 @@ public class HadoopTaskLauncher {
 	 * @param multipleOutput
 	 * @return jobId
 	 */
-	public static String executeTasks(NodeConf nc, Map<String, String> hadoopParams, FileSystem fs, String taskFileName, Task t){
+	public static String executeTasks(NodeConf nc, Map<String, String> hadoopParams, FileSystem fs, 
+			String taskFileName, Task t, boolean sync){
 		try{
 			TaskMgr taskMgr = nc.getTaskMgr();
 			Configuration conf = getHadoopConf(nc);
@@ -244,7 +245,7 @@ public class HadoopTaskLauncher {
 			}else{
 				job.setOutputFormatClass(NullOutputFormat.class);
 			}
-			if (taskMgr.getHadoopJobTracker()!=null){
+			if (taskMgr.getHadoopJobTracker()!=null && !sync){
 				job.submit();
 			}else{
 				job.waitForCompletion(true);

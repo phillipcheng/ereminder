@@ -2,6 +2,9 @@ package org.cld.datastore.test;
 
 import static org.junit.Assert.*;
 
+import java.util.Date;
+import java.util.List;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,16 +24,14 @@ public class HbaseCrawledItemTest {
 	}
 	
 	@Test
-	public void testAddGetCrawledItem(){
+	public void testAddGetCrawledItem(){//add and get and assert equal
 		HbaseDataStoreManagerImpl ds = new HbaseDataStoreManagerImpl(new Configuration());
 		CrawledItem ci = new CrawledItem();
 		String id = "abc";
 		String storeid="store1";
 		ci.setFullUrl("http://fullurl1");
 		ci.addParam("book", "book1content");
-		CrawledItemId ciid = new CrawledItemId();
-		ciid.setId(id);
-		ciid.setStoreId(storeid);
+		CrawledItemId ciid = new CrawledItemId(id, storeid, new Date());
 		ci.setId(ciid);
 		ds.addUpdateCrawledItem(ci, null);
 		
@@ -41,12 +42,19 @@ public class HbaseCrawledItemTest {
 	}
 	
 	@Test
-	public void testGetCrawledItem(){
+	public void testAdd2Version(){//add 2 version and get
 		HbaseDataStoreManagerImpl ds = new HbaseDataStoreManagerImpl(new Configuration());
+		CrawledItem ci = new CrawledItem();
 		String id = "abc";
 		String storeid="store1";
-		CrawledItem ci2 = ds.getCrawledItem(id, storeid, null);
-		logger.info("ci2 get from db:" + ci2);
+		ci.setFullUrl("http://fullurl1");
+		ci.addParam("book", "book3content");
+		CrawledItemId ciid = new CrawledItemId(id, storeid, new Date());
+		ci.setId(ciid);
+		ds.addUpdateCrawledItem(ci, null);
+		
+		List<CrawledItem> cil = ds.getCrawledItem(id, storeid, 2, null);
+		logger.info("ci list get from db:" + cil);
 	}
 
 }

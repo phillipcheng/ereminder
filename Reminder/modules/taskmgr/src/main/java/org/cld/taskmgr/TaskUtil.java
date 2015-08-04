@@ -83,7 +83,7 @@ public class TaskUtil {
 		List<String> removeKeys = new ArrayList<String>();
 		for (String key: t.getParamMap().keySet()){
 			Object o = t.getParamMap().get(key);
-			if (!(o instanceof Serializable)){
+			if (o!=null && !(o instanceof Serializable)){
 				removeKeys.add(key);
 			}
 		}

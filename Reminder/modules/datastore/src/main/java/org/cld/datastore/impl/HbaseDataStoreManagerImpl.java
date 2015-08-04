@@ -1,5 +1,6 @@
 package org.cld.datastore.impl;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -68,9 +69,10 @@ public class HbaseDataStoreManagerImpl implements DataStoreManager {
 	}
 
 	public static String getRowKey(CrawledItemId cid){
-		return cid.getId() + rowkey_sep + cid.getStoreId();
+		return cid.getStoreId() + rowkey_sep + cid.getId();
 	}
 	
+	//storeId|id
 	public static String[] fromRowKey(String rowKey){
 		int idx = rowKey.indexOf(rowkey_sep);
 		if (idx>=0){
@@ -84,25 +86,16 @@ public class HbaseDataStoreManagerImpl implements DataStoreManager {
 		}
 	}
 	
-	public static String getRowKey(String id, String dataSourceId){
-		return id + "|" + dataSourceId;
+	public static String getRowKey(String id, String storeId){
+		return storeId + rowkey_sep + id;
 	}
 	
-	public static CrawledItem getCrawledItemFromResult(String rowKey, Result rs){
-		String[] keys = fromRowKey(rowKey);
-		if (keys!=null){
-			return getCrawledItemFromResult(keys[0], keys[1], rs);
-		}else{
-			return null;
-		}
-	}
-	
-	public static CrawledItem getCrawledItemFromResult(String id, String dataSourceId, Result rs){
+	private static CrawledItem getCrawledItemFromResult(String id, String storeId, Result rs){
 		if (!rs.isEmpty()){
         	Cell cell = rs.getColumnLatestCell(CRAWLEDITEM_CF_BYTES, CRAWLEDITEM_DATA_BYTES);
         	String json = new String(CellUtil.cloneValue(cell));
         	CrawledItem ci = CrawledItem.fromJson(json);
-        	CrawledItemId ciid = new CrawledItemId(id, dataSourceId, new Date(cell.getTimestamp()));
+        	CrawledItemId ciid = new CrawledItemId(id, storeId, new Date(cell.getTimestamp()));
         	ci.setId(ciid);
             return ci;
         }else{
@@ -110,16 +103,67 @@ public class HbaseDataStoreManagerImpl implements DataStoreManager {
         }
 	}
 	
+	private static List<CrawledItem> getCrawledItemsFromResult(String id, String storeId, Result rs){
+		if (!rs.isEmpty()){
+        	List<Cell> cells = rs.getColumnCells(CRAWLEDITEM_CF_BYTES, CRAWLEDITEM_DATA_BYTES);
+        	List<CrawledItem> cil = new ArrayList<CrawledItem>();
+        	for (Cell cell: cells){
+	        	String json = new String(CellUtil.cloneValue(cell));
+	        	CrawledItem ci = CrawledItem.fromJson(json);
+	        	CrawledItemId ciid = new CrawledItemId(id, storeId, new Date(cell.getTimestamp()));
+	        	ci.setId(ciid);
+	        	cil.add(ci);
+        	}
+            return cil;
+        }else{
+        	return null;
+        }
+	}
+	
+	public static CrawledItem getCrawledItemFromResult(String rowKey, Result rs){
+		String[] keys = fromRowKey(rowKey);
+		if (keys!=null){
+			return getCrawledItemFromResult(keys[1], keys[0], rs);
+		}else{
+			return null;
+		}
+	}
+	
 	@Override
-	public CrawledItem getCrawledItem(String id, String dataSourceId,
+	public CrawledItem getCrawledItem(String id, String storeId,
 			Class<? extends CrawledItem> crawledItemClazz) {
 		HTable table = null;
 		try{
 			table = new HTable(hbaseConf, CRAWLEDITEM_TABLE_NAME);
-			String rowKey = getRowKey(id, dataSourceId);
+			String rowKey = getRowKey(id, storeId);
 	        Get get = new Get(rowKey.getBytes());
 	        Result rs = table.get(get);
-	        return getCrawledItemFromResult(id, dataSourceId, rs);
+	        return getCrawledItemFromResult(id, storeId, rs);
+		}catch(Exception e){
+			logger.error("", e);
+			return null;
+		}finally{
+			if (table!=null){
+				try{
+					table.close();
+				}catch(Exception e){
+					logger.error("error close table.", e);
+				}
+			}
+		}
+	}
+	
+	@Override
+	public List<CrawledItem> getCrawledItem(String id, String storeId,
+			int maxVersion, Class<? extends CrawledItem> crawledItemClazz) {
+		HTable table = null;
+		try{
+			table = new HTable(hbaseConf, CRAWLEDITEM_TABLE_NAME);
+			String rowKey = getRowKey(id, storeId);
+	        Get get = new Get(rowKey.getBytes());
+	        get.setMaxVersions(maxVersion);
+	        Result rs = table.get(get);
+	        return getCrawledItemsFromResult(id, storeId, rs);
 		}catch(Exception e){
 			logger.error("", e);
 			return null;
@@ -134,30 +178,33 @@ public class HbaseDataStoreManagerImpl implements DataStoreManager {
 		}
 	}
 
-
 	@Override
 	public boolean addUpdateCrawledItem(CrawledItem ci, CrawledItem oldCi) {
-        HTable table = null;
-		try {
-			table = new HTable(hbaseConf, CRAWLEDITEM_TABLE_NAME);
-			String rowKey = getRowKey(ci.getId());
-            Put put = new Put(Bytes.toBytes(rowKey));
-            put.add(Bytes.toBytes(CRAWLEDITEM_CF), Bytes.toBytes(CRAWLEDITEM_DATA), Bytes
-                    .toBytes(ci.toJson(false)));
-            table.put(put);
-            return true;
-        }catch (Exception e){
-        	logger.error("", e);
-        	return false;
-        }finally{
-        	if (table!=null){
-        		try{
-        			table.close();
-        		}catch(Exception e){
-        			logger.error("error at close table.", e);
-        		}
-        	}
-        }
+		if (!ci.contentEquals(oldCi)){
+			HTable table = null;
+			try {
+				table = new HTable(hbaseConf, CRAWLEDITEM_TABLE_NAME);
+				String rowKey = getRowKey(ci.getId());
+	            Put put = new Put(Bytes.toBytes(rowKey));
+	            put.add(Bytes.toBytes(CRAWLEDITEM_CF), Bytes.toBytes(CRAWLEDITEM_DATA), ci.getId().getCreateTime().getTime(),
+	            		Bytes.toBytes(ci.toJson()));
+	            table.put(put);
+	            return true;
+	        }catch (Exception e){
+	        	logger.error("", e);
+	        	return false;
+	        }finally{
+	        	if (table!=null){
+	        		try{
+	        			table.close();
+	        		}catch(Exception e){
+	        			logger.error("error at close table.", e);
+	        		}
+	        	}
+	        }
+		}else{
+			return false;
+		}
 	}
 
 

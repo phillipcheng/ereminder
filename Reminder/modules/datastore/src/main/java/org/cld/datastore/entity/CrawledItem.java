@@ -48,7 +48,7 @@ public class CrawledItem {
 	protected CrawledItemId id;
 
 	@Column(insertable=false, updatable=false)
-	protected String type;//discriminator type: category, product
+	protected String type;//discriminator type: must be the class name: either xxx.CrawledItem, xxx.Category, xxx.Product
 
 	@Column(name = "itemType")
 	protected String itemType; //the type of the product: default, book, stock, etc
@@ -78,7 +78,7 @@ public class CrawledItem {
 	
 	//called by product, category's default constructor for hibernate
 	public CrawledItem(){
-		
+		this.type = CRAWLITEM_TYPE;
 	}
 	
 	public CrawledItem(String type){
@@ -97,7 +97,7 @@ public class CrawledItem {
 	}
 	
 	public String toString(){
-		return toJson(true);
+		return toJson();
 	}
 	
 
@@ -221,7 +221,7 @@ public class CrawledItem {
 	}
 	
 	
-	public String toJson(boolean needParamToData){
+	public String toJson(){
 		List<String> removeKeys = new ArrayList<String>();
 		for (String key: getParamMap().keySet()){
 			Object o = getParamMap().get(key);

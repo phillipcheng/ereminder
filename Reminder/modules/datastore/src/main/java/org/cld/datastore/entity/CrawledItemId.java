@@ -22,12 +22,6 @@ public class CrawledItemId implements Serializable {
 	
 	public CrawledItemId() {
 	}
-
-	public CrawledItemId(String id, String storeId) {
-		this.id = id;
-		this.storeId = storeId;
-		this.createTime = new Date();
-	}
 	
 	public CrawledItemId(String id, String storeId, Date createTime) {
 		this.id = id;

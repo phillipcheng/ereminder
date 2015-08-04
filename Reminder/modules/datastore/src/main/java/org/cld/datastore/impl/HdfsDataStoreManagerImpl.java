@@ -141,7 +141,13 @@ public class HdfsDataStoreManagerImpl implements DataStoreManager{
 		return true;
 	}
 
-
+	@Override
+	public List<CrawledItem> getCrawledItem(String id, String storeId,
+			int maxVersion, Class<? extends CrawledItem> crawledItemClazz) {
+		throw new UnsupportedOperationException();
+	}
+	
+	
 	@Override
 	public boolean addPrice(Price price) {
 		// TODO Auto-generated method stub

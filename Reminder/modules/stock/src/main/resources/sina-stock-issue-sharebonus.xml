@@ -30,7 +30,7 @@
 				<rhs value="null"></rhs>
 			</pageVerify>
 			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byJobMulti"><!-- 2 files -->
-				<outputDir value="'sina-stock-issue-sharebonus/'+startDate+'_'+endDate" fromType="expression"/>
+				<outputDir value="sina-stock-issue-sharebonus/[startDate]_[endDate]"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>
