@@ -59,7 +59,7 @@ public class ParsedTasksDef {
 		return null;
 	}
 	
-	public void setUp(TasksType tasks, ClassLoader pluginClassLoader, Map<String, Object> params) {
+	public void setUp(TasksType tasks, ClassLoader pluginClassLoader) {
 		this.tasksDef = tasks;
 		int size = tasks.getCatTask().size();
 		assert(size>=1);

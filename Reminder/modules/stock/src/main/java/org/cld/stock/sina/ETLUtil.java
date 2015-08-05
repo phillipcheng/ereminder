@@ -243,6 +243,7 @@ public class ETLUtil {
 		List<Task> tlist = new ArrayList<Task>();
 		int batchId = 0;
 		LinkedList<Date> cacheDates = new LinkedList<Date>();
+		List<String> jobIdList = new ArrayList<String>();
 		for (String id: ids){
 			String trimmedId = id.substring(2);
 			Date fDate = getIPODateByStockId(trimmedId, cconf);
@@ -281,11 +282,14 @@ public class ETLUtil {
 					Date d = tryDates.next();
 					String dstr = sdf.format(d);
 					Task t1 = t.clone(ETLUtil.class.getClassLoader());
+					if (tlist.size()%100==0){
+						logger.info("tlist size:" + tlist.size());
+					}
 					t1.putParam("stockid", id);
 					t1.putParam("date", dstr);
 					tlist.add(t1);
 					//since tlist can be very large, generate job in between
-					if (tlist.size()>100000){
+					if (tlist.size()>=100000){
 						Map<String, Object> taskParams = new HashMap<String, Object>();
 						taskParams.put(PK_MARKETID, marketId);
 						taskParams.put(BatchId_Key, batchId);
@@ -293,7 +297,7 @@ public class ETLUtil {
 						taskParams.put(PK_END_DATE, endDate);
 						String taskName = ETLUtil.getTaskName(calledMethod, taskParams);
 						logger.info(String.format("sending out:%d tasks for hadoop task %s.", tlist.size(), taskName));
-						CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName, sync);
+						jobIdList.add(CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName, sync));
 						
 						tlist = new ArrayList<Task>(); 
 						batchId++;
@@ -306,8 +310,9 @@ public class ETLUtil {
 		taskParams.put(BatchId_Key, batchId);
 		String taskName = ETLUtil.getTaskName(calledMethod, taskParams);
 		logger.info(String.format("sending out:%d tasks for hadoop task %s.", tlist.size(), taskName));
-		String jobId = CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName, sync);
-		return new String[]{jobId};
+		jobIdList.add(CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tlist, taskName, sync));
+		String[] jobIds = new String[jobIdList.size()];
+		return jobIdList.toArray(jobIds);
 	}
 	
 	//if startYear|startQuarter <=0 from IPO year

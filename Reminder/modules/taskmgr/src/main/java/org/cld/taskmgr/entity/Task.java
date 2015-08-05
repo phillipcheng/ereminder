@@ -65,6 +65,7 @@ public class Task implements Comparable<Task>, Serializable{
 	private Date lastUpdateDate;
 	private Date startDate;
 	private String paramData;
+	private String confName; //the conf file contains this task
 
 	//@JsonIgnore
 	private transient Map<String, Object> paramMap = new TreeMap<String, Object>();
@@ -95,6 +96,7 @@ public class Task implements Comparable<Task>, Serializable{
 		t.setParamData(paramData);
 		t.getParamMap().putAll(this.getParamMap());
 		t.setParsedTaskDef(parsedTaskDef);
+		t.setConfName(confName);
 		return t;
 	}
 
@@ -269,7 +271,7 @@ public class Task implements Comparable<Task>, Serializable{
 		ParsedTasksDef ptd = TaskMgr.getParsedTasksDef(storeId);
 		if (ptd == null){
 			ptd = new ParsedTasksDef();
-			ptd.setUp(tasks, pluginClassLoader, params);
+			ptd.setUp(tasks, pluginClassLoader);
 			TaskMgr.putParsedTasksDef(storeId, ptd);
 		}
 		this.parsedTaskDef = ptd;
@@ -309,5 +311,13 @@ public class Task implements Comparable<Task>, Serializable{
 	
 	public BrowseTaskType getBrowseTask(String taskName){
 		return getParsedTaskDef().getBrowseTask(taskName);
+	}
+
+	public String getConfName() {
+		return confName;
+	}
+
+	public void setConfName(String confName) {
+		this.confName = confName;
 	}
 }

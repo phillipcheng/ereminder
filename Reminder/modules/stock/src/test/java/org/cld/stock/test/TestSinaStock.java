@@ -9,6 +9,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.task.TabularCSVConvertTask;
+import org.cld.datastore.entity.CrawledItem;
 import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.StockConfig;
 import org.cld.taskmgr.TaskMgr;
@@ -52,18 +53,24 @@ public class TestSinaStock {
 		Date ed = sdf.parse("2015-08-02");
 		ssb.run_browse_idlist(MarketId_HS_A, ed);
 	}
+	@Test
+	public void testInitTestMarket() throws Exception{
+		Date ed = sdf.parse(END_DATE);
+		CrawledItem ci = ssb.run_browse_idlist(this.marketId, ed);
+		ssb.getDsm().addUpdateCrawledItem(ci, null);
+	}
 	
 	@Test
 	public void testRunAllCmd1() throws Exception{
-		ssb.runAllCmd(SinaStockBase.Test_SD, SinaStockBase.Test_D1);
+		ssb.runAllCmd(null, SinaStockBase.date_Test_D1);
 	}
 	@Test
 	public void testRunAllCmd2() throws Exception{
-		ssb.runAllCmd(SinaStockBase.Test_SD, SinaStockBase.Test_D2);
+		ssb.runAllCmd(null, SinaStockBase.date_Test_D2);
 	}
 	@Test
 	public void testRunAllCmd3() throws Exception{
-		ssb.runAllCmd(SinaStockBase.Test_SD, SinaStockBase.Test_D3);
+		ssb.runAllCmd(null, SinaStockBase.date_Test_D3);
 	}
 	
 	
@@ -143,7 +150,7 @@ public class TestSinaStock {
 	 * */
 	@Test
 	public void run_browse_corp_info() throws Exception {
-		ssb.runCmd(StockConfig.SINA_STOCK_CORP_INFO, MarketId_Test, null, null);
+		ssb.runCmd(StockConfig.SINA_STOCK_CORP_INFO, MarketId_Test, null, END_DATE);
 	}
 	
 	@Test

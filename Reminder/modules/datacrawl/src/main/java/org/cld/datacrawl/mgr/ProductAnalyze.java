@@ -69,59 +69,55 @@ public class ProductAnalyze{
 		product.setRootTaskId(task.getRootTaskId());
 		product.setFullUrl(url);
 
-		if (taskDef.getBrowsePrdTaskType().getBaseBrowseTask().getUserAttribute().size()!=0){
-			//
-			String[] xpaths = ProductAnalyzeUtil.getPageVerifyXPaths(task, taskDef);
-			BinaryBoolOp[] bbops = ProductAnalyzeUtil.getPageVerifyBoolOp(task, taskDef);
-			VerifyPageByBoolOp vpbbo = xpaths!=null? new VerifyPageByBoolOp(bbops, cconf):null;
-			VerifyPageByXPath vpbxp = bbops!=null? new VerifyPageByXPath(xpaths):null;
-			VPXP = new VerifyPageByBoolOpXPath(vpbbo, vpbxp);
-			
-			//
-			HtmlPageResult detailsResult;
-			HtmlPage details = null;
-			detailsResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(url), VPXP, null, task.getParsedTaskDef(), cconf);	
-			details = detailsResult.getPage();
-			
-			if (detailsResult.getErrorCode() == HtmlPageResult.SUCCSS){			
-				//product name
-				if (product.getName()==null){
-					String title = ProductAnalyzeUtil.getTitle(details, task, taskDef, cconf);
-					product.setName(title);
-				}
-				if (monitorPrice){
-					//
-				}
-				//call back
-				ProductAnalyzeUtil.callbackReadDetails(wc, details, product, task, taskDef, cconf);
-				product.getId().setCreateTime(new Date());
-				logger.debug("product got:" + product);
-				CsvTransformType csvTransform = bdt.getBaseBrowseTask().getCsvtransform();
-				if (csvTransform!=null){
-					//do the transform and set to crawledItem.csv
-					try {
-						AbstractCrawlItemToCSV cicsv = (AbstractCrawlItemToCSV) 
-								Class.forName(csvTransform.getTransformClass()).newInstance();
-						List<String[]> csv = cicsv.getCSV(product, null);
-						product.setCsvValue(csv);
-						if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm()) && addToDB){
-							dsManager.addUpdateCrawledItem(product, lastProduct);
-						}
-						if (retCsv) return product;
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}else{
-					if (CrawlConf.crawlDsManager_Value_Hdfs.equals(bdt.getBaseBrowseTask().getDsm())){
-						product.setCsvValue(HdfsDataStoreManagerImpl.getCSV(product, bdt.getBaseBrowseTask()));
-					}
-				}
-				if (dsManager!=null && addToDB)
-					dsManager.addUpdateCrawledItem(product, lastProduct);	
+		String[] xpaths = ProductAnalyzeUtil.getPageVerifyXPaths(task, taskDef);
+		BinaryBoolOp[] bbops = ProductAnalyzeUtil.getPageVerifyBoolOp(task, taskDef);
+		VerifyPageByBoolOp vpbbo = xpaths!=null? new VerifyPageByBoolOp(bbops, cconf):null;
+		VerifyPageByXPath vpbxp = bbops!=null? new VerifyPageByXPath(xpaths):null;
+		VPXP = new VerifyPageByBoolOpXPath(vpbbo, vpbxp);
+		
+		//
+		HtmlPageResult detailsResult;
+		HtmlPage details = null;
+		detailsResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(url), VPXP, null, task.getParsedTaskDef(), cconf);	
+		details = detailsResult.getPage();
+		
+		if (detailsResult.getErrorCode() == HtmlPageResult.SUCCSS){			
+			//product name
+			if (product.getName()==null){
+				String title = ProductAnalyzeUtil.getTitle(details, task, taskDef, cconf);
+				product.setName(title);
 			}
-		}else{
-			//do not need to browse the page
+			if (monitorPrice){
+				//
+			}
+			//call back
+			ProductAnalyzeUtil.callbackReadDetails(wc, details, product, task, taskDef, cconf);
+			product.getId().setCreateTime(new Date());
+			logger.debug("product got:" + product);
+			CsvTransformType csvTransform = bdt.getBaseBrowseTask().getCsvtransform();
+			if (csvTransform!=null){
+				//do the transform and set to crawledItem.csv
+				try {
+					AbstractCrawlItemToCSV cicsv = (AbstractCrawlItemToCSV) 
+							Class.forName(csvTransform.getTransformClass()).newInstance();
+					List<String[]> csv = cicsv.getCSV(product, null);
+					product.setCsvValue(csv);
+					if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm()) && addToDB){
+						dsManager.addUpdateCrawledItem(product, lastProduct);
+					}
+					if (retCsv) return product;
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}else{
+				if (CrawlConf.crawlDsManager_Value_Hdfs.equals(bdt.getBaseBrowseTask().getDsm())){
+					product.setCsvValue(HdfsDataStoreManagerImpl.getCSV(product, bdt.getBaseBrowseTask()));
+				}
+			}
+			if (dsManager!=null && addToDB)
+				dsManager.addUpdateCrawledItem(product, lastProduct);	
 		}
+		
 		return product;
 	}
 }

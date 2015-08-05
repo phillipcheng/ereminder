@@ -45,6 +45,24 @@ public class SinaStockBase extends TestBase{
 	public static final String Test_D2 = "2015-07-20";//only increase date
 	public static final String Test_D3 = "2015-08-01";//also increase stock
 	public static final String Test_D4 = "2015-08-04";//only increase date
+	public static Date date_Test_SD = null;
+	public static Date date_Test_D1 = null;
+	public static Date date_Test_D2 = null;
+	public static Date date_Test_D3 = null;
+	public static Date date_Test_D4 = null;
+	
+	static{
+		try{
+			date_Test_SD = sdf.parse(Test_SD);
+			date_Test_D1 = sdf.parse(Test_D1);
+			date_Test_D2 = sdf.parse(Test_D2);
+			date_Test_D3 = sdf.parse(Test_D3);
+			date_Test_D4 = sdf.parse(Test_D4);
+		}catch(Exception e){
+			logger.error("", e);
+		}
+	}
+	
 	public static final String[] Test_D1_Stocks = new String[]{"sh600000", "sh601766"};
 	public static final String[] Test_D3_Stocks = new String[]{"sh600000", "sh601766", "sz000001"};
 	
@@ -65,6 +83,9 @@ public class SinaStockBase extends TestBase{
 	private JobClient jobClient = null;
 
 	
+	public DataStoreManager getDsm(){
+		return dsm;
+	}
 	
 	public SinaStockBase(String propFile, String marketId){
 		super();
@@ -159,16 +180,21 @@ public class SinaStockBase extends TestBase{
 		if (MarketId_Test.equals(marketId)){
 			String d = sdf.format(endDate);
 			CrawledItem ci = null;
-			if (d.equals(Test_D1) || d.equals(Test_D2)){
+			Date marketChangeDate = null;
+			try {
+				marketChangeDate = sdf.parse(Test_D3);
+			}catch(Exception e){
+				logger.error("", e);
+				return null;
+			}
+			if (endDate.before(marketChangeDate)){
 				ci = new CrawledItem(CrawledItem.CRAWLITEM_TYPE, "default", 
 						new CrawledItemId(MarketId_Test, StockConfig.SINA_STOCK_IDS, endDate));
 				ci.addParam(KEY_IDS, Arrays.asList(Test_D1_Stocks));
-			}else if (d.equals(Test_D3) || d.equals(Test_D4)){
+			}else{
 				ci = new CrawledItem(CrawledItem.CRAWLITEM_TYPE, "default", 
 						new CrawledItemId(MarketId_Test, StockConfig.SINA_STOCK_IDS, endDate));
 				ci.addParam(KEY_IDS, Arrays.asList(Test_D3_Stocks));
-			}else{
-				logger.error(String.format("test market only support %s, %s, %s, %s", Test_D1, Test_D2, Test_D3, Test_D4));
 			}
 			return ci;
 		}
@@ -219,7 +245,7 @@ public class SinaStockBase extends TestBase{
 			logger.error("", e);
 		}
 		for (String cmd:conf){
-			if (marketId.startsWith(MarketId_Test) && Arrays.asList(StockConfig.tradeConfs).contains(cmd) && testStartDate.after(sd)){
+			if (marketId.startsWith(MarketId_Test) && Arrays.asList(StockConfig.tradeConfs).contains(cmd) && (sd!=null && testStartDate.after(sd))){
 				runCmd(cmd, marketId, Test_SHORT_SD, strEd);//tradeConf generates too much data, limit it to short_period for test market
 			}else{
 				runCmd(cmd, marketId, strSd, strEd);
@@ -227,33 +253,30 @@ public class SinaStockBase extends TestBase{
 		}
 	}
 	
-	public void runAllCmd(String sd, String ed) throws InterruptedException {
-		Date endDate = null;
-		Date startDate = null;
+	public void runAllCmd(Date startDate, Date endDate) throws InterruptedException {
 		Date lastRunDate = null;
 		List<String> curIds = null; 
 		List<String> deltaIds = null;
+		String strEndDate=sdf.format(endDate);
 		
-		try{
-			endDate = sdf.parse(ed);
-			if (sd!=null){
-				startDate = sdf.parse(sd);
-			}
-		}catch(ParseException pe){
-			logger.error("", pe);
-			return;
-		}
 		//get the market-ids-crawl-history
 		CmdStatus mcs = CmdStatus.getCmdStatus(dsm, marketId, StockConfig.SINA_STOCK_IDS);
-		//run browse id to see any updates
-		CrawledItem ciIds = run_browse_idlist(marketId, endDate);
 		//update the marketId by appending the endDate
-		String curMarketId = marketId + idKeySep+ ed; 
-		ciIds.getId().setId(curMarketId);
-		curIds = (List<String>) ciIds.getParam(KEY_IDS);
+		String curMarketId = marketId + idKeySep+ strEndDate; 
+		//run browse id to see any updates
+		CrawledItem ciIds = null;
+		
 		if (mcs!=null){
-			//get latest market-ids-crawl
 			String prevMarketId = marketId + idKeySep + sdf.format(mcs.getId().getCreateTime());
+			if (mcs.getId().getCreateTime().equals(endDate)){//crawl again at the same day, no need to crawl market
+				ciIds = dsm.getCrawledItem(prevMarketId, StockConfig.SINA_STOCK_IDS, CrawledItem.class);
+				curIds = (List<String>) ciIds.getParam(KEY_IDS);
+			}else{
+				ciIds = run_browse_idlist(marketId, endDate);
+				ciIds.getId().setId(curMarketId);
+				curIds = (List<String>) ciIds.getParam(KEY_IDS);
+			}
+			//get latest market-ids-crawl
 			CrawledItem ciPreIds = dsm.getCrawledItem(prevMarketId, StockConfig.SINA_STOCK_IDS, CrawledItem.class);
 			List<String> preIds = (List<String>) ciPreIds.getParam(KEY_IDS);
 			//get the delta
@@ -263,13 +286,17 @@ public class SinaStockBase extends TestBase{
 			
 			//get last all cmd run status, last run date
 			CmdStatus preAllCmdRunCS = CmdStatus.getCmdStatus(dsm, prevMarketId, StockConfig.AllCmdRun_STATUS);
-			lastRunDate = preAllCmdRunCS.getId().getCreateTime();
+			if (preAllCmdRunCS==null){//last time AllCmdRunCS failed to generate
+				lastRunDate = endDate;
+			}else{
+				lastRunDate = preAllCmdRunCS.getId().getCreateTime();
+			}
 			logger.info(String.format("market %s has org size %d.", marketId, preIds.size()));
 			if (deltaIds.size()>0){
 				logger.info(String.format("market %s has delta size %d.", marketId, deltaIds.size()));
 				//has new delta market, let's create another 2 markets
 				dsm.addUpdateCrawledItem(ciIds, null);//cur market
-				String deltaMarketId = marketId + idKeySep + ed + "_delta"; //delta market
+				String deltaMarketId = marketId + idKeySep + strEndDate + "_delta"; //delta market
 				CrawledItem ciDelta = new CrawledItem(CrawledItem.CRAWLITEM_TYPE, "default", 
 						new CrawledItemId(deltaMarketId, StockConfig.SINA_STOCK_IDS, endDate));
 				ciDelta.addParam(KEY_IDS, deltaIds);
@@ -284,11 +311,6 @@ public class SinaStockBase extends TestBase{
 				runAllCmd(deltaMarketId, startDate, lastRunDate, CMDTYPE_STATIC); //dynamic part
 				//do the [lastRunDate,endDate) for the current market
 				runAllCmd(curMarketId, lastRunDate, endDate, CMDTYPE_DYNAMIC); //
-				
-				//only add the allCmdRunCS for the curMarketId
-				CmdStatus allCmdRunStatus = new CmdStatus(curMarketId, StockConfig.AllCmdRun_STATUS, endDate, startDate, true);
-				dsm.addUpdateCrawledItem(allCmdRunStatus, null);
-				
 			}else{
 				//no new delta market, so the ids is not updated
 				//check the (null, lastRunDate) for the pre market
@@ -297,11 +319,12 @@ public class SinaStockBase extends TestBase{
 				if (CompareUtil.ObjectDiffers(lastRunDate, endDate)){
 					runAllCmd(prevMarketId, lastRunDate, endDate, CMDTYPE_DYNAMIC); //dynamic part
 				}
-				//update the allCmdRun status
-				preAllCmdRunCS.getId().setCreateTime(endDate);
-				dsm.addUpdateCrawledItem(preAllCmdRunCS, null);
 			}
 		}else{
+			ciIds = run_browse_idlist(marketId, endDate);
+			ciIds.getId().setId(curMarketId);
+			curIds = (List<String>) ciIds.getParam(KEY_IDS);
+			
 			logger.info(String.format("market %s 1st time fetch with size %d.", marketId, curIds.size()));
 			//store the market-id-crawl status
 			mcs = new CmdStatus(marketId, StockConfig.SINA_STOCK_IDS, endDate, startDate, true);
@@ -310,10 +333,9 @@ public class SinaStockBase extends TestBase{
 			dsm.addUpdateCrawledItem(ciIds, null);
 			//do the (null, enDate) for the current market
 			runAllCmd(curMarketId, startDate, endDate, CMDTYPE_ALL);
-			//store the allCmdRun status
-			CmdStatus allCmdRunStatus = new CmdStatus(curMarketId, StockConfig.AllCmdRun_STATUS, endDate, startDate, true);
-			dsm.addUpdateCrawledItem(allCmdRunStatus, null);
 		}
+		CmdStatus allCmdRunStatus = new CmdStatus(curMarketId, StockConfig.AllCmdRun_STATUS, endDate, startDate, true);
+		dsm.addUpdateCrawledItem(allCmdRunStatus, null);
 	}
 
 	//update CmdStatus for async commands

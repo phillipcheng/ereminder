@@ -54,8 +54,8 @@ public class StockConfig {
 		SINA_STOCK_CORP_RELATED_OTHER //所属系别 所属指数
 	};
 	public static String[] tradeConfs = new String[]{
-		SINA_STOCK_MARKET_HISTORY, //历史交易
 		SINA_STOCK_TRADE_DETAIL, //成交明细
+		SINA_STOCK_MARKET_HISTORY, //历史交易
 		SINA_STOCK_MARKET_RZRQ, //融资融券
 		SINA_STOCK_MARKET_DZJY, //大宗交易		//Marketless
 		SINA_STOCK_MARKET_FQ //复权交易 //		//Marketless

@@ -106,7 +106,9 @@ public class TaskUtil {
 			Task t = mapper.readValue(json, Task.class);
 			Class<? extends Task> clazz = (Class<? extends Task>) Class.forName(t.getTtype());
 			t =  mapper.readValue(json, clazz);
-			//t.fromParamData();
+			if (t.getParamMap()==null || t.getParamMap().size()==0){
+				t.fromParamData();
+			}
 			return t;
 		} catch (Exception e) {
 			logger.error("", e);

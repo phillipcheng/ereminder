@@ -2,6 +2,7 @@ package org.cld.stock.sina;
 
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,8 +19,8 @@ public class RunSinaStock {
 		String propFile="";
 		String marketId ="";
 		String cmd="";
-		String startDate = null;
-		String endDate = null;
+		String strStartDate = null;
+		String strEndDate = null;
 		if (args.length>=5){
 			propFile = args[0]; //
 			marketId = args[1]; // 
@@ -27,11 +28,19 @@ public class RunSinaStock {
 			cmd = args[2];  //
 			String sd = args[3];
 			if (!"-".equals(sd)){
-				startDate = sd;
+				strStartDate = sd;
 			}
 			String ed = args[4];
 			if (!"-".equals(ed)){
-				endDate = ed;
+				strEndDate = ed;
+			}
+			Date startDate = null;
+			Date endDate = null;
+			if (strStartDate!=null){
+				startDate = sdf.parse(strStartDate);
+			}
+			if (strEndDate!=null){
+				endDate = sdf.parse(strEndDate);
 			}
 			int argIdx = 5;
 			if ("run_task".equals(cmd)){//run already generated task
@@ -42,10 +51,12 @@ public class RunSinaStock {
 				}else{
 					System.out.println(getDefaultCmdLine() + " taskName");
 				}
+			}else if ("run_all_cmd".equals(cmd)){
+				ssb.runAllCmd(startDate, endDate);
 			}else if ("run_cmd".equals(cmd)){
 				if (args.length>=argIdx+1){
 					String cmdName = args[argIdx];
-					ssb.runCmd(cmdName, marketId, startDate, endDate);
+					ssb.runCmd(cmdName, marketId, strStartDate, strEndDate);
 				}else{
 					System.out.println(getDefaultCmdLine() + " cmdName");
 				}

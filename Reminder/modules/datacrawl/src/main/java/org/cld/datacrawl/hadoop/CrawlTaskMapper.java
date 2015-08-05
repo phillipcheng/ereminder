@@ -47,6 +47,11 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 	public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 		String taskJson = value.toString();
 		Task t = TaskUtil.taskFromJson(taskJson);
+		if (t.getConfName()!=null){
+			Map<String, Object> taskParams = new HashMap<String, Object>();
+			taskParams.put(CrawlConf.taskParamCConf_Key, cconf);
+			cconf.getTaskMgr().setUpSite(t.getConfName(), null, this.getClass().getClassLoader(), taskParams);
+		}
 		logger.info("I get task:" + t);
 		Map<String, Object> crawlTaskParams = new HashMap<String, Object>();
 		crawlTaskParams.put(TaskMgr.TASK_RUN_PARAM_CCONF, cconf);

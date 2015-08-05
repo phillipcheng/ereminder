@@ -52,13 +52,6 @@ public class TaskMgr {
 	public static final String hdfsCrawledItemFolder_Key="hdfs.crawleditem.folder";
 	public static final String crawlTasksPerMapper_Key = "crawl.task.per.mapper"; //number of tasks/lines each mapper will process
 	
-	//values
-	private String webconfWSUrl = null;
-	private boolean useProxy=false;
-	private String proxyIP;
-	private int proxyPort;
-	private int timeout; //page fetch time out in seconds
-	
 	private String hdfsDefaultName = null;
 	private String hdfsTaskFolder = null;
 	private String hadoopJobTracker = null;
@@ -92,6 +85,7 @@ public class TaskMgr {
 	
 	private String masterConfFile;
 	private NodeConf nc;
+	private Map<String, List<Task>> confTaskMap = new HashMap<String, List<Task>>();
 	
 	public static final String TASK_RUN_PARAM_CCONF="cconf";
 	
@@ -212,15 +206,13 @@ public class TaskMgr {
 				String strVal = properties.getString(key);
 				logger.debug(String.format("key:%s, value:%s", key, strVal));
 				if (webconf_wsurl_Key.equals(key)){
-					webconfWSUrl = strVal;
 				}else if (useProxy_Key.equals(key)){
-					useProxy = Boolean.parseBoolean(strVal);
+					Boolean.parseBoolean(strVal);
 				}else if (proxyIP_Key.equals(key)){
-					proxyIP = strVal;
 				}else if (proxyPort_Key.equals(key)){
-					proxyPort = Integer.parseInt(strVal);
+					Integer.parseInt(strVal);
 				}else if (timeout_Key.equals(key)){
-					timeout=Integer.parseInt(strVal);
+					Integer.parseInt(strVal);
 				}else if (hdfsTaskFolder_Key.equals(key)){
 					this.hdfsTaskFolder = strVal;
 				}else if (hdfsDefaultName_Key.equals(key)){
@@ -250,6 +242,7 @@ public class TaskMgr {
 					}
 				}else if (taskName_Key.equals(key)){
 					//load task from files
+					/*
 					List<Object> listVal = properties.getList(key);
 					logger.debug(String.format("key:%s, value:%s, listVal.size():%d", key, listVal, listVal.size()));
 					if (!"".equals(strVal.trim())){
@@ -260,7 +253,7 @@ public class TaskMgr {
 								logger.error("task type not found:" + tname + "." + Task.taskType_Key);
 							}
 						}
-					}
+					}*/
 				}else if (key.startsWith("yarn.") || key.startsWith("mapred.") || key.startsWith("mapreduce.")){
 					hadoopConfigs.put(key, strVal);
 				}
@@ -296,26 +289,6 @@ public class TaskMgr {
 			
 			//2. load conf
 			loadConf(this.masterConfFile, pluginClassLoader, params);
-			
-			//3. task.name=, get the task definition from web service
-			if (webconfWSUrl!=null){
-				logger.info("get siteconf from ws.");
-				DataStoreRSClient dsrsclient = null;
-				if (useProxy){
-					dsrsclient = new DataStoreRSClient(webconfWSUrl, proxyIP, proxyPort, timeout);
-				}else{
-					dsrsclient = new DataStoreRSClient(webconfWSUrl, timeout);
-				}
-				List<SiteConf> scl = dsrsclient.getDeployedSiteConf();
-				if (scl!=null){
-					logger.info(String.format("siteconf got: %d", scl.size()));
-					for (SiteConf sc: scl){
-						setUpSite(null, sc, pluginClassLoader, params);
-					}
-				}else{
-					logger.error("no deployed siteconf found.");
-				}
-			}
 			//
 		}catch(Exception e){
 			logger.error("exception while read properties.", e);
@@ -343,7 +316,7 @@ public class TaskMgr {
 		}
 	}
 	
-	private List<Task> loadTaskV2(TasksType tasks, ClassLoader pluginClassLoader, Map<String, Object> params, Date utime){
+	private List<Task> loadTaskV2(TasksType tasks, ClassLoader pluginClassLoader, Map<String, Object> params, Date utime, String confName){
 		List<Task> tl = new ArrayList<Task>();
 		if (tasks.getInvokeTask().size()>0){
 			for (int i=0; i<tasks.getInvokeTask().size(); i++){
@@ -395,52 +368,60 @@ public class TaskMgr {
 			}
 		}
 		
+		for (Task t: tl){
+			t.setConfName(confName);
+		}
 		return tl;
 	}
 	
 	//to convert the xml definition to tasksConf within cconf
 	public List<Task> setUpSite(String taskconfFileName, SiteConf sc, ClassLoader pluginClassLoader, Map<String, Object> params){
-		//this will create 2 tasks, 1 bct, 1 bdt
-		try {
-			Source source = null;
-			URL url = null;
-			Date d = null;
-			if (sc==null){
-				if (pluginClassLoader!=null){
-					source = new StreamSource(pluginClassLoader.getResourceAsStream(taskconfFileName));
-					url = pluginClassLoader.getResource(taskconfFileName);
+		if (confTaskMap.containsKey(taskconfFileName)){
+			return confTaskMap.get(taskconfFileName);
+		}else{
+			try {
+				Source source = null;
+				URL url = null;
+				Date d = null;
+				if (sc==null){
+					if (pluginClassLoader!=null){
+						source = new StreamSource(pluginClassLoader.getResourceAsStream(taskconfFileName));
+						url = pluginClassLoader.getResource(taskconfFileName);
+					}else{
+						source = new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(taskconfFileName));
+						url = Thread.currentThread().getContextClassLoader().getResource(taskconfFileName);
+					}
+					String fileName=null;
+					if (url!=null){
+						if (url.getProtocol().equals("file")) {
+					        fileName = url.getFile();
+					    }else if (url.getProtocol().equals("jar")){
+					    	fileName = url.getFile();
+					    	fileName = fileName.substring(0, fileName.indexOf("!"));
+					    }else {
+					        throw new IllegalArgumentException(String.format("can't get the timestamp from protocol: %s", url.getProtocol()));
+					    }
+					    File file = new File(fileName);
+					    d = new Date(file.lastModified());
+					}else{
+						logger.error(String.format("task conf file %s not found.", taskconfFileName));
+					}
 				}else{
-					source = new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(taskconfFileName));
-					url = Thread.currentThread().getContextClassLoader().getResource(taskconfFileName);
+					source = new StreamSource(new StringReader(sc.getConfxml()));
+					d = sc.getUtime();
 				}
-				String fileName=null;
-				if (url!=null){
-					if (url.getProtocol().equals("file")) {
-				        fileName = url.getFile();
-				    }else if (url.getProtocol().equals("jar")){
-				    	fileName = url.getFile();
-				    	fileName = fileName.substring(0, fileName.indexOf("!"));
-				    }else {
-				        throw new IllegalArgumentException(String.format("can't get the timestamp from protocol: %s", url.getProtocol()));
-				    }
-				    File file = new File(fileName);
-				    d = new Date(file.lastModified());
-				}else{
-					logger.error(String.format("task conf file %s not found.", taskconfFileName));
-				}
-			}else{
-				source = new StreamSource(new StringReader(sc.getConfxml()));
-				d = sc.getUtime();
+				JAXBContext jc = JAXBContext.newInstance("org.xml.taskdef");
+				Unmarshaller u = jc.createUnmarshaller();
+				
+				JAXBElement<TasksType> root = u.unmarshal(source,TasksType.class);
+				TasksType tasks = root.getValue();
+				List<Task> tl = loadTaskV2(tasks, pluginClassLoader, params, d, taskconfFileName);
+				confTaskMap.put(taskconfFileName, tl);
+				return tl;
+			}catch(Exception e){
+				logger.error("", e);
+				return new ArrayList<Task>();
 			}
-			JAXBContext jc = JAXBContext.newInstance("org.xml.taskdef");
-			Unmarshaller u = jc.createUnmarshaller();
-			
-			JAXBElement<TasksType> root = u.unmarshal(source,TasksType.class);
-			TasksType tasks = root.getValue();
-			return loadTaskV2(tasks, pluginClassLoader, params, d);
-		}catch(Exception e){
-			logger.error("", e);
-			return new ArrayList<Task>();
 		}
 	}
 	

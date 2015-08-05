@@ -7,7 +7,8 @@ productType="default">
 	<PrdTask tryPattern="false">
 		<baseBrowseTask enableJS="true" 
 		taskName="market-tradedetail" 
-		dsm="hdfs">
+		dsm="hdfs"
+		mbMemoryNeeded="256">
 			<param name="stockid"/>
 			<param name="date"/>
 			<startUrl value="http://market.finance.sina.com.cn/downxls.php?date=[date]&amp;symbol=[stockid]"/>

@@ -216,28 +216,31 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 				CrawlUtil.downloadPage(cconf, startUrl, cachePage, storeId);
 			}
 		}
+		
 		List<CrawledItem> cilist = new ArrayList<CrawledItem>();
-		//start browsing
-		for (String startUrl:startUrlList){
-			String prdId = ProductListAnalyzeUtil.getInternalId(startUrl, task, pbpTemplate);
-			if (prdId!=null && !"".equals(prdId)){			
-				if (dsManager!=null){
-					lastProduct = (Product) dsManager.getCrawledItem(prdId, storeId, Product.class);
-					ci = lastProduct;
-				}
-				if (lastProduct != null && !CompareUtil.ObjectDiffers(crawlDateTime, lastProduct.getId().getCreateTime()) && lastProduct.isCompleted()){
-					logger.info("last product has the same crawl time and is complete, skip browsing.");
+		if (pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getUserAttribute().size()!=0){
+			//start browsing
+			for (String startUrl:startUrlList){
+				String prdId = ProductListAnalyzeUtil.getInternalId(startUrl, task, pbpTemplate);
+				if (prdId!=null && !"".equals(prdId)){			
+					if (dsManager!=null){
+						lastProduct = (Product) dsManager.getCrawledItem(prdId, storeId, Product.class);
+						ci = lastProduct;
+					}
+					if (lastProduct != null && !CompareUtil.ObjectDiffers(crawlDateTime, lastProduct.getId().getCreateTime()) && lastProduct.isCompleted()){
+						logger.info("last product has the same crawl time and is complete, skip browsing.");
+					}else{
+						//add new product and price
+						thisProduct = cconf.getProductInstance(task.getTasks().getProductType());
+						CrawledItemId pid = new CrawledItemId(prdId, storeId, crawlDateTime);
+						thisProduct.setId(pid);
+						thisProduct.addCat(catId);
+						ci = cconf.getPa().addProduct(wc, startUrl, thisProduct, null, task, pbpTemplate, cconf, retcsv, addToDB);
+					}
+					cilist.add(ci);
 				}else{
-					//add new product and price
-					thisProduct = cconf.getProductInstance(task.getTasks().getProductType());
-					CrawledItemId pid = new CrawledItemId(prdId, storeId, crawlDateTime);
-					thisProduct.setId(pid);
-					thisProduct.addCat(catId);
-					ci = cconf.getPa().addProduct(wc, startUrl, thisProduct, null, task, pbpTemplate, cconf, retcsv, addToDB);
+					logger.error(String.format("prdId is null for task: %s, startUrl: %s", task.getName(), startUrl));
 				}
-				cilist.add(ci);
-			}else{
-				logger.error(String.format("prdId is null for task: %s, startUrl: %s", task.getName(), startUrl));
 			}
 		}
 		return cilist;
