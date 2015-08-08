@@ -305,8 +305,8 @@ public class Task implements Comparable<Task>, Serializable{
 		return parsedTaskDef.getBrowseDetailTask(taskName);
 	}
 	
-	public void initParsedTaskDef(Map<String, Object> params){
-		
+	public ParsedTasksDef initParsedTaskDef(Map<String, Object> params){
+		return null;
 	}
 	
 	public BrowseTaskType getBrowseTask(String taskName){

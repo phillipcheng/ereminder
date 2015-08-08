@@ -17,12 +17,13 @@ public class CrawlTaskConf extends Task {
 	private static Logger logger =  LogManager.getLogger(CrawlTaskConf.class);
 	
 	@Override
-	public void initParsedTaskDef(Map<String, Object> params){
+	public ParsedTasksDef initParsedTaskDef(Map<String, Object> params){
 		ParsedTasksDef ptd = TaskMgr.getParsedTasksDef(storeId);
 		if (ptd!=null){
 			this.setParsedTaskDef(ptd);
 		}else{
 			logger.error(String.format("site %s not found in taskMgr.", storeId));
 		}
+		return ptd;
 	}
 }

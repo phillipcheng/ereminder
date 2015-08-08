@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.task.TabularCSVConvertTask;
 import org.cld.datastore.entity.CrawledItem;
+import org.cld.stock.sina.PostProcessUtil;
 import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.StockConfig;
 import org.cld.taskmgr.TaskMgr;
@@ -62,7 +63,7 @@ public class TestSinaStock {
 	
 	@Test
 	public void testRunAllCmd1() throws Exception{
-		ssb.runAllCmd(null, SinaStockBase.date_Test_D1);
+		ssb.runAllCmd(SinaStockBase.date_Test_SD, SinaStockBase.date_Test_D1);
 	}
 	@Test
 	public void testRunAllCmd2() throws Exception{
@@ -73,11 +74,21 @@ public class TestSinaStock {
 		ssb.runAllCmd(null, SinaStockBase.date_Test_D3);
 	}
 	
+	@Test
+	public void testOnePostProcess() throws Exception{
+		PostProcessUtil.splitFolder(ssb.getCconf(), "/reminder/items/sina-stock-corp-related-other", 
+				new String[]{"concepts","industries"});
+	}
+	@Test
+	public void testAllPostProcess() throws Exception{
+		ssb.postProcess();
+	}
 	
 	@Test
 	public void run_task_1() throws Exception{
 		//ssb.run_task("run_corp_manager_2015_07_19_12_14_47_437_history_true_MarketId_test_");
 	}
+	
 	/*****
 	 * Market history 行情走势
 	 **/

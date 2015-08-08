@@ -28,7 +28,6 @@ import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.StringUtil;
-import org.xml.mytaskdef.ParsedBrowsePrd;
 import org.xml.taskdef.BrowseTaskType;
 import org.xml.taskdef.CsvOutputType;
 

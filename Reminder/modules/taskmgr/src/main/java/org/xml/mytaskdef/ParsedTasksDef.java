@@ -187,4 +187,8 @@ public class ParsedTasksDef {
 			return allBrowseTasks.get(taskName);
 		}
 	}
+	
+	public Map<String, ParsedBrowsePrd> getBrowsePrdTaskMap(){
+		return browsePrdTaskMap;
+	}
 }

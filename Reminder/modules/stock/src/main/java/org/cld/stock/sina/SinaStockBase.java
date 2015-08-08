@@ -30,6 +30,10 @@ import org.cld.datacrawl.test.TestBase;
 
 import org.cld.stock.sina.ETLUtil;
 import org.cld.stock.sina.StockConfig;
+import org.xml.mytaskdef.ParsedBrowsePrd;
+import org.xml.mytaskdef.ParsedTasksDef;
+import org.xml.taskdef.AttributeType;
+import org.xml.taskdef.CsvTransformType;
 
 public class SinaStockBase extends TestBase{
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -426,6 +430,38 @@ public class SinaStockBase extends TestBase{
 					itemsFolder + "/" + StockConfig.SINA_STOCK_FR_HISTORY_OUT + "/" + subFR, 
 					1, 
 					itemsFolder  + "/" + StockConfig.SINA_STOCK_FR_HISTORY_QUARTER_OUT + "/" + subFR);
+		}
+	}
+	
+	public void postProcess(){
+		Map<String, Object> taskParams = new HashMap<String, Object>();
+		taskParams.put(CrawlConf.taskParamCConf_Key, cconf);
+		for (String conf: StockConfig.allConf){
+			List<Task> tl = cconf.getTaskMgr().setUpSite(conf+".xml", null, this.getClass().getClassLoader(), taskParams);
+			if (tl.size()>0){
+				ParsedTasksDef ptd = tl.get(0).initParsedTaskDef(taskParams);
+				Map<String, ParsedBrowsePrd> bptMap = ptd.getBrowsePrdTaskMap();
+				for (ParsedBrowsePrd pbp: bptMap.values()){
+					Map<String, AttributeType> attrMap = pbp.getPdtAttrMap();
+					AttributeType at = attrMap.get("RowCsvName");
+					if (at!=null){
+						String csvnames = at.getValue().getValue();
+						String[] fps = csvnames.split(",");
+						if (fps.length>1){
+							CsvTransformType csvt = pbp.getBrowsePrdTaskType().getBaseBrowseTask().getCsvtransform();
+							if (csvt!=null){
+								String outputDirExp = csvt.getOutputDir().getValue();
+								int startIdx = outputDirExp.indexOf("sina-stock");
+								int endIdx = outputDirExp.indexOf("/");
+								if (startIdx!=-1 && endIdx!=-1){
+									String rootFolder = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + outputDirExp.substring(startIdx, endIdx);
+									PostProcessUtil.splitFolder(cconf, rootFolder, fps);
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 }
