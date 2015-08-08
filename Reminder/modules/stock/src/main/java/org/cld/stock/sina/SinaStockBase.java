@@ -107,12 +107,8 @@ public class SinaStockBase extends TestBase{
 	
 	public Map<String, Object> getDateParamMap(String startDate, String endDate){
 		Map<String, Object> paramMap = new HashMap<String, Object>();
-		if (startDate!=null){
-			paramMap.put(ETLUtil.PK_START_DATE, startDate);
-		}
-		if (endDate!=null){
-			paramMap.put(ETLUtil.PK_END_DATE, endDate);
-		}
+		paramMap.put(ETLUtil.PK_START_DATE, startDate);
+		paramMap.put(ETLUtil.PK_END_DATE, endDate);
 		return paramMap;
 	}
 	

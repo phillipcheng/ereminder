@@ -244,9 +244,11 @@ public class StringUtil {
 		if (input.contains(prefix) && input.contains(postfix) && params!=null){
 			for (String key: params.keySet()){
 				Object value = params.get(key);
-				if (value!=null){
-					input = input.replace(prefix + key + postfix, params.get(key).toString());
+				String strValue = "null";
+				if (value != null){
+					strValue = value.toString();
 				}
+				input = input.replace(prefix + key + postfix, strValue);
 			}
 		}
 		return input;

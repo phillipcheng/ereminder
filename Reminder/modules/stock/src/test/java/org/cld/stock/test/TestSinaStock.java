@@ -63,7 +63,7 @@ public class TestSinaStock {
 	
 	@Test
 	public void testRunAllCmd1() throws Exception{
-		ssb.runAllCmd(SinaStockBase.date_Test_SD, SinaStockBase.date_Test_D1);
+		ssb.runAllCmd(null, SinaStockBase.date_Test_D1);
 	}
 	@Test
 	public void testRunAllCmd2() throws Exception{

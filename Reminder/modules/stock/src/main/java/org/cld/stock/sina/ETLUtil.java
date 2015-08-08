@@ -98,7 +98,8 @@ public class ETLUtil {
 	
 	private static Date getDate(String key, Map<String, Object> params){
 		try{
-			if (params.containsKey(key)){
+			String strVal = (String)params.get(key);
+			if (strVal!=null){
 				return sdf.parse((String)params.get(key));
 			}else{
 				return null;
