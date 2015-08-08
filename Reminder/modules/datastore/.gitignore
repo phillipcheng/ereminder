@@ -1,2 +1,5 @@
 /target
 /test.log
+.classpath
+.project
+.settings

@@ -5,3 +5,4 @@ test.log
 .classpath
 /bin
 /target
+.project

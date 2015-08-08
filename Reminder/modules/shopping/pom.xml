@@ -59,11 +59,6 @@
         	<artifactId>crbook-persist</artifactId>
         	<version>1.0.0</version>
         </dependency>
-       	<dependency>
-        	<groupId>org.cld.stock</groupId>
-			<artifactId>cld-stock</artifactId>
-        	<version>1.0.0</version>
-        </dependency>
 	</dependencies>
 	
 	<build>
