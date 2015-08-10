@@ -211,6 +211,8 @@ public class HadoopTaskLauncher {
 			String hdfsOutputDir = getOutputDir(t);
 			int mbMem = getMbMemory(t);
 			conf.setInt("mapreduce.map.memory.mb", mbMem);
+			String optValue = "-Xmx" + mbMem + "M";
+			conf.set("mapreduce.map.java.opts", optValue);
 			
 			Job job = Job.getInstance(conf, taskFileName[0]+"|"+taskFileName.length);
 			//add app specific jars to classpath

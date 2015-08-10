@@ -4,8 +4,6 @@
     </description>
 	<property name="src"  location="src"/>
 	<property name="dist"  location="target"/>
-	
-	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
   
 	<target name="dist">
 		<copy file="${dist}/cld-stock-1.0.0.jar" todir="${dist}/lib/"/>

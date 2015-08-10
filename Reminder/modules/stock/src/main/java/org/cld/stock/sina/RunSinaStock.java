@@ -61,8 +61,14 @@ public class RunSinaStock {
 					System.out.println(getDefaultCmdLine() + " cmdName");
 				}
 			}else if ("run_special".equals(cmd)){
-				Method m = ssb.getClass().getMethod(cmd);
-				m.invoke(ssb);
+				if (args.length>=argIdx+1){
+					String method = args[argIdx];
+					Method m = ssb.getClass().getMethod(method);
+					m.invoke(ssb);
+				}else{
+					System.out.println(getDefaultCmdLine() + " methodName");
+				}
+				
 			}else{
 				logger.error("unknown command.");
 			}

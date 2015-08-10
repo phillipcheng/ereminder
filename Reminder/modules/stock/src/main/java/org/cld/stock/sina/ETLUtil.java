@@ -75,18 +75,23 @@ public class ETLUtil {
 		return idarray;
 	}
 	
+	private static Map<String, Date> ipoCache = new HashMap<String, Date>();
 	public static Date getIPODateByStockId(String stockid, CrawlConf cconf){
-		//get the IPODate
-		CrawledItem corpInfo = cconf.getDsm("hbase").getCrawledItem(stockid, StockConfig.SINA_STOCK_CORP_INFO, null);
-		List<String> fnList = (List<String>)corpInfo.getParam(StockConfig.SINA_STOCK_DATA);
-		String ipoDateStr = fnList.get(StockConfig.IPO_DATE_IDX).trim();
-		String foundDateStr = fnList.get(StockConfig.FOUND_DATE_IDX).trim();
-		Date d = DateTimeUtil.getDate(ipoDateStr, sdf);
+		Date d = ipoCache.get(stockid);
 		if (d==null){
-			logger.warn("wrong ipo date found:" + ipoDateStr + ", for stock:" + stockid + ", try found date:" + foundDateStr);
-			d = DateTimeUtil.getDate(foundDateStr, sdf);
-			if (d==null)
-				logger.warn("wrong found date found:" + foundDateStr + ", for stock:" + stockid);	
+			//get the IPODate
+			CrawledItem corpInfo = cconf.getDsm("hbase").getCrawledItem(stockid, StockConfig.SINA_STOCK_CORP_INFO, null);
+			List<String> fnList = (List<String>)corpInfo.getParam(StockConfig.SINA_STOCK_DATA);
+			String ipoDateStr = fnList.get(StockConfig.IPO_DATE_IDX).trim();
+			String foundDateStr = fnList.get(StockConfig.FOUND_DATE_IDX).trim();
+			d = DateTimeUtil.getDate(ipoDateStr, sdf);
+			if (d==null){
+				logger.warn("wrong ipo date found:" + ipoDateStr + ", for stock:" + stockid + ", try found date:" + foundDateStr);
+				d = DateTimeUtil.getDate(foundDateStr, sdf);
+				if (d==null)
+					logger.warn("wrong found date found:" + foundDateStr + ", for stock:" + stockid);	
+			}
+			ipoCache.put(stockid, d);
 		}
 		return d;
 	}

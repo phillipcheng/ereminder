@@ -159,6 +159,7 @@ public class SinaStockBase extends TestBase{
 			}
 		}
 		if (needRun){
+			logger.info(String.format("going to run cmd %s with ed:%s, sd:%s, marketId:%s", cmdName, endDate, startDate, marketId));
 			if (Arrays.asList(StockConfig.StaticConf).contains(cmdName)){
 				cs = new CmdStatus(marketId, cmdName, ed, sd, true);
 			}else{	
