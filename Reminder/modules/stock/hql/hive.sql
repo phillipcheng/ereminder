@@ -1,3 +1,7 @@
+set hive.exec.mode.local.auto=true;
+set hive.cli.print.header=true;
+set hive.cli.print.current.db=true;
+set hive.auto.convert.join=true;
 set hive.mapred.supports.subdirectories=true;
 set mapred.input.dir.recursive=true;
 
