@@ -36,8 +36,10 @@ public class TradeDetailCheckDownload {
 	public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
 	public static class MyMapper extends Mapper<Text, Text, Text, Text>{
-		private static final String firstTitle = "成交时间";
-		private static final String tradeStartTime = "09:25";
+		private static final String firstTitle1 = "成交时间";
+		private static final String firstTitle2 = "<script";
+		private static final String tradeStartTime1 = "09:25";
+		private static final String tradeStartTime2 = "09:3";
 		
 		@Override
 		public void setup(Context context) throws IOException, InterruptedException {
@@ -67,7 +69,10 @@ public class TradeDetailCheckDownload {
 					String[] keys = firstline.split("\\s+");
 					//check last line
 					String[] lastValues = lastline.split("\\s+");
-					if (!firstTitle.equals(keys[0])|| !lastValues[0].startsWith(tradeStartTime)){
+					if (!firstTitle1.equals(keys[0])|| 
+							!firstTitle2.equals(keys[0])|| 
+							!lastValues[0].startsWith(tradeStartTime1) ||
+							!lastValues[0].startsWith(tradeStartTime2) ){
 						StringBuffer sb = new StringBuffer();
 						sb.append(keys[0]);
 						sb.append(",");
@@ -86,13 +91,11 @@ public class TradeDetailCheckDownload {
 		String inDir = StockConfig.SINA_STOCK_TRADE_DETAIL + "/in/" + ed;
 		String outDir = StockConfig.SINA_STOCK_TRADE_DETAIL + "/check/" + ed;
 		Configuration conf = HadoopTaskLauncher.getHadoopConf(nc);
-		logger.info("here1");
 		//generate task list file
 		FileSystem fs;
 		try {
 			//generate the task file
 			fs = FileSystem.get(conf);
-			logger.info("here2");
 			Job job = Job.getInstance(conf, task_name + sep + inDir);
 			//add app specific jars to classpath
 			if (nc.getTaskMgr().getYarnAppCp()!=null){
@@ -105,7 +108,6 @@ public class TradeDetailCheckDownload {
 					}
 				}
 			}
-			logger.info("here3");
 			job.setJarByClass(MyMapper.class);
 			job.setMapperClass(MyMapper.class);
 			job.setNumReduceTasks(0);//no reducer
@@ -118,12 +120,9 @@ public class TradeDetailCheckDownload {
 			Path out = new Path(taskMgr.getHadoopCrawledItemFolder() + "/" + outDir);
 			fs.delete(out, true);
 			FileOutputFormat.setOutputPath(job, out);
-			logger.info("here4");
 			if (taskMgr.getHadoopJobTracker()!=null){
 				job.submit();
-				logger.info("here5");
 			}else{
-				logger.info("here6");
 				job.waitForCompletion(true);
 			}
 			return job.getJobID().toString();

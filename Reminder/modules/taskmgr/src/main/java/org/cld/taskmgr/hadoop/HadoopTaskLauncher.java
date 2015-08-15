@@ -97,6 +97,7 @@ public class HadoopTaskLauncher {
 		conf.set("fs.default.name", taskMgr.getHdfsDefaultName());
 		conf.set("mapred.textoutputformat.separator", ",");//default is tab
 		conf.set("mapreduce.task.timeout", "0");
+		conf.set("mapreduce.job.split.metainfo.maxsize", "-1");
 		conf.setInt(NLineInputFormat.LINES_PER_MAP, taskMgr.getCrawlTasksPerMapper());
 		for (String key:taskMgr.getHadoopConfigs().keySet()){
 			String value = taskMgr.getHadoopConfigs().get(key);
