@@ -37,9 +37,10 @@ public class TradeDetailCheckDownload {
 	
 	public static class MyMapper extends Mapper<Text, Text, Text, Text>{
 		private static final String firstTitle1 = "成交时间";
-		private static final String firstTitle2 = "<script";
+		private static final String emptyTitle = "<script";
 		private static final String tradeStartTime1 = "09:25";
 		private static final String tradeStartTime2 = "09:3";
+		private static final String tradeStartTime3 = "15:00";
 		
 		@Override
 		public void setup(Context context) throws IOException, InterruptedException {
@@ -69,15 +70,20 @@ public class TradeDetailCheckDownload {
 					String[] keys = firstline.split("\\s+");
 					//check last line
 					String[] lastValues = lastline.split("\\s+");
-					if (!firstTitle1.equals(keys[0])|| 
-							!firstTitle2.equals(keys[0])|| 
-							!lastValues[0].startsWith(tradeStartTime1) ||
-							!lastValues[0].startsWith(tradeStartTime2) ){
-						StringBuffer sb = new StringBuffer();
-						sb.append(keys[0]);
-						sb.append(",");
-						sb.append(lastValues[0]);
-						context.write(new Text(fileName), new Text(sb.toString()));
+					if (!emptyTitle.equals(keys[0])){//empty file
+						if (!firstTitle1.equals(keys[0]) || 
+								!(lastValues[0].startsWith(tradeStartTime1) // 09:25
+										||lastValues[0].startsWith(tradeStartTime2) //09:30
+										||(lastValues[0].startsWith(tradeStartTime3) && "0".equals(lastValues[3]))//15:00 x x 0
+										)
+								)
+							{
+							StringBuffer sb = new StringBuffer();
+							sb.append(keys[0]);
+							sb.append(",");
+							sb.append(lastValues[0]);
+							context.write(new Text(fileName), new Text(sb.toString()));
+						}
 					}
 				}
 			}

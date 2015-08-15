@@ -2,14 +2,17 @@ package org.cld.stock.sina;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
-import org.apache.commons.codec.Charsets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -88,7 +91,29 @@ public class TradeDetailPostProcess {
 		}
 	}
 	
-	public static String launch(CrawlConf cconf, Date endDate){
+	private static Job getJob(Configuration conf, NodeConf nc, FileSystem fs, String inDir) throws IOException{
+		Job job = Job.getInstance(conf, task_name + sep + inDir);
+		//add app specific jars to classpath
+		if (nc.getTaskMgr().getYarnAppCp()!=null){
+			for (String s: nc.getTaskMgr().getYarnAppCp()){
+				//find all the jar,zip files under s if s is a directory
+				FileStatus[] fslist = fs.listStatus(new Path(s));
+				Path[] plist = FileUtil.stat2Paths(fslist);
+				for (Path p:plist){
+					job.addFileToClassPath(p);
+				}
+			}
+		}
+		job.setJarByClass(MyMapper.class);
+		job.setMapperClass(MyMapper.class);
+		job.setNumReduceTasks(0);//no reducer
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(Text.class);
+		MultipleOutputs.addNamedOutput(job, NAMED_OUTPUT_TXT, TextOutputFormat.class, Text.class, Text.class);
+		return job;
+	}
+	
+	public static List<String> launch(CrawlConf cconf, Date endDate){
 		NodeConf nc = cconf.getNodeConf();
 		TaskMgr taskMgr = nc.getTaskMgr();
 		String ed = sdf.format(endDate);
@@ -100,36 +125,31 @@ public class TradeDetailPostProcess {
 		try {
 			//generate the task file
 			fs = FileSystem.get(conf);
-			Job job = Job.getInstance(conf, task_name + sep + inDir);
-			//add app specific jars to classpath
-			if (nc.getTaskMgr().getYarnAppCp()!=null){
-				for (String s: nc.getTaskMgr().getYarnAppCp()){
-					//find all the jar,zip files under s if s is a directory
-					FileStatus[] fslist = fs.listStatus(new Path(s));
-					Path[] plist = FileUtil.stat2Paths(fslist);
-					for (Path p:plist){
-						job.addFileToClassPath(p);
+			List<String> jobIdList = new ArrayList<String>();
+			Path in = new Path(taskMgr.getHadoopCrawledItemFolder() + "/" + inDir);
+			Path out = new Path(taskMgr.getHadoopCrawledItemFolder() + "/" + outDir);
+			FileStatus[] fslist = fs.listStatus(in);
+			for (FileStatus lfs: fslist){
+				if (!lfs.isFile()){
+					//generate job for all the sub-directory to reduce job size
+					String dirName = lfs.getPath().getName();
+					Path subIn = new Path(in, dirName);
+					Path subOut = new Path(out, dirName);
+					Job job = getJob(conf, nc, fs, subIn.toString());
+					FileInputFormat.addInputPath(job, subIn);
+					FileInputFormat.setInputDirRecursive(job, true);
+					fs.delete(subOut, true);
+					FileOutputFormat.setOutputPath(job, subOut);
+					logger.info(String.format("submit job %s", subIn.toString()));
+					if (taskMgr.getHadoopJobTracker()!=null){
+						job.submit();
+					}else{
+						job.waitForCompletion(true);
 					}
+					jobIdList.add(job.getJobID().toString());
 				}
 			}
-			job.setJarByClass(MyMapper.class);
-			job.setMapperClass(MyMapper.class);
-			job.setNumReduceTasks(0);//no reducer
-			job.setOutputKeyClass(Text.class);
-			job.setOutputValueClass(Text.class);
-			Path in = new Path(taskMgr.getHadoopCrawledItemFolder() + "/" + inDir);
-			FileInputFormat.addInputPath(job, in);
-			FileInputFormat.setInputDirRecursive(job, true);
-			Path out = new Path(taskMgr.getHadoopCrawledItemFolder() + "/" + outDir);
-			fs.delete(out, true);
-			FileOutputFormat.setOutputPath(job, out);
-			MultipleOutputs.addNamedOutput(job, NAMED_OUTPUT_TXT, TextOutputFormat.class, Text.class, Text.class);
-			if (taskMgr.getHadoopJobTracker()!=null){
-				job.submit();
-			}else{
-				job.waitForCompletion(true);
-			}
-			return job.getJobID().toString();
+			return jobIdList;
 		}catch (Exception e) {
 			logger.error("", e);
 		}
