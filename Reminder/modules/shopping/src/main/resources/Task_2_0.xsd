@@ -261,7 +261,7 @@ dsm set to hbase means generate hbase entry for each product browsed.</xs:docume
 				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
-		<xs:attribute name="mbMemoryNeeded" type="xs:int" use="optional" default="512"/>
+		<xs:attribute name="mbMemoryNeeded" type="xs:int" use="optional" default="1024"/>
 	</xs:complexType>
 	<xs:complexType name="BrowseCatType">
 		<xs:sequence>

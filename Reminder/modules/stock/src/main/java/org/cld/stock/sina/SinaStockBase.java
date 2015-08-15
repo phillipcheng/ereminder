@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +18,7 @@ import org.apache.hadoop.mapred.RunningJob;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.CrawledItemId;
+import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.CmdStatus;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
@@ -24,12 +26,13 @@ import org.cld.util.CompareUtil;
 import org.cld.etl.csv.CsvReformatMapredLauncher;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
+import org.cld.datacrawl.task.BrowseProductTaskConf;
 import org.cld.datacrawl.task.TabularCSVConvertTask;
 import org.cld.datacrawl.test.TestBase;
-
-
+import org.cld.stock.ose.StockConst;
 import org.cld.stock.sina.ETLUtil;
 import org.cld.stock.sina.StockConfig;
+import org.cld.stock.sina.jobs.IPODateMapper;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 import org.xml.mytaskdef.ParsedTasksDef;
 import org.xml.taskdef.AttributeType;
@@ -40,21 +43,32 @@ public class SinaStockBase extends TestBase{
 	
 	public static final String MarketId_HS_A ="hs_a"; //hu sheng A gu
 	public static final String MarketId_HS_A_ST="shfxjs"; //上证所风险警示板
-
+	
+	public static final String HS_A_START_DATE="1989-01-01";
+	public static Date date_HS_A_START_DATE=null;
+	public static String HS_A_FIRST_DATE_DETAIL_TRADE= "2004-10-1";
+	public static String HS_A_FIRST_DATE_RZRQ= "2012-11-12";
+	public static String HS_A_FIRST_DATE_DZJY= "2003-01-08";
+	static{
+		try{
+			date_HS_A_START_DATE = sdf.parse(HS_A_START_DATE);
+		}catch(Exception e){
+			logger.error("", e);
+		}
+	}
 	//for test market
 	public static final String MarketId_Test = "test";
 	public static final String Test_SD = "2014-01-10";
-	public static final String Test_SHORT_SD = "2015-07-01";
-	public static final String Test_D1 = "2015-07-10";
-	public static final String Test_D2 = "2015-07-20";//only increase date
-	public static final String Test_D3 = "2015-08-01";//also increase stock
-	public static final String Test_D4 = "2015-08-04";//only increase date
+	public static final String Test_SHORT_SD = "2015-05-01"; //this should before all Test_Dx, since this is used as the start date, and Test_Dx is used as end date.
+	public static final String Test_D1 = "2015-05-10";
+	public static final String Test_D2 = "2015-05-20";//only increase date
+	public static final String Test_D3 = "2015-06-10";//also increase stock
+	public static final String Test_D4 = "2015-07-01";//only increase date
 	public static Date date_Test_SD = null;
 	public static Date date_Test_D1 = null;
 	public static Date date_Test_D2 = null;
 	public static Date date_Test_D3 = null;
 	public static Date date_Test_D4 = null;
-	
 	static{
 		try{
 			date_Test_SD = sdf.parse(Test_SD);
@@ -66,21 +80,16 @@ public class SinaStockBase extends TestBase{
 			logger.error("", e);
 		}
 	}
-	
 	public static final String[] Test_D1_Stocks = new String[]{"sh600000", "sh601766"};
 	public static final String[] Test_D3_Stocks = new String[]{"sh600000", "sh601766", "sz000001"};
 	
-	public static final int HS_A_START_YEAR=1990;
-	public static String HS_A_FIRST_DATE_DETAIL_TRADE= "2004-10-1";
-	public static String HS_A_FIRST_DATE_RZRQ= "2012-11-12";
-	public static String HS_A_FIRST_DATE_DZJY= "2003-01-08";
-	
 	public static String KEY_IDS = "ids";
-	
 	public static String idKeySep = "_";
 	
 	private String marketId = MarketId_Test;
 	private String propFile = "client1-v2.properties";
+	private Date startDate;
+	private Date endDate;
 	private String itemsFolder;
    
 	private DataStoreManager dsm = null;
@@ -91,11 +100,13 @@ public class SinaStockBase extends TestBase{
 		return dsm;
 	}
 	
-	public SinaStockBase(String propFile, String marketId){
+	public SinaStockBase(String propFile, String marketId, Date sd, Date ed){
 		super();
 		this.marketId = marketId;
 		super.setProp(propFile);
 		this.propFile = propFile;
+		this.startDate = sd;
+		this.endDate = ed;
 		this.itemsFolder = this.cconf.getTaskMgr().getHadoopCrawledItemFolder();
 		dsm = this.cconf.getDsm(CrawlConf.crawlDsManager_Value_Hbase);
 		
@@ -254,6 +265,14 @@ public class SinaStockBase extends TestBase{
 		}
 	}
 	
+	private String getDateString(Date date){
+		String str=null;
+		if (date!=null){
+			str = sdf.format(date);
+		}
+		return str;
+	}
+	
 	public void runAllCmd(Date startDate, Date endDate) throws InterruptedException {
 		Date lastRunDate = null;
 		List<String> curIds = null; 
@@ -273,6 +292,7 @@ public class SinaStockBase extends TestBase{
 				ciIds = dsm.getCrawledItem(prevMarketId, StockConfig.SINA_STOCK_IDS, CrawledItem.class);
 				curIds = (List<String>) ciIds.getParam(KEY_IDS);
 			}else{
+				//crawl the ids again
 				ciIds = run_browse_idlist(marketId, endDate);
 				ciIds.getId().setId(curMarketId);
 				curIds = (List<String>) ciIds.getParam(KEY_IDS);
@@ -302,6 +322,20 @@ public class SinaStockBase extends TestBase{
 						new CrawledItemId(deltaMarketId, StockConfig.SINA_STOCK_IDS, endDate));
 				ciDelta.addParam(KEY_IDS, deltaIds);
 				dsm.addUpdateCrawledItem(ciDelta, null);
+				
+				//update ipodate (lastRunDate,endDate] for curMarket
+				runCmd(StockConfig.SINA_STOCK_IPODate, curMarketId, getDateString(lastRunDate), getDateString(endDate));
+				CrawledItem prevIPODate = dsm.getCrawledItem(prevMarketId, StockConfig.SINA_STOCK_IPODate, CrawledItem.class);
+				CrawledItem curIPODate = dsm.getCrawledItem(curMarketId, StockConfig.SINA_STOCK_IPODate, CrawledItem.class);
+				Map<String, String> preMap = (Map<String, String>) prevIPODate.getParam(StockConfig.SINA_STOCK_DATA);
+				Map<String, String> curMap = (Map<String, String>) curIPODate.getParam(StockConfig.SINA_STOCK_DATA);
+				if (curMap==null){
+					curMap = new HashMap<String,String>();
+				}
+				curMap.putAll(preMap);
+				curIPODate.addParam(StockConfig.SINA_STOCK_DATA, curMap);
+				dsm.addUpdateCrawledItem(curIPODate, null);
+				
 				//update the mcs
 				mcs.getId().setCreateTime(endDate);
 				dsm.addUpdateCrawledItem(mcs, null);
@@ -322,16 +356,17 @@ public class SinaStockBase extends TestBase{
 				}
 			}
 		}else{
+			//store the market-id-crawl for curMarket
 			ciIds = run_browse_idlist(marketId, endDate);
 			ciIds.getId().setId(curMarketId);
 			curIds = (List<String>) ciIds.getParam(KEY_IDS);
-			
 			logger.info(String.format("market %s 1st time fetch with size %d.", marketId, curIds.size()));
+			dsm.addUpdateCrawledItem(ciIds, null);
+			//store ipodate
+			runCmd(StockConfig.SINA_STOCK_IPODate, curMarketId, getDateString(startDate), getDateString(endDate));
 			//store the market-id-crawl status
 			mcs = new CmdStatus(marketId, StockConfig.SINA_STOCK_IDS, endDate, startDate, true);
 			dsm.addUpdateCrawledItem(mcs, null);
-			//store the market-id-crawl
-			dsm.addUpdateCrawledItem(ciIds, null);
 			//do the (null, enDate) for the current market
 			runAllCmd(curMarketId, startDate, endDate, CMDTYPE_ALL);
 		}
@@ -379,7 +414,7 @@ public class SinaStockBase extends TestBase{
 							jobStatusMap.put(jid, newStatus);
 							update = true;
 						}
-						
+						logger.info(String.format("job %s got status %d", jid, newStatus));
 					}catch(Exception e){
 						logger.error("", e);
 					}
@@ -390,15 +425,16 @@ public class SinaStockBase extends TestBase{
 			}
 		}
 	}
-	
-	
-	/****
-	 * 财务数据
-	 * @throws ParseException 
-	 */
-	//利润表
-	//资产负债表
-	//现金流量表
+
+	public void run_tradedetail_checkdownload(){
+		TradeDetailCheckDownload.launch(cconf, this.endDate);
+	}
+	public void run_tradedetail_postprocess(){
+		TradeDetailPostProcess.launch(cconf, this.endDate);
+	}
+	public void run_multioutput_postprocess(){
+		MultiOutputPostProcess.postProcessMultiOutput(cconf);
+	}
 	//crawl financial report history by market to hdfs
 	public void run_browse_fr_history() throws ParseException{//till running time
 		//set output to null, needs follow up etl
@@ -430,35 +466,11 @@ public class SinaStockBase extends TestBase{
 		}
 	}
 	
-	public void postProcess(){
-		Map<String, Object> taskParams = new HashMap<String, Object>();
-		taskParams.put(CrawlConf.taskParamCConf_Key, cconf);
-		for (String conf: StockConfig.allConf){
-			List<Task> tl = cconf.getTaskMgr().setUpSite(conf+".xml", null, this.getClass().getClassLoader(), taskParams);
-			if (tl.size()>0){
-				ParsedTasksDef ptd = tl.get(0).initParsedTaskDef(taskParams);
-				Map<String, ParsedBrowsePrd> bptMap = ptd.getBrowsePrdTaskMap();
-				for (ParsedBrowsePrd pbp: bptMap.values()){
-					Map<String, AttributeType> attrMap = pbp.getPdtAttrMap();
-					AttributeType at = attrMap.get("RowCsvName");
-					if (at!=null){
-						String csvnames = at.getValue().getValue();
-						String[] fps = csvnames.split(",");
-						if (fps.length>1){
-							CsvTransformType csvt = pbp.getBrowsePrdTaskType().getBaseBrowseTask().getCsvtransform();
-							if (csvt!=null){
-								String outputDirExp = csvt.getOutputDir().getValue();
-								int startIdx = outputDirExp.indexOf("sina-stock");
-								int endIdx = outputDirExp.indexOf("/");
-								if (startIdx!=-1 && endIdx!=-1){
-									String rootFolder = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + outputDirExp.substring(startIdx, endIdx);
-									PostProcessUtil.splitFolder(cconf, rootFolder, fps);
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+	public String getMarketId() {
+		return marketId;
+	}
+
+	public void setMarketId(String marketId) {
+		this.marketId = marketId;
 	}
 }

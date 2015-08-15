@@ -361,13 +361,13 @@ public class CrawlConf implements AppConf {
 		if (key==null || "".equals(key)){
 			key="product";
 		}
-		logger.info("prdKey to fetch:" + key);
+		logger.debug("prdKey to fetch:" + key);
 		ProductConf prdConf = this.prdConfMap.get(key);
 		if (prdConf.getPrdHandler()==null){
 			logger.error(String.format("handler class for product type:%s not specified.", key));
 			return null;
 		}
-		logger.info("prdConf:" + prdConf);
+		logger.debug("prdConf:" + prdConf);
 		try {
 			Product p = prdConf.getProductClass().newInstance();
 			p.setItemType(key);

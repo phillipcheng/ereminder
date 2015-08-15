@@ -1603,6 +1603,9 @@ List of notes that are transferred into accounts receivable as the issuer fails 
 出售尚未到期的持有至到期投资金额
 Sales amounts of undue held-to-maturity investments
 
+短期投资跌价准备合计
+Impairment for current investment 
+
 出售尚未到期的持有至到期投资明细
 List of sales of the undue held-to-maturity investment
 
@@ -3030,6 +3033,9 @@ Decrease Of Engineering Materials
 
 工程物资减值损失
 Engineering material impairment losses
+
+委托贷款减值准备 
+Less: Impairment for Entrusted loan 
 
 工程物资减值准备减少额合计
 Total decrease amounts of engineering material impairment reserves

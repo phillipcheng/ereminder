@@ -76,7 +76,6 @@ public class MultiRowTablesAsCSV extends AbstractCrawlItemToCSV{
 	@Override
 	public List<String[]> getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		init(ci, paramMap);
-		String keyid = (String) ci.getParam(FIELD_NAME_KEYID);
 		List<Integer> colnums = (List<Integer>) ci.getParam(FIELD_NAME_COLNUM);
 		List<String> rowcsvs = (List<String>) ci.getParam(FIELD_NAME_ROWCSV);
 		List<Integer> dateIdx = (List<Integer>) ci.getParam(FIELD_NAME_RowDateIdx);

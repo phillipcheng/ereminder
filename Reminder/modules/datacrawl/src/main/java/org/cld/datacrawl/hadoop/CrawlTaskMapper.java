@@ -70,7 +70,7 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 			if (csvtrans==null){
 				List<Task> tl = t.runMyself(crawlTaskParams, null);
 				if (tl!=null && tl.size()>0){
-					HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), tl, hadoopCrawlTaskParams, null, false);
+					HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), tl, hadoopCrawlTaskParams, null, false, this.getClass().getName(), null);
 				}
 				logger.info(String.format("I finished and send out %d tasks.", tl!=null?tl.size():0));
 			}else {

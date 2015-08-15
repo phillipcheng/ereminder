@@ -96,7 +96,6 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 	@Override
 	public List<String[]> getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		init(ci, paramMap);
-		String keyid = (String) ci.getParam(FIELD_NAME_KEYID);
 		List<String> ls = (List<String>)ci.getParam(FIELD_NAME_DATA);
 		String dataType = DATA_TYPE_NUMBER;
 		if (ci.getParam(DATA_TYPE_KEY)!=null){

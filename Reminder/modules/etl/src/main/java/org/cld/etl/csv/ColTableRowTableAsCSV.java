@@ -56,8 +56,6 @@ public class ColTableRowTableAsCSV extends AbstractCrawlItemToCSV{
 	public List<String[]> getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		init(ci, paramMap);
 		
-		String keyid = (String) ci.getParam(FIELD_NAME_KEYID);
-		
 		int colDateIdx = -1;
 		if (ci.getParam(FIELD_NAME_ColDateIdx)!=null){
 			colDateIdx = (int) ci.getParam(FIELD_NAME_ColDateIdx);

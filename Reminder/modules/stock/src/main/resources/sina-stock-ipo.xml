@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="sina-stock-ipo" productType="default">
+	<PrdTask>
+		<baseBrowseTask enableJS="true" taskName="ipo" dsm="hdfs">
+			<param name="year"/>
+			<param name="month"/><!-- 01 - 12-->
+			<param name="marketId"/>
+			<param name="mapper" value="org.cld.stock.sina.jobs.IPODateMapper"/>
+			<param name="reducer" value="org.cld.stock.sina.jobs.IPODateReducer"/>
+			<param name="HasHeader" value="false" type="boolean"/>
+			<startUrl value="http://vip.stock.finance.sina.com.cn/corp/view/vCI_CorpInfoLink.php?stockid=600028&amp;InMarketDate=[year][month]"/>
+			<userAttribute name="id">
+				<value value="year + '_' + month" toType="string" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="5" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="data1">
+				<value value="//table[@id='CirculateShareholderTable']/tbody/tr[position()>1]/td" optional="true" toType="list"/>
+			</userAttribute>
+			<userAttribute name="RowCsvName">
+				<value value="default" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<pageVerify operator="!=">
+				<lhs value="//table[@id='CirculateShareholderTable']/tbody/tr[1]/td"></lhs>
+				<rhs value="null"></rhs>
+			</pageVerify>
+			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
+			</csvtransform>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>

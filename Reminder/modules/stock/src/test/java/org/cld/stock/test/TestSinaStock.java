@@ -10,9 +10,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.task.TabularCSVConvertTask;
 import org.cld.datastore.entity.CrawledItem;
-import org.cld.stock.sina.PostProcessUtil;
+import org.cld.stock.sina.ETLUtil;
+import org.cld.stock.sina.MultiOutputPostProcess;
 import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.StockConfig;
+import org.cld.stock.sina.TradeDetailCheckDownload;
+import org.cld.stock.sina.TradeDetailPostProcess;
+import org.cld.stock.sina.jobs.IPODateMapper;
 import org.cld.taskmgr.TaskMgr;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,8 +27,18 @@ public class TestSinaStock {
 	public static final String MarketId_HS_A ="hs_a"; //hu sheng A gu
 	public static final String MarketId_Test = "test";
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	private static String START_DATE = "2014-11-10";
+	private static String START_DATE = "2014-11-01";
 	private static String END_DATE = "2014-11-10";
+	private static Date startDate=null;
+	private static Date endDate = null;
+	static{
+		try{
+			startDate = sdf.parse(START_DATE);
+			endDate = sdf.parse(END_DATE);
+		}catch(Exception e){
+			logger.error("", e);
+		}
+	}
 	
 	private String marketId = MarketId_Test;
 	private String propFile = "client1-v2.properties";
@@ -37,7 +51,7 @@ public class TestSinaStock {
 	
 	@Before
 	public void setUp(){
-		ssb = new SinaStockBase(propFile, marketId);
+		ssb = new SinaStockBase(propFile, marketId, startDate, endDate);
 		ssb.getCconf().getTaskMgr().getHadoopCrawledItemFolder();
 	}
 
@@ -60,14 +74,21 @@ public class TestSinaStock {
 		CrawledItem ci = ssb.run_browse_idlist(this.marketId, ed);
 		ssb.getDsm().addUpdateCrawledItem(ci, null);
 	}
-	
+	@Test
+	public void testIPODate() throws Exception{
+		ssb.runCmd(StockConfig.SINA_STOCK_IPODate, MarketId_HS_A, "2015-05-01", sdf.format(new Date()));
+	}
+	@Test
+	public void testGetStockIPO(){
+		ETLUtil.getIPODateByStockId(MarketId_Test, "600191", ssb.getCconf());
+	}
 	@Test
 	public void testRunAllCmd1() throws Exception{
-		ssb.runAllCmd(null, SinaStockBase.date_Test_D1);
+		ssb.runAllCmd(SinaStockBase.date_Test_D1, SinaStockBase.date_Test_D2);
 	}
 	@Test
 	public void testRunAllCmd2() throws Exception{
-		ssb.runAllCmd(null, SinaStockBase.date_Test_D2);
+		ssb.runAllCmd(SinaStockBase.date_Test_D1, SinaStockBase.date_Test_D3);
 	}
 	@Test
 	public void testRunAllCmd3() throws Exception{
@@ -75,18 +96,13 @@ public class TestSinaStock {
 	}
 	
 	@Test
-	public void testOnePostProcess() throws Exception{
-		PostProcessUtil.splitFolder(ssb.getCconf(), "/reminder/items/sina-stock-corp-related-other", 
-				new String[]{"concepts","industries"});
-	}
-	@Test
-	public void testAllPostProcess() throws Exception{
-		ssb.postProcess();
+	public void testPostProcessMultiOutput() throws Exception{
+		MultiOutputPostProcess.postProcessMultiOutput(ssb.getCconf());
 	}
 	
 	@Test
 	public void run_task_1() throws Exception{
-		//ssb.run_task("run_corp_manager_2015_07_19_12_14_47_437_history_true_MarketId_test_");
+		ssb.run_task(new String[]{"run_corp_manager_2015_07_19_12_14_47_437_history_true_MarketId_test_"});
 	}
 	
 	/*****
@@ -95,13 +111,22 @@ public class TestSinaStock {
 	//成交明细
 	@Test
 	public void run_browse_tradedetail1() throws ParseException{
-		ssb.runCmd(StockConfig.SINA_STOCK_TRADE_DETAIL, MarketId_Test, null, START_DATE);
+		ssb.runCmd(StockConfig.SINA_STOCK_TRADE_DETAIL, MarketId_Test, START_DATE, END_DATE);
 	}
 	@Test
 	public void run_browse_tradedetail2() throws ParseException{
 		String sd = "2015-07-15";
 		ssb.runCmd(StockConfig.SINA_STOCK_TRADE_DETAIL, MarketId_Test, sd, null);
 	}
+	@Test
+	public void tradedetail_postprocess() {
+		TradeDetailPostProcess.launch(ssb.getCconf(), SinaStockBase.date_Test_D2);
+	}
+	@Test
+	public void tradedetail_checkdownload() {
+		TradeDetailCheckDownload.launch(ssb.getCconf(), SinaStockBase.date_Test_D2);
+	}
+	
 	//融资融券
 	@Test
 	public void run_browse_market_rzrq1() throws ParseException{
@@ -300,7 +325,7 @@ public class TestSinaStock {
 	
 	//Finance Guideline
 	@Test
-	public void run_fr_finance_guideline1(){
+	public void run_fr_finance_guideline1(){//600028,600026 ipo date is error
 		ssb.runCmd(StockConfig.SINA_STOCK_FR_FINANCE_GUIDELINE_YEAR, MarketId_Test, null, START_DATE);
 	}
 	@Test

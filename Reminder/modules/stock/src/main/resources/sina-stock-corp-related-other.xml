@@ -13,14 +13,22 @@
 				<value value="2,2" toType="list" toEntryType="int"/>
 			</userAttribute>
 			<userAttribute name="data1">
-				<value value="//div[@id='con02-0']/table[1]/tbody/tr[count(td)>1]/td" toType="list" toEntryType="string"/>
+				<value value="//div[@id='con02-0']/table[1]/tbody/tr[count(td)>1]/td" toType="list" toEntryType="string" optional="true"/>
 			</userAttribute>
 			<userAttribute name="data2">
-				<value value="//div[@id='con02-0']/table[2]/tbody/tr[count(td)>1]/td" toType="list" toEntryType="string"/>
+				<value value="//div[@id='con02-0']/table[2]/tbody/tr[count(td)>1]/td" toType="list" toEntryType="string" optional="true"/>
 			</userAttribute>
 			<userAttribute name="RowCsvName">
 				<value value="industries,concepts" toType="list" toEntryType="string"/>
 			</userAttribute>
+			<pageVerify operator="!=">
+				<lhs value="//div[@id='con02-0']/table[1]/tbody/tr[1]/td"></lhs>
+				<rhs value="null"></rhs>
+			</pageVerify>
+			<pageVerify operator="!=">
+				<lhs value="//div[@id='con02-0']/table[2]/tbody/tr[1]/td"></lhs>
+				<rhs value="null"></rhs>
+			</pageVerify>
 			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byJobMulti"><!-- output 2 files -->
 				<outputDir value="'sina-stock-corp-related-other/'+endDate" fromType="expression"/>
 			</csvtransform>

@@ -36,6 +36,7 @@ public abstract class AbstractCrawlItemToCSV {
 	protected Date endDate = null;
 	protected boolean genHeader = false;
 	protected boolean hasHeader = true;
+	protected String keyid = "unused";
 	
 	private static Logger logger =  LogManager.getLogger(AbstractCrawlItemToCSV.class);
 	
@@ -65,7 +66,10 @@ public abstract class AbstractCrawlItemToCSV {
 		if (bHasHeader!=null){
 			hasHeader = bHasHeader.booleanValue();
 		}
-		
+		String key = (String) ci.getParam(FIELD_NAME_KEYID);
+		if (key!=null){
+			keyid = key;
+		}
 	}
 	
 	//true: date (- [startDate, endDate)

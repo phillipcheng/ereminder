@@ -1,3 +1,5 @@
+export HADOOP_USER_CLASSPATH_FIRST=true
+
 Date:
 SH:
 listed:1061

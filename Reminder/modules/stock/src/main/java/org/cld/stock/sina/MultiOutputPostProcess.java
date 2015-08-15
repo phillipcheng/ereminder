@@ -1,5 +1,9 @@
 package org.cld.stock.sina;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
@@ -8,10 +12,15 @@ import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
+import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
+import org.xml.mytaskdef.ParsedBrowsePrd;
+import org.xml.mytaskdef.ParsedTasksDef;
+import org.xml.taskdef.AttributeType;
+import org.xml.taskdef.CsvTransformType;
 
-public class PostProcessUtil {
-	private static Logger logger =  LogManager.getLogger(PostProcessUtil.class);
+public class MultiOutputPostProcess {
+	private static Logger logger =  LogManager.getLogger(MultiOutputPostProcess.class);
 	
 	private static String whichPrefix(String[] filePrefix, String srcFileName){
 		for (String fp:filePrefix){
@@ -55,6 +64,38 @@ public class PostProcessUtil {
 			}
 		}catch(Exception e){
 			logger.error("",e);
+		}
+	}
+	
+	public static void postProcessMultiOutput(CrawlConf cconf){
+		Map<String, Object> taskParams = new HashMap<String, Object>();
+		taskParams.put(CrawlConf.taskParamCConf_Key, cconf);
+		for (String conf: StockConfig.allConf){
+			List<Task> tl = cconf.getTaskMgr().setUpSite(conf+".xml", null, MultiOutputPostProcess.class.getClassLoader(), taskParams);
+			if (tl.size()>0){
+				ParsedTasksDef ptd = tl.get(0).initParsedTaskDef(taskParams);
+				Map<String, ParsedBrowsePrd> bptMap = ptd.getBrowsePrdTaskMap();
+				for (ParsedBrowsePrd pbp: bptMap.values()){
+					Map<String, AttributeType> attrMap = pbp.getPdtAttrMap();
+					AttributeType at = attrMap.get("RowCsvName");
+					if (at!=null){
+						String csvnames = at.getValue().getValue();
+						String[] fps = csvnames.split(",");
+						if (fps.length>1){
+							CsvTransformType csvt = pbp.getBrowsePrdTaskType().getBaseBrowseTask().getCsvtransform();
+							if (csvt!=null){
+								String outputDirExp = csvt.getOutputDir().getValue();
+								int startIdx = outputDirExp.indexOf("sina-stock");
+								int endIdx = outputDirExp.indexOf("/");
+								if (startIdx!=-1 && endIdx!=-1){
+									String rootFolder = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + outputDirExp.substring(startIdx, endIdx);
+									MultiOutputPostProcess.splitFolder(cconf, rootFolder, fps);
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 

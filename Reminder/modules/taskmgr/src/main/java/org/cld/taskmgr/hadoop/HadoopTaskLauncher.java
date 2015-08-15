@@ -15,6 +15,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -35,7 +36,7 @@ public class HadoopTaskLauncher {
 
 	private static Logger logger =  LogManager.getLogger(HadoopTaskLauncher.class);
 	public static final String NAMED_OUTPUT_TXT = "txt";
-	private static final int DEFAULT_MB_MEM=256;
+	private static final int DEFAULT_MB_MEM=1024;
 	
 	public static boolean hasMultipleOutput(Task t){
 		if (t.getParsedTaskDef()==null){//not a browse task
@@ -59,7 +60,7 @@ public class HadoopTaskLauncher {
 		}
 		BrowseTaskType btt = t.getBrowseTask(t.getName());
 		if (btt!=null){
-			if (btt.getCsvtransform()!=null){
+			if (btt.getCsvtransform()!=null && btt.getCsvtransform().getOutputDir()!=null){
 				return (String)TaskUtil.eval(btt.getCsvtransform().getOutputDir(), t.getParamMap());
 			}else{
 				return null;
@@ -126,7 +127,7 @@ public class HadoopTaskLauncher {
 	}
 	
 	public static String executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> hadoopParams, 
-			String sourceName, boolean sync){
+			String sourceName, boolean sync, String mapperClass, String reducerClass){
 		TaskMgr taskMgr = nc.getTaskMgr();
 		Configuration conf = getHadoopConf(nc);
 		//generate task list file
@@ -148,7 +149,7 @@ public class HadoopTaskLauncher {
 			FSDataOutputStream fin = fs.create(fileNamePath);
 			fin.writeBytes(fileContent.toString());
 			fin.close();
-			return executeTasks(nc, hadoopParams, fs, new String[]{taskFileName}, taskList.get(0), sync);
+			return executeTasks(nc, hadoopParams, fs, new String[]{taskFileName}, taskList.get(0), sync, mapperClass, reducerClass);
 		}catch (Exception e) {
 			logger.error("", e);
 		}
@@ -156,7 +157,7 @@ public class HadoopTaskLauncher {
 	}
 	
 	public static String executeTasksByFile(NodeConf nc, Map<String, String> hadoopParams, 
-			String[] sourceName, Map<String, Object> cconfMap){
+			String[] sourceName, Map<String, Object> cconfMap, String mapperClass, String reducerClass){
 		TaskMgr taskMgr = nc.getTaskMgr();
 		Configuration conf = getHadoopConf(nc);
 		//generate task list file
@@ -166,7 +167,8 @@ public class HadoopTaskLauncher {
 			fs = FileSystem.get(conf);
 			String[] taskFileName = new String[sourceName.length];
 			for (int i=0; i<taskFileName.length; i++){
-				taskFileName[i]= taskMgr.getHdfsTaskFolder() + "/" + sourceName[i];
+				String fileName = sourceName[i].trim();
+				taskFileName[i]= taskMgr.getHdfsTaskFolder() + "/" + fileName;
 			}
 			Path taskPath = new Path(taskFileName[0]);
 			if (fs.exists(taskPath)){
@@ -174,10 +176,13 @@ public class HadoopTaskLauncher {
 				String firstTaskStr = (new BufferedReader(new InputStreamReader(input))).readLine();
 				input.close();
 				Task t0 = TaskUtil.taskFromJson(firstTaskStr);
+				if (t0.getConfName()!=null){
+					taskMgr.setUpSite(t0.getConfName(), null, HadoopTaskLauncher.class.getClassLoader(), cconfMap);
+				}
 				logger.debug("firstTaskStr:" + firstTaskStr);
 				logger.debug("t0:" + t0.toString());
 				t0.initParsedTaskDef(cconfMap);
-				return executeTasks(nc, hadoopParams,fs, taskFileName, t0, false);
+				return executeTasks(nc, hadoopParams,fs, taskFileName, t0, false, mapperClass, reducerClass);
 			}else{
 				logger.error(String.format("task file %s not exist.", taskFileName[0]));
 			}
@@ -198,7 +203,7 @@ public class HadoopTaskLauncher {
 	 * @return jobId
 	 */
 	public static String executeTasks(NodeConf nc, Map<String, String> hadoopParams, FileSystem fs, 
-			String[] taskFileName, Task t, boolean sync){
+			String[] taskFileName, Task t, boolean sync, String mapperClass, String reducerClass){
 		try{
 			TaskMgr taskMgr = nc.getTaskMgr();
 			Configuration conf = getHadoopConf(nc);
@@ -226,13 +231,17 @@ public class HadoopTaskLauncher {
 					}
 				}
 			}
-			String className = taskMgr.getHadoopTaskMapperClassName();
-			Class<? extends Mapper> mapperClazz = (Class<? extends Mapper>) Class.forName(className);
-
+			Class<? extends Mapper> mapperClazz = (Class<? extends Mapper>) Class.forName(mapperClass);
 
 			job.setJarByClass(mapperClazz);
 			job.setMapperClass(mapperClazz);
-			job.setNumReduceTasks(0);//no reducer
+			if (reducerClass==null)
+				job.setNumReduceTasks(0);//no reducer
+			else{
+				Class<? extends Reducer> reducerClazz = (Class<? extends Reducer>) Class.forName(reducerClass);
+				job.setReducerClass(reducerClazz);
+				job.setNumReduceTasks(1);
+			}
 			job.setOutputKeyClass(Text.class);
 			job.setOutputValueClass(Text.class);
 			job.setInputFormatClass(NLineInputFormat.class);

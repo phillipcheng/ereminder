@@ -21,6 +21,8 @@ public class DownloadUtil {
 	
 	private static Logger logger =  LogManager.getLogger(DownloadUtil.class);
 	
+	public static int tryMax = 3;
+	
 	private static InputStream getInputStream(String url, boolean useProxy, String proxyIp, int port){
 		InputStream is=null;
 		try{
@@ -36,12 +38,12 @@ public class DownloadUtil {
 		}
 		return is;
 	}
+	
 	public static void downloadFile(String url, boolean useProxy, String proxyIp, int port, 
 			String directory, String fileName){
 		InputStream is = null;
 		FileOutputStream fos = null;
 		try{
-			int tryMax=3;
 			int tryNum=0;
 			while (is==null && tryNum<tryMax){
 				is = getInputStream(url, useProxy, proxyIp, port);
@@ -81,10 +83,18 @@ public class DownloadUtil {
 			Configuration conf = new Configuration();
 			conf.set("fs.defaultFS", fsDefaultName);
 			fs = FileSystem.get(conf);//fs can't be closed
-			is = getInputStream(url, useProxy, proxyIp, port);
-			Path fileNamePath = new Path(filePath);
-			fos = fs.create(fileNamePath);
-			fos.write(IOUtils.toByteArray(is));
+			int tryNum=0;
+			while (is==null && tryNum<tryMax){
+				is = getInputStream(url, useProxy, proxyIp, port);
+				tryNum++;
+			}
+			if (is!=null){
+				Path fileNamePath = new Path(filePath);
+				fos = fs.create(fileNamePath);
+				fos.write(IOUtils.toByteArray(is));
+			}else{
+				logger.error(String.format("try max %d reached.", tryNum));
+			}
 		}catch(Exception e){
 			logger.error("",e);
 		}finally{

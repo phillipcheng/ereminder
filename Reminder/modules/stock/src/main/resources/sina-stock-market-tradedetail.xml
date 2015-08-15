@@ -5,14 +5,12 @@ rootVolume="999990"
 storeId="sina-stock-market-tradedetail" 
 productType="default">
 	<PrdTask tryPattern="false">
-		<baseBrowseTask enableJS="true" 
-		taskName="market-tradedetail" 
-		dsm="hdfs"
-		mbMemoryNeeded="256">
+		<baseBrowseTask enableJS="true"  taskName="market-tradedetail"  dsm="hdfs" mbMemoryNeeded="256">
 			<param name="stockid"/>
 			<param name="date"/>
+			<param name="endDate" type="string"/>
 			<startUrl value="http://market.finance.sina.com.cn/downxls.php?date=[date]&amp;symbol=[stockid]"/>
-			<cachePage value="'trade_detail/' + date.substring(0,4) + '/' + date.substring(5,7) + '/' + date.substring(8,10) + '/' + stockid + '_' + date + '.xls'" fromType="expression"/>
+			<cachePage value="'in/' + endDate + '/' + date.substring(0,4) + '/' + date.substring(5,7) + '/' + date.substring(8,10) + '/' + stockid + '_' + date + '.xls'" fromType="expression"/>
 			<!-- date=2008-08-18 symbol=sh601766 -->
 		</baseBrowseTask>
 	</PrdTask>

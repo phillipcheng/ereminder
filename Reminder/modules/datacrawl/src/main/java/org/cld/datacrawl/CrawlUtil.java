@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.cfg.Configuration;
@@ -15,6 +16,7 @@ import com.gargoylesoftware.htmlunit.SilentCssErrorHandler;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebConnection;
 
+import org.cld.datacrawl.hadoop.CrawlTaskMapper;
 import org.cld.datastore.DBConf;
 import org.cld.datastore.DBFactory;
 import org.cld.datastore.impl.HibernateDataStoreManagerImpl;
@@ -54,7 +56,7 @@ public class CrawlUtil {
 		WebConnection wc = new InterceptWebConnection(webClient, skipUrls);
 		webClient.setWebConnection(wc);
 		
-		//LogManager.getLogger("com.gargoylesoftware.htmlunit").setLevel(Level.OFF); 
+		java.util.logging.Logger.getLogger("com.gargoylesoftware").setLevel(java.util.logging.Level.OFF); 
 
 	    webClient.setCssErrorHandler(new SilentCssErrorHandler());
 
@@ -135,10 +137,25 @@ public class CrawlUtil {
 	 */
 	public static String hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, 
 			String sourceName, boolean sync){
+		return hadoopExecuteCrawlTasksWithReducer(crawlPropertyFile, cconf, tlist, sourceName, sync, 
+				CrawlTaskMapper.class.getName(), null, null);
+	}
+	
+	public static String hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, 
+			String sourceName, boolean sync, Map<String, String> hadoopJobParams){
+		return hadoopExecuteCrawlTasksWithReducer(crawlPropertyFile, cconf, tlist, sourceName, sync, 
+				CrawlTaskMapper.class.getName(), null, hadoopJobParams);
+	}
+	
+	public static String hadoopExecuteCrawlTasksWithReducer(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, 
+			String sourceName, boolean sync, String mapperClass, String reducerClass, Map<String, String> hadoopJobParams){
 		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();
 		hadoopCrawlTaskParams.put(CRAWL_PROPERTIES, crawlPropertyFile);
+		if (hadoopJobParams!=null){
+			hadoopCrawlTaskParams.putAll(hadoopJobParams);
+		}
 		return HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), tlist, hadoopCrawlTaskParams, 
-				sourceName, sync);
+				sourceName, sync, mapperClass, reducerClass);
 	}
 	
 	public static String hadoopExecuteCrawlTasksByFile(String crawlPropertyFile, CrawlConf cconf, String[] sourceName){
@@ -147,7 +164,7 @@ public class CrawlUtil {
 		Map<String, Object> cconfParams = new HashMap<String, Object>();
 		cconfParams.put(TaskMgr.TASK_RUN_PARAM_CCONF, cconf);
 		return HadoopTaskLauncher.executeTasksByFile(cconf.getNodeConf(), hadoopCrawlTaskParams, 
-				sourceName, cconfParams);
+				sourceName, cconfParams, CrawlTaskMapper.class.getName(), null);
 	}
 	
 	public static void downloadPage(CrawlConf cconf, String url, String fileName, String fileSaveDir){

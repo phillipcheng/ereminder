@@ -1,6 +1,7 @@
 package org.cld.stock.sina;
 
 import java.lang.reflect.Method;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -15,7 +16,7 @@ public class RunSinaStock {
 		return "propFile marketId cmd startDate endDate";
 	}
 	
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
 		String propFile="";
 		String marketId ="";
 		String cmd="";
@@ -24,7 +25,6 @@ public class RunSinaStock {
 		if (args.length>=5){
 			propFile = args[0]; //
 			marketId = args[1]; // 
-			SinaStockBase ssb = new SinaStockBase(propFile, marketId);
 			cmd = args[2];  //
 			String sd = args[3];
 			if (!"-".equals(sd)){
@@ -36,13 +36,19 @@ public class RunSinaStock {
 			}
 			Date startDate = null;
 			Date endDate = null;
-			if (strStartDate!=null){
-				startDate = sdf.parse(strStartDate);
+			try {
+				if (strStartDate!=null){
+					startDate = sdf.parse(strStartDate);
+				}
+				if (strEndDate!=null){
+					endDate = sdf.parse(strEndDate);
+				}
+			} catch (ParseException e) {
+				logger.error("", e);
 			}
-			if (strEndDate!=null){
-				endDate = sdf.parse(strEndDate);
-			}
+			SinaStockBase ssb = new SinaStockBase(propFile, marketId, startDate, endDate);
 			int argIdx = 5;
+			String curMarketId = marketId + "_" + strEndDate;
 			if ("run_task".equals(cmd)){//run already generated task
 				if (args.length>=argIdx+1){
 					String taskName = args[argIdx];
@@ -52,24 +58,36 @@ public class RunSinaStock {
 					System.out.println(getDefaultCmdLine() + " taskName");
 				}
 			}else if ("run_all_cmd".equals(cmd)){
-				ssb.runAllCmd(startDate, endDate);
+				try {
+					ssb.runAllCmd(startDate, endDate);
+				} catch (InterruptedException e) {
+					logger.error("", e);
+				}
 			}else if ("run_cmd".equals(cmd)){
 				if (args.length>=argIdx+1){
 					String cmdName = args[argIdx];
-					ssb.runCmd(cmdName, marketId, strStartDate, strEndDate);
+					ssb.runCmd(cmdName, curMarketId, strStartDate, strEndDate);
 				}else{
 					System.out.println(getDefaultCmdLine() + " cmdName");
 				}
 			}else if ("run_special".equals(cmd)){
+				ssb.setMarketId(curMarketId);
 				if (args.length>=argIdx+1){
 					String method = args[argIdx];
-					Method m = ssb.getClass().getMethod(method);
-					m.invoke(ssb);
+					Method m;
+					try {
+						m = ssb.getClass().getMethod(method);
+						m.invoke(ssb);
+					} catch (Exception e) {
+						logger.error("", e);
+					}
 				}else{
 					System.out.println(getDefaultCmdLine() + " methodName");
 				}
-				
-			}else{
+			}else if ("update_status".equals(cmd)){
+				ssb.updateCmdStatus(strEndDate);
+			}
+			else{
 				logger.error("unknown command.");
 			}
 		}else{
