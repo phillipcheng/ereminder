@@ -82,7 +82,7 @@
 				<value value="count(//div[@id='con03-5']/table[3]/tbody[1]/tr[1]/td)" toType="int"/>
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.MultiVarRowTablesToCSV" outputType="byJobMulti"><!-- output only 7 files -->
-				<outputDir value="'sina-stock-fr-footnote/'+startDate+'_'+endDate" fromType="expression"/>
+				<outputDir value="raw/[startDate]_[endDate]/sina-stock-fr-footnote/"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

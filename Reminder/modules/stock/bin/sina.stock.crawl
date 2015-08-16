@@ -1,27 +1,13 @@
-1) cleanup hbase
-2) cleanup hdfs
+1. run_all_cmd - date1   //crawl to raw
+2. run_sepcial - date1 run_multioutput_postprocess  //raw to raw
+3. run_sepcial - date1 run_check //raw to check (if has problem, rerun 1, 2)
+4. run_sepcial - date1 run_merge //raw to merge
+5. run_sepcial - date1 run_postprocess //merge to db
 
-3) get the id list from official sites (沪深)
-
-4) runsinamain.sh run_browse_corp_info
-5) adding the 退市 info since corp_info has no 退市 date
-
-9) runsinamain.sh brs_tradedetail
-4) runsinamain.sh run_browse_fr_history
-5) runsinamain.sh run_convert_fr_history_tabular_to_csv //file downloaded to csv
-6) runsinamain.sh run_fr_reformat //from by stockid to by quarter
+1. run_all_cmd date1 date2
 
 
-9) runsinamain.sh run_browse_market_history
-10) runsinamain.sh run_merge_market_history  //from by stockid to by quarter
-
-11) runsinamain.sh run_browse_fr_footnote_history
-12) runsinamain.sh run_fr_footnote_to_csv //for all the subArea
-
-13) runsinamain.sh run_fr_achievenotice
-
-//incremental updates
-11) runsinamain.sh brs-mkt-qut 2015 1
-12) runsinamain.sh mrg-mkt-qut 2015 1
-13) runsinamain.sh brs-fr-qut 2015 1
-
+raw/sd_ed/storeid/xxx
+check/sd_ed/storeid/xxx
+merge/storeid/sd_ed/xxx
+db/sd_ed/storeid/xxx (if corresponding storeid/cmd not here, then use the one under merge)

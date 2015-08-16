@@ -8,6 +8,8 @@
 			<param name="stockid"/>
 			<param name="year"/>
 			<param name="quarter"/>
+			<param name="startDate" type="string"/>
+			<param name="endDate" type="string"/>
 			<startUrl value="http://money.finance.sina.com.cn/corp/go.php/vFD_CashFlow/stockid/[stockid]/ctrl/[year]/displaytype/4.phtml"/>
 			<userAttribute name="id">
 				<value value="stockid + '_' + year + '_' + quarter" toType="string" fromType="expression"/>
@@ -31,7 +33,7 @@
 				</rhs>
 			</pageVerify>
 			<csvtransform transformClass="org.cld.etl.csv.SpreadColTableAsCSV" outputType="byJobSingle">
-				<outputDir value="'sina-stock-fr-quarter-CashFlow/' + year + '_' + quarter" fromType="expression"/>
+				<outputDir value="raw/[startDate]_[endDate]/sina-stock-fr-quarter-CashFlow/[year]_[quarter]"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

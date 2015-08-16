@@ -52,8 +52,8 @@ public class StockConfig {
 	public static String[] corpConfs = new String[]{//not related with time
 		SINA_STOCK_CORP_INFO, //公司简介
 		SINA_STOCK_CORP_MANAGER, //公司高管
-		SINA_STOCK_CORP_RELATED, //相关证券 所属概念
-		SINA_STOCK_CORP_RELATED_OTHER //所属系别 所属指数
+		SINA_STOCK_CORP_RELATED, //相关证券 所属指数 所属系
+		SINA_STOCK_CORP_RELATED_OTHER //所属行业板块  所属概念板块
 	};
 	public static String[] tradeConfs = new String[]{
 		SINA_STOCK_TRADE_DETAIL, //成交明细
@@ -82,7 +82,7 @@ public class StockConfig {
 	};
 	
 	public static String[] syncConf = new String[]{SINA_STOCK_IPODate}; //other cmd need this result
-	public static String[] StaticConf = (String[]) ArrayUtils.addAll(corpConfs); //static
+	public static String[] StaticConf = new String[]{SINA_STOCK_CORP_INFO, SINA_STOCK_CORP_RELATED, SINA_STOCK_CORP_RELATED_OTHER}; //not time related
 	public static String[] allConf = (String[]) concatAll(corpConfs, tradeConfs, issueConfs, holderConfs, frConfs);
 	//for testing
 	//public static String[] allConf = (String[]) ArrayUtils.addAll(corpConfs, SINA_STOCK_TRADE_DETAIL);

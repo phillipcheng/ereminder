@@ -25,7 +25,7 @@
 				<value value="//table[contains(@id,'StockStructureNewTable')]/tbody/tr/td" toType="list"/>
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.SpreadColTableAsCSV" outputType="byJobSingle"><!-- 1 file -->
-				<outputDir value="'sina-stock-stock-structure/'+startDate+'_'+endDate" fromType="expression"/>
+				<outputDir value="raw/[startDate]_[endDate]/sina-stock-stock-structure/"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

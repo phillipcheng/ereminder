@@ -223,7 +223,7 @@ public class CrawlTaskEval {
 							for (Object hi:xpathListResult){
 								String url = anchorToFullUrl((HtmlAnchor)hi, (HtmlPage)page);
 								String fileName = FilenameUtils.getName(url);
-								CrawlUtil.downloadPage(cconf, url, fileName, fileSaveDir);
+								CrawlUtil.downloadPage(cconf, url, fileName);
 								convertedList.add(url);
 							}
 						}else{

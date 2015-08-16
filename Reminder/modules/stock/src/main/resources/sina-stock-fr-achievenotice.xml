@@ -21,7 +21,7 @@
 				<value value="//table[@id='Table1']/tbody/tr[count(td)=2]/td[2]" toType="list"/>
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.SpreadColTableAsCSV" outputType="byId"><!-- output #stockid files -->
-				<outputDir value="'sina-stock-fr-achievenotice/'+startDate+'_'+endDate" fromType="expression"/>
+				<outputDir value="raw/[startDate]_[endDate]/sina-stock-fr-achievenotice/"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

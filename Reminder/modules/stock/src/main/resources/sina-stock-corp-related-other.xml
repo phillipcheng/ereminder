@@ -3,6 +3,7 @@
 	<PrdTask>
 		<baseBrowseTask enableJS="true" taskName="corp-related-other" dsm="hdfs">
 			<param name="stockid"/>
+			<param name="startDate" type="string"/>
 			<param name="endDate" type="string"/>
 			<param name="HasHeader" value="false" type="boolean"/>
 			<startUrl value="http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CorpOtherInfo/stockid/[stockid]/menu_num/5.phtml"/>
@@ -30,7 +31,7 @@
 				<rhs value="null"></rhs>
 			</pageVerify>
 			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byJobMulti"><!-- output 2 files -->
-				<outputDir value="'sina-stock-corp-related-other/'+endDate" fromType="expression"/>
+				<outputDir value="raw/[startDate]_[endDate]/sina-stock-corp-related-other/"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

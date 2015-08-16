@@ -28,7 +28,7 @@
 				<value value="dzjy" toType="list"/>
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byId"><!-- 1 date per file -->
-				<outputDir value="sina-stock-market-dzjy/[startDate]_[endDate]"/>
+				<outputDir value="raw/[startDate]_[endDate]/sina-stock-market-dzjy/"/>
 			</csvtransform>
 		</baseBrowseTask>
 		<nextPage optional="true" value="//div[@class='pages']/a[last()]">

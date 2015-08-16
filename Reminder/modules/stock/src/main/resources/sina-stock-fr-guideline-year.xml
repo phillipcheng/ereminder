@@ -6,7 +6,10 @@
 	<PrdTask>
 		<baseBrowseTask enableJS="true" taskName="guideline" dsm="hdfs" mbMemoryNeeded="1024">
 			<param name="stockid"/>
+			<param name="startDate" type="string"/>
+			<param name="endDate" type="string"/>
 			<param name="year"/>
+			<param name="ColDateIdx" type="int" value="0"/><!-- 报告日期 -->
 			<startUrl value="http://money.finance.sina.com.cn/corp/go.php/vFD_FinancialGuideLine/stockid/[stockid]/ctrl/[year]/displaytype/4.phtml"/>
 			<userAttribute name="id">
 				<value value="stockid + '_' + year" toType="string" fromType="expression"/>
@@ -18,7 +21,7 @@
 				<value value="//table[@id='BalanceSheetNewTable0']/tbody/tr[count(td)>1]/td" toType="list"/>
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.SpreadColTableAsCSV" outputType="byJobSingle"><!-- 1 output for 1 year, submit job by year -->
-				<outputDir value="'sina-stock-fr-guideline-year/'+ year" fromType="expression"/>
+				<outputDir value="raw/[startDate]_[endDate]/sina-stock-fr-guideline-year"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

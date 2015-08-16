@@ -45,7 +45,7 @@
 				<value value="Text" toType="string"/>
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.ColTableRowTableAsCSV" outputType="byJobMulti"><!-- 1 file -->
-				<outputDir value="'sina-stock-stock-holder/'+startDate+'_'+endDate" fromType="expression"/>
+				<outputDir value="raw/[startDate]_[endDate]/sina-stock-stock-holder/"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

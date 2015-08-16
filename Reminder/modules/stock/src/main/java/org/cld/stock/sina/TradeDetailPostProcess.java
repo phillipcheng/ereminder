@@ -114,6 +114,10 @@ public class TradeDetailPostProcess {
 	}
 	
 	public static List<String> launch(CrawlConf cconf, Date endDate){
+		return launch(cconf, endDate, false);
+	}
+	
+	public static List<String> launch(CrawlConf cconf, Date endDate, boolean split){
 		NodeConf nc = cconf.getNodeConf();
 		TaskMgr taskMgr = nc.getTaskMgr();
 		String ed = sdf.format(endDate);
@@ -128,28 +132,44 @@ public class TradeDetailPostProcess {
 			List<String> jobIdList = new ArrayList<String>();
 			Path in = new Path(taskMgr.getHadoopCrawledItemFolder() + "/" + inDir);
 			Path out = new Path(taskMgr.getHadoopCrawledItemFolder() + "/" + outDir);
-			FileStatus[] fslist = fs.listStatus(in);
-			for (FileStatus lfs: fslist){
-				if (!lfs.isFile()){
-					//generate job for all the sub-directory to reduce job size
-					String dirName = lfs.getPath().getName();
-					Path subIn = new Path(in, dirName);
-					Path subOut = new Path(out, dirName);
-					Job job = getJob(conf, nc, fs, subIn.toString());
-					FileInputFormat.addInputPath(job, subIn);
-					FileInputFormat.setInputDirRecursive(job, true);
-					fs.delete(subOut, true);
-					FileOutputFormat.setOutputPath(job, subOut);
-					logger.info(String.format("submit job %s", subIn.toString()));
-					if (taskMgr.getHadoopJobTracker()!=null){
-						job.submit();
-					}else{
-						job.waitForCompletion(true);
+			if (split){
+				FileStatus[] fslist = fs.listStatus(in);
+				for (FileStatus lfs: fslist){
+					if (!lfs.isFile()){
+						//generate job for all the sub-directory to reduce job size
+						String dirName = lfs.getPath().getName();
+						Path subIn = new Path(in, dirName);
+						Path subOut = new Path(out, dirName);
+						Job job = getJob(conf, nc, fs, subIn.toString());
+						FileInputFormat.addInputPath(job, subIn);
+						FileInputFormat.setInputDirRecursive(job, true);
+						fs.delete(subOut, true);
+						FileOutputFormat.setOutputPath(job, subOut);
+						logger.info(String.format("submit job %s", subIn.toString()));
+						if (taskMgr.getHadoopJobTracker()!=null){
+							job.submit();
+						}else{
+							job.waitForCompletion(true);
+						}
+						jobIdList.add(job.getJobID().toString());
 					}
-					jobIdList.add(job.getJobID().toString());
 				}
+			}else{
+				Job job = getJob(conf, nc, fs, in.toString());
+				FileInputFormat.addInputPath(job, in);
+				FileInputFormat.setInputDirRecursive(job, true);
+				fs.delete(out, true);
+				FileOutputFormat.setOutputPath(job, out);
+				logger.info(String.format("submit job %s", in.toString()));
+				if (taskMgr.getHadoopJobTracker()!=null){
+					job.submit();
+				}else{
+					job.waitForCompletion(true);
+				}
+				jobIdList.add(job.getJobID().toString());
 			}
 			return jobIdList;
+			
 		}catch (Exception e) {
 			logger.error("", e);
 		}

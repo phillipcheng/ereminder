@@ -26,7 +26,7 @@
 				<value value="0" toType="list" toEntryType="int"/><!-- 日期 -->
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byJobSingle"><!-- 1 quarter 1 file -->
-				<outputDir value="sina-stock-market-fq/[year]_[quarter]_[startDate]_[endDate]"/>
+				<outputDir value="raw/[startDate]_[endDate]/sina-stock-market-fq/[year]_[quarter]"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

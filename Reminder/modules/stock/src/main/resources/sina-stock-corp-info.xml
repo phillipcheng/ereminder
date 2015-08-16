@@ -3,6 +3,7 @@
 	<PrdTask>
 		<baseBrowseTask enableJS="true" taskName="corp-info" dsm="hbase" mbMemoryNeeded="512">
 			<param name="stockid"/>
+			<param name="startDate" type="string"/>
 			<param name="endDate" type="string"/>
 			<param name="ColNum" value="2" type="int"/>
 			<param name="DataType" value="Text"/>
@@ -17,7 +18,7 @@
 			</idUrlMapping>
 			<csvtransform transformClass="org.cld.etl.csv.SpreadColTableAsCSV" outputType="byJobSingle">
 				<!-- output 1 file -->
-				<outputDir value="'sina-stock-corp-info/'+endDate" fromType="expression"/>
+				<outputDir value="raw/[startDate]_[endDate]/sina-stock-corp-info/"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

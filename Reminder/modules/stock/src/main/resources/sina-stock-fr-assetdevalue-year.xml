@@ -7,6 +7,8 @@
 	<PrdTask>
 		<baseBrowseTask enableJS="true" taskName="assetdevalue" dsm="hdfs">
 			<param name="stockid"/>
+			<param name="startDate" type="string"/>
+			<param name="endDate" type="string"/>
 			<param name="year"/>
 			<startUrl value="http://money.finance.sina.com.cn/corp/go.php/vFD_AssetDevalue/stockid/[stockid]/displaytype/4/year/[year].phtml"/>
 			<userAttribute name="id">
@@ -15,11 +17,12 @@
 			<userAttribute name="ColNum">
 				<value value="count(//table[@id='BenifitChangeNewTable0']/tbody/tr[1]/td)" toType="int"/>
 			</userAttribute>
+			<param name="ColDateIdx" type="int" value="30"/><!-- 公告日期 -->
 			<userAttribute name="data">
 				<value value="//table[@id='BenifitChangeNewTable0']/tbody/tr[count(td)>1]/td" optional="true" toType="list"/>
 			</userAttribute>
-			<csvtransform transformClass="org.cld.etl.csv.SpreadColTableAsCSV" outputType="byJobSingle"><!-- 1 output for 1 year, submit job by year -->
-				<outputDir value="'sina-stock-fr-assetdevalue-year/' + year" fromType="expression"/>
+			<csvtransform transformClass="org.cld.etl.csv.SpreadColTableAsCSV" outputType="byJobSingle">
+				<outputDir value="raw/[startDate]_[endDate]/sina-stock-fr-assetdevalue-year/[year]"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

@@ -167,10 +167,9 @@ public class CrawlUtil {
 				sourceName, cconfParams, CrawlTaskMapper.class.getName(), null);
 	}
 	
-	public static void downloadPage(CrawlConf cconf, String url, String fileName, String fileSaveDir){
-		String finalSaveDir = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + fileSaveDir;
+	public static void downloadPage(CrawlConf cconf, String url, String fileName){
 		DownloadUtil.downloadFileToHdfs(url, cconf.isUseProxy(), cconf.getProxyIP(), cconf.getProxyPort(), 
-			finalSaveDir + "/" + fileName, cconf.getTaskMgr().getHdfsDefaultName());
+				cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + fileName, cconf.getTaskMgr().getHdfsDefaultName());
 		
 	}
 }

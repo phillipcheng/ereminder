@@ -31,7 +31,7 @@
 				<value value="summary,detail" toType="list" toEntryType="string"/>
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byId"><!-- 2 file per day -->
-				<outputDir value="sina-stock-market-rzrq/[startDate]_[endDate]"/>
+				<outputDir value="raw/[startDate]_[endDate]/sina-stock-market-rzrq/"/>
 			</csvtransform>
 			<pageVerify operator="!=">
 				<lhs value="//table[@id='dataTable'][1]/tbody/tr/td"></lhs>

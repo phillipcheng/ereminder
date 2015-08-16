@@ -8,9 +8,10 @@ productType="default">
 		<baseBrowseTask enableJS="true"  taskName="market-tradedetail"  dsm="hdfs" mbMemoryNeeded="256">
 			<param name="stockid"/>
 			<param name="date"/>
+			<param name="startDate" type="string"/>
 			<param name="endDate" type="string"/>
 			<startUrl value="http://market.finance.sina.com.cn/downxls.php?date=[date]&amp;symbol=[stockid]"/>
-			<cachePage value="'in/' + endDate + '/' + date.substring(0,4) + '/' + date.substring(5,7) + '/' + date.substring(8,10) + '/' + stockid + '_' + date + '.xls'" fromType="expression"/>
+			<cachePage value="'raw/' + startDate + '_' + endDate + '/' + 'sina-stock-market-tradedetail/' + date.substring(0,4) + '/' + date.substring(5,7) + '/' + date.substring(8,10) + '/' + stockid + '_' + date + '.xls'" fromType="expression"/>
 			<!-- date=2008-08-18 symbol=sh601766 -->
 		</baseBrowseTask>
 	</PrdTask>

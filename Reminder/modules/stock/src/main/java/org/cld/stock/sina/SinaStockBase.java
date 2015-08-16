@@ -1,5 +1,6 @@
 package org.cld.stock.sina;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -12,6 +13,9 @@ import java.util.Map;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
@@ -466,6 +470,14 @@ public class SinaStockBase extends TestBase{
 		}
 	}
 	
+	//run_merge("/reminder/items", "/reminder/merged")
+	public void run_merge(String startDir, String destStartDir) throws IOException{
+		Configuration hconf = HadoopTaskLauncher.getHadoopConf(this.cconf.getNodeConf());
+		FileSystem fs = FileSystem.get(hconf);
+		Path fromDir = new Path(startDir);
+	}
+	
+	//getter, setter
 	public String getMarketId() {
 		return marketId;
 	}

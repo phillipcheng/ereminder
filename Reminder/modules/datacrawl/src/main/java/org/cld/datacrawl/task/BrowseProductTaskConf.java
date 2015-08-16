@@ -213,7 +213,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 			for (int i=0; i<cachePageList.size(); i++){
 				String startUrl = startUrlList.get(i);
 				String cachePage = cachePageList.get(i);
-				CrawlUtil.downloadPage(cconf, startUrl, cachePage, storeId);
+				CrawlUtil.downloadPage(cconf, startUrl, cachePage);
 			}
 		}
 		
