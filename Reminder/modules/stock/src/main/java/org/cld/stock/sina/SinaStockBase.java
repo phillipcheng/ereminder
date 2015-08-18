@@ -379,13 +379,7 @@ public class SinaStockBase extends TestBase{
 	}
 
 	//update CmdStatus for async commands
-	public void updateCmdStatus(String endDate){
-		Date ed = null;
-		try{
-			ed = sdf.parse(endDate);
-		}catch(Exception e){
-			logger.error("", e);
-		}
+	public void updateCmdStatus(){
 		Configuration hconf = HadoopTaskLauncher.getHadoopConf(this.cconf.getNodeConf());
 		try {
 			jobClient = new JobClient(hconf);
@@ -398,7 +392,7 @@ public class SinaStockBase extends TestBase{
 			if (Arrays.asList(StockConfig.StaticConf).contains(cmd)){
 				cs = CmdStatus.getCmdStatus(dsm, marketId, cmd);
 			}else{
-				cs = CmdStatus.getCmdStatus(dsm, marketId, cmd, ed);
+				cs = CmdStatus.getCmdStatus(dsm, marketId, cmd, this.endDate);
 			}
 			Map<String, Integer> jobStatusMap = cs.getJsMap();
 			if (jobStatusMap!=null){

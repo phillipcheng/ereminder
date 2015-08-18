@@ -84,10 +84,7 @@ public class RunSinaStock {
 				}else{
 					System.out.println(getDefaultCmdLine() + " methodName");
 				}
-			}else if ("update_status".equals(cmd)){
-				ssb.updateCmdStatus(strEndDate);
-			}
-			else{
+			}else{
 				logger.error("unknown command.");
 			}
 		}else{

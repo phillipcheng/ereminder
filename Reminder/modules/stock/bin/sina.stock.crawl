@@ -1,6 +1,6 @@
 1. run_all_cmd - date1   //crawl to raw
 2. run_sepcial - date1 run_multioutput_postprocess  //raw to raw
-3. run_sepcial - date1 run_check //raw to check (if has problem, rerun 1, 2)
+3. run_sepcial - date1 run_check //raw to check (if has problem, rerun 1 (part of 1), 2)
 4. run_sepcial - date1 run_merge //raw to merge
 5. run_sepcial - date1 run_postprocess //merge to db
 
@@ -8,6 +8,6 @@
 
 
 raw/sd_ed/storeid/xxx
-check/sd_ed/storeid/xxx
+check/sd_ed/storeid/xxx (check result file, check job status)
 merge/storeid/sd_ed/xxx
 db/sd_ed/storeid/xxx (if corresponding storeid/cmd not here, then use the one under merge)

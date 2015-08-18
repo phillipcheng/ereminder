@@ -21,7 +21,7 @@
 				<value value="//table[@id='BalanceSheetNewTable0']/tbody/tr[count(td)>1]/td" toType="list"/>
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.SpreadColTableAsCSV" outputType="byJobSingle"><!-- 1 output for 1 year, submit job by year -->
-				<outputDir value="raw/[startDate]_[endDate]/sina-stock-fr-guideline-year"/>
+				<outputDir value="raw/[startDate]_[endDate]/sina-stock-fr-guideline-year/[year]"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

@@ -128,9 +128,8 @@ public class ETLUtil {
 	//params in the task def:						method
 	//stockid, year, quarter, startDate, endDate:	runTaskByStockYearQuarter	filter on the yar, quarter page
 	//stockid, year, 		  startDate, endDate:	runTaskByStockYear			filter on the year page
-	//stockid,				  startDate, endDate:	runTaskByStock				filter on the overall page
 	//stockid, date:								runTaskByStockDate			filter by url
-	//stockid:										runTaskByStock				filter by stockid
+	//stockid,				  startDate, endDate:	runTaskByStock				filter on the overall page
 	//date:											runTaskByDate				filter by url for all stock
 	//marketid:										runTaskByMarket				
 	//confName is command
@@ -168,8 +167,6 @@ public class ETLUtil {
 					Date sd = getDate(PK_START_DATE, params);
 					Date ed = getDate(PK_END_DATE, params);
 					jobIds = runTaskByStockYear(marketId, cconf, propfile, t, sd, ed, confName, params, sync, mapperClassName, reducerClassName);
-				}else if (btt.getParamMap().containsKey(PK_START_DATE) && btt.getParamMap().containsKey(PK_END_DATE)){
-					jobIds = runTaskByStock(marketId, cconf, propfile, t, params, confName, sync, mapperClassName, reducerClassName);
 				}else if (btt.getParamMap().containsKey(PK_DATE)){
 					Date sd = getDate(PK_START_DATE, params);
 					Date ed = getDate(PK_END_DATE, params);
@@ -196,6 +193,7 @@ public class ETLUtil {
 	
 	private static String[] runTaskByMarketYearMonth(CrawlConf cconf, String propfile, Task t, String calledMethod, 
 			Map<String, Object> params, boolean sync, String mapperClassName, String reducerClassName){
+		logger.info("into runTaskByMarketYearMonth");
 		List<Task> tlist = new ArrayList<Task>();
 		Date sd = getDate(PK_START_DATE, params);
 		Date ed = getDate(PK_END_DATE, params);
@@ -244,6 +242,7 @@ public class ETLUtil {
 	
 	private static String[] runTaskByMarket(CrawlConf cconf, String propfile, Task t, String calledMethod, 
 			Map<String, Object> params, boolean sync, String mapperClassName, String reducerClassName){
+		logger.info("into runTaskByMarket");
 		List<Task> tlist = new ArrayList<Task>();
 		t.putAllParams(params);
 		tlist.add(t);
@@ -254,6 +253,7 @@ public class ETLUtil {
 	
 	private static String[] runTaskByDate(Date startDate, Date endDate, CrawlConf cconf, String propfile, Task t, 
 			Map<String, Object> params, String calledMethod, boolean sync, String mapperClassName, String reducerClassName){
+		logger.info("into runTaskByDate");
 		Date toDate = new Date();
 		if (endDate!=null){
 			toDate = endDate;
@@ -285,6 +285,7 @@ public class ETLUtil {
 	
 	private static String[] runTaskByStock(String marketId, CrawlConf cconf, String propfile, Task t, 
 			Map<String, Object> params, String calledMethod, boolean sync, String mapperClassName, String reducerClassName){
+		logger.info("into runTaskByStock");
 		String[] idarray = getStockIdByMarketId(marketId, cconf);
 		List<Task> tlist = new ArrayList<Task>();
 		for (int i=0; i<idarray.length; i++){
@@ -316,6 +317,7 @@ public class ETLUtil {
 	private static String[] runTaskByStockDate(String marketId, Date startDate, Date endDate, 
 			CrawlConf cconf, String propfile, Task t, Map<String, Object> params, String calledMethod, 
 			boolean sync, String mapperClassName, String reducerClassName){
+		logger.info("into runTaskByStockDate");
 		String[] ids = getStockIdByMarketId(marketId, cconf);
 		List<Task> tlist = new ArrayList<Task>();
 		int batchId = 0;
@@ -329,7 +331,7 @@ public class ETLUtil {
 					fDate = startDate;
 				}
 			}
-			logger.debug("ipo date:" + fDate);
+			logger.info(String.format("%s: ipo date %s", id, sdf.format(fDate)));
 			//update cache if necessary
 			Date cacheFirstDate = null;
 			if (!cacheDates.isEmpty())
@@ -342,6 +344,7 @@ public class ETLUtil {
 				}
 			}
 			LinkedList<Date> dll = DateTimeUtil.getWorkingDayList(fDate, cacheFirstDate);
+			logger.info(String.format("gen tasks for stock %s from %s to %s", id, sdf.format(fDate), sdf.format(cacheFirstDate)));
 			cacheDates.addAll(0, dll);
 			//get dates from cache
 			Date firstWorkingDay = null;
@@ -395,6 +398,7 @@ public class ETLUtil {
 	private static String[] runTaskByStockYearQuarter(String marketId, CrawlConf cconf, String propfile, Task t, 
 			Date startDate, Date endDate, String calledMethod, Map<String, Object> params, 
 			boolean sync, String mapperClassName, String reducerClassName) {
+		logger.info("into runTaskByStockYearQuarter");
 		String[] ids = getStockIdByMarketId(marketId, cconf);
 		Map<String, List<String>> stockIdByYQ = new TreeMap<String, List<String>>();
 		for (int i=0; i<ids.length; i++){
@@ -483,6 +487,7 @@ public class ETLUtil {
 	private static String[] runTaskByStockYear(String marketId, CrawlConf cconf, String propfile, Task t, 
 			Date startDate, Date endDate, String calledMethod, Map<String, Object> params, 
 			boolean sync, String mapperClassName, String reducerClassName) {
+		logger.info("into runTaskByStockYear");
 		String[] ids = getStockIdByMarketId(marketId, cconf);
 		Map<Integer, List<Task>> taskByYear = new TreeMap<Integer, List<Task>>();
 		for (int i=0; i<ids.length; i++){
