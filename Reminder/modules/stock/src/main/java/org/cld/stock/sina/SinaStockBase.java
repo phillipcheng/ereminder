@@ -13,7 +13,9 @@ import java.util.Map;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.mapred.JobClient;
@@ -27,6 +29,7 @@ import org.cld.taskmgr.entity.CmdStatus;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.CompareUtil;
+import org.cld.util.hadoop.HadoopUtil;
 import org.cld.etl.csv.CsvReformatMapredLauncher;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
@@ -50,7 +53,7 @@ public class SinaStockBase extends TestBase{
 	
 	public static final String HS_A_START_DATE="1989-01-01";
 	public static Date date_HS_A_START_DATE=null;
-	public static String HS_A_FIRST_DATE_DETAIL_TRADE= "2004-10-1";
+	public static String HS_A_FIRST_DATE_DETAIL_TRADE= "2004-10-01";
 	public static String HS_A_FIRST_DATE_RZRQ= "2012-11-12";
 	public static String HS_A_FIRST_DATE_DZJY= "2003-01-08";
 	static{
@@ -135,7 +138,7 @@ public class SinaStockBase extends TestBase{
 	public void runCmd(String cmdName, String marketId, String startDate, String endDate) {
 		if (cmdName.contains("rzrq")){
 			if (startDate==null){
-				startDate = HS_A_FIRST_DATE_DZJY;
+				startDate = HS_A_FIRST_DATE_RZRQ;
 			}
 		}else if (cmdName.contains("dzjy")){
 			if (startDate == null){
@@ -252,7 +255,11 @@ public class SinaStockBase extends TestBase{
 		}else if (type == CMDTYPE_DYNAMIC){
 			conf = StockConfig.DynamicConf;
 		}else if (type == CMDTYPE_ALL){
-			conf = StockConfig.allConf;
+			if (marketId.startsWith(MarketId_Test)){
+				conf = StockConfig.testAllConf;
+			}else{
+				conf = StockConfig.allConf;
+			}
 		}
 		Date testStartDate = null;
 		try{
@@ -425,13 +432,36 @@ public class SinaStockBase extends TestBase{
 	}
 
 	public void run_tradedetail_checkdownload(){
-		TradeDetailCheckDownload.launch(cconf, this.endDate);
+		String datePart;
+		String strEndDate = sdf.format(this.endDate);
+		if (this.startDate==null){
+			datePart = SinaStockBase.HS_A_FIRST_DATE_DETAIL_TRADE + "_" + strEndDate;
+		}else{
+			datePart = sdf.format(this.startDate) + "_" + strEndDate;
+		}
+		TradeDetailCheckDownload.launch(cconf, datePart);
 	}
+	
 	public void run_tradedetail_postprocess(){
-		TradeDetailPostProcess.launch(cconf, this.endDate);
+		String datePart;
+		String strEndDate = sdf.format(this.endDate);
+		if (this.startDate==null){
+			datePart = SinaStockBase.HS_A_FIRST_DATE_DETAIL_TRADE + "_" + strEndDate;
+		}else{
+			datePart = sdf.format(this.startDate) + "_" + strEndDate;
+		}
+		TradeDetailPostProcessTask.launch(this.propFile, cconf, datePart);
 	}
-	public void run_multioutput_postprocess(){
-		MultiOutputPostProcess.postProcessMultiOutput(cconf);
+	
+	public void run_merge(){
+		String datePart;
+		String strEndDate = sdf.format(this.endDate);
+		if (this.startDate==null){
+			datePart = SinaStockBase.HS_A_FIRST_DATE_DETAIL_TRADE + "_" + strEndDate;
+		}else{
+			datePart = sdf.format(this.startDate) + "_" + strEndDate;
+		}
+		Merge.run_merge(cconf, datePart);
 	}
 	//crawl financial report history by market to hdfs
 	public void run_browse_fr_history() throws ParseException{//till running time
@@ -462,13 +492,6 @@ public class SinaStockBase extends TestBase{
 					1, 
 					itemsFolder  + "/" + StockConfig.SINA_STOCK_FR_HISTORY_QUARTER_OUT + "/" + subFR);
 		}
-	}
-	
-	//run_merge("/reminder/items", "/reminder/merged")
-	public void run_merge(String startDir, String destStartDir) throws IOException{
-		Configuration hconf = HadoopTaskLauncher.getHadoopConf(this.cconf.getNodeConf());
-		FileSystem fs = FileSystem.get(hconf);
-		Path fromDir = new Path(startDir);
 	}
 	
 	//getter, setter

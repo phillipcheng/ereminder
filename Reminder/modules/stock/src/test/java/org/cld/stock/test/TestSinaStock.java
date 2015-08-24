@@ -3,21 +3,14 @@ package org.cld.stock.test;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.task.TabularCSVConvertTask;
-import org.cld.datastore.entity.CrawledItem;
 import org.cld.stock.sina.ETLUtil;
-import org.cld.stock.sina.MultiOutputPostProcess;
+import org.cld.stock.sina.Merge;
 import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.StockConfig;
 import org.cld.stock.sina.TradeDetailCheckDownload;
-import org.cld.stock.sina.TradeDetailPostProcess;
-import org.cld.stock.sina.jobs.IPODateMapper;
-import org.cld.taskmgr.TaskMgr;
+import org.cld.stock.sina.TradeDetailPostProcessTask;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -55,6 +48,12 @@ public class TestSinaStock {
 		ssb.getCconf().getTaskMgr().getHadoopCrawledItemFolder();
 	}
 
+
+	@Test
+	public void testInitTestMarket() throws Exception{
+		ssb.getDsm().addUpdateCrawledItem(ssb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
+	}
+	
 	/***
 	 * Stock ids
 	 * */
@@ -67,12 +66,6 @@ public class TestSinaStock {
 	public void testBrowseIdlist_with_st() throws Exception{
 		Date ed = sdf.parse("2015-08-02");
 		ssb.run_browse_idlist(MarketId_HS_A, ed);
-	}
-	@Test
-	public void testInitTestMarket() throws Exception{
-		Date ed = sdf.parse(END_DATE);
-		CrawledItem ci = ssb.run_browse_idlist(this.marketId, ed);
-		ssb.getDsm().addUpdateCrawledItem(ci, null);
 	}
 	@Test
 	public void testIPODate() throws Exception{
@@ -96,15 +89,9 @@ public class TestSinaStock {
 	}
 	
 	@Test
-	public void testPostProcessMultiOutput() throws Exception{
-		MultiOutputPostProcess.postProcessMultiOutput(ssb.getCconf());
-	}
-	
-	@Test
 	public void run_task_1() throws Exception{
 		ssb.run_task(new String[]{"run_corp_manager_2015_07_19_12_14_47_437_history_true_MarketId_test_"});
 	}
-	
 	/*****
 	 * Market history 行情走势
 	 **/
@@ -120,13 +107,16 @@ public class TestSinaStock {
 	}
 	@Test
 	public void tradedetail_postprocess() {
-		TradeDetailPostProcess.launch(ssb.getCconf(), SinaStockBase.date_Test_D2);
+		TradeDetailPostProcessTask.launch(this.propFile, ssb.getCconf(), SinaStockBase.Test_D1 + "_" + SinaStockBase.Test_D2);
 	}
 	@Test
 	public void tradedetail_checkdownload() {
-		TradeDetailCheckDownload.launch(ssb.getCconf(), SinaStockBase.date_Test_D2);
+		TradeDetailCheckDownload.launch(ssb.getCconf(), SinaStockBase.Test_D1 + "_" + SinaStockBase.Test_D2);
 	}
-	
+	@Test
+	public void testMerge() throws Exception{
+		Merge.run_merge(ssb.getCconf(), SinaStockBase.Test_D1 + "_" + SinaStockBase.Test_D2);
+	}
 	//融资融券
 	@Test
 	public void run_browse_market_rzrq1() throws ParseException{

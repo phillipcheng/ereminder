@@ -4,11 +4,6 @@
     <Console name="Console" target="SYSTEM_OUT">
       <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
     </Console>
-    <File name="File" fileName="test.log">
-      <PatternLayout>
-        <pattern>%d %p %C{1.} [%t] %m%n</pattern>
-      </PatternLayout>
-    </File>
   </Appenders>
   <Loggers>
     <Root level="ERROR">
@@ -30,16 +25,16 @@
     </Logger>
     
     <Logger name="org.apache" level="WARN">
-      <AppenderRef ref="File"/>
+      <AppenderRef ref="Console"/>
     </Logger>
     <Logger name="org.hibernate" level="WARN">
-      <AppenderRef ref="File"/>
+      <AppenderRef ref="Console"/>
     </Logger>
-    <Logger name="com.gargoylesoftware" level="WARN">
-      <AppenderRef ref="File"/>
+    <Logger name="com.gargoylesoftware" level="FATAL">
+      <AppenderRef ref="Console"/>
     </Logger>
-    <Logger name="net.sourceforge.htmlunit" level="WARN">
-      <AppenderRef ref="File"/>
+    <Logger name="net.sourceforge.htmlunit" level="FATAL">
+      <AppenderRef ref="Console"/>
     </Logger>
   </Loggers>
 </Configuration>

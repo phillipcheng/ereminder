@@ -90,12 +90,11 @@ public class TradeDetailCheckDownload {
 		}
 	}
 	
-	public static String launch(CrawlConf cconf, Date endDate){
+	public static String launch(CrawlConf cconf, String datePart){
 		NodeConf nc = cconf.getNodeConf();
 		TaskMgr taskMgr = nc.getTaskMgr();
-		String ed = sdf.format(endDate);
-		String inDir = StockConfig.SINA_STOCK_TRADE_DETAIL + "/in/" + ed;
-		String outDir = StockConfig.SINA_STOCK_TRADE_DETAIL + "/check/" + ed;
+		String inDir = StockConfig.RAW_ROOT + "/" + datePart + "/" + StockConfig.SINA_STOCK_TRADE_DETAIL;
+		String outDir = StockConfig.CHECK_ROOT + "/" + StockConfig.SINA_STOCK_TRADE_DETAIL + "/" + datePart;
 		Configuration conf = HadoopTaskLauncher.getHadoopConf(nc);
 		//generate task list file
 		FileSystem fs;
@@ -120,10 +119,10 @@ public class TradeDetailCheckDownload {
 			job.setInputFormatClass(WholeFileInputFormat.class);
 			job.setOutputKeyClass(Text.class);
 			job.setOutputValueClass(Text.class);
-			Path in = new Path(taskMgr.getHadoopCrawledItemFolder() + "/" + inDir);
+			Path in = new Path(inDir);
 			FileInputFormat.addInputPath(job, in);
 			FileInputFormat.setInputDirRecursive(job, true);
-			Path out = new Path(taskMgr.getHadoopCrawledItemFolder() + "/" + outDir);
+			Path out = new Path(outDir);
 			fs.delete(out, true);
 			FileOutputFormat.setOutputPath(job, out);
 			if (taskMgr.getHadoopJobTracker()!=null){

@@ -163,9 +163,11 @@ public class Task implements Comparable<Task>, Serializable{
 		sb.append(", paramData:" + paramData);
 		if (parsedTaskDef!=null)
 			sb.append(", parsedTaskDef:" + parsedTaskDef);
-		sb.append(", paramMap:");
-		for (String key: paramMap.keySet()){
-			sb.append("," + key + ":" + paramMap.get(key));
+		if (paramMap!=null){
+			sb.append(", paramMap:");
+			for (String key: paramMap.keySet()){
+				sb.append("," + key + ":" + paramMap.get(key));
+			}
 		}
 		return sb.toString();
 	}
