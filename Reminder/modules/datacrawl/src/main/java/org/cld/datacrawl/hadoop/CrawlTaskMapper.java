@@ -18,6 +18,7 @@ import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.datastore.entity.CrawledItem;
+import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
@@ -58,7 +59,7 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();
 		hadoopCrawlTaskParams.put(CrawlUtil.CRAWL_PROPERTIES, context.getConfiguration().get(CrawlUtil.CRAWL_PROPERTIES));
 		try{
-			t.initParsedTaskDef(crawlTaskParams);
+			t.initParsedTaskDef();
 			BrowseTaskType btt = null;
 			CsvTransformType csvtrans = null;
 			if (t.getParsedTaskDef()==null){
@@ -105,7 +106,11 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 												br = new BufferedWriter(new OutputStreamWriter(fs.create(new Path(outputFile),true)));
 												hdfsByIdOutputMap.put(outputFile, br);
 											}
-											br.write(csvkey + "," + csvvalue + "\n");
+											if (AbstractCrawlItemToCSV.KEY_VALUE_UNDEFINED.equals(csvkey)){
+												br.write(csvvalue + "\n");
+											}else{
+												br.write(csvkey + "," + csvvalue + "\n");
+											}
 										}
 									}
 								}else if (v.length==3){
@@ -126,7 +131,11 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 											br = new BufferedWriter(new OutputStreamWriter(fs.create(new Path(outputFile),true)));
 											hdfsByIdOutputMap.put(outputFile, br);
 										}
-										br.write(outkey + "," + outvalue + "\n");
+										if (AbstractCrawlItemToCSV.KEY_VALUE_UNDEFINED.equals(outkey)){
+											br.write(outvalue + "\n");
+										}else{
+											br.write(outkey + "," + outvalue + "\n");
+										}
 									}
 								}else{
 									logger.error("wrong number of csv length: not 2 and 3 but:" + v.length);

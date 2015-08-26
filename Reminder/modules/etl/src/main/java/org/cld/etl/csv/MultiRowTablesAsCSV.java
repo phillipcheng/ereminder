@@ -10,10 +10,7 @@ import org.cld.datastore.entity.CrawledItem;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
 
 public class MultiRowTablesAsCSV extends AbstractCrawlItemToCSV{
-	
 	private static Logger logger =  LogManager.getLogger(MultiRowTablesAsCSV.class);
-
-	public static final String FIELD_NAME_ROWCSV="RowCsvName";//csv output name of each row table
 	
 	public List<String> getDefaultDataType(int colnum){
 		ArrayList<String> dataTypes = new ArrayList<String>();

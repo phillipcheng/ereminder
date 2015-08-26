@@ -9,7 +9,6 @@
 			<param name="startDate" type="string"/>
 			<param name="endDate" type="string"/>
 			<param name="year"/>
-			<param name="ColDateIdx" type="int" value="0"/><!-- 报告日期 -->
 			<startUrl value="http://money.finance.sina.com.cn/corp/go.php/vFD_FinancialGuideLine/stockid/[stockid]/ctrl/[year]/displaytype/4.phtml"/>
 			<userAttribute name="id">
 				<value value="stockid + '_' + year" toType="string" fromType="expression"/>

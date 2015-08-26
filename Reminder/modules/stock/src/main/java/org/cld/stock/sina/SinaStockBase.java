@@ -1,49 +1,35 @@
 package org.cld.stock.sina;
 
-import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FileUtil;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.CrawledItemId;
-import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.CmdStatus;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.CompareUtil;
-import org.cld.util.hadoop.HadoopUtil;
 import org.cld.etl.csv.CsvReformatMapredLauncher;
+import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
-import org.cld.datacrawl.task.BrowseProductTaskConf;
+import org.cld.datacrawl.task.CrawlTaskConf;
 import org.cld.datacrawl.task.TabularCSVConvertTask;
 import org.cld.datacrawl.test.TestBase;
-import org.cld.stock.ose.StockConst;
 import org.cld.stock.sina.ETLUtil;
 import org.cld.stock.sina.StockConfig;
-import org.cld.stock.sina.jobs.IPODateMapper;
 import org.xml.mytaskdef.ParsedBrowsePrd;
-import org.xml.mytaskdef.ParsedTasksDef;
-import org.xml.taskdef.AttributeType;
-import org.xml.taskdef.CsvTransformType;
 
 public class SinaStockBase extends TestBase{
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -98,6 +84,7 @@ public class SinaStockBase extends TestBase{
 	private Date startDate;
 	private Date endDate;
 	private String itemsFolder;
+	private String specialParam = null;//for special cmd to use as parameter
    
 	private DataStoreManager dsm = null;
 	private JobClient jobClient = null;
@@ -125,75 +112,15 @@ public class SinaStockBase extends TestBase{
 	
 	public Map<String, Object> getDateParamMap(String startDate, String endDate){
 		Map<String, Object> paramMap = new HashMap<String, Object>();
-		paramMap.put(ETLUtil.PK_START_DATE, startDate);
-		paramMap.put(ETLUtil.PK_END_DATE, endDate);
+		paramMap.put(AbstractCrawlItemToCSV.FIELD_NAME_STARTDATE, startDate);
+		paramMap.put(AbstractCrawlItemToCSV.FIELD_NAME_ENDDATE, endDate);
 		return paramMap;
 	}
 	
-	public void run_task(String[] taskFileName){
-		CrawlUtil.hadoopExecuteCrawlTasksByFile(this.propFile, cconf, taskFileName);
+	public void run_task(String[] taskFileName, Map<String, String> hadoopParams){
+		CrawlUtil.hadoopExecuteCrawlTasksByFile(this.propFile, cconf, taskFileName, hadoopParams);
 	}
 	
-	//cmdName is the fileName of the site-conf without suffix, is the storeid
-	public void runCmd(String cmdName, String marketId, String startDate, String endDate) {
-		if (cmdName.contains("rzrq")){
-			if (startDate==null){
-				startDate = HS_A_FIRST_DATE_RZRQ;
-			}
-		}else if (cmdName.contains("dzjy")){
-			if (startDate == null){
-				startDate = HS_A_FIRST_DATE_DZJY;
-			}
-		}else if (cmdName.contains("tradedetail")){
-			if (startDate == null){
-				startDate = HS_A_FIRST_DATE_DETAIL_TRADE;
-			}
-		}
-		Map<String, Object> params = getDateParamMap(startDate, endDate);
-		Date ed = null;
-		Date sd = null;
-		try{
-			if (endDate!=null){
-				ed = sdf.parse(endDate);
-			}
-			if (startDate!=null){
-				sd = sdf.parse(startDate);
-			}
-		}catch(Exception e){
-			logger.error("", e);
-		}
-		CmdStatus cs= null;
-		if (Arrays.asList(StockConfig.StaticConf).contains(cmdName)){
-			cs = CmdStatus.getCmdStatus(dsm, marketId, cmdName);
-		}else{
-			cs = CmdStatus.getCmdStatus(dsm, marketId, cmdName, ed);
-		}
-		boolean needRun = true;
-		if (cs != null){//no such command run before
-			if (ArrayUtils.contains(StockConfig.StaticConf, cmdName)){
-				needRun = false;
-			}else if (!CompareUtil.ObjectDiffers(ed, cs.getId().getCreateTime())){//compare only end time
-				needRun = false;
-			}
-		}
-		if (needRun){
-			logger.info(String.format("going to run cmd %s with ed:%s, sd:%s, marketId:%s", cmdName, endDate, startDate, marketId));
-			if (Arrays.asList(StockConfig.StaticConf).contains(cmdName)){
-				cs = new CmdStatus(marketId, cmdName, ed, sd, true);
-			}else{	
-				cs = new CmdStatus(marketId, cmdName, ed, sd, false);
-			}
-			String[] jobIds = ETLUtil.runTaskByCmd(marketId, cconf, this.getPropFile(), cmdName, params);
-			for (String jobId:jobIds){
-				cs.getJsMap().put(jobId, 4);//PREPARE
-			}
-			dsm.addUpdateCrawledItem(cs, null);
-		}
-	}
-	
-	/***
-	 * Stock ids
-	 * */
 	//get #hs_a + #, not added to db yet
 	public CrawledItem run_browse_idlist(String marketId, Date endDate) throws InterruptedException{
 		if (MarketId_Test.equals(marketId)){
@@ -234,7 +161,64 @@ public class SinaStockBase extends TestBase{
 		}
 		return ciOrg;
 	}
-
+	
+	//cmdName is the fileName of the site-conf without suffix, is the storeid
+	public void runCmd(String cmdName, String marketId, String startDate, String endDate) {
+		if (cmdName.contains("rzrq")){
+			if (startDate==null){
+				startDate = HS_A_FIRST_DATE_RZRQ;
+			}
+		}else if (cmdName.contains("dzjy")){
+			if (startDate == null){
+				startDate = HS_A_FIRST_DATE_DZJY;
+			}
+		}else if (cmdName.contains("tradedetail")){
+			if (startDate == null){
+				startDate = HS_A_FIRST_DATE_DETAIL_TRADE;
+			}
+		}
+		Map<String, Object> params = getDateParamMap(startDate, endDate);
+		Date ed = null;
+		Date sd = null;
+		try{
+			if (endDate!=null){
+				ed = sdf.parse(endDate);
+			}
+			if (startDate!=null){
+				sd = sdf.parse(startDate);
+			}
+		}catch(Exception e){
+			logger.error("", e);
+		}
+		CmdStatus cs= null;
+		boolean isStatic = ETLUtil.isStatic(cconf, cmdName);
+		if (isStatic){
+			cs = CmdStatus.getCmdStatus(dsm, marketId, cmdName);
+		}else{
+			cs = CmdStatus.getCmdStatus(dsm, marketId, cmdName, ed);
+		}
+		boolean needRun = true;
+		if (cs != null){//no such command run before
+			if (isStatic){
+				needRun = false;
+			}else if (!CompareUtil.ObjectDiffers(ed, cs.getId().getCreateTime())){//compare only end time
+				needRun = false;
+			}
+		}
+		if (needRun){
+			logger.info(String.format("going to run cmd %s with ed:%s, sd:%s, marketId:%s", cmdName, endDate, startDate, marketId));
+			if (isStatic){
+				cs = new CmdStatus(marketId, cmdName, ed, sd, true);
+			}else{	
+				cs = new CmdStatus(marketId, cmdName, ed, sd, false);
+			}
+			String[] jobIds = ETLUtil.runTaskByCmd(marketId, cconf, this.getPropFile(), cmdName, params);
+			for (String jobId:jobIds){
+				cs.getJsMap().put(jobId, 4);//PREPARE
+			}
+			dsm.addUpdateCrawledItem(cs, null);
+		}
+	}
 	
 	public static int CMDTYPE_STATIC=1; //not updated with time, static data
 	public static int CMDTYPE_DYNAMIC=2; //updated with time
@@ -249,17 +233,11 @@ public class SinaStockBase extends TestBase{
 		if (ed!=null){
 			strEd = sdf.format(ed);
 		}
-		String[] conf = null;
-		if (type == CMDTYPE_STATIC){
-			conf = StockConfig.StaticConf;
-		}else if (type == CMDTYPE_DYNAMIC){
-			conf = StockConfig.DynamicConf;
-		}else if (type == CMDTYPE_ALL){
-			if (marketId.startsWith(MarketId_Test)){
-				conf = StockConfig.testAllConf;
-			}else{
-				conf = StockConfig.allConf;
-			}
+		String[] confs = null;
+		if (marketId.startsWith(MarketId_Test)){
+			confs = StockConfig.testAllConf;
+		}else{
+			confs = StockConfig.allConf;
 		}
 		Date testStartDate = null;
 		try{
@@ -267,11 +245,17 @@ public class SinaStockBase extends TestBase{
 		}catch(Exception e){
 			logger.error("", e);
 		}
-		for (String cmd:conf){
-			if (marketId.startsWith(MarketId_Test) && Arrays.asList(StockConfig.tradeConfs).contains(cmd) && (sd!=null && testStartDate.after(sd))){
-				runCmd(cmd, marketId, Test_SHORT_SD, strEd);//tradeConf generates too much data, limit it to short_period for test market
-			}else{
-				runCmd(cmd, marketId, strSd, strEd);
+		for (String cmd:confs){
+			boolean isStatic = ETLUtil.isStatic(cconf, cmd);
+			if (
+					(type == CMDTYPE_STATIC && isStatic) ||
+					(type == CMDTYPE_DYNAMIC && !isStatic) ||
+					(type == CMDTYPE_ALL)){
+				if (marketId.startsWith(MarketId_Test) && Arrays.asList(StockConfig.tradeConfs).contains(cmd) && (sd!=null && testStartDate.after(sd))){
+					runCmd(cmd, marketId, Test_SHORT_SD, strEd);//tradeConf generates too much data, limit it to short_period for test market
+				}else{
+					runCmd(cmd, marketId, strSd, strEd);
+				}
 			}
 		}
 	}
@@ -354,7 +338,7 @@ public class SinaStockBase extends TestBase{
 				//check the (null, lastRunDate) for the previous market
 				runAllCmd(prevMarketId, startDate, lastRunDate, CMDTYPE_ALL);
 				//apply (null, endDate) for delta market
-				runAllCmd(deltaMarketId, startDate, lastRunDate, CMDTYPE_STATIC); //dynamic part
+				runAllCmd(deltaMarketId, lastRunDate, endDate, CMDTYPE_STATIC);
 				//do the [lastRunDate,endDate) for the current market
 				runAllCmd(curMarketId, lastRunDate, endDate, CMDTYPE_DYNAMIC); //
 			}else{
@@ -396,7 +380,8 @@ public class SinaStockBase extends TestBase{
 		for (String cmd: StockConfig.allConf){
 			boolean update=false;
 			CmdStatus cs = null;
-			if (Arrays.asList(StockConfig.StaticConf).contains(cmd)){
+			boolean isStatic = ETLUtil.isStatic(cconf, cmd);
+			if (isStatic){
 				cs = CmdStatus.getCmdStatus(dsm, marketId, cmd);
 			}else{
 				cs = CmdStatus.getCmdStatus(dsm, marketId, cmd, this.endDate);
@@ -457,11 +442,11 @@ public class SinaStockBase extends TestBase{
 		String datePart;
 		String strEndDate = sdf.format(this.endDate);
 		if (this.startDate==null){
-			datePart = SinaStockBase.HS_A_FIRST_DATE_DETAIL_TRADE + "_" + strEndDate;
+			datePart = null + "_" + strEndDate;
 		}else{
 			datePart = sdf.format(this.startDate) + "_" + strEndDate;
 		}
-		Merge.run_merge(cconf, datePart);
+		MergeTask.launch(this.propFile, cconf, datePart, specialParam, true);
 	}
 	//crawl financial report history by market to hdfs
 	public void run_browse_fr_history() throws ParseException{//till running time
@@ -501,5 +486,13 @@ public class SinaStockBase extends TestBase{
 
 	public void setMarketId(String marketId) {
 		this.marketId = marketId;
+	}
+
+	public String getSpecialParam() {
+		return specialParam;
+	}
+
+	public void setSpecialParam(String specialParam) {
+		this.specialParam = specialParam;
 	}
 }

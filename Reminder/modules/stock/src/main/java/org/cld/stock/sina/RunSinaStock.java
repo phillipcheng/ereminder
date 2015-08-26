@@ -4,6 +4,8 @@ import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,7 +55,21 @@ public class RunSinaStock {
 				if (args.length>=argIdx+1){
 					String taskName = args[argIdx];
 					String[] taskNames = taskName.split(",");
-					ssb.run_task(taskNames);
+					Map<String, String> hadoopParams = new HashMap<String, String>();
+					if (args.length>=argIdx+2){
+						String params = args[argIdx+1];//mapreduce.map.memory.mb:3072,mapreduce.map.java.opts:-Xmx3072M
+						String[] strParams = params.split(",");
+						for (String strParam:strParams){
+							String[] kv = strParam.split(":");
+							if (kv.length<2){
+								logger.error(String.format("wrong param format: %s", params));
+								return;
+							}else{
+								hadoopParams.put(kv[0], kv[1]);
+							}
+						}
+					}
+					ssb.run_task(taskNames, hadoopParams);
 				}else{
 					System.out.println(getDefaultCmdLine() + " taskName");
 				}
@@ -74,6 +90,10 @@ public class RunSinaStock {
 				ssb.setMarketId(curMarketId);
 				if (args.length>=argIdx+1){
 					String method = args[argIdx];
+					if (args.length>=argIdx+2){
+						String specialParam = args[argIdx+1];
+						ssb.setSpecialParam(specialParam);
+					}
 					Method m;
 					try {
 						m = ssb.getClass().getMethod(method);

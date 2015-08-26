@@ -8,6 +8,8 @@
 			<param name="stockid"/>
 			<param name="startDate" type="string"/>
 			<param name="endDate" type="string"/>
+			<param name="year" type="int"/>
+			<param name="dateCompareWith" type="string" value="year"/>
 			<startUrl value="http://vip.stock.finance.sina.com.cn/corp/go.php/vFD_FootNotes/stockid/[stockid].phtml"/>
 			<userAttribute name="id">
 				<value value="stockid" fromScope="param"/>
@@ -82,7 +84,7 @@
 				<value value="count(//div[@id='con03-5']/table[3]/tbody[1]/tr[1]/td)" toType="int"/>
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.MultiVarRowTablesToCSV" outputType="byJobMulti"><!-- output only 7 files -->
-				<outputDir value="raw/[startDate]_[endDate]/sina-stock-fr-footnote/"/>
+				<outputDir value="raw/[startDate]_[endDate]/sina-stock-fr-footnote/[year]"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

@@ -6,6 +6,7 @@
 			<param name="startDate" type="string"/>
 			<param name="endDate" type="string"/>
 			<param name="HasHeader" value="true" type="boolean"/>
+			<param name="static" value="true" type="boolean"/>
 			<startUrl value="http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CorpXiangGuan/stockid/[stockid].phtml"/>
 			<userAttribute name="id">
 				<value value="stockid" toType="string" fromScope="param"/>

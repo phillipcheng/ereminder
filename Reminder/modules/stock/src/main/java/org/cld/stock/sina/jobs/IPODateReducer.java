@@ -16,6 +16,7 @@ import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.CrawledItemId;
+import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.cld.stock.sina.ETLUtil;
 import org.cld.stock.sina.StockConfig;
 
@@ -43,7 +44,7 @@ public class IPODateReducer extends Reducer<Text, Text, Text, Text>{
 		}
 		logger.info(String.format("total stock: %d", ipoDate.size()));
 		String marketId = context.getConfiguration().get(ETLUtil.PK_MARKETID);
-		String strEd = context.getConfiguration().get(ETLUtil.PK_END_DATE);
+		String strEd = context.getConfiguration().get(AbstractCrawlItemToCSV.FIELD_NAME_ENDDATE);
 		Date ed = null;
 		try {
 			ed = sdf.parse(strEd);

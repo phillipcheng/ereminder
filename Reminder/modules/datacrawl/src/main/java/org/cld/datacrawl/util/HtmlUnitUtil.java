@@ -365,8 +365,10 @@ public class HtmlUnitUtil {
 		return LoginStatus.LoginNotNeeded;
 	}
 	
+	public static final int maxloop = 15; //number of wait time
+	public static final int waitTime = 1000; //ms for each wait
+	//total is maxloop * waitTime
 	public static boolean waitVerify(HtmlPage page, VerifyPage vp, Object param) throws InterruptedException{
-		int maxloop = 20;
 		int innerloop=0;
 		Date tick1 = null;
 		Date tick2 = null;
@@ -411,8 +413,6 @@ public class HtmlUnitUtil {
 	 * @return the page result
 	 * @throws InterruptedException
 	 */
-	public static final int maxloop = 15;
-	public static final int waitTime = 2000; //ms
 	public static HtmlPageResult clickNextPageWithRetryValidate(WebClient wc, NextPage np, VerifyPage vp, Object param, 
 			ParsedTasksDef siteDef, CrawlConf cconf) 
 			throws InterruptedException{

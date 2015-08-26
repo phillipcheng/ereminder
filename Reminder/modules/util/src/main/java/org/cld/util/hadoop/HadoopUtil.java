@@ -47,7 +47,7 @@ class FirstFileFilter implements PathFilter{
 		//xxxx-m-000xx
 		String name = p.getName();
 		if (name.contains("-m-")){
-			int idx = name.indexOf("-");
+			int idx = name.indexOf("-m-");
 			if (idx>-1){
 				String partName = name.substring(0, idx-1);
 				if (prefixes.contains(partName)){
@@ -57,6 +57,8 @@ class FirstFileFilter implements PathFilter{
 					return true;
 				}
 			}
+		}else{
+			//by id
 		}
 		return false;
 	}	
@@ -82,6 +84,7 @@ public class HadoopUtil {
 					for (FileStatus fst:fstl){
 						FileStatus[] subDirs = fs.listStatus(fst.getPath(), dfilter);
 						if (subDirs.length==0){
+							logger.info(String.format("add leaf dir: %s", fst.getPath().toString()));
 							leafPaths.add(fst.getPath());
 						}else{
 							checkPaths.add(fst.getPath());
@@ -89,6 +92,7 @@ public class HadoopUtil {
 					}
 				}else{
 					//p is a leaf dir
+					logger.info(String.format("add leaf dir: %s", p.toString()));
 					leafPaths.add(p);
 				}
 			} catch (IOException e) {
@@ -107,7 +111,7 @@ public class HadoopUtil {
 			String[] retPrefix = new String[fstl.length];
 			for (int i=0; i<fstl.length; i++){
 				String name = fstl[i].getPath().getName();
-				int idx = name.indexOf("-");
+				int idx = name.indexOf("-m-");
 				if (idx>-1){
 					String partName = name.substring(0, idx);
 					retPrefix[i]=partName;

@@ -3,14 +3,20 @@ package org.cld.stock.test;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.sina.ETLUtil;
-import org.cld.stock.sina.Merge;
+import org.cld.stock.sina.MergeTask;
 import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.StockConfig;
 import org.cld.stock.sina.TradeDetailCheckDownload;
 import org.cld.stock.sina.TradeDetailPostProcessTask;
+import org.cld.taskmgr.TaskMgr;
+import org.cld.taskmgr.entity.Task;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -47,11 +53,50 @@ public class TestSinaStock {
 		ssb = new SinaStockBase(propFile, marketId, startDate, endDate);
 		ssb.getCconf().getTaskMgr().getHadoopCrawledItemFolder();
 	}
-
-
+	
+	//
 	@Test
 	public void testInitTestMarket() throws Exception{
 		ssb.getDsm().addUpdateCrawledItem(ssb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
+	}
+	@Test
+	public void testRunAllCmd1() throws Exception{
+		ssb.runAllCmd(SinaStockBase.date_Test_D1, SinaStockBase.date_Test_D2);
+	}
+	@Test
+	public void tradedetail_postprocess_1() {
+		TradeDetailPostProcessTask.launch(this.propFile, ssb.getCconf(), SinaStockBase.Test_D1 + "_" + SinaStockBase.Test_D2);
+	}
+	@Test
+	public void testMerge_1() throws Exception{
+		MergeTask.launch(this.propFile, ssb.getCconf(), SinaStockBase.Test_D1 + "_" + SinaStockBase.Test_D2, null, false);
+	}
+	@Test
+	public void testMRMerge_1() throws Exception{
+		MergeTask.launch(this.propFile, ssb.getCconf(), SinaStockBase.Test_D1 + "_" + SinaStockBase.Test_D2, null, true);
+	}
+	@Test
+	public void testRunAllCmd2() throws Exception{
+		ssb.runAllCmd(SinaStockBase.date_Test_D2, SinaStockBase.date_Test_D3);
+	}
+	@Test
+	public void tradedetail_postprocess_2() {
+		TradeDetailPostProcessTask.launch(this.propFile, ssb.getCconf(), SinaStockBase.Test_D2 + "_" + SinaStockBase.Test_D3);
+	}
+	@Test
+	public void testMerge_2() throws Exception{
+		MergeTask.launch(this.propFile, ssb.getCconf(), SinaStockBase.Test_D2 + "_" + SinaStockBase.Test_D3, null, false);
+	}
+	//
+	
+	@Test
+	public void testRunAllCmd3() throws Exception{
+		ssb.runAllCmd(null, SinaStockBase.date_Test_D3);
+	}
+	
+	@Test
+	public void run_task_1() throws Exception{
+		ssb.run_task(new String[]{"run_corp_manager_2015_07_19_12_14_47_437_history_true_MarketId_test_"}, null);
 	}
 	
 	/***
@@ -75,23 +120,6 @@ public class TestSinaStock {
 	public void testGetStockIPO(){
 		ETLUtil.getIPODateByStockId(MarketId_Test, "600191", ssb.getCconf());
 	}
-	@Test
-	public void testRunAllCmd1() throws Exception{
-		ssb.runAllCmd(SinaStockBase.date_Test_D1, SinaStockBase.date_Test_D2);
-	}
-	@Test
-	public void testRunAllCmd2() throws Exception{
-		ssb.runAllCmd(SinaStockBase.date_Test_D1, SinaStockBase.date_Test_D3);
-	}
-	@Test
-	public void testRunAllCmd3() throws Exception{
-		ssb.runAllCmd(null, SinaStockBase.date_Test_D3);
-	}
-	
-	@Test
-	public void run_task_1() throws Exception{
-		ssb.run_task(new String[]{"run_corp_manager_2015_07_19_12_14_47_437_history_true_MarketId_test_"});
-	}
 	/*****
 	 * Market history 行情走势
 	 **/
@@ -106,17 +134,17 @@ public class TestSinaStock {
 		ssb.runCmd(StockConfig.SINA_STOCK_TRADE_DETAIL, MarketId_Test, sd, null);
 	}
 	@Test
-	public void tradedetail_postprocess() {
-		TradeDetailPostProcessTask.launch(this.propFile, ssb.getCconf(), SinaStockBase.Test_D1 + "_" + SinaStockBase.Test_D2);
-	}
-	@Test
 	public void tradedetail_checkdownload() {
 		TradeDetailCheckDownload.launch(ssb.getCconf(), SinaStockBase.Test_D1 + "_" + SinaStockBase.Test_D2);
 	}
-	@Test
-	public void testMerge() throws Exception{
-		Merge.run_merge(ssb.getCconf(), SinaStockBase.Test_D1 + "_" + SinaStockBase.Test_D2);
-	}
+	
+
+	
+	
+	
+	
+	
+	
 	//融资融券
 	@Test
 	public void run_browse_market_rzrq1() throws ParseException{
@@ -335,5 +363,18 @@ public class TestSinaStock {
 	@Test
 	public void run_fr_assetdevalue2(){
 		ssb.runCmd(StockConfig.SINA_STOCK_FR_ASSETDEVALUE_YEAR, MarketId_Test, END_DATE, null);
+	}
+	
+	//test crawl
+	@Test
+	public void test_crawl_1() throws InterruptedException{
+		List<Task> tl = ssb.getCconf().setUpSite("sina-stock-market-dzjy.xml", null);
+		String date = "2012-05-30";
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put(TaskMgr.TASK_RUN_PARAM_CCONF, ssb.getCconf());
+		params.put("date", date);
+		params.put("startDate", date);
+		params.put("endDate", date);
+		tl.get(0).runMyself(params, null);
 	}
 }

@@ -53,7 +53,7 @@ public class IPODateMapper extends Mapper<Object, Text, Text, Text>{
 		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();
 		hadoopCrawlTaskParams.put(CrawlUtil.CRAWL_PROPERTIES, context.getConfiguration().get(CrawlUtil.CRAWL_PROPERTIES));
 		try{
-			t.initParsedTaskDef(crawlTaskParams);
+			t.initParsedTaskDef();
 			List<CrawledItem> cilist = t.runMyselfWithOutput(crawlTaskParams, false);
 			if (cilist!=null && cilist.size()==1){
 				CrawledItem ci = cilist.get(0);

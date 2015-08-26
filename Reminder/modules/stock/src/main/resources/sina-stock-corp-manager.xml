@@ -5,15 +5,14 @@
 			<param name="stockid"/>
 			<param name="startDate" type="string"/>
 			<param name="endDate" type="string"/>
+			<param name="static" value="false" type="boolean"/>
+			<param name="RowDateIdx" type="int" value="2"/><!-- 任职日期 -->
 			<startUrl value="http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CorpManager/stockid/[stockid].phtml"/>
 			<userAttribute name="id">
 				<value value="stockid" toType="string" fromScope="param"/>
 			</userAttribute>
 			<userAttribute name="data">
 				<value value="//table[@id='comInfo1']/tbody/tr[count(td)>1]/td" toType="list"/>
-			</userAttribute>
-			<userAttribute name="RowDateIdx">
-				<value value="2" toType="int"/><!-- 任职日期 -->
 			</userAttribute>
 			<userAttribute name="RowNum">
 				<value value="4" toType="int"/>

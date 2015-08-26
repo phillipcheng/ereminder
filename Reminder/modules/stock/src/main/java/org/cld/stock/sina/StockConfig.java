@@ -87,13 +87,10 @@ public class StockConfig {
 	};
 	
 	public static String[] syncConf = new String[]{SINA_STOCK_IPODate}; //other cmd need this result
-	public static String[] StaticConf = new String[]{SINA_STOCK_CORP_INFO, SINA_STOCK_CORP_RELATED, SINA_STOCK_CORP_RELATED_OTHER}; //not time related
 	public static String[] allConf = (String[]) concatAll(corpConfs, tradeConfs, issueConfs, holderConfs, frConfs);
-	public static String[] DynamicConf = (String[])ArrayUtils.removeElements(allConf, StaticConf);
 	
 	//for testing
-	public static String[] testAllConf = (String[]) ArrayUtils.addAll(corpConfs, SINA_STOCK_TRADE_DETAIL);
-	public static String[] testDynamicConf = (String[])ArrayUtils.removeElements(testAllConf, StaticConf);
+	public static String[] testAllConf = (String[]) ArrayUtils.addAll(corpConfs, SINA_STOCK_FR_FOOTNOTE);
 	
 	public static <T> T[] concatAll(T[] first, T[]... rest) {
 	  int totalLength = first.length;

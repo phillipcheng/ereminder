@@ -22,6 +22,8 @@ public abstract class AbstractCrawlItemToCSV {
 	public static final String FIELD_NAME_ColDateIdx="ColDateIdx";//the idx of the date field of the colum table
 	public static final String FIELD_NAME_ROWCSV="RowCsvName";//name of row csv file
 	public static final String FIELD_NAME_RowDateIdx="RowDateIdx";//the idx of the date field of the row table
+	public static final String FIELD_NAME_DATECOMPARE_WTIH="dateCompareWith";//the date field compare with which value, can be parameter 'year', if not specified then startDate and endDate
+	public static final String FIELD_NAME_STATIC = "static";
 	
 	public static final String KEY_GENHEADER="GenHeader";
 	public static final String KEY_HASHEADER="HasHeader"; //default to true
@@ -29,6 +31,7 @@ public abstract class AbstractCrawlItemToCSV {
 	public static final String DATA_TYPE_KEY="DataType";
 	public static final String DATA_TYPE_NUMBER="Number";
 	public static final String DATA_TYPE_TEXT="Text";
+	public static final String KEY_VALUE_UNDEFINED="unused";
 	
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
@@ -36,7 +39,8 @@ public abstract class AbstractCrawlItemToCSV {
 	protected Date endDate = null;
 	protected boolean genHeader = false;
 	protected boolean hasHeader = true;
-	protected String keyid = "unused";
+	protected String keyid = KEY_VALUE_UNDEFINED;
+	protected String dateCompareWithValue = null;
 	
 	private static Logger logger =  LogManager.getLogger(AbstractCrawlItemToCSV.class);
 	
@@ -70,19 +74,31 @@ public abstract class AbstractCrawlItemToCSV {
 		if (key!=null){
 			keyid = key;
 		}
+		String dateCompareWith = (String)ci.getParam(FIELD_NAME_DATECOMPARE_WTIH);
+		if (dateCompareWith!=null){
+			dateCompareWithValue = ci.getParam(dateCompareWith).toString();
+		}
 	}
 	
 	//true: date (- [startDate, endDate)
 	protected boolean checkDate(String date){
 		try {
-			Date d = sdf.parse(date);
-			if (startDate!=null){
-				if (startDate.after(d)){
-					return false;
+			if (dateCompareWithValue==null){
+				Date d = sdf.parse(date);
+				if (startDate!=null){
+					if (startDate.after(d)){
+						return false;
+					}
 				}
-			}
-			if (endDate!=null){
-				if (!d.before(endDate)){
+				if (endDate!=null){
+					if (!d.before(endDate)){
+						return false;
+					}
+				}
+			}else{
+				if (date.contains(dateCompareWithValue)){
+					return true;
+				}else{
 					return false;
 				}
 			}

@@ -17,7 +17,7 @@ public class CrawlTaskConf extends Task {
 	private static Logger logger =  LogManager.getLogger(CrawlTaskConf.class);
 	
 	@Override
-	public ParsedTasksDef initParsedTaskDef(Map<String, Object> params){
+	public ParsedTasksDef initParsedTaskDef(){
 		ParsedTasksDef ptd = TaskMgr.getParsedTasksDef(storeId);
 		if (ptd!=null){
 			this.setParsedTaskDef(ptd);

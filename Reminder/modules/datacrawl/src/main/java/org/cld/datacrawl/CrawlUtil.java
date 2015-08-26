@@ -159,8 +159,15 @@ public class CrawlUtil {
 	}
 	
 	public static String hadoopExecuteCrawlTasksByFile(String crawlPropertyFile, CrawlConf cconf, String[] sourceName){
+		return hadoopExecuteCrawlTasksByFile(crawlPropertyFile, cconf, sourceName, null);
+	}
+	
+	public static String hadoopExecuteCrawlTasksByFile(String crawlPropertyFile, CrawlConf cconf, String[] sourceName, Map<String, String> hadoopParams){
 		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();
 		hadoopCrawlTaskParams.put(CRAWL_PROPERTIES, crawlPropertyFile);
+		if (hadoopParams!=null){
+			hadoopCrawlTaskParams.putAll(hadoopParams);
+		}
 		Map<String, Object> cconfParams = new HashMap<String, Object>();
 		cconfParams.put(TaskMgr.TASK_RUN_PARAM_CCONF, cconf);
 		return HadoopTaskLauncher.executeTasksByFile(cconf.getNodeConf(), hadoopCrawlTaskParams, 

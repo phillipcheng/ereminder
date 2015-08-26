@@ -5,8 +5,8 @@
 
 1. run_all_cmd date1 date2
 
-
 raw/sd_ed/storeid/xxx
+postprocess/sd_ed/storeid/xxx
 check/sd_ed/storeid/xxx (check result file, check job status)
 merge/storeid/sd_ed/xxx
-db/sd_ed/storeid/xxx (if corresponding storeid/cmd not here, then use the one under merge)
+

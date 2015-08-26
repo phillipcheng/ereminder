@@ -17,7 +17,6 @@
 			<userAttribute name="ColNum">
 				<value value="count(//table[@id='BenifitChangeNewTable0']/tbody/tr[1]/td)" toType="int"/>
 			</userAttribute>
-			<param name="ColDateIdx" type="int" value="30"/><!-- 公告日期 -->
 			<userAttribute name="data">
 				<value value="//table[@id='BenifitChangeNewTable0']/tbody/tr[count(td)>1]/td" optional="true" toType="list"/>
 			</userAttribute>

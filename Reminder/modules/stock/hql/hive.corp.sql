@@ -26,11 +26,3 @@ create external table CorpRelatedIndustries( stockid String, industryName String
 --corp related other concepts
 create external table CorpRelatedConcepts( stockid String, conceptName String, comment String) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/sina-stock-corp-related-other/concepts';
 
---market trade-detail
-create external table MarketTradeDetail( stockid String, conceptName String, comment String) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/sina-stock-market-tradedetail/trade_detail/' tblproperties ("skip.header.line.count"="1");
-
-create external table MarketDaily(close decimal(10,4), dt Date, high decimal(10,4),low decimal(10,4), open decimal(10,4), stockid String, tvolume BIGINT, volume BIGINT) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/sina-stock-market-history-output';
-
-
-
-
