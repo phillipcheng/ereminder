@@ -80,7 +80,7 @@ public abstract class AbstractCrawlItemToCSV {
 		}
 	}
 	
-	//true: date (- [startDate, endDate)
+	//true: date belongs [startDate, endDate)
 	protected boolean checkDate(String date){
 		try {
 			if (dateCompareWithValue==null){
@@ -93,18 +93,23 @@ public abstract class AbstractCrawlItemToCSV {
 				if (endDate!=null){
 					if (!d.before(endDate)){
 						return false;
+					}else{
+						return true; //startDate not after d and d before endDate
 					}
+				}else{
+					//endDate is null
+					return false;
 				}
 			}else{
 				if (date.contains(dateCompareWithValue)){
-					return true;
+					return true; //date contains the compare value
 				}else{
 					return false;
 				}
 			}
 		}catch(Exception e){
 			logger.error("", e);
+			return false;//wrong date format
 		}
-		return true;
 	}
 }
