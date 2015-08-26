@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -176,7 +177,13 @@ public class TradeDetailPostProcessTask extends Task implements Serializable{
 				}
 			}
 			String taskName = "TradeDetailPostProcess_" + batchId;
-			jobIdList.add(CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tl, "TradeDetailPostProcess_" + batchId, false));
+			int mbMem = 3072;
+			String optValue = "-Xmx" + mbMem + "M";
+			Map<String, String> hadoopJobParams = new HashMap<String, String>();
+			hadoopJobParams.put("mapreduce.map.speculative", "false");//since we do not allow same map multiple instance
+			hadoopJobParams.put("mapreduce.map.memory.mb", mbMem+"");
+			hadoopJobParams.put("mapreduce.map.java.opts", optValue);
+			jobIdList.add(CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tl, "TradeDetailPostProcess_" + batchId, false, hadoopJobParams));
 			logger.info(String.format("sending out:%d tasks for hadoop task %s.", tl.size(), taskName));
 			String[] jobIds = new String[jobIdList.size()];
 			return jobIdList.toArray(jobIds);

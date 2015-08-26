@@ -56,9 +56,10 @@ public class ETLUtil {
 		return false;
 	}
 	
-	public static boolean hasDateIdx(ParsedBrowsePrd btt){
+	private static boolean hasDateIdx(ParsedBrowsePrd btt){
 		if (btt.getParamMap().containsKey(AbstractCrawlItemToCSV.FIELD_NAME_ColDateIdx)
 				||btt.getParamMap().containsKey(AbstractCrawlItemToCSV.FIELD_NAME_RowDateIdx)
+				||btt.getParamMap().containsKey(ETLUtil.PK_DATE)
 				||btt.getPdtAttrMap().containsKey(AbstractCrawlItemToCSV.FIELD_NAME_ColDateIdx)
 				||btt.getPdtAttrMap().containsKey(AbstractCrawlItemToCSV.FIELD_NAME_RowDateIdx)){
 			return true;
@@ -317,9 +318,6 @@ public class ETLUtil {
 			toDate = endDate;
 		}
 		LinkedList<Date> dll = DateTimeUtil.getWorkingDayList(startDate, toDate);
-		if (DateTimeUtil.isWorkingDay(toDate)){
-			dll.add(toDate);
-		}
 		List<Task> tlist = new ArrayList<Task>();
 		Iterator<Date> tryDates = dll.listIterator();
 		while(tryDates.hasNext()){

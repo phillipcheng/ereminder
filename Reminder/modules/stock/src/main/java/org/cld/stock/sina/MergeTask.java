@@ -91,6 +91,9 @@ public class MergeTask extends Task implements Serializable{
 							fs.mkdirs(destDir);
 						}
 						FileUtil.copy(fs, srcs, fs, destDir, false, true, hconf);
+						if (fs.exists(destFile)){
+							fs.delete(destFile, false);
+						}
 						FileUtil.copyMerge(fs, destDir, fs, destFile, false, hconf, "");
 						fs.delete(destDir, true);
 					}
@@ -160,6 +163,7 @@ public class MergeTask extends Task implements Serializable{
 				int mbMem = 3072;
 				String optValue = "-Xmx" + mbMem + "M";
 				Map<String, String> hadoopJobParams = new HashMap<String, String>();
+				hadoopJobParams.put("mapreduce.map.speculative", "false");//since we do not allow same map multiple instance
 				hadoopJobParams.put("mapreduce.map.memory.mb", mbMem+"");
 				hadoopJobParams.put("mapreduce.map.java.opts", optValue);
 				jobIdList.add(CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tl, taskName, false, hadoopJobParams));

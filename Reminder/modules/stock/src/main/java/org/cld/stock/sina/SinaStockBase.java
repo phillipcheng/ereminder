@@ -81,6 +81,7 @@ public class SinaStockBase extends TestBase{
 	
 	private String marketId = MarketId_Test;
 	private String propFile = "client1-v2.properties";
+	//every run crawl date belongs [startDate, endDate), e.g. 08-16,08-25    08-25,08-26 
 	private Date startDate;
 	private Date endDate;
 	private String itemsFolder;

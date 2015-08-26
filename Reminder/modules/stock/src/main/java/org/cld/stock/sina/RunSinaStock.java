@@ -50,7 +50,6 @@ public class RunSinaStock {
 			}
 			SinaStockBase ssb = new SinaStockBase(propFile, marketId, startDate, endDate);
 			int argIdx = 5;
-			String curMarketId = marketId + "_" + strEndDate;
 			if ("run_task".equals(cmd)){//run already generated task
 				if (args.length>=argIdx+1){
 					String taskName = args[argIdx];
@@ -82,12 +81,12 @@ public class RunSinaStock {
 			}else if ("run_cmd".equals(cmd)){
 				if (args.length>=argIdx+1){
 					String cmdName = args[argIdx];
-					ssb.runCmd(cmdName, curMarketId, strStartDate, strEndDate);
+					ssb.runCmd(cmdName, marketId, strStartDate, strEndDate);
 				}else{
 					System.out.println(getDefaultCmdLine() + " cmdName");
 				}
 			}else if ("run_special".equals(cmd)){
-				ssb.setMarketId(curMarketId);
+				ssb.setMarketId(marketId);
 				if (args.length>=argIdx+1){
 					String method = args[argIdx];
 					if (args.length>=argIdx+2){
