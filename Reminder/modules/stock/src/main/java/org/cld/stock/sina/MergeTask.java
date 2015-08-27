@@ -40,7 +40,6 @@ public class MergeTask extends Task implements Serializable{
 
 	private CrawlConf cconf;
 
-
 	public MergeTask(){	
 	}
 	
@@ -68,24 +67,24 @@ public class MergeTask extends Task implements Serializable{
 			FileSystem fs = FileSystem.get(hconf);
 			Path lp = new Path(leafDir);
 			logger.info(String.format("leaf dir found %s", lp.toString()));
-			String[] prefixes = HadoopUtil.getOutputPrefix(fs, lp);
-			if (prefixes!=null){
-				logger.info("prefixes got:" + Arrays.toString(prefixes));
+			String[] partNames = HadoopUtil.getPartNames(fs, lp);
+			if (partNames!=null){
+				logger.info("prefixes got:" + Arrays.toString(partNames));
 				String strLP = lp.toString();
 				String midPart = strLP.substring(strLP.indexOf(storeid)+storeid.length(), strLP.length());
 				logger.info("midPart:" + midPart);
-				if (prefixes.length>1){
+				if (partNames.length>1){
 					//multiple output
-					for (String prefix:prefixes){
-						Path[] srcs = HadoopUtil.getFilesWithPrefix(fs, lp, prefix);
+					for (String partName:partNames){
+						Path[] srcs = HadoopUtil.getFileWithNameContains(fs, lp, partName);
 						Path destDir = null;
 						Path destFile = null;
 						if (!needOverwrite){
-							destDir = new Path(StockConfig.MERGE_ROOT + "/" + storeid + "/" + prefix + "/" + datePart + "/" + midPart + "/tmp/");
-							destFile = new Path(StockConfig.MERGE_ROOT + "/" + storeid + "/" + prefix + "/" + datePart + "/" + midPart + "/merge");
+							destDir = new Path(StockConfig.MERGE_ROOT + "/" + storeid + "/" + partName + "/" + datePart + "/" + midPart + "/tmp/");
+							destFile = new Path(StockConfig.MERGE_ROOT + "/" + storeid + "/" + partName + "/" + datePart + "/" + midPart + "/merge");
 						}else{
-							destDir = new Path(StockConfig.MERGE_ROOT + "/" + storeid + "/" + prefix + "/" + midPart + "/tmp/");
-							destFile = new Path(StockConfig.MERGE_ROOT + "/" + storeid + "/" + prefix + "/" + midPart + "/merge");
+							destDir = new Path(StockConfig.MERGE_ROOT + "/" + storeid + "/" + partName + "/" + midPart + "/tmp/");
+							destFile = new Path(StockConfig.MERGE_ROOT + "/" + storeid + "/" + partName + "/" + midPart + "/merge");
 						}
 						if (!fs.exists(destDir)){
 							fs.mkdirs(destDir);

@@ -6,19 +6,18 @@ import org.apache.hadoop.fs.PathFilter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class FileNamePrefixFilter implements PathFilter{
-	private static Logger logger =  LogManager.getLogger(FileNamePrefixFilter.class);
-	private String prefix = null;
+public class FileNameFilter implements PathFilter{
+	private static Logger logger =  LogManager.getLogger(FileNameFilter.class);
+	private String key = null;
 	
-	public FileNamePrefixFilter(String prefix){
-		this.prefix = prefix;
+	public FileNameFilter(String key){
+		this.key = key;
 	}
 	
 	@Override
 	public boolean accept(Path p) {
-		//xxxx-m-000xx
 		String name = p.getName();
-		if (name.startsWith(prefix)){
+		if (name.contains(key)){
 			return true;
 		}
 		return false;

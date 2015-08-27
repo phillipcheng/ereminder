@@ -18,7 +18,7 @@
 				<value value="5" toType="int"/>
 			</userAttribute>			
 			<userAttribute name="ColCsvName">
-				<value value="TopStockHolderSummary" toType="string"/>
+				<value value="Summary" toType="string"/>
 			</userAttribute>
 			<userAttribute name="ColDataType">
 				<value value="Number" toType="string"/>
@@ -42,7 +42,9 @@
 				<value value="TopStockHolder" toType="string"/>
 			</userAttribute>
 			<userAttribute name="RowDataType">
-				<value value="Text" toType="string"/>
+				<value value="Number,Text,Number,Number,Text" toType="list" toEntryType="string"/>
+				<!-- <value value="Text" toType="string"/>-->
+				<!-- <value value="Text" toType="list" toEntryType="string"/>-->
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.ColTableRowTableAsCSV" outputType="byJobMulti"><!-- 1 file -->
 				<outputDir value="raw/[startDate]_[endDate]/sina-stock-stock-holder/"/>

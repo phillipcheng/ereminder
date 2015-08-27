@@ -5,5 +5,10 @@ set hive.auto.convert.join=true;
 set hive.mapred.supports.subdirectories=true;
 set mapred.input.dir.recursive=true;
 
---market dzjy
-create external table MarketDZJY(dt Date, stockid String, stockname String, price decimal(10,4), volume decimal(20,2), amount decimal(20,2), buyerAgent String, sellerAgent String, stockType String) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/sina-stock-market-dzjy';
+--
+drop table if exists ShareBonusDividend;
+create external table ShareBonusDividend(stockid String, annouceDate Date, SongGu decimal(10,2), ZhuanZeng decimal(10,2), Devidend decimal(10,2), progress String, ExDate Date, RegDate Date, XStockPublicDate Date, comment String) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-issue-sharebonus/dividend';
+
+--
+drop table if exists ShareBonusAlloted;
+create external table ShareBonusAlloted(stockid String, dt Date, AllotNumberEveryTen decimal(10,2), price decimal(10,4), base decimal(20,2), ExDate Date, RegDate Date, PayStartDate Timestamp, PayEndDate Date, XStockPublicDate Date, TotalAmount decimal(20,2), comment String) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-issue-sharebonus/allotted';

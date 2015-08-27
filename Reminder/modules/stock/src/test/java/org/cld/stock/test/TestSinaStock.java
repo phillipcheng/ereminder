@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.datastore.entity.CrawledItem;
 import org.cld.stock.sina.ETLUtil;
 import org.cld.stock.sina.MergeTask;
 import org.cld.stock.sina.SinaStockBase;
@@ -368,13 +369,16 @@ public class TestSinaStock {
 	//test crawl
 	@Test
 	public void test_crawl_1() throws InterruptedException{
-		List<Task> tl = ssb.getCconf().setUpSite("sina-stock-market-dzjy.xml", null);
-		String date = "2012-05-30";
+		List<Task> tl = ssb.getCconf().setUpSite("sina-stock-stock-holder.xml", null);
+		String startDate = "2014-01-01";
+		String endDate = "2015-12-31";
+		String stockId = "002216";
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put(TaskMgr.TASK_RUN_PARAM_CCONF, ssb.getCconf());
-		params.put("date", date);
-		params.put("startDate", date);
-		params.put("endDate", date);
-		tl.get(0).runMyself(params, null);
+		params.put("stockid", stockId);
+		params.put("startDate", startDate);
+		params.put("endDate", endDate);
+		List<CrawledItem> cil = tl.get(0).runMyselfWithOutput(params, false);
+		logger.info(cil.get(0));
 	}
 }

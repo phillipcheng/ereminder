@@ -46,7 +46,7 @@ public class ColTableRowTableAsCSV extends AbstractCrawlItemToCSV{
 	
 	public static String processV(String v, String dt){
 		if (DATA_TYPE_NUMBER.equals(dt)){
-			v = v.replaceAll("[^0-9\\-]", "");
+			v = v.replaceAll("[^0-9\\-\\.]", "");
 		}
 		return v;
 	}
@@ -85,13 +85,19 @@ public class ColTableRowTableAsCSV extends AbstractCrawlItemToCSV{
 			hasColumnTable = false;
 		}
 		//for row table
-		int rownum = (int) ci.getParam(FIELD_NAME_ROWNUM);
+		int rownum = (int) ci.getParam(FIELD_NAME_ROWNUM);//actually this is the combined column number of each row
 		String ssv = (String) ci.getParam(FIELD_NAME_SECSEPVALUE);
 		String rowcsvname = (String) ci.getParam(FIELD_NAME_ROWCSV);
-		String rowdatatype = AbstractCrawlItemToCSV.DATA_TYPE_TEXT;
-		String dt = (String)ci.getParam(FIELD_NAME_ROWDataType);
-		if (dt!=null){
-			rowdatatype = dt;
+		List<String> rowdatatype = new ArrayList<String>();
+		rowdatatype.add(DATA_TYPE_TEXT);//default
+		Object dtobj = ci.getParam(FIELD_NAME_ROWDataType);
+		if (dtobj!=null){
+			if (dtobj instanceof List){
+				rowdatatype = (List<String>)dtobj;
+			}else if (dtobj instanceof String){
+				rowdatatype.clear();
+				rowdatatype.add((String)dtobj);
+			}
 		}
 		
 		List<String> colString = new ArrayList<String>();
@@ -204,7 +210,11 @@ public class ColTableRowTableAsCSV extends AbstractCrawlItemToCSV{
 									else if (j>0){
 										sb.append(",");
 									}
-									v = processV(v, rowdatatype);
+									String rdt = rowdatatype.get(0);
+									if (rowdatatype.size()>j){
+										rdt = rowdatatype.get(j);
+									}
+									v = processV(v, rdt);
 									sb.append(v);
 									p++;
 								}

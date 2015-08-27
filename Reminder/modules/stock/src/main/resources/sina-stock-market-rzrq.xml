@@ -19,7 +19,7 @@
 				<value value="5,11" toType="list" toEntryType="int"/>
 			</userAttribute>
 			<userAttribute name="data1">
-				<value value="//table[@id='dataTable'][1]/tbody/tr[count(td)=5]/td" toType="list" toEntryType="string" optional="true"/>
+				<value value="//table[@id='dataTable'][1]/tbody/tr[position()&gt;2]/td" toType="list" toEntryType="string" optional="true"/>
 			</userAttribute>
 			<userAttribute name="data2">
 				<value value="//table[@id='dataTable'][2]/tbody/tr[count(td)=11]/td" toType="list" toEntryType="string" optional="true"/>
