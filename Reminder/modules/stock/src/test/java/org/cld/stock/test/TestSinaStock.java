@@ -11,11 +11,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.stock.sina.ETLUtil;
-import org.cld.stock.sina.MergeTask;
 import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.StockConfig;
-import org.cld.stock.sina.TradeDetailCheckDownload;
-import org.cld.stock.sina.TradeDetailPostProcessTask;
+import org.cld.stock.sina.task.MergeTask;
+import org.cld.stock.sina.task.TradeDetailCheckDownload;
+import org.cld.stock.sina.task.TradeDetailPostProcessTask;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
 import org.junit.Before;
@@ -138,12 +138,6 @@ public class TestSinaStock {
 	public void tradedetail_checkdownload() {
 		TradeDetailCheckDownload.launch(ssb.getCconf(), SinaStockBase.Test_D1 + "_" + SinaStockBase.Test_D2);
 	}
-	
-
-	
-	
-	
-	
 	
 	
 	//融资融券
@@ -381,4 +375,6 @@ public class TestSinaStock {
 		List<CrawledItem> cil = tl.get(0).runMyselfWithOutput(params, false);
 		logger.info(cil.get(0));
 	}
+	
+
 }

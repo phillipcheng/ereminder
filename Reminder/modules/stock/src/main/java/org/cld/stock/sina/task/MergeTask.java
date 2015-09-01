@@ -1,4 +1,4 @@
-package org.cld.stock.sina;
+package org.cld.stock.sina.task;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -19,6 +19,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
+import org.cld.stock.sina.ETLUtil;
+import org.cld.stock.sina.StockConfig;
 import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
@@ -27,7 +29,7 @@ import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.hadoop.HadoopUtil;
 
 @Entity
-@DiscriminatorValue("org.cld.stock.sina.TradeDetailMergeTask")
+@DiscriminatorValue("org.cld.stock.sina.task.MergeTask")
 public class MergeTask extends Task implements Serializable{
 	private static final long serialVersionUID = 1L;
 	private static Logger logger =  LogManager.getLogger(MergeTask.class);
@@ -158,7 +160,7 @@ public class MergeTask extends Task implements Serializable{
 				}
 			}
 			if (doMR){
-				String taskName = MergeTask.class.getName();
+				String taskName = MergeTask.class.getName() + "_" + datePart + "_" + whichStore;
 				int mbMem = 3072;
 				String optValue = "-Xmx" + mbMem + "M";
 				Map<String, String> hadoopJobParams = new HashMap<String, String>();

@@ -99,6 +99,7 @@ public class HadoopTaskLauncher {
 		conf.set("mapreduce.task.timeout", "0");
 		conf.set("mapreduce.job.split.metainfo.maxsize", "-1");
 		conf.setInt(NLineInputFormat.LINES_PER_MAP, taskMgr.getCrawlTasksPerMapper());
+		
 		for (String key:taskMgr.getHadoopConfigs().keySet()){
 			String value = taskMgr.getHadoopConfigs().get(key);
 			conf.set(key, value);
@@ -132,10 +133,9 @@ public class HadoopTaskLauncher {
 		TaskMgr taskMgr = nc.getTaskMgr();
 		Configuration conf = getHadoopConf(nc);
 		//generate task list file
-		FileSystem fs;
 		try {
 			//generate the task file
-			fs = FileSystem.get(conf);
+			FileSystem fs = FileSystem.get(conf);
 			String taskFileName = null;
 			StringBuffer fileContent = new StringBuffer();
 			for (Task t: taskList){
@@ -150,7 +150,11 @@ public class HadoopTaskLauncher {
 			FSDataOutputStream fin = fs.create(fileNamePath);
 			fin.writeBytes(fileContent.toString());
 			fin.close();
-			return executeTasks(nc, hadoopParams, fs, new String[]{taskFileName}, taskList.get(0), sync, mapperClass, reducerClass);
+			Task t = taskList.get(0);
+			int mbMapperMem = getMbMemory(t);
+			boolean multipleOutput = hasMultipleOutput(t);
+			String outputDir = getOutputDir(t);
+			return executeTasks(nc, hadoopParams, new String[]{taskFileName}, mbMapperMem, multipleOutput, outputDir, sync, mapperClass, reducerClass, true);
 		}catch (Exception e) {
 			logger.error("", e);
 		}
@@ -162,10 +166,9 @@ public class HadoopTaskLauncher {
 		TaskMgr taskMgr = nc.getTaskMgr();
 		Configuration conf = getHadoopConf(nc);
 		//generate task list file
-		FileSystem fs;
 		try {
 			//generate the task file
-			fs = FileSystem.get(conf);
+			FileSystem fs = FileSystem.get(conf);
 			String[] taskFileName = new String[sourceName.length];
 			for (int i=0; i<taskFileName.length; i++){
 				String fileName = sourceName[i].trim();
@@ -183,7 +186,10 @@ public class HadoopTaskLauncher {
 				logger.debug("firstTaskStr:" + firstTaskStr);
 				logger.debug("t0:" + t0.toString());
 				t0.initParsedTaskDef();
-				return executeTasks(nc, hadoopParams,fs, taskFileName, t0, false, mapperClass, reducerClass);
+				int mbMapperMem = getMbMemory(t0);
+				boolean multipleOutput = hasMultipleOutput(t0);
+				String outputDir = getOutputDir(t0);
+				return executeTasks(nc, hadoopParams, taskFileName, mbMapperMem, multipleOutput, outputDir, false, mapperClass, reducerClass, true);
 			}else{
 				logger.error(String.format("task file %s not exist.", taskFileName[0]));
 			}
@@ -194,31 +200,36 @@ public class HadoopTaskLauncher {
 	}
 	
 	/**
-	 * send the taskList to the cluster
+	 * general mr job lanuch
 	 * @param nc
-	 * @param taskList
 	 * @param hadoopParams
-	 * @param sourceName: the source/generator name, used as the generated task info file name, if taskList is null, the file already exists, just use it
-	 * @param hdfsOutputDir
-	 * @param multipleOutput
+	 * @param inputPaths
+	 * ...
 	 * @return jobId
 	 */
-	public static String executeTasks(NodeConf nc, Map<String, String> hadoopParams, FileSystem fs, 
-			String[] taskFileName, Task t, boolean sync, String mapperClass, String reducerClass){
+	public static String executeTasks(NodeConf nc, Map<String, String> hadoopParams, 
+			String[] inputPaths, int mbMRMem, boolean multipleOutput, String outputDir, 
+			boolean sync, String mapperClass, String reducerClass, boolean uselinesPerMap){
 		try{
 			TaskMgr taskMgr = nc.getTaskMgr();
 			Configuration conf = getHadoopConf(nc);
-			int mbMem = getMbMemory(t);
-			conf.setInt("mapreduce.map.memory.mb", mbMem);
+			FileSystem fs = FileSystem.get(conf);
+			int mbMem = mbMRMem;
 			String optValue = "-Xmx" + mbMem + "M";
+			conf.setInt("mapreduce.map.memory.mb", mbMem);
 			conf.set("mapreduce.map.java.opts", optValue);
-			for(String key: hadoopParams.keySet()){
-				conf.set(key, hadoopParams.get(key));
-				logger.info(String.format("add conf entry: %s, %s", key, hadoopParams.get(key)));
+			conf.setInt("mapreduce.reduce.memory.mb", mbMem);
+			conf.set("mapreduce.reduce.java.opts", optValue);
+			if (hadoopParams!=null){
+				for(String key: hadoopParams.keySet()){
+					conf.set(key, hadoopParams.get(key));
+					logger.info(String.format("add conf entry: %s, %s", key, hadoopParams.get(key)));
+				}
 			}
-			boolean multipleOutput = hasMultipleOutput(t);
-			String hdfsOutputDir = getOutputDir(t);
-			Job job = Job.getInstance(conf, taskFileName[0]+"|"+taskFileName.length);
+			Job job = Job.getInstance(conf, inputPaths[0]+"|"+inputPaths.length);
+			if (uselinesPerMap){
+				job.setInputFormatClass(NLineInputFormat.class);
+			}
 			//add app specific jars to classpath
 			if (nc.getTaskMgr().getYarnAppCp()!=null){
 				for (String s: nc.getTaskMgr().getYarnAppCp()){
@@ -243,15 +254,20 @@ public class HadoopTaskLauncher {
 			}
 			job.setOutputKeyClass(Text.class);
 			job.setOutputValueClass(Text.class);
-			job.setInputFormatClass(NLineInputFormat.class);
 			if (multipleOutput)
 				MultipleOutputs.addNamedOutput(job, NAMED_OUTPUT_TXT, TextOutputFormat.class, Text.class, Text.class);
-			for (String tfn:taskFileName){
+			FileInputFormat.setInputDirRecursive(job, true);
+			for (String tfn:inputPaths){
 				Path in = new Path(tfn);
 				FileInputFormat.addInputPath(job, in);
 			}
-			if (hdfsOutputDir!=null){
-				Path out = new Path(taskMgr.getHadoopCrawledItemFolder() + "/" + hdfsOutputDir);
+			if (outputDir!=null){
+				Path out = null;
+				if (outputDir.startsWith("/")){
+					out = new Path(outputDir);
+				}else{
+					out = new Path(taskMgr.getHadoopCrawledItemFolder() + "/" + outputDir);
+				}
 				fs.delete(out, true);
 				FileOutputFormat.setOutputPath(job, out);
 			}else{

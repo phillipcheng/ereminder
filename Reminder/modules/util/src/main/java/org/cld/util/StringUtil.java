@@ -1,6 +1,7 @@
 package org.cld.util;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -22,9 +23,23 @@ public class StringUtil {
 	public static final char KeyValue_Sep2=':'; //En_colon
 	
 	public static final char FullStop_1='。';
-	
-	
+
 	public static Logger logger = LogManager.getLogger(StringUtil.class);
+	
+
+	public static Map<String, String> parseMapParams(String params){
+		Map<String, String> paramsMap = new HashMap<String, String>();
+		String[] strParams = params.split(",");
+		for (String strParam:strParams){
+			String[] kv = strParam.split(":");
+			if (kv.length<2){
+				logger.error(String.format("wrong param format: %s", params));
+			}else{
+				paramsMap.put(kv[0], kv[1]);
+			}
+		}
+		return paramsMap;
+	}
 	
 	public static int getIntegerFrom(String str){
 		Scanner in = new Scanner(str).useDelimiter("[^0-9]+");

@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.util.StringUtil;
 
 public class RunSinaStock {
 	protected static Logger logger =  LogManager.getLogger(RunSinaStock.class);
@@ -57,16 +58,7 @@ public class RunSinaStock {
 					Map<String, String> hadoopParams = new HashMap<String, String>();
 					if (args.length>=argIdx+2){
 						String params = args[argIdx+1];//mapreduce.map.memory.mb:3072,mapreduce.map.java.opts:-Xmx3072M
-						String[] strParams = params.split(",");
-						for (String strParam:strParams){
-							String[] kv = strParam.split(":");
-							if (kv.length<2){
-								logger.error(String.format("wrong param format: %s", params));
-								return;
-							}else{
-								hadoopParams.put(kv[0], kv[1]);
-							}
-						}
+						hadoopParams = StringUtil.parseMapParams(params);
 					}
 					ssb.run_task(taskNames, hadoopParams);
 				}else{

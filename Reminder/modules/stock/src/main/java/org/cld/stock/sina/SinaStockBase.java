@@ -29,6 +29,10 @@ import org.cld.datacrawl.task.TabularCSVConvertTask;
 import org.cld.datacrawl.test.TestBase;
 import org.cld.stock.sina.ETLUtil;
 import org.cld.stock.sina.StockConfig;
+import org.cld.stock.sina.task.GenNdLable;
+import org.cld.stock.sina.task.MergeTask;
+import org.cld.stock.sina.task.TradeDetailCheckDownload;
+import org.cld.stock.sina.task.TradeDetailPostProcessTask;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 
 public class SinaStockBase extends TestBase{
@@ -449,6 +453,19 @@ public class SinaStockBase extends TestBase{
 		}
 		MergeTask.launch(this.propFile, cconf, datePart, specialParam, true);
 	}
+	
+	//sina-stock-market-fq
+	public void splitByStock(){
+		HadoopTaskLauncher.executeTasks(getCconf().getNodeConf(), null, 
+				new String[]{"/reminder/items/merge/"+this.specialParam}, 3072, true, 
+				"/reminder/items/mlinput/"+this.specialParam, 
+				false, "org.cld.stock.sina.jobs.SplitByStockMapper", "org.cld.stock.sina.jobs.SplitByStockReducer", false);
+	}
+	
+	public void genNdLable(){
+		GenNdLable.launch(this.propFile, getCconf(), this.specialParam, true);
+	}
+	
 	//crawl financial report history by market to hdfs
 	public void run_browse_fr_history() throws ParseException{//till running time
 		//set output to null, needs follow up etl

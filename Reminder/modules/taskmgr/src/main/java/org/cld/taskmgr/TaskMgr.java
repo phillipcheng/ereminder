@@ -254,7 +254,7 @@ public class TaskMgr {
 							}
 						}
 					}*/
-				}else if (key.startsWith("yarn.") || key.startsWith("mapred.") || key.startsWith("mapreduce.")){
+				}else if (key.startsWith("yarn.") || key.startsWith("mapred.") || key.startsWith("mapreduce.") || key.startsWith("dfs.")){
 					hadoopConfigs.put(key, strVal);
 				}
 			}

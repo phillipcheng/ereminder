@@ -31,6 +31,10 @@ public class TestBase {
 		return pFile;
 	}
 	
+	public CrawlConf getCconf(){
+		return cconf;
+	}
+	
 	private static String getConfId(String fileName){
 		return fileName.substring(0,fileName.indexOf("."));
 	}

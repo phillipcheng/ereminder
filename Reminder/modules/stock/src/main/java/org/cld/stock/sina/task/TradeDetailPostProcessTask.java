@@ -1,4 +1,4 @@
-package org.cld.stock.sina;
+package org.cld.stock.sina.task;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -32,7 +32,8 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.etl.csv.TabularCSVConverter;
-import org.cld.stock.sina.TradeDetailCheckDownload.MyMapper;
+import org.cld.stock.sina.StockConfig;
+import org.cld.stock.sina.task.TradeDetailCheckDownload.MyMapper;
 import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
@@ -40,8 +41,6 @@ import org.cld.taskmgr.entity.TaskStat;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.hadoop.WholeFileInputFormat;
 
-@Entity
-@DiscriminatorValue("org.cld.stock.sina.TradeDetailPostProcessTask")
 public class TradeDetailPostProcessTask extends Task implements Serializable{
 	private static final long serialVersionUID = 1L;
 	private static Logger logger =  LogManager.getLogger(TradeDetailPostProcessTask.class);
@@ -169,7 +168,7 @@ public class TradeDetailPostProcessTask extends Task implements Serializable{
 				TradeDetailPostProcessTask t = new TradeDetailPostProcessTask(lfs.getPath().toString());
 				tl.add(t);
 				if (tl.size()>=100000){
-					String taskName = "TradeDetailPostProcess_" + batchId;
+					String taskName = "TradeDetailPostProcess_" + datePart + "_" + batchId;
 					jobIdList.add(CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tl, taskName, false));
 					logger.info(String.format("sending out:%d tasks for hadoop task %s.", tl.size(), taskName));
 					batchId++;

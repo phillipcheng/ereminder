@@ -44,6 +44,11 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 		mos = new MultipleOutputs<Text,Text>(context);
 	}
 	
+    @Override
+    protected void cleanup(Context context) throws IOException, InterruptedException {
+        mos.close();
+    }
+	
 	@Override
 	public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 		String taskJson = value.toString();
@@ -157,8 +162,4 @@ public class CrawlTaskMapper extends Mapper<Object, Text, Text, Text>{
 		}
 	}
 	
-    @Override
-    protected void cleanup(Context context) throws IOException, InterruptedException {
-        mos.close();
-    }
 }
