@@ -32,7 +32,7 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.etl.csv.TabularCSVConverter;
-import org.cld.stock.sina.StockConfig;
+import org.cld.stock.sina.SinaStockConfig;
 import org.cld.stock.sina.task.TradeDetailCheckDownload.MyMapper;
 import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskMgr;
@@ -158,7 +158,7 @@ public class TradeDetailPostProcessTask extends Task implements Serializable{
 		try {
 			//generate the task file
 			fs = FileSystem.get(conf);
-			String root = StockConfig.RAW_ROOT + "/" + datePart + "/" + StockConfig.SINA_STOCK_TRADE_DETAIL + "/";
+			String root = SinaStockConfig.RAW_ROOT + "/" + datePart + "/" + SinaStockConfig.SINA_STOCK_TRADE_DETAIL + "/";
 			RemoteIterator<LocatedFileStatus> fsit = fs.listFiles(new Path(root), true);
 			List<Task> tl = new ArrayList<Task>();
 			List<String> jobIdList = new ArrayList<String>();

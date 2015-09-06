@@ -88,11 +88,18 @@ public class MultiRowTablesAsCSV extends AbstractCrawlItemToCSV{
 			if (dataTypes==null){
 				dataTypes = getDefaultDataType(colnum);
 			}
-			String csvname = rowcsvs.get(i);
+			List<String> strs = null;
 			if (ls!=null && ls.size()>=colnum){
-				List<String> strs = rowTableToCSV(ls, colnum, hasHeader, dataTypes, dIdx);
+				strs = rowTableToCSV(ls, colnum, hasHeader, dataTypes, dIdx);
+			}
+			if (rowcsvs!=null){
+				String csvname = rowcsvs.get(i);
 				for (String str:strs){
 					csvs.add(new String[]{keyid, str, csvname});
+				}
+			}else{
+				for (String str:strs){
+					csvs.add(new String[]{keyid, str});
 				}
 			}
 		}

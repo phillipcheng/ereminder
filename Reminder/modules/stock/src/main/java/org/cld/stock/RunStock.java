@@ -1,4 +1,4 @@
-package org.cld.stock.sina;
+package org.cld.stock;
 
 import java.lang.reflect.Method;
 import java.text.ParseException;
@@ -9,31 +9,40 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.stock.nasdaq.NasdaqStockBase;
+import org.cld.stock.sina.SinaStockBase;
 import org.cld.util.StringUtil;
 
-public class RunSinaStock {
-	protected static Logger logger =  LogManager.getLogger(RunSinaStock.class);
+public class RunStock {
+	protected static Logger logger =  LogManager.getLogger(RunStock.class);
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
+	public static final String SINA_STOCK_BASE="sina";
+	public static final String NASDAQ_STOCK_BASE="nasdaq";
+	
+	
+	//client-v2.properties sina MarketId_HS_A run_special - - genNdLable xxx,x:xx,xx
 	public static String getDefaultCmdLine(){
-		return "propFile marketId cmd startDate endDate";
+		return "propFile stock_base marketId cmd startDate endDate method params";
 	}
 	
 	public static void main(String[] args) {
 		String propFile="";
+		String stockBase = "";
 		String marketId ="";
 		String cmd="";
 		String strStartDate = null;
 		String strEndDate = null;
-		if (args.length>=5){
+		if (args.length>=6){
 			propFile = args[0]; //
-			marketId = args[1]; // 
-			cmd = args[2];  //
-			String sd = args[3];
+			stockBase = args[1]; //
+			marketId = args[2]; // 
+			cmd = args[3];  //
+			String sd = args[4];
 			if (!"-".equals(sd)){
 				strStartDate = sd;
 			}
-			String ed = args[4];
+			String ed = args[5];
 			if (!"-".equals(ed)){
 				strEndDate = ed;
 			}
@@ -49,8 +58,14 @@ public class RunSinaStock {
 			} catch (ParseException e) {
 				logger.error("", e);
 			}
-			SinaStockBase ssb = new SinaStockBase(propFile, marketId, startDate, endDate);
-			int argIdx = 5;
+			StockBase sb = null;
+			if (SINA_STOCK_BASE.equals(stockBase)){
+				sb = new SinaStockBase(propFile, marketId, startDate, endDate);
+			}else{
+				sb = new NasdaqStockBase(propFile, marketId, startDate, endDate);
+			}
+			
+			int argIdx = 6;
 			if ("run_task".equals(cmd)){//run already generated task
 				if (args.length>=argIdx+1){
 					String taskName = args[argIdx];
@@ -60,35 +75,36 @@ public class RunSinaStock {
 						String params = args[argIdx+1];//mapreduce.map.memory.mb:3072,mapreduce.map.java.opts:-Xmx3072M
 						hadoopParams = StringUtil.parseMapParams(params);
 					}
-					ssb.run_task(taskNames, hadoopParams);
+					sb.run_task(taskNames, hadoopParams);
 				}else{
 					System.out.println(getDefaultCmdLine() + " taskName");
 				}
 			}else if ("run_all_cmd".equals(cmd)){
 				try {
-					ssb.runAllCmd(startDate, endDate);
+					sb.runAllCmd(startDate, endDate);
 				} catch (InterruptedException e) {
 					logger.error("", e);
 				}
 			}else if ("run_cmd".equals(cmd)){
 				if (args.length>=argIdx+1){
 					String cmdName = args[argIdx];
-					ssb.runCmd(cmdName, marketId, strStartDate, strEndDate);
+					sb.runCmd(cmdName, marketId, strStartDate, strEndDate);
 				}else{
 					System.out.println(getDefaultCmdLine() + " cmdName");
 				}
 			}else if ("run_special".equals(cmd)){
-				ssb.setMarketId(marketId);
+				//sample usage for run_special - - genNdLable /reminder/items/mlinput/sina-stock-market-fq,1,0:1:8,2
+				sb.setMarketId(marketId);
 				if (args.length>=argIdx+1){
 					String method = args[argIdx];
 					if (args.length>=argIdx+2){
 						String specialParam = args[argIdx+1];
-						ssb.setSpecialParam(specialParam);
+						sb.setSpecialParam(specialParam);
 					}
 					Method m;
 					try {
-						m = ssb.getClass().getMethod(method);
-						m.invoke(ssb);
+						m = sb.getClass().getMethod(method);
+						m.invoke(sb);
 					} catch (Exception e) {
 						logger.error("", e);
 					}

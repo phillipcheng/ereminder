@@ -44,8 +44,6 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 public class CrawlTaskEval {
 
 	private static Logger logger =  LogManager.getLogger(CrawlTaskEval.class);
-
-
 	
 	public static int getIntValue(Object value, String valueExp){
 		if (value instanceof Integer){
@@ -460,11 +458,12 @@ public class CrawlTaskEval {
 						List elistvarorg = (List) paramMap.get(nvt.getName());
 						Object last = elistvarorg.get(elistvarorg.size()-1);
 						Object first = elistvarorg.get(0);
-						//check final condition: this equals last
+						/*
+						//default final condition: circlic and not duplicate
 						if (entry.equals(last)||entry.equals(first)){
 							logger.info(String.format("this entry %s equals last %s or first %s", entry, last, first));
 							externalistFinished=true;
-						}
+						}*/
 						if (doTryPattern){
 							PatternIO pio = (PatternIO) paramMap.get(patternVarName);
 							if (pio==null){

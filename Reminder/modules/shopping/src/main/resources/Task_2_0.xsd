@@ -7,6 +7,7 @@
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:element name="Tasks" type="TasksType"/>
 	<xs:simpleType name="VarType">
@@ -470,7 +471,11 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 					<xs:documentation>for debug purpose, print the value from the page</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="nextpage" type="ConditionalNextPage"/>
+			<xs:element name="nextpage" type="ConditionalNextPage" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>nextpage can be optional when some input action, e.g. select, can trigger event to change the page which makes the nextpage redundent</xs:documentation>
+				</xs:annotation>
+			</xs:element>
 		</xs:sequence>
 		<xs:attribute name="pageName" type="xs:string">
 			<xs:annotation>

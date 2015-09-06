@@ -34,6 +34,8 @@ import com.gargoylesoftware.htmlunit.html.DomNode;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlSelect;
+import com.gargoylesoftware.htmlunit.javascript.host.Event;
 
 enum LoginStatus{
 	LoginNotNeeded (0),
@@ -63,7 +65,11 @@ public class HtmlUnitUtil {
 		else{
 			if (np.getNextItem()!=null){
 				logger.debug(String.format("clicking item: %s on page %s now.", np.getNextItem().asXml(), np.getNextItem().getPage().getUrl().toExternalForm()));
-				page = np.getNextItem().click();
+				if (np.getNextItem() instanceof HtmlSelect){
+					page = (HtmlPage) ((HtmlSelect)np.getNextItem()).fireEvent(Event.TYPE_CHANGE).getNewPage();
+				}else{
+					page = np.getNextItem().click();
+				}
 			}else{
 				logger.error("wrong np, no next url, no next item.");
 				return null;
@@ -228,10 +234,18 @@ public class HtmlUnitUtil {
 							String inputXpath = input.getName();
 							HtmlElement he = currentPage.getFirstByXPath(inputXpath);
 							if (he != null){
+								HtmlPage p = null;
 								if (he instanceof HtmlInput){
-									((HtmlInput)he).setValueAttribute((String)inputValue);
+									p = (HtmlPage) ((HtmlInput)he).setValueAttribute((String)inputValue);
+								}else if (he instanceof HtmlSelect){
+									p = ((HtmlSelect)he).setSelectedAttribute((String)inputValue, true);
 								}else{
 									logger.error(String.format("unsupported assignment to type: %s for xpath: %s", he, inputXpath));
+								}
+								if (p!=null){
+									List<HtmlPage> pagelist1= new ArrayList<HtmlPage>();
+									pagelist1.add(p);
+									pageMap.put(ConfKey.CURRENT_PAGE, pagelist1); //set current page
 								}
 							}else{
 								logger.error(String.format("xpath %s not found for assignment.", inputXpath));
@@ -253,48 +267,52 @@ public class HtmlUnitUtil {
 				}
 				//eval condition
 				ConditionalNextPage cnp = curClick.getNextpage();
-				AttributeType nextPage = null;
-				if (cnp.getCondition()==null){
-					nextPage = cnp.getSuccessNextPage();
-				}else{
-					if (BinaryBoolOpEval.eval(currentPage, cconf, cnp.getCondition(), null)){
+				if (cnp!=null){
+					AttributeType nextPage = null;
+					if (cnp.getCondition()==null){
 						nextPage = cnp.getSuccessNextPage();
 					}else{
-						nextPage = cnp.getFailNextPage();
+						if (BinaryBoolOpEval.eval(currentPage, cconf, cnp.getCondition(), null)){
+							nextPage = cnp.getSuccessNextPage();
+						}else{
+							nextPage = cnp.getFailNextPage();
+						}
 					}
-				}
-				
-				if (cnp.getWaitTime()!=null){
-					Thread.sleep(cnp.getWaitTime()*1000);
-				}
-				
-				//do the click
-				ValueType vt = nextPage.getValue();
-				if (vt!=null){
-					vt.setToType(VarType.PAGE);//for click stream, the to type is page
-					Object value = CrawlTaskEval.eval(pageMap, vt, cconf, params);
-					if (value!=null && value instanceof HtmlPage){
-						List<HtmlPage> pagelist1= new ArrayList<HtmlPage>();
-						pagelist1.add((HtmlPage)value);
-						pageMap.put(nextPage.getName(), pagelist1);
-						pageMap.put(ConfKey.CURRENT_PAGE, pagelist1); //set current page
-					}else{
-						logger.error(String.format("click stream:%s eval to %s, not a page, check toType. prdPage is:%s", 
-								vt.getValue(), value, currentNP==null? "null":currentNP));
-						break;
+					
+					if (cnp.getWaitTime()!=null){
+						Thread.sleep(cnp.getWaitTime()*1000);
 					}
-				}
-				//get the next click
-				curClick = clickMap.get(nextPage.getName());
-				if (curClick==null){
-					//page name not defined for each click, try get the next click
-					if (clickIdx<clickstream.getLink().size()-1){
-						clickIdx++;
-						curClick = clickstream.getLink().get(clickIdx);
+					
+					//do the click
+					ValueType vt = nextPage.getValue();
+					if (vt!=null){
+						vt.setToType(VarType.PAGE);//for click stream, the to type is page
+						Object value = CrawlTaskEval.eval(pageMap, vt, cconf, params);
+						if (value!=null && value instanceof HtmlPage){
+							List<HtmlPage> pagelist1= new ArrayList<HtmlPage>();
+							pagelist1.add((HtmlPage)value);
+							pageMap.put(nextPage.getName(), pagelist1);
+							pageMap.put(ConfKey.CURRENT_PAGE, pagelist1); //set current page
+						}else{
+							logger.error(String.format("click stream:%s eval to %s, not a page, check toType. prdPage is:%s", 
+									vt.getValue(), value, currentNP==null? "null":currentNP));
+							break;
+						}
 					}
-				}
-				if (curClick==null){
-					logger.debug(String.format("next click with name:%s is null, exit.", nextPage.getName()));
+					//get the next click
+					curClick = clickMap.get(nextPage.getName());
+					if (curClick==null){
+						//page name not defined for each click, try get the next click
+						if (clickIdx<clickstream.getLink().size()-1){
+							clickIdx++;
+							curClick = clickstream.getLink().get(clickIdx);
+						}
+					}
+					if (curClick==null){
+						logger.debug(String.format("next click with name:%s is null, exit.", nextPage.getName()));
+					}
+				}else{
+					curClick=null; //quit loop
 				}
 			}
 		}

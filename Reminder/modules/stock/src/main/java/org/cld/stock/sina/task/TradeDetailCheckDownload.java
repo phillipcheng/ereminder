@@ -23,7 +23,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.stock.sina.StockConfig;
+import org.cld.stock.sina.SinaStockConfig;
 import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
@@ -94,8 +94,8 @@ public class TradeDetailCheckDownload {
 	public static String launch(CrawlConf cconf, String datePart){
 		NodeConf nc = cconf.getNodeConf();
 		TaskMgr taskMgr = nc.getTaskMgr();
-		String inDir = StockConfig.RAW_ROOT + "/" + datePart + "/" + StockConfig.SINA_STOCK_TRADE_DETAIL;
-		String outDir = StockConfig.CHECK_ROOT + "/" + StockConfig.SINA_STOCK_TRADE_DETAIL + "/" + datePart;
+		String inDir = SinaStockConfig.RAW_ROOT + "/" + datePart + "/" + SinaStockConfig.SINA_STOCK_TRADE_DETAIL;
+		String outDir = SinaStockConfig.CHECK_ROOT + "/" + SinaStockConfig.SINA_STOCK_TRADE_DETAIL + "/" + datePart;
 		Configuration conf = HadoopTaskLauncher.getHadoopConf(nc);
 		//generate task list file
 		FileSystem fs;

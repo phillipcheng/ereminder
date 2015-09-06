@@ -1,12 +1,40 @@
 package org.cld.stock.sina;
 
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.cld.stock.StockConfig;
+import org.cld.util.ListUtil;
 
-public class StockConfig {
-	public static final String AllCmdRun_STATUS="AllCmdRun";
+public class SinaStockConfig implements StockConfig {
+	protected static Logger logger =  LogManager.getLogger(SinaStockBase.class);
+	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
+	
+	public static final String MarketId_HS_A ="hs_a"; //hu sheng A gu
+	public static final String MarketId_HS_A_ST="shfxjs"; //上证所风险警示板
+	public static final String MarketId_HS_Test = "hs_a_test";
+	
+	public static final String HS_A_START_DATE="1989-01-01";
+	public static String HS_A_FIRST_DATE_DETAIL_TRADE= "2004-10-01";
+	public static String HS_A_FIRST_DATE_RZRQ= "2012-11-12";
+	public static String HS_A_FIRST_DATE_DZJY= "2003-01-08";
+
+	public static Date date_HS_A_START_DATE=null;
+	static{
+		try{
+			date_HS_A_START_DATE = sdf.parse(HS_A_START_DATE);
+		}catch(Exception e){
+			logger.error("", e);
+		}
+	}
+
 	//file name of the xml conf and the store id as well
 	public static final String SINA_STOCK_IDS ="sina-stock-ids";
 	public static final String SINA_STOCK_IPODate="sina-stock-ipo";
@@ -46,12 +74,6 @@ public class StockConfig {
 	public static final int IPO_DATE_IDX = 7;
 	public static final int FOUND_DATE_IDX=13;
 	public static final int NAME_CHANGE_HISTORY=41;
-	public static final String SINA_STOCK_DATA="data";
-	
-	//
-	public static final String RAW_ROOT="/reminder/items/raw";
-	public static final String MERGE_ROOT="/reminder/items/merge";
-	public static final String CHECK_ROOT="/reminder/items/check";
 	
 	
 	public static String[] corpConfs = new String[]{//not related with time
@@ -87,22 +109,87 @@ public class StockConfig {
 	};
 	
 	public static String[] syncConf = new String[]{SINA_STOCK_IPODate}; //other cmd need this result
-	public static String[] allConf = (String[]) concatAll(corpConfs, tradeConfs, issueConfs, holderConfs, frConfs);
+	public static String[] allConf = (String[]) ListUtil.concatAll(corpConfs, tradeConfs, issueConfs, holderConfs, frConfs);
+
+	@Override
+	public String getTestMarketId() {
+		return MarketId_HS_Test;
+	}
+
+	@Override
+	public String getStockIdsCmd() {
+		return SINA_STOCK_IDS;
+	}
+
+	@Override
+	public String getIPODateCmd() {
+		return SINA_STOCK_IPODate;
+	}
+
+	@Override
+	public String getTestMarketChangeDate() {
+		return SinaTestStockConfig.Test_D3;
+	}
+
+	@Override
+	public String[] getTestStockSet1() {
+		return SinaTestStockConfig.Test_D1_Stocks;
+	}
+
+	@Override
+	public String[] getTestStockSet2() {
+		return SinaTestStockConfig.Test_D3_Stocks;
+	}
+
+	static Map<String, String> pairedMarket = new HashMap<String, String>();
+	static{
+		pairedMarket.put(MarketId_HS_A, MarketId_HS_A_ST);
+	}
 	
-	//for testing
-	public static String[] testAllConf = (String[]) ArrayUtils.addAll(corpConfs, SINA_STOCK_FR_FOOTNOTE);
-	
-	public static <T> T[] concatAll(T[] first, T[]... rest) {
-	  int totalLength = first.length;
-	  for (T[] array : rest) {
-	    totalLength += array.length;
-	  }
-	  T[] result = Arrays.copyOf(first, totalLength);
-	  int offset = first.length;
-	  for (T[] array : rest) {
-	    System.arraycopy(array, 0, result, offset, array.length);
-	    offset += array.length;
-	  }
-	  return result;
+	@Override
+	public Map<String, String> getPairedMarket() {
+		return pairedMarket;
+	}
+
+	@Override
+	public String getStartDate(String cmdName) {
+		String startDate = null;
+		if (cmdName.contains("rzrq")){
+			startDate = SinaStockConfig.HS_A_FIRST_DATE_RZRQ;
+		}else if (cmdName.contains("dzjy")){
+			startDate = SinaStockConfig.HS_A_FIRST_DATE_DZJY;
+		}else if (cmdName.contains("tradedetail")){
+			startDate = SinaStockConfig.HS_A_FIRST_DATE_DETAIL_TRADE;
+		}
+		return startDate;
+	}
+
+	@Override
+	public String[] getAllCmds(String marketId) {
+		if (marketId.startsWith(SinaStockConfig.MarketId_HS_Test)){
+			return SinaTestStockConfig.testAllConf;
+		}else{
+			return SinaStockConfig.allConf;
+		}
+	}
+
+	@Override
+	public String getTestShortStartDate() {
+		return SinaTestStockConfig.Test_SHORT_SD;
+	}
+
+	@Override
+	public String[] getSlowCmds() {
+		return new String[]{SINA_STOCK_TRADE_DETAIL};
+	}
+
+	@Override
+	public String[] getSyncCmds() {
+		return new String[]{SINA_STOCK_IPODate};
+	}
+
+	@Override
+	public Date getMarketStartDate() {
+		return date_HS_A_START_DATE;
 	}
 }

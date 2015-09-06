@@ -17,8 +17,9 @@ import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.CrawledItemId;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
-import org.cld.stock.sina.ETLUtil;
-import org.cld.stock.sina.StockConfig;
+import org.cld.stock.ETLUtil;
+import org.cld.stock.StockBase;
+import org.cld.stock.sina.SinaStockConfig;
 
 
 public class IPODateReducer extends Reducer<Text, Text, Text, Text>{
@@ -52,8 +53,8 @@ public class IPODateReducer extends Reducer<Text, Text, Text, Text>{
 			logger.error("", e);
 		}
 		CrawledItem ipoCi = new CrawledItem(CrawledItem.CRAWLITEM_TYPE, "default", 
-				new CrawledItemId(marketId, StockConfig.SINA_STOCK_IPODate, ed));
-		ipoCi.addParam(StockConfig.SINA_STOCK_DATA, ipoDate);
+				new CrawledItemId(marketId, SinaStockConfig.SINA_STOCK_IPODate, ed));
+		ipoCi.addParam(StockBase.KEY_IPODate_MAP, ipoDate);
 		cconf.getDefaultDsm().addUpdateCrawledItem(ipoCi, null);
 	}
 	

@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +29,14 @@ import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 
 import com.google.common.primitives.Ints;
 
+/**
+ * input lines of data
+ * for consecutive n lines (1..n, 2..n+1, etc)
+ * set the n+1 [lableIdx] as the lable, the n lines data (after removing the skipVIdx for each line) as the input
+ * output in libsvm format
+ * 
+ *
+ */
 public class GenNdLable extends Task implements Serializable{
 	private static final long serialVersionUID = 1L;
 	private static Logger logger =  LogManager.getLogger(GenNdLable.class);
@@ -89,22 +96,23 @@ public class GenNdLable extends Task implements Serializable{
 			while (lastline!=null){
 				//work with n lines and lastline
 				StringBuffer sb = new StringBuffer();
-				int inum=0;
+				String[] v2s = lastline.split(",");
+				String[] vs = lines[ndays-1].split(",");
+				double lableValue = Double.parseDouble(v2s[lableIdx])/Double.parseDouble(vs[lableIdx]);
+				sb.append(Double.toString(lableValue));
+				int inum=1;
 				for (int k=0; k<ndays; k++){
 					String[] v1s = lines[k].split(",");
 					for (int i=0; i<v1s.length; i++){
 						if (skipVIdx==null || !skipV.contains(i)){//filter v
-							if (inum>0){
-								sb.append(",");
-							}
+							sb.append(" ");
+							sb.append(inum);
+							sb.append(":");
 							sb.append(v1s[i]);
 							inum++;
 						}
 					}
 				}
-				String[] v2s = lastline.split(",");
-				sb.append(",");
-				sb.append(v2s[lableIdx]);
 				sb.append("\n");
 				logger.info("a line:" + sb.toString());
 				osw.write(sb.toString());
@@ -114,7 +122,6 @@ public class GenNdLable extends Task implements Serializable{
 				lines[ndays-1]=lastline;
 				lastline = isr.readLine();
 			}
-			
 		}catch(Exception e){
 			logger.error("", e);
 		}finally{

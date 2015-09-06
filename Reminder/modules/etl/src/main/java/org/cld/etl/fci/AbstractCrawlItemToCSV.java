@@ -1,5 +1,6 @@
 package org.cld.etl.fci;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -34,6 +35,7 @@ public abstract class AbstractCrawlItemToCSV {
 	public static final String KEY_VALUE_UNDEFINED="unused";
 	
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	public static final SimpleDateFormat sdf2 = new SimpleDateFormat("MM/dd/yyyy");
 	
 	protected Date startDate = null;
 	protected Date endDate = null;
@@ -84,7 +86,12 @@ public abstract class AbstractCrawlItemToCSV {
 	protected boolean checkDate(String date){
 		try {
 			if (dateCompareWithValue==null){
-				Date d = sdf.parse(date);
+				Date d = null;
+				try {
+					d = sdf.parse(date);
+				}catch(ParseException pe){
+					d = sdf2.parse(date);
+				}
 				if (startDate!=null){
 					if (startDate.after(d)){
 						return false;

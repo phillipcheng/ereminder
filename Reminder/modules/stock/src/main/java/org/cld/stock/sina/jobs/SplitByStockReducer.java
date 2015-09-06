@@ -19,8 +19,8 @@ import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.CrawledItemId;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
-import org.cld.stock.sina.ETLUtil;
-import org.cld.stock.sina.StockConfig;
+import org.cld.stock.ETLUtil;
+import org.cld.stock.sina.SinaStockConfig;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 
 

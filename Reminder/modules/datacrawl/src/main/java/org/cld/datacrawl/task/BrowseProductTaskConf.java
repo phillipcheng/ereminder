@@ -23,6 +23,7 @@ import org.cld.datastore.entity.CrawledItemId;
 import org.cld.datastore.entity.Price;
 import org.cld.datastore.entity.Product;
 import org.cld.pagea.general.ProductListAnalyzeUtil;
+import org.cld.taskmgr.ScriptEngineUtil;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
@@ -101,21 +102,27 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		this.enableJS = bdt.getBaseBrowseTask().isEnableJS();
 		for (ParamType pt: bdt.getBaseBrowseTask().getParam()){
 			if (pt.getValue()!=null){
-				//has default value, put in the paramsMap
-				if (VarType.STRING==pt.getType()){
-					putParam(pt.getName(), pt.getValue());
-				}else if (VarType.INT == pt.getType()){
-					putParam(pt.getName(), Integer.parseInt(pt.getValue()));
-				}else if (VarType.BOOLEAN == pt.getType()){
-					putParam(pt.getName(), Boolean.parseBoolean(pt.getValue()));
-				}else if (VarType.DATE == pt.getType()){
-					try{
-						putParam(pt.getName(), sdf.parse(pt.getValue()));
-					}catch(Exception e){
-						logger.error("", e);
-					}
+				if (pt.getType()==VarType.EXPRESSION){
+					String ret = (String)ScriptEngineUtil.eval(pt.getValue(), VarType.STRING, this.getParamMap());
+					putParam(pt.getName(), ret);
+					logger.info(String.format("exp: %s eval to %s", pt.getValue(), ret));
 				}else{
-					logger.error(String.format("default value type not support for param : %s", pt.getName()));
+					//has default value, put in the paramsMap
+					if (VarType.STRING==pt.getType()){
+						putParam(pt.getName(), pt.getValue());
+					}else if (VarType.INT == pt.getType()){
+						putParam(pt.getName(), Integer.parseInt(pt.getValue()));
+					}else if (VarType.BOOLEAN == pt.getType()){
+						putParam(pt.getName(), Boolean.parseBoolean(pt.getValue()));
+					}else if (VarType.DATE == pt.getType()){
+						try{
+							putParam(pt.getName(), sdf.parse(pt.getValue()));
+						}catch(Exception e){
+							logger.error("", e);
+						}
+					}else{
+						logger.error(String.format("default value type not support for param : %s", pt.getName()));
+					}
 				}
 			}else{
 				if (VarType.INT == pt.getType()){
