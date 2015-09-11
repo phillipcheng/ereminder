@@ -1,5 +1,7 @@
 package org.cld.datacrawl.mgr;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
@@ -34,6 +36,7 @@ import org.xml.taskdef.VarType;
 import com.gargoylesoftware.htmlunit.html.DomNamespaceNode;
 import com.gargoylesoftware.htmlunit.html.DomNode;
 import com.gargoylesoftware.htmlunit.html.DomText;
+import com.gargoylesoftware.htmlunit.html.FrameWindow;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlDivision;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
@@ -137,9 +140,9 @@ public class CrawlTaskEval {
 		}else if (entry instanceof HtmlInput){
 			finalString = ((HtmlInput)entry).getValueAttribute();
 		}else if (entry instanceof DomNamespaceNode){
-			finalString = ((DomNamespaceNode)entry).getTextContent().trim();
+			finalString = ((DomNamespaceNode)entry).getTextContent();
 		}else if (entry instanceof DomText){
-			finalString = ((DomText)entry).getTextContent().trim();
+			finalString = ((DomText)entry).getTextContent();
 		}else if (entry instanceof HtmlElement){
 			finalString = ((HtmlElement)entry).asText();
 		}else{
@@ -149,7 +152,7 @@ public class CrawlTaskEval {
 				logger.warn(String.format("still returned, entry %s of type %s in list can't cast to string", entry, entry.getClass()));
 			}
 		}
-		return finalString;
+		return finalString.trim();
 	}
 	
 	public static String getURLStringValue(Object entry, DomNode page){
@@ -173,6 +176,32 @@ public class CrawlTaskEval {
 		return finalString;
 	}
 	
+	private static String processFile(ValueType vt, HtmlElement clickable, Map<String, Object> params, CrawlConf cconf, DomNode page){
+		String fileName = "";
+		if (vt.getToDirectory()!=null){
+			fileName = TaskUtil.evalStringValue(vt.getFromType(), vt.getToDirectory(), params);
+			logger.info(String.format("fileName is: %s", fileName));
+		}
+		try{
+			InputStream is = null;
+			try {
+				is = clickable.click().getWebResponse().getContentAsStream();
+				if (clickable instanceof HtmlAnchor){
+					String url = anchorToFullUrl((HtmlAnchor)clickable, (HtmlPage)page);
+					fileName = fileName + "/" + FilenameUtils.getName(url);
+				}
+				CrawlUtil.downloadPage(cconf, is, fileName);
+			}finally{
+				if (is!=null){
+					is.close();
+				}
+			}
+		}catch(IOException ioe){
+			logger.error("", ioe);
+		}
+		return fileName;
+	}
+	
 	private static void processXpath(ValueType vt, String xpathValue, Map<String, List<? extends DomNode>> pageMap
 			, CrawlConf cconf, List<List> rxpathListResultList, List<List<HtmlPage>> rpagelistList, List<HtmlPage> rpageList
 			, List<String> valueExpList, Map<String, Object> params) throws InterruptedException{
@@ -184,11 +213,26 @@ public class CrawlTaskEval {
 		}else{
 			pages = pageMap.get(vt.getBasePage());
 		}
-
-		String fileSaveDir=null;
 		
 		if (pages!=null){
 			for (DomNode page : pages){
+				//switch page for frame
+				String frameId = vt.getFrameId();
+				FrameWindow fw=null;
+				DomNode orgPage = null;
+				if (frameId!=null && page instanceof HtmlPage){
+					orgPage = page;
+					try {
+						//by idx
+						int idx = Integer.parseInt(frameId);
+						fw = ((HtmlPage)page).getFrames().get(idx);
+						page = (DomNode) fw.getEnclosedPage();
+					}catch(NumberFormatException nfe){
+						//by name
+						fw = ((HtmlPage)page).getFrameByName(frameId);
+						page = (DomNode) fw.getEnclosedPage();
+					}
+				}
 				Object xpathResult = null;
 				List xpathListResult = null;
 				if (VarType.LIST == vt.getToType() || VarType.EXTERNAL_LIST == vt.getToType()){
@@ -215,14 +259,8 @@ public class CrawlTaskEval {
 								}
 							}
 						}else if (vt.getToEntryType()==VarType.FILE){
-							if (fileSaveDir==null && vt.getToDirectory()!=null){
-								fileSaveDir = (String) ScriptEngineUtil.eval(vt.getToDirectory(), VarType.STRING, params);
-							}
-							for (Object hi:xpathListResult){
-								String url = anchorToFullUrl((HtmlAnchor)hi, (HtmlPage)page);
-								String fileName = FilenameUtils.getName(url);
-								CrawlUtil.downloadPage(cconf, url, fileName);
-								convertedList.add(url);
+							for (Object entry:xpathListResult){
+								convertedList.add(processFile(vt, (HtmlElement)entry, params, cconf, page));
 							}
 						}else{
 							logger.warn(String.format(
@@ -258,7 +296,12 @@ public class CrawlTaskEval {
 								pvtlist.add(pvt);
 							HtmlPage pageGet = getPage(xpathRes, page, vt, pvtlist, cconf, params);
 							if (pageGet!=null){
-								pagelist.add(pageGet.cloneNode(true));
+								if (fw!=null){
+									fw.setEnclosedPage(pageGet);
+									pagelist.add((HtmlPage) orgPage.cloneNode(true));
+								}else{
+									pagelist.add(pageGet.cloneNode(true));
+								}
 							}else{
 								logger.error(String.format("can't get page for xpath: %s", xpathRes));
 							}
@@ -273,8 +316,17 @@ public class CrawlTaskEval {
 						if (VarType.PAGE==vt.getToType()){
 							BinaryBoolOp pvt = null;
 							HtmlPage pageGet = getPage(xpathResult, page, vt, vt.getPageVerify(), cconf, params);
-							if (pageGet!=null)
-								rpageList.add(pageGet); //return page, no further processing
+							if (pageGet!=null){
+								if (fw!=null){
+									fw.setEnclosedPage(pageGet);
+									logger.debug(String.format("enclosing page: %s", pageGet.asXml()));
+									rpageList.add((HtmlPage) orgPage);
+								}else{
+									rpageList.add(pageGet);
+								}
+							}
+						}else if (VarType.FILE == vt.getToType()){
+							processFile(vt, (HtmlElement)xpathResult, params, cconf, page);	//no return value needed
 						}else if (VarType.URL==vt.getToType()){
 							valueExp = getURLStringValue(xpathResult, page);
 							valueExpList.add(valueExp);
@@ -386,10 +438,10 @@ public class CrawlTaskEval {
 		}
 		
 		List<Object> retList = new ArrayList<Object>();
-		retList.addAll(rxpathListResultList);
-		retList.addAll(rpagelistList);
-		retList.addAll(rpageList);
-		retList.addAll(valueList);
+		retList.addAll(rxpathListResultList);//list of HtmlElement
+		retList.addAll(rpagelistList);//list of page list
+		retList.addAll(rpageList);//list of page
+		retList.addAll(valueList);//list of other object (int, string, date, double, etc)
 		if (retList.size()==1){
 			return retList.get(0);
 		}else{
@@ -409,6 +461,10 @@ public class CrawlTaskEval {
 				}else{
 					logger.error(String.format("input params does not have: %s", nvt.getName()));
 				}
+			}else if (vt.getFromScope() == ScopeType.CONST){
+				paramMap.put(nvt.getName(), TaskUtil.getValue(vt, vt.getValue()));
+			}else{
+				paramMap.put(nvt.getName(), null);
 			}
 		}
 	}
@@ -456,35 +512,39 @@ public class CrawlTaskEval {
 					}
 					if (paramMap.containsKey(nvt.getName())){
 						List elistvarorg = (List) paramMap.get(nvt.getName());
-						Object last = elistvarorg.get(elistvarorg.size()-1);
-						Object first = elistvarorg.get(0);
-						/*
-						//default final condition: circlic and not duplicate
-						if (entry.equals(last)||entry.equals(first)){
-							logger.info(String.format("this entry %s equals last %s or first %s", entry, last, first));
-							externalistFinished=true;
-						}*/
-						if (doTryPattern){
-							PatternIO pio = (PatternIO) paramMap.get(patternVarName);
-							if (pio==null){
-								pio = new PatternIO();
-								paramMap.put(patternVarName, pio);
-							}
-							List elistvar = new ArrayList();
-							for (int j=0; j<listvar.size(); j++){
-								elistvar.clear();
-								elistvar.addAll(elistvarorg);
-								elistvar.addAll(listvar.subList(0, j+1));
-								PatternUtil.usePattern(pio, elistvar);
-								if (pio.isFinished()){
-									externalistFinished=true;
-									break;
+						if (elistvarorg!=null){
+							Object last = elistvarorg.get(elistvarorg.size()-1);
+							Object first = elistvarorg.get(0);
+							/*
+							//default final condition: circlic and not duplicate
+							if (entry.equals(last)||entry.equals(first)){
+								logger.info(String.format("this entry %s equals last %s or first %s", entry, last, first));
+								externalistFinished=true;
+							}*/
+							if (doTryPattern){
+								PatternIO pio = (PatternIO) paramMap.get(patternVarName);
+								if (pio==null){
+									pio = new PatternIO();
+									paramMap.put(patternVarName, pio);
 								}
+								List elistvar = new ArrayList();
+								for (int j=0; j<listvar.size(); j++){
+									elistvar.clear();
+									elistvar.addAll(elistvarorg);
+									elistvar.addAll(listvar.subList(0, j+1));
+									PatternUtil.usePattern(pio, elistvar);
+									if (pio.isFinished()){
+										externalistFinished=true;
+										break;
+									}
+								}
+								paramMap.put(nvt.getName(), elistvar);
+							}else{
+								elistvarorg.addAll(listvar);
+								paramMap.put(nvt.getName(), elistvarorg);
 							}
-							paramMap.put(nvt.getName(), elistvar);
 						}else{
-							elistvarorg.addAll(listvar);
-							paramMap.put(nvt.getName(), elistvarorg);
+							paramMap.put(nvt.getName(), listvar);
 						}
 					}else{
 						if (doTryPattern){
@@ -518,7 +578,7 @@ public class CrawlTaskEval {
 							paramMap.put(nvt.getName(), vallist);
 						}
 					}else{
-						
+						paramMap.put(nvt.getName(), vallist);
 					}
 				}else if (val instanceof HtmlPage){
 					//add the returned page to pageMap

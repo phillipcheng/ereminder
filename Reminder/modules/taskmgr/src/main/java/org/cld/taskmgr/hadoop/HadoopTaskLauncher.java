@@ -70,6 +70,18 @@ public class HadoopTaskLauncher {
 		}
 	}
 	
+	public static String getOutputDir(BrowseTaskType btt, Map<String, Object> taskParams){
+		if (btt!=null){
+			if (btt.getCsvtransform()!=null && btt.getCsvtransform().getOutputDir()!=null){
+				return (String)TaskUtil.eval(btt.getCsvtransform().getOutputDir(), taskParams);
+			}else{
+				return null;
+			}
+		}else{
+			return null;
+		}
+	}
+	
 	public static int getMbMemory(Task t){
 		if (t.getParsedTaskDef()==null){//not a browse task
 			return DEFAULT_MB_MEM;
@@ -80,6 +92,11 @@ public class HadoopTaskLauncher {
 		}else{
 			return DEFAULT_MB_MEM;
 		}
+	}
+	
+	public static int getTaskPerJob(Task t){
+		BrowseTaskType btt = t.getBrowseTask(t.getName());
+		return btt.getTaskNumPerJob();
 	}
 	
 	public static Configuration getHadoopConf(NodeConf nc){
@@ -98,6 +115,7 @@ public class HadoopTaskLauncher {
 		conf.set("mapred.textoutputformat.separator", ",");//default is tab
 		conf.set("mapreduce.task.timeout", "0");
 		conf.set("mapreduce.job.split.metainfo.maxsize", "-1");
+		conf.set("mapreduce.map.speculative", "false");//since we do not allow same map multiple instance
 		conf.setInt(NLineInputFormat.LINES_PER_MAP, taskMgr.getCrawlTasksPerMapper());
 		
 		for (String key:taskMgr.getHadoopConfigs().keySet()){
@@ -128,6 +146,20 @@ public class HadoopTaskLauncher {
 		return sourceName;
 	}
 	
+	public static void updateHadoopParams(Task t, Map<String, String> hadoopParams){
+		int mbMapperMem = getMbMemory(t);
+		hadoopParams.put(NLineInputFormat.LINES_PER_MAP, getTaskPerJob(t)+"");
+		updateHadoopParams(mbMapperMem, hadoopParams);
+	}
+	
+	public static void updateHadoopParams(int mbMapperMem, Map<String, String> hadoopParams){
+		String optValue = "-Xmx" + mbMapperMem + "M";
+		hadoopParams.put("mapreduce.map.memory.mb", mbMapperMem+"");
+		hadoopParams.put("mapreduce.map.java.opts", optValue);
+		hadoopParams.put("mapreduce.reduce.memory.mb", mbMapperMem+"");
+		hadoopParams.put("mapreduce.reduce.java.opts", optValue);
+	}
+	
 	public static String executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> hadoopParams, 
 			String sourceName, boolean sync, String mapperClass, String reducerClass){
 		TaskMgr taskMgr = nc.getTaskMgr();
@@ -151,10 +183,10 @@ public class HadoopTaskLauncher {
 			fin.writeBytes(fileContent.toString());
 			fin.close();
 			Task t = taskList.get(0);
-			int mbMapperMem = getMbMemory(t);
+			updateHadoopParams(t, hadoopParams);
 			boolean multipleOutput = hasMultipleOutput(t);
 			String outputDir = getOutputDir(t);
-			return executeTasks(nc, hadoopParams, new String[]{taskFileName}, mbMapperMem, multipleOutput, outputDir, sync, mapperClass, reducerClass, true);
+			return executeTasks(nc, hadoopParams, new String[]{taskFileName}, multipleOutput, outputDir, sync, mapperClass, reducerClass, true);
 		}catch (Exception e) {
 			logger.error("", e);
 		}
@@ -186,10 +218,10 @@ public class HadoopTaskLauncher {
 				logger.debug("firstTaskStr:" + firstTaskStr);
 				logger.debug("t0:" + t0.toString());
 				t0.initParsedTaskDef();
-				int mbMapperMem = getMbMemory(t0);
+				updateHadoopParams(t0, hadoopParams);
 				boolean multipleOutput = hasMultipleOutput(t0);
 				String outputDir = getOutputDir(t0);
-				return executeTasks(nc, hadoopParams, taskFileName, mbMapperMem, multipleOutput, outputDir, false, mapperClass, reducerClass, true);
+				return executeTasks(nc, hadoopParams, taskFileName, multipleOutput, outputDir, false, mapperClass, reducerClass, true);
 			}else{
 				logger.error(String.format("task file %s not exist.", taskFileName[0]));
 			}
@@ -208,18 +240,12 @@ public class HadoopTaskLauncher {
 	 * @return jobId
 	 */
 	public static String executeTasks(NodeConf nc, Map<String, String> hadoopParams, 
-			String[] inputPaths, int mbMRMem, boolean multipleOutput, String outputDir, 
+			String[] inputPaths, boolean multipleOutput, String outputDir, 
 			boolean sync, String mapperClass, String reducerClass, boolean uselinesPerMap){
 		try{
 			TaskMgr taskMgr = nc.getTaskMgr();
 			Configuration conf = getHadoopConf(nc);
 			FileSystem fs = FileSystem.get(conf);
-			int mbMem = mbMRMem;
-			String optValue = "-Xmx" + mbMem + "M";
-			conf.setInt("mapreduce.map.memory.mb", mbMem);
-			conf.set("mapreduce.map.java.opts", optValue);
-			conf.setInt("mapreduce.reduce.memory.mb", mbMem);
-			conf.set("mapreduce.reduce.java.opts", optValue);
 			if (hadoopParams!=null){
 				for(String key: hadoopParams.keySet()){
 					conf.set(key, hadoopParams.get(key));

@@ -17,6 +17,9 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.Table;
 
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.MapContext;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.entity.CrawledItem;
@@ -184,6 +187,11 @@ public class Task implements Comparable<Task>, Serializable{
 	public List<CrawledItem> runMyselfWithOutput(Map<String, Object> params, boolean addToDB) throws InterruptedException{
 		logger.info("super runMyselfWithOutput do nothing.");
 		return null;
+	}
+	
+	public void runMyselfAndOutput(Map<String, Object> params, boolean addToDB, BrowseTaskType btt, 
+			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
+		logger.info("super runMyselfAndOutput do nothing.");
 	}
 	
 	public String getId() {

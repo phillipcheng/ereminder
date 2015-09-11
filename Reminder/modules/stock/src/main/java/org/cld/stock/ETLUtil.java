@@ -201,8 +201,10 @@ public class ETLUtil {
 			Map<String, Object> params){
 		List<Task> tl = new ArrayList<Task>();
 		boolean sync = false;
-		if (Arrays.asList(sc.getSyncCmds()).contains(confName)){
-			sync = true;
+		if (sc.getSyncCmds()!=null){
+			if (Arrays.asList(sc.getSyncCmds()).contains(confName)){
+				sync = true;
+			}
 		}
 		String confFileName = confName + ".xml";
 		if (confFileName!=null){
@@ -351,7 +353,7 @@ public class ETLUtil {
 		List<Task> tlist = new ArrayList<Task>();
 		for (int i=0; i<idarray.length; i++){
 			String stockid = idarray[i];
-			stockid = stockid.substring(2);
+			stockid = sc.trimStockId(stockid);
 			Task t1 = t.clone(ETLUtil.class.getClassLoader());
 			if (params!=null)
 				t1.putAllParams(params);

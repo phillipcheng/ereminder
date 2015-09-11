@@ -20,8 +20,10 @@ public class RunStock {
 	public static final String SINA_STOCK_BASE="sina";
 	public static final String NASDAQ_STOCK_BASE="nasdaq";
 	
-	
-	//client-v2.properties sina MarketId_HS_A run_special - - genNdLable xxx,x:xx,xx
+	//x.properties nasdaq NASDAQ_2015-09-09 run_cmd - - nasdaq-quote-tick
+	//x.properties sina hs_a run_special - - genNdLable xxx,x:xx,xx
+	//x.properties nasdaq NYSE run_all_cmd - 2015-09-10
+	//x.properties nasdaq NASDAQ_2015-09-09 run_cmd - - nasdaq-quote-tick
 	public static String getDefaultCmdLine(){
 		return "propFile stock_base marketId cmd startDate endDate method params";
 	}

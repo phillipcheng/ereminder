@@ -11,11 +11,14 @@ public interface StockConfig {
 	
 	public String getTestMarketId();
 	
+	public String trimStockId(String stockid);
+	
 	public String getStockIdsCmd();
 	public String getIPODateCmd(); //null, then ipo date info is within StockIds
 	public String[] getAllCmds(String marketId);
 	public String[] getSyncCmds();
 	public Date getMarketStartDate();
+	public String[] getCurrentDayCmds();
 	
 	
 	public String getTestMarketChangeDate();//date before this using test_stock_set1, date after this using test_stock_set2

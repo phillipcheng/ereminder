@@ -298,32 +298,34 @@ public class TaskMgr {
 
 	public static final String taskParamTaskIndex="taskindex"; //the index of the specific task
 	
-	public Task getTaskInstTemplate(String taskType, TasksType tasks, ClassLoader pluginClassLoader, 
+	//
+	public Task getTaskInstance(String taskType, TasksType tasks, ClassLoader pluginClassLoader, 
 			Map<String, Object> params, Date utime, String taskName){
 		try{
 			TaskTypeConf ttypeConf = ttypeConfs.get(taskType);
-			Task taskInstTemplate = ttypeConf.getTaskEntityClass().newInstance();
-			taskInstTemplate.setName(taskName);
-			taskInstTemplate.setLastUpdateDate(utime);
-			taskInstTemplate.setTtype(taskType);
-			taskInstTemplate.setUp(tasks, pluginClassLoader, params);
-			taskInstTemplate.putAllParams(params);
-			taskInstTemplate.genId();
-			return taskInstTemplate;
+			Task taskInstance = ttypeConf.getTaskEntityClass().newInstance();
+			taskInstance.setName(taskName);
+			taskInstance.setLastUpdateDate(utime);
+			taskInstance.setTtype(taskType);
+			taskInstance.setUp(tasks, pluginClassLoader, params);
+			if (params!=null)
+				taskInstance.putAllParams(params);
+			taskInstance.genId();
+			return taskInstance;
 		}catch(Exception e){
 			logger.error("", e);
 			return null;
 		}
 	}
 	
-	private List<Task> loadTaskV2(TasksType tasks, ClassLoader pluginClassLoader, Map<String, Object> params, Date utime, String confName){
+	private List<Task> loadTask(TasksType tasks, ClassLoader pluginClassLoader, Map<String, Object> params, Date utime, String confName){
 		List<Task> tl = new ArrayList<Task>();
 		if (tasks.getInvokeTask().size()>0){
 			for (int i=0; i<tasks.getInvokeTask().size(); i++){
 				TaskInvokeType tit = tasks.getInvokeTask().get(i);
 				String taskType = "org.cld.datacrawl.task.InvokeTaskTaskConf";
 				params.put(taskParamTaskIndex, i);
-				Task invokeTask=getTaskInstTemplate(taskType, tasks, pluginClassLoader, params, utime, tit.getMyTaskName());
+				Task invokeTask=getTaskInstance(taskType, tasks, pluginClassLoader, params, utime, tit.getMyTaskName());
 				if (invokeTask!=null){
 					invokeTask.setStart(true);
 					tasksConf.put(invokeTask.getName(), invokeTask);
@@ -336,7 +338,7 @@ public class TaskMgr {
 		if (tasks.getCatTask().size()>0){//create the default confid_bct->confid_bdt chain
 			String siteconfid = tasks.getStoreId();
 			String taskType = "org.cld.datacrawl.task.BrowseCategoryTaskConf";
-			Task bctTask = getTaskInstTemplate(taskType, tasks, pluginClassLoader, params, utime, siteconfid + "_bct");
+			Task bctTask = getTaskInstance(taskType, tasks, pluginClassLoader, params, utime, siteconfid + "_bct");
 			if (bctTask!=null){
 				bctTask.setStart(true);
 				bctTask.setNextTask(siteconfid + "_bdt");
@@ -345,7 +347,7 @@ public class TaskMgr {
 				logger.info("BCT Task loaded:" + bctTask);
 			}
 			taskType = "org.cld.datacrawl.task.BrowseDetailTaskConf";
-			Task bdtTask = getTaskInstTemplate(taskType, tasks, pluginClassLoader, params, utime, siteconfid + "_bdt");
+			Task bdtTask = getTaskInstance(taskType, tasks, pluginClassLoader, params, utime, siteconfid + "_bdt");
 			if (bdtTask!=null){
 				bdtTask.setStart(false);
 				tasksConf.put(bdtTask.getName(), bdtTask);
@@ -358,7 +360,7 @@ public class TaskMgr {
 		if (tasks.getPrdTask()!=null){
 			String taskType = "org.cld.datacrawl.task.BrowseProductTaskConf";
 			for (BrowseDetailType bpt: tasks.getPrdTask()){
-				Task prdTask = getTaskInstTemplate(taskType, tasks, pluginClassLoader, params, utime, bpt.getBaseBrowseTask().getTaskName());
+				Task prdTask = getTaskInstance(taskType, tasks, pluginClassLoader, params, utime, bpt.getBaseBrowseTask().getTaskName());
 				if (prdTask!=null){
 					prdTask.setStart(bpt.getBaseBrowseTask().isIsStart());
 					tasksConf.put(prdTask.getName(), prdTask);
@@ -367,11 +369,14 @@ public class TaskMgr {
 				}
 			}
 		}
-		
+		List<Task> retTL = new ArrayList<Task>();
 		for (Task t: tl){
 			t.setConfName(confName);
+			if (t.isStart()){
+				retTL.add(t);
+			}
 		}
-		return tl;
+		return retTL;
 	}
 	
 	//to convert the xml definition to tasksConf within cconf
@@ -415,7 +420,7 @@ public class TaskMgr {
 				
 				JAXBElement<TasksType> root = u.unmarshal(source,TasksType.class);
 				TasksType tasks = root.getValue();
-				List<Task> tl = loadTaskV2(tasks, pluginClassLoader, params, d, taskconfFileName);
+				List<Task> tl = loadTask(tasks, pluginClassLoader, params, d, taskconfFileName);
 				confTaskMap.put(taskconfFileName, tl);
 				return tl;
 			}catch(Exception e){

@@ -26,6 +26,8 @@ public class TableUtil {
 			str = "0";
 		}else if (str.contains(",")){
 			str = str.replace(",", "");//remove comma
+		}else if (str.contains("$")){
+			str = str.replace("$", "");
 		}
 		//百万,万元,元,千元
 		str = str.trim();

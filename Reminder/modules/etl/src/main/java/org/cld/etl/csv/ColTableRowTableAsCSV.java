@@ -53,7 +53,7 @@ public class ColTableRowTableAsCSV extends AbstractCrawlItemToCSV{
 	
 	//column to csv
 	@Override
-	public List<String[]> getCSV(CrawledItem ci, Map<String, Object> paramMap) {
+	public String[][] getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		init(ci, paramMap);
 		
 		int colDateIdx = -1;
@@ -237,15 +237,20 @@ public class ColTableRowTableAsCSV extends AbstractCrawlItemToCSV{
 			logger.error(String.format("no %s found.", FIELD_NAME_DATA));
 		}
 		
-		List<String[]> retlist = new ArrayList<String[]>();
+		String[][] retlist = new String[colString.size()+rowString.size()][3];
 		if (colcsvname!=null){
-			for (String csv:colString){
-				retlist.add(new String[]{keyid, csv, colcsvname});
+			for (int i=0; i<colString.size();i++){
+				retlist[i][0]=keyid;
+				retlist[i][1]=colString.get(i);
+				retlist[i][2]=colcsvname;
 			}
 		}
+		int colSize = colString.size();
 		if (rowcsvname!=null){
-			for (String csv:rowString){
-				retlist.add(new String[]{keyid, csv, rowcsvname});
+			for (int i=0; i<rowString.size(); i++){
+				retlist[colSize+i][0]=keyid;
+				retlist[colSize+i][1]=rowString.get(i);
+				retlist[colSize+i][2]=rowcsvname;
 			}
 		}
 		return retlist;

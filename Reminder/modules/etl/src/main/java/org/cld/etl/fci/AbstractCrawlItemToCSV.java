@@ -49,7 +49,7 @@ public abstract class AbstractCrawlItemToCSV {
 	//return list of csv value
 	//2 tuple: key, value
 	//3 tuple: key, value, fileName
-	abstract public List<String[]> getCSV(CrawledItem ci, Map<String, Object> paramMap);
+	abstract public String[][] getCSV(CrawledItem ci, Map<String, Object> paramMap);
 	
 	public void init(CrawledItem ci, Map<String, Object> paramMap){
 		try{

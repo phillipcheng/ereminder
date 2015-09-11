@@ -94,7 +94,7 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 	 */
 	//spread column table(s) to csv
 	@Override
-	public List<String[]> getCSV(CrawledItem ci, Map<String, Object> paramMap) {
+	public String[][] getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		init(ci, paramMap);
 		List<String> ls = (List<String>)ci.getParam(FIELD_NAME_DATA);
 		String dataType = DATA_TYPE_NUMBER;
@@ -134,9 +134,9 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 			csvs.addAll(colTableToCSV(oneTableValues, leftCol, hasHeader, genHeader, dataType, colDateIdx));
 		}
 		
-		List<String[]> retlist = new ArrayList<String[]>();
-		for (String csv:csvs){
-			retlist.add(new String[]{keyid, csv});
+		String[][] retlist = new String[csvs.size()][];
+		for (int i=0; i<csvs.size(); i++){
+			retlist[i] = new String[]{keyid, csvs.get(i)};
 		}
 		return retlist;
 	}

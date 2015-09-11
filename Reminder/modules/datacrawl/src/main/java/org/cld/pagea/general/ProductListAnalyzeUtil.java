@@ -173,8 +173,13 @@ public class ProductListAnalyzeUtil {
 						id = nvt.getValue().getValue();
 						return id;
 					}else if (nvt.getValue().getFromType()==VarType.EXPRESSION){
-						Object ret = ScriptEngineUtil.eval(nvt.getValue().getValue(), VarType.STRING, task.getParamMap());
-						return (String)ret;
+						String ret = null;
+						try {
+							ret = (String) ScriptEngineUtil.eval(nvt.getValue().getValue(), VarType.STRING, task.getParamMap());
+						}catch(Throwable t){
+							logger.warn(t.getMessage());
+						}
+						return ret;
 					}else{
 						logger.error(String.format("from|scope type not supported for id in user attribute: %s|%s", 
 								nvt.getValue().getFromType(), nvt.getValue().getFromScope()));

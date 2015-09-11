@@ -6,7 +6,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.mgr.BinaryBoolOpEval;
+import org.cld.taskmgr.BinaryBoolOpEval;
 import org.cld.util.PatternResult;
 import org.xml.taskdef.BinaryBoolOp;
 
@@ -43,7 +43,7 @@ public class VerifyPageByBoolOp implements VerifyPage {
 	public boolean verifySuccess(HtmlPage page, Object param) {
 		Map<String, Object> attributes = (Map<String, Object>)param;
 		for (BinaryBoolOp op: validationOps){
-			if (BinaryBoolOpEval.eval(page, cconf, op, attributes)==false){
+			if (BinaryBoolOpEval.eval(op, attributes)==false){
 				return false;
 			}
 		}

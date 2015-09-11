@@ -71,7 +71,7 @@ public class MultiRowTablesAsCSV extends AbstractCrawlItemToCSV{
 	
 	//multiple column table to csv, each data1, data2...
 	@Override
-	public List<String[]> getCSV(CrawledItem ci, Map<String, Object> paramMap) {
+	public String[][] getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		init(ci, paramMap);
 		List<Integer> colnums = (List<Integer>) ci.getParam(FIELD_NAME_COLNUM);
 		List<String> rowcsvs = (List<String>) ci.getParam(FIELD_NAME_ROWCSV);
@@ -92,17 +92,23 @@ public class MultiRowTablesAsCSV extends AbstractCrawlItemToCSV{
 			if (ls!=null && ls.size()>=colnum){
 				strs = rowTableToCSV(ls, colnum, hasHeader, dataTypes, dIdx);
 			}
-			if (rowcsvs!=null){
-				String csvname = rowcsvs.get(i);
-				for (String str:strs){
-					csvs.add(new String[]{keyid, str, csvname});
-				}
-			}else{
-				for (String str:strs){
-					csvs.add(new String[]{keyid, str});
+			if (strs!=null){
+				if (rowcsvs!=null){
+					String csvname = rowcsvs.get(i);
+					for (String str:strs){
+						csvs.add(new String[]{keyid, str, csvname});
+					}
+				}else{
+					for (String str:strs){
+						csvs.add(new String[]{keyid, str});
+					}
 				}
 			}
 		}
-		return csvs;
+		String[][] retCsvs = new String[csvs.size()][];
+		for (int i=0; i<csvs.size(); i++){
+			retCsvs[i] = csvs.get(i);
+		}
+		return retCsvs;
 	}
 }

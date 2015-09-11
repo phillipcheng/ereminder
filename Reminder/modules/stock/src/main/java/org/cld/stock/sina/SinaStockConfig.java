@@ -192,4 +192,13 @@ public class SinaStockConfig implements StockConfig {
 	public Date getMarketStartDate() {
 		return date_HS_A_START_DATE;
 	}
+	
+	@Override
+	public String trimStockId(String stockid) {
+		return stockid.substring(2); //remove the sz, sh prefix
+	}
+	@Override
+	public String[] getCurrentDayCmds() {
+		return new String[]{};
+	}
 }

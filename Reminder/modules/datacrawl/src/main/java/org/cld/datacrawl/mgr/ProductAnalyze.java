@@ -1,8 +1,6 @@
 package org.cld.datacrawl.mgr;
 
 import java.util.Date;
-import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -10,6 +8,7 @@ import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 import org.cld.pagea.general.ProductAnalyzeUtil;
+import org.cld.taskmgr.BinaryBoolOpEval;
 import org.cld.taskmgr.entity.Task;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.NextPage;
@@ -58,6 +57,7 @@ public class ProductAnalyze{
 	public CrawledItem addProduct(WebClient wc, String url, Product product, Product lastProduct, Task task, 
 			ParsedBrowsePrd taskDef, CrawlConf cconf, boolean retCsv, boolean addToDB) 
 			throws InterruptedException{
+		logger.info(String.format("add product with start url:%s", url));
 		BrowseDetailType bdt = taskDef.getBrowsePrdTaskType();
 		boolean monitorPrice = bdt.isMonitorPrice();
 		DataStoreManager dsManager = null;
@@ -94,28 +94,46 @@ public class ProductAnalyze{
 			ProductAnalyzeUtil.callbackReadDetails(wc, details, product, task, taskDef, cconf);
 			product.getId().setCreateTime(new Date());
 			logger.debug("product got:" + product);
-			CsvTransformType csvTransform = bdt.getBaseBrowseTask().getCsvtransform();
-			if (csvTransform!=null){
-				//do the transform and set to crawledItem.csv
-				try {
-					AbstractCrawlItemToCSV cicsv = (AbstractCrawlItemToCSV) 
-							Class.forName(csvTransform.getTransformClass()).newInstance();
-					List<String[]> csv = cicsv.getCSV(product, null);
-					product.setCsvValue(csv);
-					if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm()) && addToDB){
-						dsManager.addUpdateCrawledItem(product, lastProduct);
-					}
-					if (retCsv) return product;
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}else{
-				if (CrawlConf.crawlDsManager_Value_Hdfs.equals(bdt.getBaseBrowseTask().getDsm())){
-					product.setCsvValue(HdfsDataStoreManagerImpl.getCSV(product, bdt.getBaseBrowseTask()));
+			boolean goNext=false;
+			if (bdt.getBaseBrowseTask().getNextTask()!=null){
+				BinaryBoolOp bbo = bdt.getBaseBrowseTask().getNextTask().getCondition();
+				if (bbo!=null){
+					goNext=BinaryBoolOpEval.eval(bbo, product.getParamMap());
+				}else{
+					goNext=true;
 				}
 			}
-			if (dsManager!=null && addToDB)
-				dsManager.addUpdateCrawledItem(product, lastProduct);	
+			product.setGoNext(goNext);
+			if (!goNext){//only transform for final task
+				CsvTransformType csvTransform = bdt.getBaseBrowseTask().getCsvtransform();
+				if (csvTransform!=null && csvTransform.getTransformClass()!=null){
+					//do the transform and set to crawledItem.csv
+					try {
+						AbstractCrawlItemToCSV cicsv = (AbstractCrawlItemToCSV) 
+								Class.forName(csvTransform.getTransformClass()).newInstance();
+						String[][] csv = cicsv.getCSV(product, null);
+						product.setCsvValue(csv);
+						if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm()) && addToDB){
+							dsManager.addUpdateCrawledItem(product, lastProduct);
+						}
+						//cleanup some memory
+						for (int i=1; i<4;i++){
+							if (product.getParamMap().containsKey(AbstractCrawlItemToCSV.FIELD_NAME_DATA+i)){
+								product.addParam(AbstractCrawlItemToCSV.FIELD_NAME_DATA+i, null);
+							}
+						}
+						if (retCsv) return product;
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}else{
+					if (CrawlConf.crawlDsManager_Value_Hdfs.equals(bdt.getBaseBrowseTask().getDsm())){
+						product.setCsvValue(HdfsDataStoreManagerImpl.getCSV(product, bdt.getBaseBrowseTask()));
+					}
+				}
+				if (dsManager!=null && addToDB)
+					dsManager.addUpdateCrawledItem(product, lastProduct);	
+			}
 		}
 		
 		return product;

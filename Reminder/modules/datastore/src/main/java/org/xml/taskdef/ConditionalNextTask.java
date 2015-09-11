@@ -10,21 +10,23 @@ package org.xml.taskdef;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
 
 /**
- * <p>Java class for CredentialType complex type.
+ * <p>Java class for ConditionalNextTask complex type.
  * 
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType name="CredentialType">
+ * &lt;complexType name="ConditionalNextTask">
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
- *       &lt;attribute name="username" type="{http://www.w3.org/2001/XMLSchema}string" />
- *       &lt;attribute name="password" type="{http://www.w3.org/2001/XMLSchema}string" />
+ *       &lt;sequence>
+ *         &lt;element name="condition" type="{}BinaryBoolOp" minOccurs="0"/>
+ *         &lt;element name="invokeTask" type="{}TaskInvokeType"/>
+ *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
  * &lt;/complexType>
@@ -33,60 +35,62 @@ import javax.xml.bind.annotation.XmlType;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "CredentialType")
-public class CredentialType {
+@XmlType(name = "ConditionalNextTask", propOrder = {
+    "condition",
+    "invokeTask"
+})
+public class ConditionalNextTask {
 
-    @XmlAttribute(name = "username")
-    protected String username;
-    @XmlAttribute(name = "password")
-    protected String password;
+    protected BinaryBoolOp condition;
+    @XmlElement(required = true)
+    protected TaskInvokeType invokeTask;
 
     /**
-     * Gets the value of the username property.
+     * Gets the value of the condition property.
      * 
      * @return
      *     possible object is
-     *     {@link String }
+     *     {@link BinaryBoolOp }
      *     
      */
-    public String getUsername() {
-        return username;
+    public BinaryBoolOp getCondition() {
+        return condition;
     }
 
     /**
-     * Sets the value of the username property.
+     * Sets the value of the condition property.
      * 
      * @param value
      *     allowed object is
-     *     {@link String }
+     *     {@link BinaryBoolOp }
      *     
      */
-    public void setUsername(String value) {
-        this.username = value;
+    public void setCondition(BinaryBoolOp value) {
+        this.condition = value;
     }
 
     /**
-     * Gets the value of the password property.
+     * Gets the value of the invokeTask property.
      * 
      * @return
      *     possible object is
-     *     {@link String }
+     *     {@link TaskInvokeType }
      *     
      */
-    public String getPassword() {
-        return password;
+    public TaskInvokeType getInvokeTask() {
+        return invokeTask;
     }
 
     /**
-     * Sets the value of the password property.
+     * Sets the value of the invokeTask property.
      * 
      * @param value
      *     allowed object is
-     *     {@link String }
+     *     {@link TaskInvokeType }
      *     
      */
-    public void setPassword(String value) {
-        this.password = value;
+    public void setInvokeTask(TaskInvokeType value) {
+        this.invokeTask = value;
     }
 
 }

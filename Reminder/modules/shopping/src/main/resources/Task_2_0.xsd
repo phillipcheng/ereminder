@@ -8,6 +8,8 @@
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:element name="Tasks" type="TasksType"/>
 	<xs:simpleType name="VarType">
@@ -162,6 +164,11 @@
 				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
+		<xs:attribute name="frameId">
+			<xs:annotation>
+				<xs:documentation>used to switch to the fame within the page, int for index, string for name</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
 		<xs:attribute name="format" type="xs:string" use="optional">
 			<xs:annotation>
 				<xs:documentation>
@@ -214,6 +221,7 @@
 					<xs:documentation>ICrawlItemToCSV impl. will transform the crawledItem into a list of csv lines, and save to hdfs			</xs:documentation>
 				</xs:annotation>
 			</xs:element>
+			<xs:element name="nextTask" type="ConditionalNextTask" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="taskName" type="xs:string" use="optional">
 			<xs:annotation>
@@ -223,7 +231,7 @@
 				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
-		<xs:attribute name="isStart" type="xs:boolean" use="optional" default="false">
+		<xs:attribute name="isStart" type="xs:boolean" use="optional" default="true">
 			<xs:annotation>
 				<xs:documentation>
 					true, started when engine starts, does not need an
@@ -252,6 +260,7 @@ dsm set to hbase means generate hbase entry for each product browsed.</xs:docume
 					<xs:enumeration value="hdfs"/>
 					<xs:enumeration value="hbase"/>
 					<xs:enumeration value="hibernate"/>
+					<xs:enumeration value="nothing"/>
 				</xs:restriction>
 			</xs:simpleType>
 		</xs:attribute>
@@ -262,7 +271,16 @@ dsm set to hbase means generate hbase entry for each product browsed.</xs:docume
 				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
-		<xs:attribute name="mbMemoryNeeded" type="xs:int" use="optional" default="1024"/>
+		<xs:attribute name="mbMemoryNeeded" type="xs:int" use="optional" default="1024">
+			<xs:annotation>
+				<xs:documentation>memory for each mapper and reducer</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="taskNumPerJob" type="xs:int" default="10">
+			<xs:annotation>
+				<xs:documentation>number of tasks per Mapper</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
 	</xs:complexType>
 	<xs:complexType name="BrowseCatType">
 		<xs:sequence>
@@ -376,11 +394,9 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="BinaryBoolOp">
-		<xs:sequence>
-			<xs:element name="lhs" type="ValueType"/>
-			<xs:element name="rhs" type="ValueType"/>
-		</xs:sequence>
-		<xs:attribute name="operator" type="OpType" use="required"/>
+		<xs:simpleContent>
+			<xs:extension base="xs:string"/>
+		</xs:simpleContent>
 	</xs:complexType>
 	<xs:complexType name="TokenType">
 		<xs:annotation>
@@ -536,9 +552,16 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 	</xs:complexType>
 	<xs:complexType name="CsvTransformType">
 		<xs:sequence>
-			<xs:element name="outputDir" type="ValueType"/>
+			<xs:element name="outputDir" type="ValueType" minOccurs="0"/>
 		</xs:sequence>
-		<xs:attribute name="transformClass" type="xs:string" use="required"/>
-		<xs:attribute name="outputType" type="CsvOutputType" use="required"/>
+		<xs:attribute name="reverse" type="xs:boolean" default="false"/>
+		<xs:attribute name="transformClass" type="xs:string"/>
+		<xs:attribute name="outputType" type="CsvOutputType"/>
+	</xs:complexType>
+	<xs:complexType name="ConditionalNextTask">
+		<xs:sequence>
+			<xs:element name="condition" type="BinaryBoolOp" minOccurs="0"/>
+			<xs:element name="invokeTask" type="TaskInvokeType"/>
+		</xs:sequence>
 	</xs:complexType>
 </xs:schema>

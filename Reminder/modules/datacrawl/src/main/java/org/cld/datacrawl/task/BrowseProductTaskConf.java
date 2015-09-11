@@ -1,7 +1,8 @@
 package org.cld.datacrawl.task;
 
+import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -11,28 +12,37 @@ import java.util.Map;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.MapContext;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
-import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.CrawledItemId;
-import org.cld.datastore.entity.Price;
 import org.cld.datastore.entity.Product;
+import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.cld.pagea.general.ProductListAnalyzeUtil;
+import org.cld.taskmgr.BinaryBoolOpEval;
 import org.cld.taskmgr.ScriptEngineUtil;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
+import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.CompareUtil;
-import org.cld.util.StringUtil;
 import org.xml.mytaskdef.ParsedBrowsePrd;
+import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.BrowseDetailType;
+import org.xml.taskdef.BrowseTaskType;
+import org.xml.taskdef.CsvOutputType;
+import org.xml.taskdef.CsvTransformType;
 import org.xml.taskdef.ParamType;
+import org.xml.taskdef.TaskInvokeType;
 import org.xml.taskdef.TasksType;
 import org.xml.taskdef.VarType;
 
@@ -44,7 +54,6 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 	private static final long serialVersionUID = 1L;
 
 	private static Logger logger =  LogManager.getLogger(BrowseProductTaskConf.class);
-	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	//configurable values
 	private String startURL;
 	private String productType;
@@ -82,6 +91,19 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		return this.getId();
 	}
 
+	//using the task param map to evaluate expression type params
+	private void evalParams(BrowseDetailType bdt){
+		for (ParamType pt: bdt.getBaseBrowseTask().getParam()){
+			if (pt.getValue()!=null){
+				if (pt.getType()==VarType.EXPRESSION){
+					String ret = (String)ScriptEngineUtil.eval(pt.getValue(), VarType.STRING, this.getParamMap());
+					putParam(pt.getName(), ret);
+					logger.info(String.format("exp: %s eval to %s", pt.getValue(), ret));
+				}
+			}
+		}
+	}
+	
 	@Override
 	public void setUp(TasksType tasks, ClassLoader pluginClassLoader, Map<String, Object> params) {
 		super.setUp(tasks, pluginClassLoader, params);
@@ -102,28 +124,8 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		this.enableJS = bdt.getBaseBrowseTask().isEnableJS();
 		for (ParamType pt: bdt.getBaseBrowseTask().getParam()){
 			if (pt.getValue()!=null){
-				if (pt.getType()==VarType.EXPRESSION){
-					String ret = (String)ScriptEngineUtil.eval(pt.getValue(), VarType.STRING, this.getParamMap());
-					putParam(pt.getName(), ret);
-					logger.info(String.format("exp: %s eval to %s", pt.getValue(), ret));
-				}else{
-					//has default value, put in the paramsMap
-					if (VarType.STRING==pt.getType()){
-						putParam(pt.getName(), pt.getValue());
-					}else if (VarType.INT == pt.getType()){
-						putParam(pt.getName(), Integer.parseInt(pt.getValue()));
-					}else if (VarType.BOOLEAN == pt.getType()){
-						putParam(pt.getName(), Boolean.parseBoolean(pt.getValue()));
-					}else if (VarType.DATE == pt.getType()){
-						try{
-							putParam(pt.getName(), sdf.parse(pt.getValue()));
-						}catch(Exception e){
-							logger.error("", e);
-						}
-					}else{
-						logger.error(String.format("default value type not support for param : %s", pt.getName()));
-					}
-				}
+				Object value = TaskUtil.getValue(null, pt.getValue(), pt.getType());
+				putParam(pt.getName(), value);
 			}else{
 				if (VarType.INT == pt.getType()){
 					putParam(pt.getName(), -1);
@@ -134,6 +136,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 				}
 			}
 		}
+		evalParams(bdt);
 	}
 	
 	private static void addFullUrl(ParsedBrowsePrd pbpTemplate, Map<String, Object> singleValueParams, 
@@ -158,11 +161,11 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 	 * @return
 	 * @throws InterruptedException
 	 */
-	public static List<CrawledItem> browseProduct(BrowseProductTaskConf task, CrawlConf cconf, WebClient wc, String storeId, 
-			String catId, String taskName, Map<String, Object> params, boolean retcsv, Date crawlDateTime, boolean addToDB) 
+	public static List<CrawledItem> browseProduct(BrowseProductTaskConf task, CrawlConf cconf, String storeId, 
+			String catId, String taskName, Map<String, Object> params, boolean retcsv, Date crawlDateTime, boolean addToDB, 
+			BrowseTaskType btt, Map<String, BufferedWriter> hdfsByIdOutputMap, 
+			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) 
 			throws InterruptedException{
-		CrawledItem ci = null;
-		Product lastProduct = null;
 		Product thisProduct = null;
 		ParsedBrowsePrd pbpTemplate = task.getBrowseDetailTask(taskName);
 		BrowseDetailType bdt = pbpTemplate.getBrowsePrdTaskType();
@@ -172,16 +175,18 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		}else{
 			dsManager = cconf.getDefaultDsm();
 		}
+		//re-evaluate params
+		task.putAllParams(params);
+		task.evalParams(bdt);
 		//startUrl may contains parameters needs to be converted to startUrlWithValue (maybe multiple) by filling the ParamValueMap
 		List<String> startUrlList = new ArrayList<String>();
 		List<String> cachePageList = new ArrayList<String>(); //if configured to save cache pages
 		List<ParamType> plist = pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getParam();
-		if (plist!=null && plist.size()>0){
+		if (plist!=null && plist.size()>0){//expand starturl using parameters, esp list type params
 			List<ParamType> listTypeParams = new ArrayList<ParamType>();
 			Map<String, Object> singleValueParams = new HashMap<String, Object>();
 			for (ParamType pv:plist){
 				if (pv.getType()!=VarType.LIST){
-					Object val = params.get(pv.getName());
 					singleValueParams.put(pv.getName(), params.get(pv.getName()));
 				}else{
 					listTypeParams.add(pv);
@@ -224,33 +229,154 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 			}
 		}
 		
-		List<CrawledItem> cilist = new ArrayList<CrawledItem>();
+		List<CrawledItem> retcilist = new ArrayList<CrawledItem>();
 		if (pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getUserAttribute().size()!=0){
 			//start browsing
 			for (String startUrl:startUrlList){
+				CrawledItem ci = null;
+				boolean needCrawl = true;
+				Product lastProduct = null;
 				String prdId = ProductListAnalyzeUtil.getInternalId(startUrl, task, pbpTemplate);
-				if (prdId!=null && !"".equals(prdId)){			
-					if (dsManager!=null){
-						lastProduct = (Product) dsManager.getCrawledItem(prdId, storeId, Product.class);
-						ci = lastProduct;
+				if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm())){
+					//check any update
+					if (prdId!=null && !"".equals(prdId)){			
+						if (dsManager!=null){
+							lastProduct = (Product) dsManager.getCrawledItem(prdId, storeId, Product.class);
+							ci = lastProduct;
+						}
+						if (lastProduct != null && !CompareUtil.ObjectDiffers(crawlDateTime, lastProduct.getId().getCreateTime()) && lastProduct.isCompleted()){
+							needCrawl= false;
+							logger.info("last product has the same crawl time and is complete, skip browsing.");
+						}
 					}
-					if (lastProduct != null && !CompareUtil.ObjectDiffers(crawlDateTime, lastProduct.getId().getCreateTime()) && lastProduct.isCompleted()){
-						logger.info("last product has the same crawl time and is complete, skip browsing.");
-					}else{
-						//add new product and price
-						thisProduct = cconf.getProductInstance(task.getTasks().getProductType());
-						CrawledItemId pid = new CrawledItemId(prdId, storeId, crawlDateTime);
-						thisProduct.setId(pid);
-						thisProduct.addCat(catId);
+				}
+				if (needCrawl){
+					//add new product and price
+					thisProduct = cconf.getProductInstance(task.getTasks().getProductType());
+					CrawledItemId pid = new CrawledItemId(prdId, storeId, crawlDateTime); //Id might need to be filled back
+					thisProduct.setId(pid);
+					thisProduct.addCat(catId);
+					BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(task.getName());
+					WebClient wc = null;
+					try {
+						wc = CrawlUtil.getWebClient(cconf, taskTemplate.skipUrls, taskTemplate.enableJS);
 						ci = cconf.getPa().addProduct(wc, startUrl, thisProduct, null, task, pbpTemplate, cconf, retcsv, addToDB);
+						if (!ci.isGoNext()){//only output for final task
+							if (btt!=null){//called within mapper reducer, has all the 4 extra parameters
+								CsvTransformType csvtrans = btt.getCsvtransform();
+								if (csvtrans!=null){
+									CsvOutputType cot = csvtrans.getOutputType();
+									FileSystem fs = FileSystem.get(context.getConfiguration());
+									String outputDirPrefix=null;
+									
+									if (cot == CsvOutputType.BY_ID){//all ci has the same id for multiple ci output
+										outputDirPrefix = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" +
+												HadoopTaskLauncher.getOutputDir(btt, ci.getParamMap()) + "/" + ci.getId().getId();
+									}
+									String[][] csv = ci.getCsvValue();
+									if (csv!=null){
+										int total=csv.length;
+										logger.info(String.format("going to write out %d csvs", total));
+										for (int i=0; i<total; i++){
+											String[] v;
+											if (!csvtrans.isReverse()){
+												v = csv[i];
+											}else{
+												v = csv[total-1-i];
+											}
+											if (v.length==2){
+												if (v[1]!=null && !"".equals(v[1])){
+													String csvkey = v[0];
+													String csvvalue = v[1];
+													if (cot != CsvOutputType.BY_ID){
+														context.write(new Text(csvkey), new Text(csvvalue));
+													}else{
+														//
+														String outputFile = outputDirPrefix;
+														BufferedWriter br = null;
+														if (hdfsByIdOutputMap.containsKey(outputFile)){
+															br = hdfsByIdOutputMap.get(outputFile);
+														}else{
+															br = new BufferedWriter(new OutputStreamWriter(fs.create(new Path(outputFile),true)));
+															hdfsByIdOutputMap.put(outputFile, br);
+														}
+														if (AbstractCrawlItemToCSV.KEY_VALUE_UNDEFINED.equals(csvkey)){
+															br.write(csvvalue + "\n");
+														}else{
+															br.write(csvkey + "," + csvvalue + "\n");
+														}
+													}
+												}
+											}else if (v.length==3){
+												String outkey=v[0];
+												String outvalue=v[1];
+												String outfilePrefix=v[2];
+												if (cot == CsvOutputType.BY_JOB_MULTI){
+													mos.write(HadoopTaskLauncher.NAMED_OUTPUT_TXT, 
+															new Text(outkey), new Text(outvalue), outfilePrefix);
+												}else if (cot == CsvOutputType.BY_JOB_SINGLE){
+													context.write(new Text(outkey), new Text(outvalue));
+												}else if (cot == CsvOutputType.BY_ID){
+													String outputFile = outputDirPrefix + "_" + outfilePrefix;
+													BufferedWriter br = null;
+													if (hdfsByIdOutputMap.containsKey(outputFile)){
+														br = hdfsByIdOutputMap.get(outputFile);
+													}else{
+														br = new BufferedWriter(new OutputStreamWriter(fs.create(new Path(outputFile),true)));
+														hdfsByIdOutputMap.put(outputFile, br);
+													}
+													if (AbstractCrawlItemToCSV.KEY_VALUE_UNDEFINED.equals(outkey)){
+														br.write(outvalue + "\n");
+													}else{
+														br.write(outkey + "," + outvalue + "\n");
+													}
+												}
+											}else{
+												logger.error("wrong number of csv length: not 2 and 3 but:" + v.length);
+											}
+										}
+									}else{
+										//called from mapred, but no output specified.
+									}
+								}
+							}
+						}
+					}catch(Exception e){
+						logger.error("", e);
+					}finally{
+						if (wc!=null){
+							wc.closeAllWindows();
+						}
 					}
-					cilist.add(ci);
+				}
+				if (ci.isGoNext()){
+					TaskInvokeType tit = bdt.getBaseBrowseTask().getNextTask().getInvokeTask();
+					String callTaskName = tit.getToCallTaskName();
+					ParsedBrowsePrd pbptTemplate = task.getBrowseDetailTask(callTaskName);
+					if (pbptTemplate==null){
+						logger.error(String.format("invoke task name: %s not found in site %s", callTaskName, task.getTasks().getStoreId()));
+					}
+					//check tit's param only pass the value to the param which has no init value
+					List<ParamType> ptl = pbptTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getParam();
+					for (ParamType pt:ptl){
+						if (pt.getValue()!=null){
+							params.remove(pt.getName());
+						}
+					}
+					BrowseProductTaskConf t = (BrowseProductTaskConf) cconf.getTaskMgr().getTaskInstance("org.cld.datacrawl.task.BrowseProductTaskConf", 
+							task.getTasks(), cconf.getPluginClassLoader(), params, new Date(), callTaskName);
+					List<CrawledItem> cilist1 = browseProduct(t, cconf, storeId, catId, callTaskName, t.getParamMap(), 
+							retcsv, crawlDateTime, addToDB, btt, hdfsByIdOutputMap, context, mos);
+					if (btt!=null)
+						retcilist.addAll(cilist1);
 				}else{
-					logger.error(String.format("prdId is null for task: %s, startUrl: %s", task.getName(), startUrl));
+					if (btt!=null)
+						retcilist.add(ci);
 				}
 			}
 		}
-		return cilist;
+		
+		return retcilist;
 	}
 	
 	@Override
@@ -260,10 +386,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
 		BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
 		this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
-		WebClient wc = CrawlUtil.getWebClient(cconf, taskTemplate.skipUrls, taskTemplate.enableJS);
-		
-		browseProduct(this, cconf, wc, this.getStoreId(), null, this.getName(), this.getParamMap(), false, this.getStartDate(), true);
-	
+		browseProduct(this, cconf, this.getStoreId(), null, this.getName(), this.getParamMap(), false, this.getStartDate(), true, null, null, null, null);
 		return new ArrayList<Task>();
 	}
 	
@@ -275,11 +398,36 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
 		if (taskTemplate!=null){
 			this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
-			WebClient wc = CrawlUtil.getWebClient(cconf, taskTemplate.skipUrls, taskTemplate.enableJS);
-			return browseProduct(this, cconf, wc, this.getStoreId(), null, this.getName(), this.getParamMap(), true, this.getStartDate(), addToDB);
+			return browseProduct(this, cconf, getStoreId(), null, getName(), getParamMap(), true, getStartDate(), addToDB, null, null, null, null);
 		}else{
 			logger.error(String.format("task %s not found in config.", getName()));
 			return null;
+		}
+	}
+	
+	@Override
+	public void runMyselfAndOutput(Map<String, Object> params, boolean addToDB, BrowseTaskType btt, 
+			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
+		this.putAllParams(params);
+		CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
+		BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
+		if (taskTemplate!=null){
+			Map<String, BufferedWriter> hdfsByIdOutputMap = new HashMap<String, BufferedWriter>();
+			try{
+				this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
+				browseProduct(this, cconf, getStoreId(), null, getName(), getParamMap(), true, getStartDate(), addToDB, 
+						btt, hdfsByIdOutputMap, context, mos);
+			}finally{
+				for (BufferedWriter br: hdfsByIdOutputMap.values()){
+					try{
+						br.close();
+					}catch(Exception e){
+						logger.error("", e);
+					}
+				}
+			}
+		}else{
+			logger.error(String.format("task %s not found in config.", getName()));
 		}
 	}
 	

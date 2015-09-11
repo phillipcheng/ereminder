@@ -7,16 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
-import javax.persistence.Table;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.util.JsonUtil;
@@ -29,14 +19,6 @@ import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
-@Entity
-@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(
-    name="type",
-    discriminatorType=DiscriminatorType.STRING
-)
-@DiscriminatorValue("item")
-@Table(name = "CrawledItem")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CrawledItem {
 	public static final String CRAWLITEM_TYPE="org.cld.datastore.entity.CrawledItem";
@@ -44,37 +26,30 @@ public class CrawledItem {
 	private static Logger logger =  LogManager.getLogger(CrawledItem.class);
 	
 	@JsonIgnore
-	@EmbeddedId
 	protected CrawledItemId id;
 
-	@Column(insertable=false, updatable=false)
 	protected String type;//discriminator type: must be the class name: either xxx.CrawledItem, xxx.Category, xxx.Product
 
-	@Column(name = "itemType")
 	protected String itemType; //the type of the product: default, book, stock, etc
 
-	@Column(name = "rootTaskId")
 	protected String rootTaskId;
 	
-	@Column(name = "name")
 	protected String name;
 
-	@Column(name = "fullUrl")
 	protected String fullUrl;
 
-	@Column(name = "parentCatId")
 	protected String parentCatId;//parent category's internal catId
 	
-	@Column(name="updateTime")
 	protected Date updateTime; //time on the page, this item is updated differ than crawl time, time i found it
 	
-	@Column(name = "paramData", length = 80000)
 	private String paramData; //json format data of paramMap
+	
+	private boolean goNext; //do i have a next task
 	
 	//@JsonIgnore
 	private transient Map<String, Object> params = new TreeMap<String, Object>();//I need the order of keys
 	
-	private List<String[]> csvValue;//list of key,value pairs for hdfs to save
+	private String[][] csvValue;//list of key,value pairs for hdfs to save
 	
 	//called by product, category's default constructor for hibernate
 	public CrawledItem(){
@@ -97,7 +72,7 @@ public class CrawledItem {
 	}
 	
 	public String toString(){
-		return toJson();
+		return "CrawledItem:" + toJson();
 	}
 	
 
@@ -256,13 +231,19 @@ public class CrawledItem {
 		}
 	}
 
-	public List<String[]> getCsvValue() {
+	public String[][] getCsvValue() {
 		return csvValue;
 	}
 
-	public void setCsvValue(List<String[]> csvValue) {
+	public void setCsvValue(String[][] csvValue) {
 		this.csvValue = csvValue;
 	}
 
+	public boolean isGoNext() {
+		return goNext;
+	}
 
+	public void setGoNext(boolean goNext) {
+		this.goNext = goNext;
+	}
 }

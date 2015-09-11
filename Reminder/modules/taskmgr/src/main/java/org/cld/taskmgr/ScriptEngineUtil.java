@@ -1,5 +1,6 @@
 package org.cld.taskmgr;
 
+import java.util.Date;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -18,7 +19,12 @@ public class ScriptEngineUtil {
 	public static Object eval(String exp, VarType toType, Map<String,Object> variables){
 		ScriptEngine jsEngine = manager.getEngineByName("JavaScript");
 		for (String key: variables.keySet()){
-			jsEngine.put(key, variables.get(key));
+			Object v = variables.get(key);
+			if (v instanceof Date){
+				jsEngine.put(key, ((Date)v).getTime());
+			}else{
+				jsEngine.put(key, v);
+			}
 		}
 		try {
 			Object ret = jsEngine.eval(exp);
@@ -51,7 +57,7 @@ public class ScriptEngineUtil {
 			}
 			return ret;
 		} catch (ScriptException e) {
-			logger.error(String.format("while eval %s, var map is %s", exp, variables), e);
+			logger.error(String.format("error msg: %s while eval %s, var map is %s", e.getMessage(), exp, variables));
 			return null;
 		}
 	}

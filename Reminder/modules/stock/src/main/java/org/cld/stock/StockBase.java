@@ -136,12 +136,18 @@ public abstract class StockBase extends TestBase{
 	//cmdName is the fileName of the site-conf without suffix, is the storeid
 	public void runCmd(String cmdName, String marketId, String startDate, String endDate) {
 		StockConfig sc = getStockConfig();
-		String strSD = sc.getStartDate(cmdName);
-		if (strSD!=null){
-			startDate = strSD;
+		if (Arrays.asList(sc.getCurrentDayCmds()).contains(cmdName)){
+			Date d = StockUtil.getUSLatestOpenMarketDate();
+			startDate = sdf.format(d);
+			endDate = startDate;
+		}else{
+			if (startDate==null){
+				startDate = sc.getStartDate(cmdName);
+			}
 		}
 		
 		Map<String, Object> params = getDateParamMap(startDate, endDate);
+		params.put(ETLUtil.PK_MARKETID, marketId);
 		Date ed = null;
 		Date sd = null;
 		try{

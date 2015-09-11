@@ -19,18 +19,19 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlSpan;
 
 import org.cld.datacrawl.CrawlConf;
+import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.NextPage;
 import org.cld.datacrawl.ProductConf;
-import org.cld.datacrawl.mgr.BinaryBoolOpEval;
 import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.datacrawl.util.HtmlPageResult;
 import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.datacrawl.util.VerifyPageByXPath;
 import org.cld.datastore.entity.Product;
-import org.cld.taskmgr.ScriptEngineUtil;
+import org.cld.taskmgr.BinaryBoolOpEval;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.StringUtil;
 import org.xml.mytaskdef.ConfKey;
+import org.xml.mytaskdef.IdUrlMapping;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 import org.xml.mytaskdef.TasksTypeUtil;
 import org.xml.taskdef.AttributeType;
@@ -38,7 +39,6 @@ import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.BrowseDetailType;
 import org.xml.taskdef.ClickStreamType;
 import org.xml.taskdef.ValueType;
-import org.xml.taskdef.VarType;
 
 public class ProductAnalyzeUtil {
 	
@@ -143,12 +143,14 @@ public class ProductAnalyzeUtil {
 	}
 	
 	private static HtmlPage getNextPage(WebClient wc, HtmlPage curPage, Task task, 
-			ParsedBrowsePrd taskDef, CrawlConf cconf) throws InterruptedException{
+			ParsedBrowsePrd taskDef, CrawlConf cconf, Product product) throws InterruptedException{
 		BrowseDetailType bdt = taskDef.getBrowsePrdTaskType();
 		if (bdt.getNextPage()!=null){
 			HtmlElement nextPageEle = null ;
 			String url = null;
 			DomNamespaceNode dnsn = curPage.getFirstByXPath(bdt.getNextPage().getValue());
+			product.addParam(ConfKey.PRD_NEXTPAGE, dnsn);
+			logger.info(String.format("get next page element: %s from page:%s", dnsn, curPage.getUrl().toExternalForm()));
 			if (dnsn==null){
 				logger.info(String.format("next page xpath %s not found on page %s.", bdt.getNextPage(), curPage.getUrl().toExternalForm()));
 				return null;
@@ -229,9 +231,14 @@ public class ProductAnalyzeUtil {
 		boolean externalistFinished=false;
 		HtmlPage curPage = (HtmlPage) pageMap.get(ConfKey.CURRENT_PAGE).get(0);
 		boolean finalPage=true;
+		//set variable nextPage, later it will be set while doing the getNextPage
+		if (bdt.getNextPage()!=null){
+			DomNamespaceNode dnsn = curPage.getFirstByXPath(bdt.getNextPage().getValue());
+			product.addParam(ConfKey.PRD_NEXTPAGE, dnsn);
+			logger.info(String.format("get next page element: %s from page:%s", dnsn, curPage.getUrl().toExternalForm()));
+		}
 		if (bdt.getLastPageCondition()!=null){
-			finalPage= BinaryBoolOpEval.eval(curPage, cconf, bdt.getLastPageCondition(), 
-				product.getParamMap());
+			finalPage= BinaryBoolOpEval.eval(bdt.getLastPageCondition(), product.getParamMap());
 		}
 		int curPageNum = 1;
 		//(totalPage not set or curPage less than totalPage) & curPage not null & not final & not finished
@@ -255,10 +262,15 @@ public class ProductAnalyzeUtil {
 				logger.debug(product.getParamMap());
 				if (externalistFinished)
 					break;
-				curPage=getNextPage(wc, curPage, task, taskDef, cconf);
+				curPage=getNextPage(wc, curPage, task, taskDef, cconf, product);
 				curPageNum ++;
 				if (bdt.getLastPageCondition()!=null){
-					finalPage = BinaryBoolOpEval.eval(curPage, cconf, bdt.getLastPageCondition(), product.getParamMap());
+					finalPage = BinaryBoolOpEval.eval(bdt.getLastPageCondition(), product.getParamMap());
+				}
+				if (curPageNum % 5 ==0){//for every 10 pages, close all windows to save memory
+					wc.closeAllWindows();
+					logger.info("wc closed");
+					wc = CrawlUtil.getWebClient(cconf, task.getParsedTaskDef().getSkipUrls(), bdt.getBaseBrowseTask().isEnableJS());
 				}
 			}else{
 				break;
@@ -276,6 +288,13 @@ public class ProductAnalyzeUtil {
 			logger.info("curPageNum:" + curPageNum + ", totalPage:" + totalPage);
 			logger.debug(product.getParamMap());
 		}
+		
+		//fill id back
+		if (product.getId().getId()==null && product.getParam(IdUrlMapping.ID_KEY)!=null){
+			product.getId().setId((String) product.getParam(IdUrlMapping.ID_KEY));
+			logger.debug(String.format("fill id:%s back.", product.getId().getId()));
+		}
+		
 		if (finalPage || externalistFinished){
 			product.setCompleted(true);
 		}

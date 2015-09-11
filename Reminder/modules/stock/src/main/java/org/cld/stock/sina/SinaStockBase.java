@@ -3,7 +3,10 @@ package org.cld.stock.sina;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.etl.csv.CsvReformatMapredLauncher;
@@ -65,8 +68,10 @@ public class SinaStockBase extends StockBase{
 	
 	//sina-stock-market-fq
 	public void splitByStock(){
-		HadoopTaskLauncher.executeTasks(getCconf().getNodeConf(), null, 
-				new String[]{"/reminder/items/merge/"+this.specialParam}, 3072, true, 
+		Map<String, String> hadoopParams = new HashMap<String, String>();
+		HadoopTaskLauncher.updateHadoopParams(3072, hadoopParams);
+		HadoopTaskLauncher.executeTasks(getCconf().getNodeConf(), hadoopParams, 
+				new String[]{"/reminder/items/merge/"+this.specialParam}, true, 
 				"/reminder/items/mlinput/"+this.specialParam, 
 				false, "org.cld.stock.sina.jobs.SplitByStockMapper", "org.cld.stock.sina.jobs.SplitByStockReducer", false);
 	}

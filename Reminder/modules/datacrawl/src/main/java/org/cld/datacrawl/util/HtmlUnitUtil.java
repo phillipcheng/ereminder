@@ -15,8 +15,8 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.NextPage;
-import org.cld.datacrawl.mgr.BinaryBoolOpEval;
 import org.cld.datacrawl.mgr.CrawlTaskEval;
+import org.cld.taskmgr.BinaryBoolOpEval;
 import org.xml.mytaskdef.ConfKey;
 import org.xml.mytaskdef.ParsedTasksDef;
 import org.xml.taskdef.AttributeType;
@@ -80,7 +80,7 @@ public class HtmlUnitUtil {
 	
 	private static boolean isGotcha(HtmlPage landingPage, LoginType loginInfo, CrawlConf cconf){
 		if (loginInfo.getLoginGotchaCondition()!=null){
-			boolean ret = BinaryBoolOpEval.eval(landingPage, cconf, loginInfo.getLoginSuccessCondition(), null);
+			boolean ret = BinaryBoolOpEval.eval(loginInfo.getLoginSuccessCondition(), null);
 			if (ret){
 				return true;
 			}else{
@@ -136,7 +136,7 @@ public class HtmlUnitUtil {
 			return LoginStatus.LoginCatchya;
 		}else{
 			if (loginInfo.getLoginSuccessCondition()!=null){
-				boolean ret = BinaryBoolOpEval.eval(afterLoginPage, cconf, loginInfo.getLoginSuccessCondition(), null);
+				boolean ret = BinaryBoolOpEval.eval(loginInfo.getLoginSuccessCondition(), null);
 				if (ret){
 					return LoginStatus.LoginSuccess;
 				}else{
@@ -272,7 +272,7 @@ public class HtmlUnitUtil {
 					if (cnp.getCondition()==null){
 						nextPage = cnp.getSuccessNextPage();
 					}else{
-						if (BinaryBoolOpEval.eval(currentPage, cconf, cnp.getCondition(), null)){
+						if (BinaryBoolOpEval.eval(cnp.getCondition(), null)){
 							nextPage = cnp.getSuccessNextPage();
 						}else{
 							nextPage = cnp.getFailNextPage();

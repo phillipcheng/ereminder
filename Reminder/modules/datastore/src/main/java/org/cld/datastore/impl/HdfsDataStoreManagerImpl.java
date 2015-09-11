@@ -40,9 +40,9 @@ public class HdfsDataStoreManagerImpl implements DataStoreManager{
 		return null;
 	}
 
-	public static List<String[]> getCSV(CrawledItem ci, BrowseTaskType btt) {
+	public static String[][] getCSV(CrawledItem ci, BrowseTaskType btt) {
 		String id = ci.getId().getId();
-		List<String[]> csvList = new ArrayList<String[]>();
+		
 		List<String> outParamList = new ArrayList<String>();
 		for (ParamType pt:btt.getParam()){
 			if ("out".equals(pt.getDirection())){
@@ -82,6 +82,7 @@ public class HdfsDataStoreManagerImpl implements DataStoreManager{
 			}
 		}
 		logger.info("size:" + size);
+		List<String[]> csvList = new ArrayList<String[]>();
 		if (btt.isDsmHeader()){
 			csvList.add(new String[]{id, sb.toString()});
 		}
@@ -109,7 +110,11 @@ public class HdfsDataStoreManagerImpl implements DataStoreManager{
 			sb.append("\n");
 			csvList.add(new String[]{id, sb.toString()});
 		}
-		return csvList;
+		String[][] ret = new String[csvList.size()][];
+		for (i=0; i<csvList.size();i++){
+			ret[i] = csvList.get(i);
+		}
+		return ret;
 	}
 	
 	@Override

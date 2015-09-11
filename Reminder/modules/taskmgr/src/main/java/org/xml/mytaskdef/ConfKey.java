@@ -11,6 +11,7 @@ public class ConfKey {
 	//predefined attribute name
 	public static final String TOTAL_PAGENUM="totalPageNum";
 	public static final String CURRENT_PAGENUM="pagenum";
+	public static final String PRD_NEXTPAGE="nextPage";
 	
 	//parameters
 	public static final String PARAM_PRE="[";

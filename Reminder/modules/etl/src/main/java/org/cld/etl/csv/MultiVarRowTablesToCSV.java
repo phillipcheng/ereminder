@@ -28,7 +28,7 @@ public class MultiVarRowTablesToCSV extends AbstractCrawlItemToCSV{
 	
 	//row to csv
 	@Override
-	public List<String[]> getCSV(CrawledItem ci, Map<String, Object> paramMap) {
+	public String[][] getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		init(ci, paramMap);
 		List<String> csvnames = (List<String>)ci.getParam(FIELD_NAME_ROWCSV);
 		List<Integer> cnl = new ArrayList<Integer>();
@@ -91,6 +91,10 @@ public class MultiVarRowTablesToCSV extends AbstractCrawlItemToCSV{
 				logger.error("", e);
 			}
 		}
-		return retlist;
+		String[][] retCsvs = new String[retlist.size()][];
+		for (int i=0; i<retlist.size(); i++){
+			retCsvs[i] = retlist.get(i);
+		}
+		return retCsvs;
 	}
 }

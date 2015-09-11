@@ -57,8 +57,8 @@ public class IPODateMapper extends Mapper<Object, Text, Text, Text>{
 			List<CrawledItem> cilist = t.runMyselfWithOutput(crawlTaskParams, false);
 			if (cilist!=null && cilist.size()==1){
 				CrawledItem ci = cilist.get(0);
-				List<String[]> csvlist = ci.getCsvValue();
-				if (csvlist!=null && csvlist.size()>0){
+				String[][] csvlist = ci.getCsvValue();
+				if (csvlist!=null && csvlist.length>0){
 					for (String[] csvKV:csvlist){
 						String csvV = csvKV[1];
 						String csvK = csvKV[0];

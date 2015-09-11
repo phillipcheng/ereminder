@@ -76,24 +76,14 @@ public class DownloadUtil {
 	public static void downloadFileToHdfs(String url, boolean useProxy, String proxyIp, int port, 
 			String filePath, String fsDefaultName){
 		InputStream is = null;
-		FSDataOutputStream fos = null;
-		FileSystem fs = null;
-		
 		try{
-			Configuration conf = new Configuration();
-			conf.set("fs.defaultFS", fsDefaultName);
-			fs = FileSystem.get(conf);//fs can't be closed
 			int tryNum=0;
 			while (is==null && tryNum<tryMax){
 				is = getInputStream(url, useProxy, proxyIp, port);
 				tryNum++;
 			}
 			if (is!=null){
-				Path fileNamePath = new Path(filePath);
-				fos = fs.create(fileNamePath);
-				fos.write(IOUtils.toByteArray(is));
-			}else{
-				logger.error(String.format("try max %d reached.", tryNum));
+				downloadFileToHdfs(is, filePath, fsDefaultName);
 			}
 		}catch(Exception e){
 			logger.error("",e);
@@ -102,6 +92,31 @@ public class DownloadUtil {
 				if (is!=null){
 					is.close();
 				}
+			}catch(Exception e){
+				logger.error("", e);
+			}
+		}
+	}
+	
+	public static void downloadFileToHdfs(InputStream is, String filePath, String fsDefaultName){
+		FSDataOutputStream fos = null;
+		FileSystem fs = null;
+		
+		try{
+			Configuration conf = new Configuration();
+			conf.set("fs.defaultFS", fsDefaultName);
+			fs = FileSystem.get(conf);//fs can't be closed
+			if (is!=null){
+				Path fileNamePath = new Path(filePath);
+				fos = fs.create(fileNamePath);
+				fos.write(IOUtils.toByteArray(is));
+			}else{
+				logger.error("inputstream is null");
+			}
+		}catch(Exception e){
+			logger.error("",e);
+		}finally{
+			try{
 				if (fos!=null){
 					fos.close();
 				}

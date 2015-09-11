@@ -9,6 +9,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.entity.CrawledItem;
+import org.cld.stock.StockUtil;
 import org.cld.stock.nasdaq.NasdaqStockBase;
 import org.cld.stock.nasdaq.NasdaqStockConfig;
 import org.cld.stock.nasdaq.NasdaqTestStockConfig;
@@ -55,16 +56,45 @@ public class TestNasdaqStock {
 	}
 	
 	@Test
+	public void testRunAllCmd1() throws Exception{
+		nsb.runAllCmd(NasdaqTestStockConfig.date_Test_SD, NasdaqTestStockConfig.date_Test_END_D2);
+	}
+	
+	@Test
 	public void testBrowseIdlist_with_st() throws Exception{
 		Date ed = sdf.parse("2015-08-02");
 		nsb.run_browse_idlist(NasdaqStockConfig.MarketId_NASDAQ, ed);
 	}
 	
 	@Test
+	public void testCmd_QuoteTick(){
+		Date d = StockUtil.getUSLatestOpenMarketDate();
+		String strD = sdf.format(d);
+		logger.info("strD is:" + strD);
+		nsb.runCmd(NasdaqStockConfig.QUOTE_TICK, marketId, strD, strD);
+	}
+	
+	@Test
+	public void testCmd_QuoteAfterHours(){
+		Date d = StockUtil.getUSLatestOpenMarketDate();
+		String strD = sdf.format(d);
+		logger.info("strD is:" + strD);
+		nsb.runCmd(NasdaqStockConfig.QUOTE_AFTERHOURS, marketId, strD, strD);
+	}
+	
+	@Test
+	public void testCmd_QuotePreMarket(){
+		Date d = StockUtil.getUSLatestOpenMarketDate();
+		String strD = sdf.format(d);
+		logger.info("strD is:" + strD);
+		nsb.runCmd(NasdaqStockConfig.QUOTE_PREMARKET, marketId, strD, strD);
+	}
+	
+	@Test
 	public void testCrawl_QuoteHistorical() throws InterruptedException {
 		List<Task> tl = nsb.getCconf().setUpSite("nasdaq-quote-historical.xml", null);
 		String startDate = "2014-01-01";
-		String endDate = "2015-12-31";
+		String endDate = "2015-09-02";
 		String stockId = "flws";
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put(TaskMgr.TASK_RUN_PARAM_CCONF, nsb.getCconf());
@@ -74,6 +104,45 @@ public class TestNasdaqStock {
 		params.put("endDate", endDate);
 		List<CrawledItem> cil = tl.get(0).runMyselfWithOutput(params, false);
 		logger.info(cil.get(0));
+	}
+	
+	@Test
+	public void testCrawl_QuoteTick() throws InterruptedException {
+		List<Task> tl = nsb.getCconf().setUpSite("nasdaq-quote-tick.xml", null);
+		Date d = StockUtil.getUSLatestOpenMarketDate();
+		String strD = sdf.format(d);
+		//String stockId = "ba";
+		String stockId = "disca";
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put(TaskMgr.TASK_RUN_PARAM_CCONF, nsb.getCconf());
+		params.put("marketId", NasdaqStockConfig.MarketId_NASDAQ);
+		params.put("stockid", stockId);
+		params.put("startDate", strD);
+		params.put("endDate", strD);
+		List<CrawledItem> cil = tl.get(0).runMyselfWithOutput(params, false);
+		for (CrawledItem ci: cil){
+			logger.info(ci);
+		}
+	}
+	
+	@Test
+	public void testCrawl_QuoteAfterHours() throws InterruptedException {
+		List<Task> tl = nsb.getCconf().setUpSite("nasdaq-quote-afterhours.xml", null);
+		Date d = StockUtil.getUSLatestOpenMarketDate();
+		String strD = sdf.format(d);
+		//String stockId = "ba";
+		//String stockId = "baba";
+		String stockId = "aapl";
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put(TaskMgr.TASK_RUN_PARAM_CCONF, nsb.getCconf());
+		params.put("marketId", NasdaqStockConfig.MarketId_NASDAQ);
+		params.put("stockid", stockId);
+		params.put("startDate", strD);
+		params.put("endDate", strD);
+		List<CrawledItem> cil = tl.get(0).runMyselfWithOutput(params, false);
+		for (CrawledItem ci: cil){
+			logger.info(ci);
+		}
 	}
 
 }

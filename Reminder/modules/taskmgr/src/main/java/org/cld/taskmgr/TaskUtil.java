@@ -124,17 +124,26 @@ public class TaskUtil {
 	}
 	
 
-	//get the value from value string according toValueType
 	public static Object getValue(ValueType vt, String valueExp){
-		Object value = null;
-		//perform pre-process
-		ValueType.StrPreprocess sp = vt.getStrPreprocess();
-		if (sp!=null){
-			valueExp = StringUtil.getStringBetweenFirstPreFirstPost(valueExp, sp.getTrimPre(), sp.getTrimPost());
-			valueExp = valueExp.trim();
+		return getValue(vt, valueExp, vt.getToType());
+	}
+	
+	//if vt provides more info for toType, it can be null
+	public static Object getValue(ValueType vt, String valueExp, VarType toType){
+		if (toType==null){
+			toType = vt.getToType();
 		}
-		if (vt.getToType()!=null){
-			if (VarType.DATE==vt.getToType()){
+		Object value = null;
+		if (vt!=null){
+			//perform pre-process
+			ValueType.StrPreprocess sp = vt.getStrPreprocess();
+			if (sp!=null){
+				valueExp = StringUtil.getStringBetweenFirstPreFirstPost(valueExp, sp.getTrimPre(), sp.getTrimPost());
+				valueExp = valueExp.trim();
+			}
+		}
+		if (toType!=null){
+			if (VarType.DATE==toType){
 				String format = vt.getFormat();
 				SafeSimpleDateFormat sdf=null;
 				if (dfMap.containsKey(format)){
@@ -154,32 +163,36 @@ public class TaskUtil {
 					logger.error(String.format("date: %s can't be parsed using format: %s.", 
 							valueExp, format), e);
 				}
-			}else if (VarType.INT == vt.getToType()){
+			}else if (VarType.INT == toType){
 				valueExp = valueExp.replaceAll("\\D+","");
 				value = Integer.parseInt(valueExp);
-			}else if (VarType.FLOAT == vt.getToType()){
+			}else if (VarType.FLOAT == toType){
 				value = Float.parseFloat(valueExp);
-			}else if (VarType.BOOLEAN == vt.getToType()){
+			}else if (VarType.BOOLEAN == toType){
 				value = Boolean.parseBoolean(valueExp);
-			}else if (VarType.STRING == vt.getToType()){
+			}else if (VarType.STRING == toType){
 				value = valueExp;
-			}else if (VarType.URL == vt.getToType()){
+			}else if (VarType.URL == toType){
 				value = valueExp;
-			}else if (VarType.LIST == vt.getToType()){
+			}else if (VarType.LIST == toType){
 				String[] vs = valueExp.split(LIST_VALUE_SEP);
 				List<Object> vl = new ArrayList<Object>();
 				for (String v:vs){
-					if (VarType.STRING == vt.getToEntryType()){
+					if (vt!=null){
+						if (VarType.STRING == vt.getToEntryType()){
+							vl.add(v);
+						}else if (VarType.INT == vt.getToEntryType()){
+							vl.add(Integer.parseInt(v));
+						}else{
+							logger.error(String.format("unsupported toEntryType %s.", vt.getToEntryType()));
+						}
+					}else{//default as string list
 						vl.add(v);
-					}else if (VarType.INT == vt.getToEntryType()){
-						vl.add(Integer.parseInt(v));
-					}else{
-						logger.error(String.format("unsupported toEntryType %s.", vt.getToEntryType()));
 					}
 				}
 				return vl;
 			}else{
-				logger.error(String.format("toType not supported: %s", vt.getToType()));
+				logger.error(String.format("toType not supported: %s", toType));
 			}
 		}else{
 			//treated as string
@@ -190,15 +203,22 @@ public class TaskUtil {
 	}
 	
 	//evalue value without using page, xpath
-	public static Object eval(ValueType vt, Map<String, Object> params){
+	public static String evalStringValue(VarType fromType, String value, Map<String, Object> params){
 		//transform from value
 		String valueExp = null;
-		if (VarType.EXPRESSION == vt.getFromType()){
-			valueExp = (String) ScriptEngineUtil.eval(vt.getValue(), VarType.STRING, params);
+		if (VarType.EXPRESSION == fromType){
+			valueExp = (String) ScriptEngineUtil.eval(value, VarType.STRING, params);
 		}else{
 			//for simple [parameter] replacement
-			valueExp = StringUtil.fillParams(vt.getValue(), params, ConfKey.PARAM_PRE, ConfKey.PARAM_POST);
+			valueExp = StringUtil.fillParams(value, params, ConfKey.PARAM_PRE, ConfKey.PARAM_POST);
 		}
+		return valueExp;
+	}
+	
+	//evalue value without using page, xpath
+	public static Object eval(ValueType vt, Map<String, Object> params){
+		//transform from value
+		String valueExp = evalStringValue(vt.getFromType(), vt.getValue(), params);
 		//get value from valueExp
 		return getValue(vt, valueExp);
 	}

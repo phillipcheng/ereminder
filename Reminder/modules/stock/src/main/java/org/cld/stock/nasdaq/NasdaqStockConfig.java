@@ -48,11 +48,11 @@ public class NasdaqStockConfig implements StockConfig{
 		CORP_INFO, //公司简介
 	};
 	public static String[] quoteConfs = new String[]{
-		QUOTE_HISTORY, //
-		QUOTE_PREMARKET, //
-		QUOTE_AFTERHOURS, //
-		QUOTE_TICK, //
-		QUOTE_ONEMINUTE //
+		QUOTE_HISTORY, // daily
+		QUOTE_PREMARKET, // 8:00AM ET - 9:30AM ET, will be posted from 4:15 a.m. ET to 7:30 a.m. ET of the following day.
+		QUOTE_AFTERHOURS, //4:00PM ET - 8:00PM ET, will be posted 4:15 p.m. ET to 3:30 p.m. ET of the following day
+		QUOTE_TICK, // 9:30AM ET - 4:00PM ET
+		//QUOTE_ONEMINUTE // trading + extended hours, 8:00AM-8:00PM, max get the past 5 days
 	};
 	public static String[] issueConfs = new String[]{
 		DIVIDEND_HISTORY, //
@@ -69,7 +69,8 @@ public class NasdaqStockConfig implements StockConfig{
 	};
 	
 	public static String[] syncConf = new String[]{}; //other cmd need this result
-	public static String[] allConf = (String[]) ListUtil.concatAll(corpConfs, quoteConfs, issueConfs, holderConfs, frConfs);
+	//public static String[] allConf = (String[]) ListUtil.concatAll(corpConfs, quoteConfs, issueConfs, holderConfs, frConfs);
+	public static String[] allConf = new String[]{};
 	@Override
 	public String getTestMarketId() {
 		return NasdaqTestStockConfig.MarketId_NASDAQ_Test;
@@ -84,11 +85,14 @@ public class NasdaqStockConfig implements StockConfig{
 	}
 	@Override
 	public String[] getAllCmds(String marketId) {
-		return allConf;
+		if (marketId.startsWith(NasdaqTestStockConfig.MarketId_NASDAQ_Test)){
+			return NasdaqTestStockConfig.testAllConf;
+		}else{
+			return NasdaqStockConfig.allConf;
+		}
 	}
 	@Override
 	public String[] getSyncCmds() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 	@Override
@@ -98,27 +102,22 @@ public class NasdaqStockConfig implements StockConfig{
 	}
 	@Override
 	public String getTestMarketChangeDate() {
-		// TODO Auto-generated method stub
-		return null;
+		return NasdaqTestStockConfig.Test_END_D3;
 	}
 	@Override
 	public String[] getTestStockSet1() {
-		// TODO Auto-generated method stub
-		return null;
+		return NasdaqTestStockConfig.Test_D1_Stocks;
 	}
 	@Override
 	public String[] getTestStockSet2() {
-		// TODO Auto-generated method stub
-		return null;
+		return NasdaqTestStockConfig.Test_D3_Stocks;
 	}
 	@Override
 	public String getTestShortStartDate() {
-		// TODO Auto-generated method stub
-		return null;
+		return NasdaqTestStockConfig.Test_SHORT_SD;
 	}
 	@Override
 	public String[] getSlowCmds() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 	@Override
@@ -128,5 +127,13 @@ public class NasdaqStockConfig implements StockConfig{
 	@Override
 	public String getStartDate(String cmdName) {
 		return null;
+	}
+	@Override
+	public String trimStockId(String stockid) {
+		return stockid;//untrimmed
+	}
+	@Override
+	public String[] getCurrentDayCmds() {
+		return new String[]{QUOTE_TICK, QUOTE_PREMARKET, QUOTE_AFTERHOURS};
 	}
 }

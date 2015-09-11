@@ -1,5 +1,6 @@
 package org.cld.datacrawl;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -65,7 +66,7 @@ public class CrawlUtil {
 	        public void notify(String s, Object o) { }
 	    });
 	    
-	    webClient.getCookieManager().setCookiesEnabled(true);//required by linkedin/sina.weibo
+	    webClient.getCookieManager().setCookiesEnabled(false);//required by linkedin/sina.weibo
 	    webClient.getOptions().setCssEnabled(true);
 	    webClient.getOptions().setPrintContentOnFailingStatusCode(false);
 		webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
@@ -177,6 +178,11 @@ public class CrawlUtil {
 	public static void downloadPage(CrawlConf cconf, String url, String fileName){
 		DownloadUtil.downloadFileToHdfs(url, cconf.isUseProxy(), cconf.getProxyIP(), cconf.getProxyPort(), 
 				cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + fileName, cconf.getTaskMgr().getHdfsDefaultName());
+		
+	}
+	
+	public static void downloadPage(CrawlConf cconf, InputStream is, String fileName){
+		DownloadUtil.downloadFileToHdfs(is, cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + fileName, cconf.getTaskMgr().getHdfsDefaultName());
 		
 	}
 }

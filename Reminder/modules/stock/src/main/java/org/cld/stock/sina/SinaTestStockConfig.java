@@ -6,10 +6,9 @@ import java.util.Date;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.stock.test.TestSinaStock;
 
 public class SinaTestStockConfig {
-	private static Logger logger =  LogManager.getLogger(TestSinaStock.class);
+	private static Logger logger =  LogManager.getLogger(SinaTestStockConfig.class);
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
 	public static final String Test_SD = "2014-01-10";

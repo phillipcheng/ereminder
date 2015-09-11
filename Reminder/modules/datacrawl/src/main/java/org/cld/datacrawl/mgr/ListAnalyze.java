@@ -23,6 +23,7 @@ import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.datacrawl.util.SomePageErrorException;
 import org.cld.pagea.general.CategoryAnalyzeUtil;
 import org.cld.pagea.general.ListAnalyzeUtil;
+import org.cld.taskmgr.BinaryBoolOpEval;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.xml.mytaskdef.ConfKey;
@@ -74,7 +75,7 @@ public class ListAnalyze {
 		BinaryBoolOp lastScreenCond = task.getLeafBrowseCatTask().getSubItemList().getLastScreenCondition();
 		
 		if (nextScreenXPath!=null && lastScreenCond!=null){
-			while (!BinaryBoolOpEval.eval(listPage, cconf, lastScreenCond, cat.getParamMap())){
+			while (!BinaryBoolOpEval.eval(lastScreenCond, cat.getParamMap())){
 				HtmlElement he = listPage.getFirstByXPath(nextScreenXPath);
 				NextPage nsp = new NextPage(he);
 				listPageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, nsp, VPBL, task, task.getParsedTaskDef(), cconf);

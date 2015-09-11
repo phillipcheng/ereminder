@@ -61,7 +61,7 @@ public class AbstractHbaseToCSVMapper extends TableMapper<Text, Text>{
 				if (m!=null){
 					outputId = m.group(1);
 				}
-				List<String[]> retcsv = tocsv.getCSV(ci, paramMap);
+				String[][] retcsv = tocsv.getCSV(ci, paramMap);
 				for (String[] output: retcsv){
 					if (output!=null && !"".equals(output)){
 						context.write(new Text(outputId), new Text(output[1]));
