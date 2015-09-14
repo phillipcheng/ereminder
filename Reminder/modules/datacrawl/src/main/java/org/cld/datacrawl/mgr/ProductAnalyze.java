@@ -24,6 +24,7 @@ import org.cld.datacrawl.util.VerifyPageByBoolOpXPath;
 import org.cld.datacrawl.util.VerifyPageByXPath;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.xml.mytaskdef.ParsedBrowsePrd;
+import org.xml.mytaskdef.XPathType;
 import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.BrowseDetailType;
 import org.xml.taskdef.CsvTransformType;
@@ -69,7 +70,7 @@ public class ProductAnalyze{
 		product.setRootTaskId(task.getRootTaskId());
 		product.setFullUrl(url);
 
-		String[] xpaths = ProductAnalyzeUtil.getPageVerifyXPaths(task, taskDef);
+		XPathType[] xpaths = ProductAnalyzeUtil.getPageVerifyXPaths(task, taskDef);
 		BinaryBoolOp[] bbops = ProductAnalyzeUtil.getPageVerifyBoolOp(task, taskDef);
 		VerifyPageByBoolOp vpbbo = xpaths!=null? new VerifyPageByBoolOp(bbops, cconf):null;
 		VerifyPageByXPath vpbxp = bbops!=null? new VerifyPageByXPath(xpaths):null;

@@ -119,7 +119,7 @@ public abstract class StockBase extends TestBase{
 			}
 			ciOrg.addParam(KEY_IPODate_MAP, ipoMap);
 		}
-		logger.info("ci we got:" + ciOrg);
+		logger.debug("ci we got:" + ciOrg);
 		if (sc.getPairedMarket()!=null && sc.getPairedMarket().containsKey(marketId)){
 			String pairMarketId = sc.getPairedMarket().get(marketId);
 			//we need to add the st market as well
@@ -280,7 +280,7 @@ public abstract class StockBase extends TestBase{
 				logger.info(String.format("market %s has delta size %d.", marketId, deltaIds.size()));
 				//has new delta market, let's create another 2 markets
 				dsm.addUpdateCrawledItem(ciIds, null);////hbase persistence for curMarket
-				hdfsDsm.addUpdateCrawledItem(ciIds, null);//hdfs persistence for cur market
+				hdfsDsm.addUpdateCrawledItem(ciIds, null);//hdfs persistence for curMarket
 				String deltaMarketId = marketId + idKeySep + strEndDate + "_delta"; //delta market
 				CrawledItem ciDelta = new CrawledItem(CrawledItem.CRAWLITEM_TYPE, "default", 
 						new CrawledItemId(deltaMarketId, sc.getStockIdsCmd(), endDate));

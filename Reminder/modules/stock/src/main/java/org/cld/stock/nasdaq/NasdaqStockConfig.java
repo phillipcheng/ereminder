@@ -14,11 +14,11 @@ public class NasdaqStockConfig implements StockConfig{
 	//file name of the xml conf and the store id as well
 	public static final String STOCK_IDS ="nasdaq-ids";
 	//market
-	public static final String QUOTE_HISTORY="nasdaq-quote-historical";//历史交易
-	public static final String QUOTE_PREMARKET="nasdaq-quote-premarket";//
-	public static final String QUOTE_AFTERHOURS="nasdaq-quote-afterhours";//
-	public static final String QUOTE_TICK="nasdaq-quote-tick";//
-	public static final String QUOTE_ONEMINUTE="nasdaq-quote-oneminute";//
+	public static final String QUOTE_HISTORY="nasdaq-quote-historical";//start-end
+	public static final String QUOTE_PREMARKET="nasdaq-quote-premarket";//current day
+	public static final String QUOTE_AFTERHOURS="nasdaq-quote-afterhours";//current day
+	public static final String QUOTE_TICK="nasdaq-quote-tick";//current day
+	public static final String QUOTE_ONEMINUTE="nasdaq-quote-oneminute";//failed to crawl, need to calculate
 	
 	//corp material
 	public static final String CORP_INFO="nasdaq-corp-info";//
@@ -32,9 +32,10 @@ public class NasdaqStockConfig implements StockConfig{
 	public static final String HOLDINGS_INSIDER="nasdaq-holdings_insider";
 	
 	//finance report
-	public static final String BALANCE_SHEET="nasdaq-fr-balance-sheet";
-	public static final String INCOME_STATEMENT="nasdaq-fr-income-statement";
-	public static final String CASH_FLOW="nasdaq-fr-cash-flow";
+	public static final String BALANCE_SHEET="nasdaq-fr-quarter-BalanceSheet";
+	public static final String INCOME_STATEMENT="nasdaq-fr-quarter-IncomeStatement";
+	public static final String CASH_FLOW="nasdaq-fr-quarter-CashFlow";
+	public static final String REVENUE="nasdaq-fr-quarter-revenue";
 	
 	public static final String STOCK_DATA="data";
 	

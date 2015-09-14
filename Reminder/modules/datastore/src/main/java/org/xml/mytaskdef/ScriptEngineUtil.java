@@ -1,4 +1,4 @@
-package org.cld.taskmgr;
+package org.xml.mytaskdef;
 
 import java.util.Date;
 import java.util.Map;

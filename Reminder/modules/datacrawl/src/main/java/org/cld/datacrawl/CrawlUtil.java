@@ -35,8 +35,10 @@ public class CrawlUtil {
 	
 	
 	public static void closeWebClient(WebClient wc){
-		logger.debug("close webclient.");
-		wc.closeAllWindows();
+		if (wc!=null){
+			logger.debug("close webclient.");
+			wc.closeAllWindows();
+		}
 	}
 	
 	

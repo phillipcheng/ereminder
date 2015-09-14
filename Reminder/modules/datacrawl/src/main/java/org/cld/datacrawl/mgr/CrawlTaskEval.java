@@ -20,13 +20,13 @@ import org.cld.datacrawl.NextPage;
 import org.cld.datacrawl.util.HtmlPageResult;
 import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.datacrawl.util.VerifyPageByBoolOp;
-import org.cld.taskmgr.ScriptEngineUtil;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.util.PatternIO;
 import org.cld.util.PatternUtil;
 import org.cld.util.SafeSimpleDateFormat;
 import org.cld.util.StringUtil;
 import org.xml.mytaskdef.ConfKey;
+import org.xml.mytaskdef.ScriptEngineUtil;
 import org.xml.taskdef.AttributeType;
 import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.ScopeType;
@@ -217,9 +217,9 @@ public class CrawlTaskEval {
 		if (pages!=null){
 			for (DomNode page : pages){
 				//switch page for frame
-				String frameId = vt.getFrameId();
 				FrameWindow fw=null;
 				DomNode orgPage = null;
+				String frameId = vt.getFrameId();
 				if (frameId!=null && page instanceof HtmlPage){
 					orgPage = page;
 					try {
@@ -227,10 +227,12 @@ public class CrawlTaskEval {
 						int idx = Integer.parseInt(frameId);
 						fw = ((HtmlPage)page).getFrames().get(idx);
 						page = (DomNode) fw.getEnclosedPage();
+						logger.debug(String.format("get frame %s by name %s", page, frameId));
 					}catch(NumberFormatException nfe){
 						//by name
 						fw = ((HtmlPage)page).getFrameByName(frameId);
 						page = (DomNode) fw.getEnclosedPage();
+						logger.debug(String.format("get frame %s by name %s", page, frameId));
 					}
 				}
 				Object xpathResult = null;

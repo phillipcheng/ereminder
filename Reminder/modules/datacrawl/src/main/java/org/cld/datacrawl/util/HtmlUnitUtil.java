@@ -31,6 +31,7 @@ import org.xml.taskdef.VarType;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomNode;
+import com.gargoylesoftware.htmlunit.html.FrameWindow;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
@@ -43,10 +44,7 @@ enum LoginStatus{
 	LoginFailed(2), 
 	LoginCatchya(3);
 	
-	private final int status;
-	
 	LoginStatus(int status){
-		this.status = status;
 	}
 }
 
@@ -55,6 +53,25 @@ public class HtmlUnitUtil {
 	private static final String KEY_PASSWORD="password";
 	private static Logger logger =  LogManager.getLogger(HtmlUnitUtil.class);
 	
+	public static DomNode getFramePage(DomNode page, String frameId){
+		FrameWindow fw=null;
+		DomNode framePage = null;
+		if (frameId!=null && page instanceof HtmlPage){
+			try {
+				//by idx
+				int idx = Integer.parseInt(frameId);
+				fw = ((HtmlPage)page).getFrames().get(idx);
+				framePage = (DomNode) fw.getEnclosedPage();
+				logger.debug(String.format("get frame %s by name %s", framePage, frameId));
+			}catch(NumberFormatException nfe){
+				//by name
+				fw = ((HtmlPage)page).getFrameByName(frameId);
+				framePage = (DomNode) fw.getEnclosedPage();
+				logger.debug(String.format("get frame %s by name %s", framePage, frameId));
+			}
+		}
+		return framePage;
+	}
 	/*
 	 * directly get page from webclient without the validation, retrying, etc
 	 */
@@ -169,8 +186,9 @@ public class HtmlUnitUtil {
 				}
 			} catch (FailingHttpStatusCodeException | IOException e) {
 				logger.error("", e);
+			}finally{
+				CrawlUtil.closeWebClient(wc);
 			}
-			wc.closeAllWindows();
 		}
 		return unlocked;
 	}

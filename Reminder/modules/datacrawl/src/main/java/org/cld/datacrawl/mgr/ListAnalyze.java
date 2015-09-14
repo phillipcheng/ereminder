@@ -195,7 +195,7 @@ public class ListAnalyze {
 				throw spe;
 			}
 		}finally{
-			wc.closeAllWindows();
+			CrawlUtil.closeWebClient(wc);
 		}
 		return tl;
 	}

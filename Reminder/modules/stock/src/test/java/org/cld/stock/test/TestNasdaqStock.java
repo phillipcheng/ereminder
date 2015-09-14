@@ -67,6 +67,12 @@ public class TestNasdaqStock {
 	}
 	
 	@Test
+	public void testBrowseIdlist_AMEX() throws Exception{
+		Date ed = sdf.parse("2015-08-02");
+		nsb.run_browse_idlist("AMEX", ed);
+	}
+	
+	@Test
 	public void testCmd_QuoteTick(){
 		Date d = StockUtil.getUSLatestOpenMarketDate();
 		String strD = sdf.format(d);
@@ -88,6 +94,22 @@ public class TestNasdaqStock {
 		String strD = sdf.format(d);
 		logger.info("strD is:" + strD);
 		nsb.runCmd(NasdaqStockConfig.QUOTE_PREMARKET, marketId, strD, strD);
+	}
+	
+	@Test
+	public void testCmd_Fr_QuarterlyIncomeStatement(){
+		Date d = StockUtil.getUSLatestOpenMarketDate();
+		String strD = sdf.format(d);
+		logger.info("strD is:" + strD);
+		nsb.runCmd(NasdaqStockConfig.INCOME_STATEMENT, marketId, strD, strD);
+	}
+	
+	@Test
+	public void testCmd_Fr_QuarterlyRevenue(){
+		Date d = StockUtil.getUSLatestOpenMarketDate();
+		String strD = sdf.format(d);
+		logger.info("strD is:" + strD);
+		nsb.runCmd(NasdaqStockConfig.REVENUE, marketId, strD, strD);
 	}
 	
 	@Test

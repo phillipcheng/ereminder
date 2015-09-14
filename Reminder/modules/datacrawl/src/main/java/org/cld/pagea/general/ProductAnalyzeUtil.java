@@ -34,6 +34,7 @@ import org.xml.mytaskdef.ConfKey;
 import org.xml.mytaskdef.IdUrlMapping;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 import org.xml.mytaskdef.TasksTypeUtil;
+import org.xml.mytaskdef.XPathType;
 import org.xml.taskdef.AttributeType;
 import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.BrowseDetailType;
@@ -45,30 +46,30 @@ public class ProductAnalyzeUtil {
 	private static Logger logger =  LogManager.getLogger(ProductAnalyzeUtil.class);
 	
 	//
-	public static String[] getPageVerifyXPaths(Task task, ParsedBrowsePrd taskDef) {
+	public static XPathType[] getPageVerifyXPaths(Task task, ParsedBrowsePrd taskDef) {
 		if (taskDef.getBrowsePrdTaskType().getFirstPageClickStream()==null){
-			List<String> xpathList = new ArrayList<String>();
+			List<XPathType> xpathList = new ArrayList<XPathType>();
 			List<AttributeType> attrlist = taskDef.getBrowsePrdTaskType().getBaseBrowseTask().getUserAttribute();
 			//page verifications
 			for (AttributeType attr: attrlist){
 				if (!attr.getValue().isOptional()){
-					String xpath = TasksTypeUtil.getXPath(attr.getValue(), task.getParamMap());
+					XPathType xpath = TasksTypeUtil.getXPath(attr.getValue(), task.getParamMap());
 					if (xpath!=null)
 						xpathList.add(xpath);
 				}
 			}
 			ValueType tpVT = taskDef.getBrowsePrdTaskType().getTotalPage();
 			if (tpVT!=null && !tpVT.isOptional() && tpVT.getValue().contains("/")){
-				String xpath = TasksTypeUtil.getXPath(tpVT, task.getParamMap());
+				XPathType xpath = TasksTypeUtil.getXPath(tpVT, task.getParamMap());
 				if (xpath!=null)
 					xpathList.add(xpath);
 			}
 			ValueType np = taskDef.getBrowsePrdTaskType().getNextPage();
 			if (np!=null && !np.isOptional() && np.getValue().contains("/")){
-				xpathList.add(np.getValue());
+				xpathList.add(new XPathType(np.getValue(), np.getFrameId()));
 			}
 			if (xpathList.size()>0)
-				return xpathList.toArray(new String[xpathList.size()]);
+				return xpathList.toArray(new XPathType[xpathList.size()]);
 			else
 				return null;
 		}else{
@@ -268,8 +269,7 @@ public class ProductAnalyzeUtil {
 					finalPage = BinaryBoolOpEval.eval(bdt.getLastPageCondition(), product.getParamMap());
 				}
 				if (curPageNum % 5 ==0){//for every 10 pages, close all windows to save memory
-					wc.closeAllWindows();
-					logger.info("wc closed");
+					CrawlUtil.closeWebClient(wc);
 					wc = CrawlUtil.getWebClient(cconf, task.getParsedTaskDef().getSkipUrls(), bdt.getBaseBrowseTask().isEnableJS());
 				}
 			}else{

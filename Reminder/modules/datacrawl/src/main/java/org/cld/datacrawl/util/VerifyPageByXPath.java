@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.util.PatternResult;
+import org.xml.mytaskdef.XPathType;
 import org.xml.taskdef.AttributeType;
 import org.xml.taskdef.ClickType;
 import org.xml.taskdef.VarType;
@@ -17,48 +18,49 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 public class VerifyPageByXPath implements VerifyPage {
 	public static Logger logger = LogManager.getLogger(VerifyPageByXPath.class);
 	
-	private String[] xpathsSuccess;
+	private XPathType[] xpathsSuccess;
 	private String[] expectedValues;
 	
 	public VerifyPageByXPath(){
 	}
 	
 	public VerifyPageByXPath(ClickType ct){
-		List<String> xpaths = new ArrayList<String>();
+		List<XPathType> xpaths = new ArrayList<XPathType>();
 		List<AttributeType> atl = ct.getInput();
 		for (AttributeType at:atl){
 			if (at.getValue().getFromType()==VarType.XPATH || at.getValue().getValue().contains("//")){
-				xpaths.add(at.getValue().getValue());
+				xpaths.add(new XPathType(at.getValue().getValue(), at.getValue().getFrameId()));
 			}
 		}
 
 		if (ct.getNextpage().getCondition()==null){
 			if (ct.getNextpage().getSuccessNextPage().getValue().getFromType()==VarType.XPATH ||
 					ct.getNextpage().getSuccessNextPage().getValue().getValue().contains("//")){
-				xpaths.add(ct.getNextpage().getSuccessNextPage().getValue().getValue());
+				xpaths.add(new XPathType(ct.getNextpage().getSuccessNextPage().getValue().getValue(), 
+						ct.getNextpage().getSuccessNextPage().getValue().getFrameId()));
 			}
 		}
-		xpathsSuccess = xpaths.toArray(new String[xpaths.size()]);
+		xpathsSuccess = xpaths.toArray(new XPathType[xpaths.size()]);
+	}
+	
+	public VerifyPageByXPath(XPathType[] xpaths){
+		this.xpathsSuccess =  xpaths;
+	}
+	
+	public VerifyPageByXPath(XPathType[] xpaths, String[] values){
+		this.xpathsSuccess = xpaths;
+		this.expectedValues = values;
 	}
 	
 	public String toString(){
 		StringBuffer sb = new StringBuffer();
-		for (String x:xpathsSuccess){
+		for (XPathType x:xpathsSuccess){
 			sb.append(x);
 		}
 		return sb.toString();
 	}
 	
-	public VerifyPageByXPath(String[] xpaths){
-		this.xpathsSuccess =  xpaths;
-	}
-	
-	public VerifyPageByXPath(String[] xpaths, String[] values){
-		this.xpathsSuccess = xpaths;
-		this.expectedValues = values;
-	}
-	
-	public void setXPaths(String[] xpaths){
+	public void setXPaths(XPathType[] xpaths){
 		this.xpathsSuccess = xpaths;
 	}
 	
@@ -70,9 +72,10 @@ public class VerifyPageByXPath implements VerifyPage {
 		}
 		for (int i=0; i<xpathsSuccess.length; i++){
 			if (xpathsSuccess[i]!=null){
-				Object result = page.getFirstByXPath(xpathsSuccess[i]);
+				HtmlPage framePage = (HtmlPage) HtmlUnitUtil.getFramePage(page, xpathsSuccess[i].getFrameId());
+				Object result = framePage.getFirstByXPath(xpathsSuccess[i].getXpath());
 				if (result==null){
-					logger.warn(String.format("xpath:%s not found on page %s", xpathsSuccess[i], page.getUrl().toExternalForm()));;
+					logger.warn(String.format("xpath:%s not found on page %s", xpathsSuccess[i], framePage.getUrl().toExternalForm()));;
 					return false;
 				}else{
 					String strResult = CrawlTaskEval.getStringValue(result);
@@ -80,7 +83,7 @@ public class VerifyPageByXPath implements VerifyPage {
 						if (strResult!=null){
 							if (!expectedValues[i].equals(strResult)){
 								logger.warn(String.format("result get from xpath %s on page %s is [%s] different then expected [%s]", 
-										xpathsSuccess[i], page.getUrl().toExternalForm(), strResult, expectedValues[i]));
+										xpathsSuccess[i], framePage.getUrl().toExternalForm(), strResult, expectedValues[i]));
 								return false;
 							}
 						}else{

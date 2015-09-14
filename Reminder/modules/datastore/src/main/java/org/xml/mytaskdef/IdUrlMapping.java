@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.taskmgr.ScriptEngineUtil;
 import org.xml.taskdef.DirectionType;
 import org.xml.taskdef.RegExpType;
 import org.xml.taskdef.TokenType;

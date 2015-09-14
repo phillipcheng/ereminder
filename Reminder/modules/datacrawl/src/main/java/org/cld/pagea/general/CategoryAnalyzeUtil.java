@@ -34,36 +34,37 @@ import org.xml.mytaskdef.BrowseCatInst;
 import org.xml.mytaskdef.ConfKey;
 import org.xml.mytaskdef.IdUrlMapping;
 import org.xml.mytaskdef.ParsedTasksDef;
+import org.xml.mytaskdef.XPathType;
 
 public class CategoryAnalyzeUtil {
 	
 	private static Logger logger =  LogManager.getLogger(CategoryAnalyzeUtil.class);
 	
-	public static String[] getCatPageVerifyXPaths(Category cat, BrowseCategoryTaskConf task) {
-		List<String> xpaths = new ArrayList<String>();
+	public static XPathType[] getCatPageVerifyXPaths(Category cat, BrowseCategoryTaskConf task) {
+		List<XPathType> xpaths = new ArrayList<XPathType>();
 		BrowseCatInst bci = task.getBCI(task.getStartURL());
 		if (bci!=null){
 			ValueType totalItemNumVT = bci.getBc().getTotalItemNum();
 			if (totalItemNumVT!=null){
 				if (totalItemNumVT.getFromType()==VarType.XPATH || totalItemNumVT.getValue().contains("//")){
-					xpaths.add(totalItemNumVT.getValue());
+					xpaths.add(new XPathType(totalItemNumVT.getValue(), totalItemNumVT.getFrameId()));
 				}
 			}
 			ValueType totalPageNumVT = bci.getBc().getTotalPageNum();
 			if (totalPageNumVT!=null){
 				if (totalPageNumVT.getFromType()==VarType.XPATH || totalPageNumVT.getValue().contains("//")){
-					xpaths.add(totalPageNumVT.getValue());
+					xpaths.add(new XPathType(totalPageNumVT.getValue(), totalPageNumVT.getFrameId()));
 				}
 			}
 			ValueType itemListVT = bci.getBc().getSubItemList().getItemList();
 			if (itemListVT!=null){
 				if (itemListVT.getFromType()==VarType.XPATH || itemListVT.getValue().contains("/")){
-					xpaths.add(itemListVT.getValue());
+					xpaths.add(new XPathType(itemListVT.getValue(), itemListVT.getFrameId()));
 				}
 			}
 		}
 		logger.info("category page verify xpaths:" + xpaths);
-		return xpaths.toArray(new String[xpaths.size()]);
+		return xpaths.toArray(new XPathType[xpaths.size()]);
 	}
 
 	

@@ -218,8 +218,7 @@ public class CategoryAnalyze {
 			logger.error("", e);
 			return null;
 		}finally{
-			if (wc!=null)
-				CrawlUtil.closeWebClient(wc);
+			CrawlUtil.closeWebClient(wc);
 		}
 	}
 	

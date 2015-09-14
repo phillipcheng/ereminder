@@ -28,7 +28,6 @@ import org.cld.datastore.entity.Product;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.cld.pagea.general.ProductListAnalyzeUtil;
 import org.cld.taskmgr.BinaryBoolOpEval;
-import org.cld.taskmgr.ScriptEngineUtil;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
@@ -36,6 +35,7 @@ import org.cld.taskmgr.entity.TaskStat;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.CompareUtil;
 import org.xml.mytaskdef.ParsedBrowsePrd;
+import org.xml.mytaskdef.ScriptEngineUtil;
 import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.BrowseDetailType;
 import org.xml.taskdef.BrowseTaskType;
@@ -344,9 +344,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 					}catch(Exception e){
 						logger.error("", e);
 					}finally{
-						if (wc!=null){
-							wc.closeAllWindows();
-						}
+						CrawlUtil.closeWebClient(wc);
 					}
 				}
 				if (ci.isGoNext()){
@@ -367,10 +365,10 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 							task.getTasks(), cconf.getPluginClassLoader(), params, new Date(), callTaskName);
 					List<CrawledItem> cilist1 = browseProduct(t, cconf, storeId, catId, callTaskName, t.getParamMap(), 
 							retcsv, crawlDateTime, addToDB, btt, hdfsByIdOutputMap, context, mos);
-					if (btt!=null)
+					if (btt==null)
 						retcilist.addAll(cilist1);
 				}else{
-					if (btt!=null)
+					if (btt==null)
 						retcilist.add(ci);
 				}
 			}

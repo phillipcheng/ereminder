@@ -49,7 +49,10 @@
 			<groupId>org.apache.hbase</groupId>
 			<artifactId>hbase-client</artifactId>
 		</dependency>
-		
+		<dependency>
+			<groupId>net.sourceforge.htmlunit</groupId>
+			<artifactId>htmlunit</artifactId>
+		</dependency>
 	</dependencies>
 	
 	<build>
