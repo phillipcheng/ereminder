@@ -69,6 +69,8 @@ public class HtmlUnitUtil {
 				framePage = (DomNode) fw.getEnclosedPage();
 				logger.debug(String.format("get frame %s by name %s", framePage, frameId));
 			}
+		}else{
+			framePage = page;
 		}
 		return framePage;
 	}

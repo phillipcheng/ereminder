@@ -1,12 +1,10 @@
 package org.cld.stock.sina;
 
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.StockConfig;
@@ -38,17 +36,25 @@ public class SinaStockConfig implements StockConfig {
 	//file name of the xml conf and the store id as well
 	public static final String SINA_STOCK_IDS ="sina-stock-ids";
 	public static final String SINA_STOCK_IPODate="sina-stock-ipo";
+	//corp material
+	public static final String SINA_STOCK_CORP_INFO="sina-stock-corp-info";//
+	public static final String SINA_STOCK_CORP_MANAGER="sina-stock-corp-manager";//
+	public static final String SINA_STOCK_CORP_RELATED="sina-stock-corp-related";
+	public static final String SINA_STOCK_CORP_RELATED_OTHER="sina-stock-corp-related-other";
+	//finance report
+	public static final String SINA_STOCK_FR_QUARTER_BALANCE_SHEET="sina-stock-fr-quarter-BalanceSheet";
+	public static final String SINA_STOCK_FR_QUARTER_PROFIT_STATEMENT="sina-stock-fr-quarter-ProfitStatement";
+	public static final String SINA_STOCK_FR_QUARTER_CASHFLOW="sina-stock-fr-quarter-CashFlow";
+	public static final String SINA_STOCK_FR_FOOTNOTE="sina-stock-fr-footnote";
+	public static final String SINA_STOCK_FR_AchieveNotice="sina-stock-fr-achievenotice";
+	public static final String SINA_STOCK_FR_GUIDELINE_YEAR="sina-stock-fr-guideline-year";
+	public static final String SINA_STOCK_FR_ASSETDEVALUE_YEAR="sina-stock-fr-assetdevalue-year";
 	//market
 	public static final String SINA_STOCK_MARKET_HISTORY="sina-stock-market-history";//历史交易
 	public static final String SINA_STOCK_TRADE_DETAIL="sina-stock-market-tradedetail";//成交明细
 	public static final String SINA_STOCK_MARKET_RZRQ="sina-stock-market-rzrq";//融资融券
 	public static final String SINA_STOCK_MARKET_DZJY="sina-stock-market-dzjy";//大宗交易
 	public static final String SINA_STOCK_MARKET_FQ="sina-stock-market-fq"; //复权
-	//corp material
-	public static final String SINA_STOCK_CORP_INFO="sina-stock-corp-info";//
-	public static final String SINA_STOCK_CORP_MANAGER="sina-stock-corp-manager";//
-	public static final String SINA_STOCK_CORP_RELATED="sina-stock-corp-related";
-	public static final String SINA_STOCK_CORP_RELATED_OTHER="sina-stock-corp-related-other";
 	//issue
 	public static final String SINA_STOCK_ISSUE_SHAREBONUS="sina-stock-issue-sharebonus";
 	//stock holder
@@ -56,25 +62,60 @@ public class SinaStockConfig implements StockConfig {
 	public static final String SINA_STOCK_STOCK_HOLDER="sina-stock-stock-holder";
 	public static final String SINA_STOCK_STOCK_HOLDER_CIRCULATE="sina-stock-stock-holder-circulate";
 	public static final String SINA_STOCK_STOCK_HOLDER_FUND="sina-stock-stock-holder-fund";
-	//finance report
-	public static final String SINA_STOCK_FR_HISTORY="sina-stock-fr-history";
-	public static final String SINA_STOCK_FR_HISTORY_OUT="sina-stock-fr-history-out";
-	public static final String SINA_STOCK_FR_HISTORY_QUARTER_OUT="sina-stock-fr-history-quarter-out";
-	public static final String[] subFR = new String[]{"BalanceSheet", "ProfitStatement", "CashFlow"};
-	public static final String SINA_STOCK_FR_QUARTER_BALANCE_SHEET="sina-stock-fr-quarter-BalanceSheet";
-	public static final String SINA_STOCK_FR_QUARTER_PROFIT_STATEMENT="sina-stock-fr-quarter-ProfitStatement";
-	public static final String SINA_STOCK_FR_QUARTER_CASHFLOW="sina-stock-fr-quarter-CashFlow";
-	public static final String SINA_STOCK_FR_FOOTNOTE="sina-stock-fr-footnote";
-	public static final String SINA_STOCK_FR_AchieveNotice="sina-stock-fr-achievenotice";
-	public static final String SINA_STOCK_FR_FINANCE_GUIDELINE_YEAR="sina-stock-fr-guideline-year";
-	public static final String SINA_STOCK_FR_ASSETDEVALUE_YEAR="sina-stock-fr-assetdevalue-year";
-	//big event
+	
 	
 	//idx on the corp-info page
 	public static final int IPO_DATE_IDX = 7;
 	public static final int FOUND_DATE_IDX=13;
 	public static final int NAME_CHANGE_HISTORY=41;
-	
+
+	public static final Map<String, String[]> cmdTableMap = new HashMap<String, String[]>();
+	static{
+		//corp
+		cmdTableMap.put(SINA_STOCK_CORP_INFO, new String[]{"sinacorpinfo"});
+		cmdTableMap.put(SINA_STOCK_CORP_MANAGER, new String[]{"sinacorpmanager"});
+		cmdTableMap.put(SINA_STOCK_CORP_RELATED, new String[]{
+				"sinacorprelatedindices", 
+				"sinacorprelatedsecurities", 
+				"sinacorprelatedxis"});
+		cmdTableMap.put(SINA_STOCK_CORP_RELATED_OTHER, new String[]{
+				"sinacorprelatedconcepts",
+				"sinacorprelatedindustries"});
+		//fr
+		cmdTableMap.put(SINA_STOCK_FR_QUARTER_BALANCE_SHEET, new String[]{"sinafrbalancesheet"});
+		cmdTableMap.put(SINA_STOCK_FR_QUARTER_PROFIT_STATEMENT, new String[]{"sinafrprofitstatement"});
+		cmdTableMap.put(SINA_STOCK_FR_QUARTER_CASHFLOW, new String[]{"sinafrcashflow"});
+		cmdTableMap.put(SINA_STOCK_FR_FOOTNOTE, new String[]{
+				"sinafrfootnoteaccount",
+				"sinafrfootnoteinventory",
+				"sinafrfootnoterecievableaging",
+				"sinafrfootnotetax", 
+				"sinafrfootnoteincomeindustry",
+				"sinafrfootnoteincomeproduct",
+				"sinafrfootnoteincomeregion"});
+		cmdTableMap.put(SINA_STOCK_FR_AchieveNotice, new String[]{"sinafrachievenotice"});
+		cmdTableMap.put(SINA_STOCK_FR_GUIDELINE_YEAR, new String[]{"sinafrguideline"});
+		cmdTableMap.put(SINA_STOCK_FR_ASSETDEVALUE_YEAR, new String[]{"sinafrassetdevalue"});
+		//market
+		cmdTableMap.put(SINA_STOCK_MARKET_HISTORY, new String[]{"sinamarketdaily"});
+		cmdTableMap.put(SINA_STOCK_TRADE_DETAIL, new String[]{"sinamarkettradedetail"});
+		cmdTableMap.put(SINA_STOCK_MARKET_RZRQ, new String[]{
+				"sinamarketrzrqdetail",
+				"sinamarketrzrqsummary"});
+		cmdTableMap.put(SINA_STOCK_MARKET_DZJY, new String[]{"sinamarketdzjy"});
+		cmdTableMap.put(SINA_STOCK_MARKET_FQ, new String[]{"sinamarketfq"});
+		//stock holder
+		cmdTableMap.put(SINA_STOCK_STOCK_HOLDER_FUND, new String[]{"sinastockfundholder"});
+		cmdTableMap.put(SINA_STOCK_STOCK_STRUCTURE, new String[]{"sinastockstructure"});
+		cmdTableMap.put(SINA_STOCK_STOCK_HOLDER, new String[]{
+				"sinastocktopholder", 
+				"sinastocktopholdersummary"});
+		cmdTableMap.put(SINA_STOCK_STOCK_HOLDER_CIRCULATE, new String[]{"sinastocktopholdercirculate"});
+		//issue
+		cmdTableMap.put(SINA_STOCK_ISSUE_SHAREBONUS, new String[]{
+				"sinasharebonusalloted", 
+				"sinasharebonusdividend"});
+	}
 	
 	public static String[] corpConfs = new String[]{//not related with time
 		SINA_STOCK_CORP_INFO, //公司简介
@@ -102,7 +143,7 @@ public class SinaStockConfig implements StockConfig {
 		SINA_STOCK_FR_AchieveNotice, //业绩预告
 		SINA_STOCK_FR_ASSETDEVALUE_YEAR, //资产减值准备
 		SINA_STOCK_FR_FOOTNOTE, //财务附注
-		SINA_STOCK_FR_FINANCE_GUIDELINE_YEAR, //财务指标
+		SINA_STOCK_FR_GUIDELINE_YEAR, //财务指标
 		SINA_STOCK_FR_QUARTER_BALANCE_SHEET, //利润表
 		SINA_STOCK_FR_QUARTER_CASHFLOW,//现金流量表
 		SINA_STOCK_FR_QUARTER_PROFIT_STATEMENT, //资产负债表
@@ -200,5 +241,11 @@ public class SinaStockConfig implements StockConfig {
 	@Override
 	public String[] getCurrentDayCmds() {
 		return new String[]{};
+	}
+
+	@Override
+	public String getTableByCmd() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

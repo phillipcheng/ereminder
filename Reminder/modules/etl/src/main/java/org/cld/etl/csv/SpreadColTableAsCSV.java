@@ -43,7 +43,7 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 	 * @return
 	 */
 	public List<String> colTableToCSV(List<String> vl, int colnum, boolean hasHeader, 
-			boolean genHeader, String dataType, int colDateIdx){
+			boolean genHeader, List<String> dataTypes, int colDateIdx){
 		List<String> retList = new ArrayList<String>();
 		if (vl!=null){
 			for (int i=0; i<colnum; i++){
@@ -56,6 +56,10 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 				
 				while (j<vl.size()){
 					String str = vl.get(j);
+					String dataType = AbstractCrawlItemToCSV.DATA_TYPE_NUMBER;
+					if (dataTypes!=null && dataTypes.size()>row){
+						dataType = dataTypes.get(row);
+					}
 					str = TableUtil.getValue(str, dataType);
 					if (hasHeader && i==0 && genHeader){
 						//header
@@ -92,16 +96,14 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 	 * colnum: 3
 	 * rownum: 2
 	 */
-	//spread column table(s) to csv
+	//spread column table(s) to csv, here the concept of row and column are swapped
 	@Override
 	public String[][] getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		init(ci, paramMap);
 		List<String> ls = (List<String>)ci.getParam(FIELD_NAME_DATA);
-		String dataType = DATA_TYPE_NUMBER;
-		if (ci.getParam(DATA_TYPE_KEY)!=null){
-			dataType = (String) ci.getParam(DATA_TYPE_KEY);
-		}
 		int colnum = (int) ci.getParam(FIELD_NAME_COLNUM);
+		List<String> dataTypes = (List<String>)ci.getParam(DATA_TYPE_KEY);
+		
 		int rownum = -1;
 		if (ci.getParam(FIELD_NAME_ROWNUM)!=null){
 			rownum = (int) ci.getParam(FIELD_NAME_ROWNUM);
@@ -123,7 +125,7 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 				oneTableValues = ls.subList(startIdx, endIdx);
 				startIdx +=valueFullTable;
 				endIdx +=valueFullTable;
-				csvs.addAll(colTableToCSV(oneTableValues, colnum, hasHeader, genHeader, dataType, colDateIdx));
+				csvs.addAll(colTableToCSV(oneTableValues, colnum, hasHeader, genHeader, dataTypes, colDateIdx));
 			}
 			oneTableValues = ls.subList(startIdx, ls.size());
 			int leftItems = ls.size()-startIdx;
@@ -131,7 +133,7 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 			if (rownum!=-1){
 				leftCol = leftItems/rownum;
 			}
-			csvs.addAll(colTableToCSV(oneTableValues, leftCol, hasHeader, genHeader, dataType, colDateIdx));
+			csvs.addAll(colTableToCSV(oneTableValues, leftCol, hasHeader, genHeader, dataTypes, colDateIdx));
 		}
 		
 		String[][] retlist = new String[csvs.size()][];

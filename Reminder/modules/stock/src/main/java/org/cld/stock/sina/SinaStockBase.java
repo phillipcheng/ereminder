@@ -79,37 +79,4 @@ public class SinaStockBase extends StockBase{
 	public void genNdLable(){
 		GenNdLable.launch(this.propFile, getCconf(), this.specialParam, true);
 	}
-	
-	//crawl financial report history by market to hdfs
-	public void run_browse_fr_history() throws ParseException{//till running time
-		//set output to null, needs follow up etl
-		ETLUtil.runTaskByCmd(sc, marketId, cconf, this.getPropFile(), SinaStockConfig.SINA_STOCK_FR_HISTORY, null);
-	}
-	//fr history convert to csv/hive
-	public void run_convert_fr_history_tabular_to_csv() throws Exception {
-		String[] ids = ETLUtil.getStockIdByMarketId(sc, marketId, cconf);
-		List<Task> tlist = new ArrayList<Task>();
-		for (int i=0; i<ids.length; i++){
-			String sid = ids[i];
-			String stockid = sid.substring(2);
-			for (String subFR: SinaStockConfig.subFR){
-				TabularCSVConvertTask ct = new TabularCSVConvertTask(stockid, 
-						SinaStockConfig.SINA_STOCK_FR_HISTORY + "/" + subFR, 
-						SinaStockConfig.SINA_STOCK_FR_HISTORY_OUT+ "/" + subFR);
-				tlist.add(ct);
-			}
-		}
-		CrawlUtil.hadoopExecuteCrawlTasks(this.getPropFile(), cconf, tlist, null, false);
-	}
-	//fr history reformat from split by stockid to split by quarter
-	public void run_fr_reformat() throws Exception{
-		for (String subFR: SinaStockConfig.subFR){
-			CsvReformatMapredLauncher.format(this.getPropFile(), 
-					"/" + SinaStockConfig.SINA_STOCK_FR_HISTORY_OUT + "/" + subFR, 
-					1, 
-					"/" + SinaStockConfig.SINA_STOCK_FR_HISTORY_QUARTER_OUT + "/" + subFR);
-		}
-	}
-
-
 }

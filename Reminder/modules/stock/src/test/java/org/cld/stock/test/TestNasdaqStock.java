@@ -61,15 +61,9 @@ public class TestNasdaqStock {
 	}
 	
 	@Test
-	public void testBrowseIdlist_with_st() throws Exception{
+	public void testBrowseIdlist() throws Exception{
 		Date ed = sdf.parse("2015-08-02");
 		nsb.run_browse_idlist(NasdaqStockConfig.MarketId_NASDAQ, ed);
-	}
-	
-	@Test
-	public void testBrowseIdlist_AMEX() throws Exception{
-		Date ed = sdf.parse("2015-08-02");
-		nsb.run_browse_idlist("AMEX", ed);
 	}
 	
 	@Test
@@ -105,12 +99,52 @@ public class TestNasdaqStock {
 	}
 	
 	@Test
+	public void testCmd_Fr_QuarterlyCashFlow(){
+		Date d = StockUtil.getUSLatestOpenMarketDate();
+		String strD = sdf.format(d);
+		logger.info("strD is:" + strD);
+		nsb.runCmd(NasdaqStockConfig.CASH_FLOW, marketId, strD, strD);
+	}
+	
+	@Test
 	public void testCmd_Fr_QuarterlyRevenue(){
 		Date d = StockUtil.getUSLatestOpenMarketDate();
 		String strD = sdf.format(d);
 		logger.info("strD is:" + strD);
 		nsb.runCmd(NasdaqStockConfig.REVENUE, marketId, strD, strD);
 	}
+	
+	@Test
+	public void testCmd_Issue_DividendHistory(){
+		Date d = StockUtil.getUSLatestOpenMarketDate();
+		String strD = sdf.format(d);
+		logger.info("strD is:" + strD);
+		nsb.runCmd(NasdaqStockConfig.DIVIDEND_HISTORY, marketId, strD, strD);
+	}
+	
+	@Test
+	public void testCmd_QuoteShortInterest(){
+		Date d = StockUtil.getUSLatestOpenMarketDate();
+		String strD = sdf.format(d);
+		logger.info("strD is:" + strD);
+		nsb.runCmd(NasdaqStockConfig.QUOTE_SHORT_INTEREST, marketId, strD, strD);
+	}
+	
+	@Test
+	public void testCmd_HolderInsiders(){
+		Date d = StockUtil.getUSLatestOpenMarketDate();
+		String strD = sdf.format(d);
+		logger.info("strD is:" + strD);
+		nsb.runCmd(NasdaqStockConfig.HOLDING_INSIDERS, marketId, strD, strD);
+	}
+	@Test
+	public void testCmd_HolderInstitutional(){
+		Date d = StockUtil.getUSLatestOpenMarketDate();
+		String strD = sdf.format(d);
+		logger.info("strD is:" + strD);
+		nsb.runCmd(NasdaqStockConfig.HOLDING_INSTITUTIONAL, marketId, strD, strD);
+	}
+	
 	
 	@Test
 	public void testCrawl_QuoteHistorical() throws InterruptedException {

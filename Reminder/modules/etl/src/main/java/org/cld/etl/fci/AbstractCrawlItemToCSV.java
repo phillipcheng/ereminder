@@ -2,6 +2,7 @@ package org.cld.etl.fci;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,8 @@ public abstract class AbstractCrawlItemToCSV {
 	public static final String DATA_TYPE_KEY="DataType";
 	public static final String DATA_TYPE_NUMBER="Number";
 	public static final String DATA_TYPE_TEXT="Text";
+	public static final String DATA_TYPE_DATE="Date";
+	
 	public static final String KEY_VALUE_UNDEFINED="unused";
 	
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -118,5 +121,15 @@ public abstract class AbstractCrawlItemToCSV {
 			logger.error("", e);
 			return false;//wrong date format
 		}
+	}
+	
+	public List<String> getDefaultDataType(List<String> dts, int colnum){
+		if (dts == null){
+			dts = new ArrayList<String>();
+		}
+		for (int i=dts.size(); i<colnum; i++){
+			dts.add(AbstractCrawlItemToCSV.DATA_TYPE_NUMBER);
+		}
+		return dts;
 	}
 }

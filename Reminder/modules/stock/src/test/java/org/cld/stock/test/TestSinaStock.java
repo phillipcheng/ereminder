@@ -285,21 +285,6 @@ public class TestSinaStock {
 	/****
 	 * 财务数据
 	 */
-	//crawl financial report history by market to hdfs
-	@Test
-	public void run_browse_fr_history() throws Exception {
-		ssb.run_browse_fr_history();
-	}
-	//fr history convert to csv/hive
-	@Test
-	public void run_convert_fr_history_tabular_to_csv() throws Exception {
-		ssb.run_convert_fr_history_tabular_to_csv();
-	}
-	//fr history reformat from split by stockid to split by quarter
-	@Test
-	public void run_fr_reformat() throws Exception{
-		ssb.run_fr_reformat();
-	}
 	//fr-quarter
 	@Test
 	public void run_browse_fr_quarter1() throws Exception {
@@ -338,15 +323,15 @@ public class TestSinaStock {
 	//Finance Guideline
 	@Test
 	public void run_fr_finance_guideline1(){//600028,600026 ipo date is error
-		ssb.runCmd(SinaStockConfig.SINA_STOCK_FR_FINANCE_GUIDELINE_YEAR, SinaStockConfig.MarketId_HS_Test, null, START_DATE);
+		ssb.runCmd(SinaStockConfig.SINA_STOCK_FR_GUIDELINE_YEAR, SinaStockConfig.MarketId_HS_Test, null, START_DATE);
 	}
 	@Test
 	public void run_fr_finance_guideline2(){
-		ssb.runCmd(SinaStockConfig.SINA_STOCK_FR_FINANCE_GUIDELINE_YEAR, SinaStockConfig.MarketId_HS_Test, END_DATE, null);
+		ssb.runCmd(SinaStockConfig.SINA_STOCK_FR_GUIDELINE_YEAR, SinaStockConfig.MarketId_HS_Test, END_DATE, null);
 	}
 	@Test
 	public void run_fr_finance_guideline3(){
-		ssb.runCmd(SinaStockConfig.SINA_STOCK_FR_FINANCE_GUIDELINE_YEAR, SinaStockConfig.MarketId_HS_Test, null, null);
+		ssb.runCmd(SinaStockConfig.SINA_STOCK_FR_GUIDELINE_YEAR, SinaStockConfig.MarketId_HS_Test, null, null);
 	}
 	
 	//Asset Devalue

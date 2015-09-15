@@ -140,6 +140,11 @@ public class ETLUtil {
 		return idarray;
 	}
 	
+	public static String[] getStockIdByCmdYearQuarter(StockConfig sc, String marketId, String cmd, int year, int quarter, CrawlConf cconf){
+		//TODO
+		return null;
+	}
+	
 	private static Map<String, String> ipoCache = null;
 	public static Date getIPODateByStockId(StockConfig sc, String marketId, String stockid, CrawlConf cconf){
 		if (ipoCache==null){

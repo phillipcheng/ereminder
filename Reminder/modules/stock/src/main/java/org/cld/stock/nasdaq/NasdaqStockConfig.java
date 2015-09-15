@@ -18,18 +18,14 @@ public class NasdaqStockConfig implements StockConfig{
 	public static final String QUOTE_PREMARKET="nasdaq-quote-premarket";//current day
 	public static final String QUOTE_AFTERHOURS="nasdaq-quote-afterhours";//current day
 	public static final String QUOTE_TICK="nasdaq-quote-tick";//current day
-	public static final String QUOTE_ONEMINUTE="nasdaq-quote-oneminute";//failed to crawl, need to calculate
-	
-	//corp material
-	public static final String CORP_INFO="nasdaq-corp-info";//
+	public static final String QUOTE_SHORT_INTEREST="nasdaq-quote-short-interest";
 	
 	//issue
-	public static final String DIVIDEND_HISTORY="nasdaq-dividend-history";
+	public static final String DIVIDEND_HISTORY="nasdaq-issue-dividend-history";
 	
 	//holdings
-	public static final String HOLDINGS_OWNERSHIP="nasdaq-holdings_ownership";
-	public static final String HOLDINGS_INSTITUTIONAL="nasdaq-holdings_institutional";
-	public static final String HOLDINGS_INSIDER="nasdaq-holdings_insider";
+	public static final String HOLDING_INSTITUTIONAL="nasdaq-holding-institutional";
+	public static final String HOLDING_INSIDERS="nasdaq-holding-insiders";
 	
 	//finance report
 	public static final String BALANCE_SHEET="nasdaq-fr-quarter-BalanceSheet";
@@ -46,27 +42,28 @@ public class NasdaqStockConfig implements StockConfig{
 	
 	
 	public static String[] corpConfs = new String[]{
-		CORP_INFO, //公司简介
 	};
+	
 	public static String[] quoteConfs = new String[]{
 		QUOTE_HISTORY, // daily
 		QUOTE_PREMARKET, // 8:00AM ET - 9:30AM ET, will be posted from 4:15 a.m. ET to 7:30 a.m. ET of the following day.
 		QUOTE_AFTERHOURS, //4:00PM ET - 8:00PM ET, will be posted 4:15 p.m. ET to 3:30 p.m. ET of the following day
 		QUOTE_TICK, // 9:30AM ET - 4:00PM ET
+		QUOTE_SHORT_INTEREST,
 		//QUOTE_ONEMINUTE // trading + extended hours, 8:00AM-8:00PM, max get the past 5 days
 	};
 	public static String[] issueConfs = new String[]{
 		DIVIDEND_HISTORY, //
 	};
 	public static String[] holderConfs = new String[]{
-		HOLDINGS_OWNERSHIP,
-		HOLDINGS_INSTITUTIONAL,
-		HOLDINGS_INSIDER,
+		HOLDING_INSTITUTIONAL,
+		HOLDING_INSIDERS,
 	};	
 	public static String[] frConfs = new String[]{
 		BALANCE_SHEET, //
 		INCOME_STATEMENT, //
 		CASH_FLOW, //
+		REVENUE,
 	};
 	
 	public static String[] syncConf = new String[]{}; //other cmd need this result
@@ -136,5 +133,10 @@ public class NasdaqStockConfig implements StockConfig{
 	@Override
 	public String[] getCurrentDayCmds() {
 		return new String[]{QUOTE_TICK, QUOTE_PREMARKET, QUOTE_AFTERHOURS};
+	}
+	@Override
+	public String getTableByCmd() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

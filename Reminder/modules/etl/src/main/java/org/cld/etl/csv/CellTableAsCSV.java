@@ -40,15 +40,18 @@ public class CellTableAsCSV extends AbstractCrawlItemToCSV{
 	private static Logger logger =  LogManager.getLogger(CellTableAsCSV.class);
 	private static final String FIELD_NAME_COLHEADER="ColHeader";
 	private static final String FIELD_NAME_ROWHEADER="RowHeader";
+	private static final String FIELD_NAME_CELLROWNUMBER="CellRowNum"; //how many rows per cell
 	
 	
 	@Override
 	public String[][] getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		init(ci, paramMap);
 		List<String> ls = (List<String>)ci.getParam(FIELD_NAME_DATA);
-		int rownum = (int) ci.getParam(FIELD_NAME_ROWNUM);
+		int cellrownum = (int)ci.getParam(FIELD_NAME_CELLROWNUMBER);
 		List<String> colHeaders = (List<String>) ci.getParam(FIELD_NAME_COLHEADER);
+		int colnum = colHeaders.size();
 		List<String> rowHeaders = (List<String>) ci.getParam(FIELD_NAME_ROWHEADER);
+		List<String> dataTypes = (List<String>)ci.getParam(DATA_TYPE_KEY); //number of items in the cell not including the row-header and col-header
 		List<String[]> csvs = new ArrayList<String[]>();
 		for (int j=0; j<colHeaders.size(); j++){
 			for (int k=0; k<rowHeaders.size(); k++){
@@ -60,9 +63,15 @@ public class CellTableAsCSV extends AbstractCrawlItemToCSV{
 				sb.append(",");
 				sb.append(rowHeader);
 				sb.append(",");
-				for (int i=0; i<rownum; i++){
-					sb.append(ls.get(j*k+k*rownum+i));
-					if (i<rownum-1){
+				for (int i=0; i<cellrownum; i++){
+					String v = ls.get( k*colnum*cellrownum + i*colnum + j);
+					String dataType = AbstractCrawlItemToCSV.DATA_TYPE_NUMBER;
+					if (dataTypes!=null && dataTypes.size()>i){
+						dataType = dataTypes.get(i);
+					}
+					v = TableUtil.getValue(v, dataType);
+					sb.append(v);
+					if (i<cellrownum-1){
 						sb.append(",");
 					}
 				}

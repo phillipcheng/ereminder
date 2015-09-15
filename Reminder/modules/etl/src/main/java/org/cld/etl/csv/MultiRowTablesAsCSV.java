@@ -12,13 +12,7 @@ import org.cld.etl.fci.AbstractCrawlItemToCSV;
 public class MultiRowTablesAsCSV extends AbstractCrawlItemToCSV{
 	private static Logger logger =  LogManager.getLogger(MultiRowTablesAsCSV.class);
 	
-	public List<String> getDefaultDataType(int colnum){
-		ArrayList<String> dataTypes = new ArrayList<String>();
-		for (int i=0; i<colnum; i++){
-			dataTypes.add(AbstractCrawlItemToCSV.DATA_TYPE_NUMBER);
-		}
-		return dataTypes;
-	}
+
 	
 	/**
 	 * 
@@ -85,9 +79,8 @@ public class MultiRowTablesAsCSV extends AbstractCrawlItemToCSV{
 			}
 			List<String> ls = (List<String>)ci.getParam(FIELD_NAME_DATA+(i+1));
 			List<String> dataTypes = (List<String>)ci.getParam(DATA_TYPE_KEY+(i+1));
-			if (dataTypes==null){
-				dataTypes = getDefaultDataType(colnum);
-			}
+			dataTypes = getDefaultDataType(dataTypes, colnum);
+			
 			List<String> strs = null;
 			if (ls!=null && ls.size()>=colnum){
 				strs = rowTableToCSV(ls, colnum, hasHeader, dataTypes, dIdx);

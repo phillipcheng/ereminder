@@ -26,6 +26,7 @@ public interface StockConfig {
 	public String[] getTestStockSet2();
 	public String getTestShortStartDate();
 	public String[] getSlowCmds();
+	public String getTableByCmd();
 	
 	public Map<String, String> getPairedMarket(); //like MarketId_HS_A paired with MarketId_HS_A_ST
 
