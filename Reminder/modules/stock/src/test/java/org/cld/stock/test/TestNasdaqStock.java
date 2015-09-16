@@ -45,15 +45,10 @@ public class TestNasdaqStock {
 	}
 	
 	@Before
-	public void setUp(){
-		nsb = new NasdaqStockBase(propFile, marketId, startDate, endDate);
-	}
+	public void setUp(){nsb = new NasdaqStockBase(propFile, marketId, startDate, endDate);}
 	
-	//
 	@Test
-	public void testInitTestMarket() throws Exception{
-		nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
-	}
+	public void testInitTestMarket() throws Exception{nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);}
 	
 	@Test
 	public void testRunAllCmd1() throws Exception{

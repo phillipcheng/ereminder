@@ -14,9 +14,9 @@ import org.cld.stock.ETLUtil;
 import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.SinaTestStockConfig;
 import org.cld.stock.sina.SinaStockConfig;
-import org.cld.stock.sina.task.MergeTask;
 import org.cld.stock.sina.task.TradeDetailCheckDownload;
 import org.cld.stock.sina.task.TradeDetailPostProcessTask;
+import org.cld.stock.task.MergeTask;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
 import org.junit.Before;
@@ -69,11 +69,11 @@ public class TestSinaStock {
 	}
 	@Test
 	public void testMerge_1() throws Exception{
-		MergeTask.launch(this.propFile, ssb.getCconf(), SinaTestStockConfig.Test_D1 + "_" + SinaTestStockConfig.Test_D2, null, false);
+		MergeTask.launch(ssb.getStockConfig(), this.propFile, ssb.getCconf(), SinaTestStockConfig.Test_D1 + "_" + SinaTestStockConfig.Test_D2, null, false);
 	}
 	@Test
 	public void testMRMerge_1() throws Exception{
-		MergeTask.launch(this.propFile, ssb.getCconf(), SinaTestStockConfig.Test_D1 + "_" + SinaTestStockConfig.Test_D2, null, true);
+		MergeTask.launch(ssb.getStockConfig(), this.propFile, ssb.getCconf(), SinaTestStockConfig.Test_D1 + "_" + SinaTestStockConfig.Test_D2, null, true);
 	}
 	@Test
 	public void testRunAllCmd2() throws Exception{
@@ -85,7 +85,7 @@ public class TestSinaStock {
 	}
 	@Test
 	public void testMerge_2() throws Exception{
-		MergeTask.launch(this.propFile, ssb.getCconf(), SinaTestStockConfig.Test_D2 + "_" + SinaTestStockConfig.Test_D3, null, false);
+		MergeTask.launch(ssb.getStockConfig(), this.propFile, ssb.getCconf(), SinaTestStockConfig.Test_D2 + "_" + SinaTestStockConfig.Test_D3, null, false);
 	}
 	//
 	

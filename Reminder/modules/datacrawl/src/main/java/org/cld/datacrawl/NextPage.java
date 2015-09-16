@@ -1,6 +1,7 @@
 package org.cld.datacrawl;
 
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 
 public class NextPage {
@@ -10,20 +11,30 @@ public class NextPage {
 	
 	private String nextUrl;
 	private HtmlElement nextItem; //the HtmlElement represents next page
+	private HtmlPage motherPage; //if next item is on the frame, this is the enclosing page
+	private String frameId; //can be index or name
 	private int status = STATUS_NORMAL;
 	
 	public NextPage(int status){
 		this.status=status;
 	}
-	public NextPage(HtmlElement nextItem){
-		this.nextItem = nextItem;
-	}
+
 	public NextPage(String nextUrl){
 		this.nextUrl = nextUrl;
+		this.motherPage = null;
+		this.frameId = null;
 	}
-	public NextPage(String nextUrl, HtmlElement nextItem){
-		this.nextItem = nextItem;
+	
+	public NextPage(String nextUrl, HtmlPage motherPage, String frameId){
 		this.nextUrl = nextUrl;
+		this.motherPage = motherPage;
+		this.frameId = frameId;
+	}
+	
+	public NextPage(HtmlElement nextItem, HtmlPage motherPage, String frameId){
+		this.nextItem = nextItem;
+		this.motherPage = motherPage;
+		this.frameId = frameId;
 	}
 	
 	public String toString(){
@@ -54,6 +65,18 @@ public class NextPage {
 	}
 	public void setStatus(int status) {
 		this.status = status;
+	}
+	public HtmlPage getMotherPage() {
+		return motherPage;
+	}
+	public void setMotherPage(HtmlPage motherPage) {
+		this.motherPage = motherPage;
+	}
+	public String getFrameId() {
+		return frameId;
+	}
+	public void setFrameId(String frameId) {
+		this.frameId = frameId;
 	} 
 
 }

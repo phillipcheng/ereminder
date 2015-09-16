@@ -15,8 +15,20 @@ public class TableUtil {
 	private static Logger logger =  LogManager.getLogger(TableUtil.class);
 	
 	public static final Map<String, Integer> unitMap = new HashMap<String, Integer>();
+	
 	public static final String[] units = new String[]{"万股","百万","万元","千元","元","（元）"};
 	public static final int[] numUnits = new int[]{10000,1000000,10000,1000,1,1};
+	public static final Map<String, Integer> scales = new HashMap<String, Integer>();
+	static{
+		scales.put("万股", 10000);
+		scales.put("百万", 1000000);
+		scales.put("万股", 10000);
+		scales.put("千元", 1000);
+		scales.put("元", 1);
+		scales.put("（元）", 1);
+		scales.put("(t)", 1000);
+		scales.put("(m)", 1000000);
+	}
 	public static final SimpleDateFormat sdf1 = new SimpleDateFormat("MM/dd/yyyy");
 	public static final SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -29,7 +41,8 @@ public class TableUtil {
 	}
 	
 	public static Pattern negP = Pattern.compile("\\((.*)\\)");
-	public static Pattern endingP = Pattern.compile("(.+)(\\(.*\\))");
+	public static Pattern endingP = Pattern.compile("([\\-\\.0-9]+)(.*)");
+	
 	public static String getFRNumber(String instr){
 		String str = instr;
 		if ("--".equals(str)){
@@ -45,30 +58,23 @@ public class TableUtil {
 			str = "-" + m.group(1);
 		}
 		//remove money sign
-		if (str.contains("$")){
-			str = str.replace("$", "");
-		}else{
-			//remove suffix unit 百万,万元,元,千元, usually for china RMB
-			str = str.trim();
-			for (int k=0; k<units.length; k++){
-				String unit = units[k];
-				if (str.endsWith(unit)){
-					str = str.substring(0, str.indexOf(unit));
-					double l = Double.parseDouble(str);
-					l = l * unitMap.get(unit);
-					str = Double.toString(l);
-					break;
-				}
-			}
-		}
-		//remove ending comment in following format: xx(xx)
+		str = str.replace("$", "");
+		
+		//multiple scale
 		m = endingP.matcher(str);
 		if (m.matches()){
-			str = m.group(1);
+			float f = Float.parseFloat(m.group(1));
+			String unit = m.group(2).trim();
+			if (scales.containsKey(unit)){
+				f = f * scales.get(unit);
+				str = Float.toString(f);
+			}else{
+				//remove suffix anyway
+				str = m.group(1);
+			}
 		}
 		return str;
 	}
-	
 
 	
 	public static String getValue(String v, String dataType){

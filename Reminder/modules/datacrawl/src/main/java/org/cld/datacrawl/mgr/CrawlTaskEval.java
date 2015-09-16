@@ -73,7 +73,7 @@ public class CrawlTaskEval {
 		HtmlPageResult hpResult=null;
 
 		HtmlElement input = (HtmlElement)xpathResult;
-		NextPage np = new NextPage(input);
+		NextPage np = new NextPage(input, (HtmlPage) page, vt.getFrameId());
 		VerifyPageByBoolOp vp=null;
 		if (pvtList!=null){
 			vp = new VerifyPageByBoolOp(pvtList.toArray(new BinaryBoolOp[pvtList.size()]), cconf);

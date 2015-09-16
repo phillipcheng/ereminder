@@ -19,6 +19,7 @@ import org.cld.taskmgr.entity.CmdStatus;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.CompareUtil;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
+import org.cld.stock.task.MergeTask;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.test.TestBase;
@@ -391,6 +392,11 @@ public abstract class StockBase extends TestBase{
 				dsm.addUpdateCrawledItem(cs, null);
 			}
 		}
+	}
+	
+	public void run_merge(){
+		String datePart = getStockConfig().getDatePart(marketId, startDate, endDate);
+		MergeTask.launch(getStockConfig(), this.propFile, cconf, datePart, specialParam, true);
 	}
 
 	//getter, setter

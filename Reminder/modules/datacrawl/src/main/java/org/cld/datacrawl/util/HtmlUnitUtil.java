@@ -74,14 +74,29 @@ public class HtmlUnitUtil {
 		}
 		return framePage;
 	}
+	
+	public static FrameWindow getFrameWindow(DomNode page, String frameId){
+		FrameWindow fw=null;
+		if (frameId!=null && page instanceof HtmlPage){
+			try {
+				//by idx
+				int idx = Integer.parseInt(frameId);
+				fw = ((HtmlPage)page).getFrames().get(idx);
+			}catch(NumberFormatException nfe){
+				//by name
+				fw = ((HtmlPage)page).getFrameByName(frameId);
+			}
+		}
+		return fw;
+	}
 	/*
 	 * directly get page from webclient without the validation, retrying, etc
 	 */
 	private static HtmlPage getDirectPage(WebClient wc, NextPage np) throws IOException, RuntimeException {
 		HtmlPage page;
-		if (np.getNextUrl()!=null)
+		if (np.getNextUrl()!=null){
 			page = wc.getPage(np.getNextUrl());
-		else{
+		}else{
 			if (np.getNextItem()!=null){
 				logger.debug(String.format("clicking item: %s on page %s now.", np.getNextItem().asXml(), np.getNextItem().getPage().getUrl().toExternalForm()));
 				if (np.getNextItem() instanceof HtmlSelect){
@@ -94,7 +109,13 @@ public class HtmlUnitUtil {
 				return null;
 			}
 		}
-		return page;
+		if (np.getFrameId()!=null){
+			//need to set the enclosing page and return mother page
+			getFrameWindow(np.getMotherPage(), np.getFrameId()).setEnclosedPage(page);
+			return np.getMotherPage();
+		}else{
+			return page;
+		}
 	}
 	
 	private static boolean isGotcha(HtmlPage landingPage, LoginType loginInfo, CrawlConf cconf){
@@ -145,7 +166,7 @@ public class HtmlUnitUtil {
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put(KEY_USERNAME, credential.getUsername());
 		paramMap.put(KEY_PASSWORD, credential.getPassword());
-		NextPage np = new NextPage(landingUrl);
+		NextPage np = new NextPage(landingUrl, null, null);
 		clickClickStream(loginClickStream, pageMap, paramMap, cconf, np);
 		pagelist = (List<HtmlPage>) pageMap.get(ConfKey.CURRENT_PAGE);
 		HtmlPage afterLoginPage = pagelist.get(0);

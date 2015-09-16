@@ -135,7 +135,8 @@ public class ProductAnalyzeUtil {
 				pagelist.add(prdPage);
 				pageMap.put(ConfKey.START_PAGE, pagelist);
 				pageMap.put(ConfKey.CURRENT_PAGE, pagelist);//set current page
-				HtmlUnitUtil.clickClickStream(firstPageClicks, pageMap, task.getParamMap(), cconf, new NextPage(prdPage.getUrl().toExternalForm()));
+				HtmlUnitUtil.clickClickStream(firstPageClicks, pageMap, task.getParamMap(), cconf, 
+						new NextPage(prdPage.getUrl().toExternalForm(), null, null));
 			}else{
 				logger.error("click stream does not support finish condition now.");
 			}
@@ -147,49 +148,41 @@ public class ProductAnalyzeUtil {
 			ParsedBrowsePrd taskDef, CrawlConf cconf, Product product) throws InterruptedException{
 		BrowseDetailType bdt = taskDef.getBrowsePrdTaskType();
 		if (bdt.getNextPage()!=null){
-			HtmlElement nextPageEle = null ;
-			String url = null;
-			DomNamespaceNode dnsn = curPage.getFirstByXPath(bdt.getNextPage().getValue());
+			HtmlPage frame = (HtmlPage) HtmlUnitUtil.getFramePage(curPage, bdt.getNextPage().getFrameId());
+			DomNamespaceNode dnsn = frame.getFirstByXPath(bdt.getNextPage().getValue());
 			product.addParam(ConfKey.PRD_NEXTPAGE, dnsn);
-			logger.info(String.format("get next page element: %s from page:%s", dnsn, curPage.getUrl().toExternalForm()));
+			logger.info(String.format("get next page element: %s from page:%s", dnsn, frame.getUrl().toExternalForm()));
 			if (dnsn==null){
-				logger.info(String.format("next page xpath %s not found on page %s.", bdt.getNextPage(), curPage.getUrl().toExternalForm()));
+				logger.info(String.format("next page xpath %s not found on page %s.", bdt.getNextPage(), frame.getUrl().toExternalForm()));
 				return null;
 			}
+			HtmlElement nextPageEle = null;
+			String url = null;
 			if (dnsn instanceof HtmlAnchor){
 				HtmlAnchor ha = (HtmlAnchor)dnsn;
 				if (ha.getHrefAttribute().contains("javascript")){
 					nextPageEle = (HtmlElement) dnsn;
 				}else{
 					try {
-						url = curPage.getFullyQualifiedUrl(((HtmlAnchor)dnsn).getHrefAttribute()).toExternalForm();
+						url = frame.getFullyQualifiedUrl(((HtmlAnchor)dnsn).getHrefAttribute()).toExternalForm();
 					} catch (MalformedURLException e) {
 						logger.error("", e);
 					}
 				}
-			}else if (dnsn instanceof HtmlInput || dnsn instanceof HtmlSpan){
-				//clickable
-				nextPageEle = (HtmlElement) dnsn;
 			}else{
-				//TODO special, should be in config, for example: location.href='1.html#pic'
-				url = dnsn.getTextContent();
-				url = StringUtil.getStringBetweenFirstPreLastPost(url, "'", "'");
-				try {
-					url = curPage.getFullyQualifiedUrl(url).toExternalForm();
-				} catch (MalformedURLException e) {
-					logger.error("",e);
-				}
+				nextPageEle = (HtmlElement) dnsn;
 			}
 			
-			if (nextPageEle!=null || url!=null){
-				NextPage np = new NextPage(url, nextPageEle);
-				HtmlPageResult hpResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, np, 
-						new VerifyPageByXPath(getPageVerifyXPaths(task, taskDef)), null, task.getParsedTaskDef(), cconf);
-				if (hpResult.getErrorCode()==HtmlPageResult.SUCCSS){
-					return hpResult.getPage();
-				}else{
-					return null;
-				}
+			NextPage np = null;
+			if (url!=null){
+				np = new NextPage(url, curPage, bdt.getNextPage().getFrameId());
+			}else{
+				np = new NextPage(nextPageEle, curPage, bdt.getNextPage().getFrameId());
+			}
+			HtmlPageResult hpResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, np, 
+					new VerifyPageByXPath(getPageVerifyXPaths(task, taskDef)), null, task.getParsedTaskDef(), cconf);
+			if (hpResult.getErrorCode()==HtmlPageResult.SUCCSS){
+				return hpResult.getPage();
 			}else{
 				return null;
 			}
@@ -214,7 +207,7 @@ public class ProductAnalyzeUtil {
 		}else{
 			pageMap = new HashMap<String, List<? extends DomNode>>();
 			
-			HtmlPageResult hpResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(product.getLastUrl()), 
+			HtmlPageResult hpResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(product.getLastUrl(), null, null), 
 					 new VerifyPageByXPath(getPageVerifyXPaths(task, taskDef)), null, task.getParsedTaskDef(), cconf);
 			if (hpResult.getErrorCode()==HtmlPageResult.SUCCSS){
 				inpage = hpResult.getPage();
@@ -234,9 +227,10 @@ public class ProductAnalyzeUtil {
 		boolean finalPage=true;
 		//set variable nextPage, later it will be set while doing the getNextPage
 		if (bdt.getNextPage()!=null){
-			DomNamespaceNode dnsn = curPage.getFirstByXPath(bdt.getNextPage().getValue());
+			HtmlPage frame = (HtmlPage) HtmlUnitUtil.getFramePage(curPage, bdt.getNextPage().getFrameId());
+			DomNamespaceNode dnsn = frame.getFirstByXPath(bdt.getNextPage().getValue());
 			product.addParam(ConfKey.PRD_NEXTPAGE, dnsn);
-			logger.info(String.format("get next page element: %s from page:%s", dnsn, curPage.getUrl().toExternalForm()));
+			logger.info(String.format("get next page element: %s from page:%s", dnsn, frame.getUrl().toExternalForm()));
 		}
 		if (bdt.getLastPageCondition()!=null){
 			finalPage= BinaryBoolOpEval.eval(bdt.getLastPageCondition(), product.getParamMap());

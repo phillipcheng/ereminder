@@ -52,7 +52,8 @@ public class ListAnalyzeUtil {
 							logger.error("error when get fully qualified url for %s", ((HtmlAnchor)he).getHrefAttribute());
 						}
 					}
-					return new NextPage(he);
+					//TODO to change this
+					return new NextPage(he, listPage, null);
 				}else{
 					logger.error(String.format("next page xpath %s not found on page %s", npxpath, listPage.getUrl().toExternalForm()));
 					return new NextPage(NextPage.STATUS_ERR);

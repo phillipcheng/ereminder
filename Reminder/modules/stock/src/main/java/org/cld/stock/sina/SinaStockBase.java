@@ -16,10 +16,10 @@ import org.cld.stock.ETLUtil;
 import org.cld.stock.StockBase;
 import org.cld.stock.StockConfig;
 import org.cld.stock.sina.SinaStockConfig;
-import org.cld.stock.sina.task.GenNdLable;
-import org.cld.stock.sina.task.MergeTask;
 import org.cld.stock.sina.task.TradeDetailCheckDownload;
 import org.cld.stock.sina.task.TradeDetailPostProcessTask;
+import org.cld.stock.task.GenNdLable;
+import org.cld.stock.task.MergeTask;
 
 public class SinaStockBase extends StockBase{
 	private StockConfig sc = new SinaStockConfig();
@@ -53,17 +53,6 @@ public class SinaStockBase extends StockBase{
 			datePart = sdf.format(this.startDate) + "_" + strEndDate;
 		}
 		TradeDetailPostProcessTask.launch(this.propFile, cconf, datePart);
-	}
-	
-	public void run_merge(){
-		String datePart;
-		String strEndDate = sdf.format(this.endDate);
-		if (this.startDate==null){
-			datePart = null + "_" + strEndDate;
-		}else{
-			datePart = sdf.format(this.startDate) + "_" + strEndDate;
-		}
-		MergeTask.launch(this.propFile, cconf, datePart, specialParam, true);
 	}
 	
 	//sina-stock-market-fq

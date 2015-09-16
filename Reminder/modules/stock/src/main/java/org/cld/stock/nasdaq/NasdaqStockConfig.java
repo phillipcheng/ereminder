@@ -139,4 +139,12 @@ public class NasdaqStockConfig implements StockConfig{
 		// TODO Auto-generated method stub
 		return null;
 	}
+	@Override
+	public String[] getPostProcessCmds() {
+		return new String[]{};
+	}
+	@Override
+	public String getDatePart(String marketId, Date startDate, Date endDate) {
+		return marketId + "_" + sdf.format(endDate);
+	}
 }

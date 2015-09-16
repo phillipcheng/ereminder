@@ -248,4 +248,20 @@ public class SinaStockConfig implements StockConfig {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public String[] getPostProcessCmds() {
+		return new String[]{SINA_STOCK_TRADE_DETAIL};
+	}
+
+	@Override
+	public String getDatePart(String marketId, Date startDate, Date endDate) {
+		String strStartDate = null;
+		if (startDate == null){
+			strStartDate = "null";
+		}else{
+			strStartDate = sdf.format(startDate);
+		}
+		return strStartDate + "_" + sdf.format(endDate);
+	}
 }

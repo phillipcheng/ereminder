@@ -1,4 +1,4 @@
-package org.cld.stock.sina.task;
+package org.cld.stock.task;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

@@ -1,4 +1,4 @@
-package org.cld.stock.sina.task;
+package org.cld.stock.task;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -15,18 +15,20 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.CrawlUtil;
-import org.cld.stock.ETLUtil;
-import org.cld.stock.sina.SinaStockConfig;
+
+import org.cld.util.hadoop.HadoopUtil;
 import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
-import org.cld.util.hadoop.HadoopUtil;
+import org.cld.datacrawl.CrawlConf;
+import org.cld.datacrawl.CrawlUtil;
+import org.cld.stock.ETLUtil;
+import org.cld.stock.StockConfig;
 
 @Entity
 @DiscriminatorValue("org.cld.stock.sina.task.MergeTask")
@@ -82,11 +84,11 @@ public class MergeTask extends Task implements Serializable{
 						Path destDir = null;
 						Path destFile = null;
 						if (!needOverwrite){
-							destDir = new Path(SinaStockConfig.MERGE_ROOT + "/" + storeid + "/" + partName + "/" + datePart + "/" + midPart + "/tmp/");
-							destFile = new Path(SinaStockConfig.MERGE_ROOT + "/" + storeid + "/" + partName + "/" + datePart + "/" + midPart + "/merge");
+							destDir = new Path(StockConfig.MERGE_ROOT + "/" + storeid + "/" + partName + "/" + datePart + "/" + midPart + "/tmp/");
+							destFile = new Path(StockConfig.MERGE_ROOT + "/" + storeid + "/" + partName + "/" + datePart + "/" + midPart + "/merge");
 						}else{
-							destDir = new Path(SinaStockConfig.MERGE_ROOT + "/" + storeid + "/" + partName + "/" + midPart + "/tmp/");
-							destFile = new Path(SinaStockConfig.MERGE_ROOT + "/" + storeid + "/" + partName + "/" + midPart + "/merge");
+							destDir = new Path(StockConfig.MERGE_ROOT + "/" + storeid + "/" + partName + "/" + midPart + "/tmp/");
+							destFile = new Path(StockConfig.MERGE_ROOT + "/" + storeid + "/" + partName + "/" + midPart + "/merge");
 						}
 						if (!fs.exists(destDir)){
 							fs.mkdirs(destDir);
@@ -103,9 +105,9 @@ public class MergeTask extends Task implements Serializable{
 					//src dir is lp
 					Path dest = null;
 					if (!needOverwrite){
-						dest = new Path(SinaStockConfig.MERGE_ROOT + "/" + storeid + "/" + datePart + "/" + midPart + "/merged");
+						dest = new Path(StockConfig.MERGE_ROOT + "/" + storeid + "/" + datePart + "/" + midPart + "/merged");
 					}else{
-						dest = new Path(SinaStockConfig.MERGE_ROOT + "/" + storeid + "/" + midPart + "/merged");
+						dest = new Path(StockConfig.MERGE_ROOT + "/" + storeid + "/" + midPart + "/merged");
 					}
 					if (fs.exists(dest)){
 						fs.delete(dest, false);
@@ -127,7 +129,7 @@ public class MergeTask extends Task implements Serializable{
 	}
 	
 	//return jobId list
-	public static String[] launch(String propfile, CrawlConf cconf, String datePart, String whichStore, boolean doMR){
+	public static String[] launch(StockConfig sc, String propfile, CrawlConf cconf, String datePart, String whichStore, boolean doMR){
 		NodeConf nc = cconf.getNodeConf();
 		Configuration conf = HadoopTaskLauncher.getHadoopConf(nc);
 		//generate task list file
@@ -137,7 +139,7 @@ public class MergeTask extends Task implements Serializable{
 			fs = FileSystem.get(conf);
 			List<Task> tl = new ArrayList<Task>();
 			List<String> jobIdList = new ArrayList<String>();
-			Path fromDir = new Path(SinaStockConfig.RAW_ROOT+"/"+datePart);
+			Path fromDir = new Path(StockConfig.RAW_ROOT+"/"+datePart);
 			logger.info(String.format("root from path: %s", fromDir.toString()));
 			logger.info(String.format("whichStore is: %s", whichStore));
 			FileStatus[] fsList = fs.listStatus(fromDir);
@@ -148,7 +150,8 @@ public class MergeTask extends Task implements Serializable{
 					if (whichStore == null || (whichStore!=null && whichStore.equals(storeid))){
 						boolean needOverwrite = ETLUtil.needOverwrite(cconf, storeid);
 						Path storePath = store.getPath();
-						if (SinaStockConfig.SINA_STOCK_TRADE_DETAIL.equals(storeid)){//trade detail has been post-processed, so the input folder changed
+						if (Arrays.asList(sc.getPostProcessCmds()).contains(storeid)){
+							//some cmd has post-processed, so the input folder changed
 							storePath = new Path(storePath.toString().replace("raw", "postprocess"));
 						}
 						Path[] leafDirs = HadoopUtil.getLeafPath(fs, storePath);

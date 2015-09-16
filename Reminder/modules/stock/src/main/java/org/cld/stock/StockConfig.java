@@ -1,5 +1,6 @@
 package org.cld.stock;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
@@ -8,6 +9,8 @@ public interface StockConfig {
 	public static final String RAW_ROOT="/reminder/items/raw";
 	public static final String MERGE_ROOT="/reminder/items/merge";
 	public static final String CHECK_ROOT="/reminder/items/check";
+
+	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
 	public String getTestMarketId();
 	
@@ -27,8 +30,11 @@ public interface StockConfig {
 	public String getTestShortStartDate();
 	public String[] getSlowCmds();
 	public String getTableByCmd();
+	public String[] getPostProcessCmds();
 	
 	public Map<String, String> getPairedMarket(); //like MarketId_HS_A paired with MarketId_HS_A_ST
 
 	public String getStartDate(String cmdName);
+	
+	public String getDatePart(String marketId, Date startDate, Date endDate);
 }

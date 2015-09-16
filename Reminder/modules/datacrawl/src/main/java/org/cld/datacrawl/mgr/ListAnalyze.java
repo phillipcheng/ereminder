@@ -70,18 +70,8 @@ public class ListAnalyze {
 		
 		HtmlPageResult listPageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, np, VPBL, task, task.getParsedTaskDef(), cconf);
 		HtmlPage listPage = listPageResult.getPage();
-		//before processing items, if there is screen, scroll them
-		String nextScreenXPath = task.getLeafBrowseCatTask().getSubItemList().getNextScreen();
-		BinaryBoolOp lastScreenCond = task.getLeafBrowseCatTask().getSubItemList().getLastScreenCondition();
-		
-		if (nextScreenXPath!=null && lastScreenCond!=null){
-			while (!BinaryBoolOpEval.eval(lastScreenCond, cat.getParamMap())){
-				HtmlElement he = listPage.getFirstByXPath(nextScreenXPath);
-				NextPage nsp = new NextPage(he);
-				listPageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, nsp, VPBL, task, task.getParsedTaskDef(), cconf);
-				listPage = listPageResult.getPage();
-			}
-		}
+		//TODO add scroll support
+
 		if (listPageResult.getErrorCode() == HtmlPageResult.SUCCSS){
 			Date readTime = new Date(System.currentTimeMillis());
 			List<Task> tl = lpInf.process(listPage, readTime, cat, cconf, task, maxItems, wc);
