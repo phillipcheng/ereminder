@@ -320,6 +320,7 @@ public class Task implements Comparable<Task>, Serializable{
 	}
 	
 	public BrowseTaskType getBrowseTask(String taskName){
+		logger.info("getBrowseTask taskName:" + taskName);
 		return getParsedTaskDef().getBrowseTask(taskName);
 	}
 

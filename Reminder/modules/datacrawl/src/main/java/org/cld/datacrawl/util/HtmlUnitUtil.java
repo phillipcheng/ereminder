@@ -15,8 +15,8 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.NextPage;
+import org.cld.datacrawl.mgr.BinaryBoolOpEval;
 import org.cld.datacrawl.mgr.CrawlTaskEval;
-import org.cld.taskmgr.BinaryBoolOpEval;
 import org.xml.mytaskdef.ConfKey;
 import org.xml.mytaskdef.ParsedTasksDef;
 import org.xml.taskdef.AttributeType;
@@ -36,7 +36,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlSelect;
-import com.gargoylesoftware.htmlunit.javascript.host.Event;
+import com.gargoylesoftware.htmlunit.javascript.host.event.Event;
 
 enum LoginStatus{
 	LoginNotNeeded (0),
@@ -120,7 +120,7 @@ public class HtmlUnitUtil {
 	
 	private static boolean isGotcha(HtmlPage landingPage, LoginType loginInfo, CrawlConf cconf){
 		if (loginInfo.getLoginGotchaCondition()!=null){
-			boolean ret = BinaryBoolOpEval.eval(loginInfo.getLoginSuccessCondition(), null);
+			boolean ret = BinaryBoolOpEval.eval(loginInfo.getLoginSuccessCondition(), null, landingPage, cconf);
 			if (ret){
 				return true;
 			}else{
@@ -176,7 +176,7 @@ public class HtmlUnitUtil {
 			return LoginStatus.LoginCatchya;
 		}else{
 			if (loginInfo.getLoginSuccessCondition()!=null){
-				boolean ret = BinaryBoolOpEval.eval(loginInfo.getLoginSuccessCondition(), null);
+				boolean ret = BinaryBoolOpEval.eval(loginInfo.getLoginSuccessCondition(), null, afterLoginPage, cconf);
 				if (ret){
 					return LoginStatus.LoginSuccess;
 				}else{
@@ -283,11 +283,12 @@ public class HtmlUnitUtil {
 								}else{
 									logger.error(String.format("unsupported assignment to type: %s for xpath: %s", he, inputXpath));
 								}
+								/*
 								if (p!=null){
 									List<HtmlPage> pagelist1= new ArrayList<HtmlPage>();
 									pagelist1.add(p);
 									pageMap.put(ConfKey.CURRENT_PAGE, pagelist1); //set current page
-								}
+								}*/
 							}else{
 								logger.error(String.format("xpath %s not found for assignment.", inputXpath));
 							}
@@ -313,7 +314,7 @@ public class HtmlUnitUtil {
 					if (cnp.getCondition()==null){
 						nextPage = cnp.getSuccessNextPage();
 					}else{
-						if (BinaryBoolOpEval.eval(cnp.getCondition(), null)){
+						if (BinaryBoolOpEval.eval(cnp.getCondition(), null, (HtmlPage) pageMap.get(ConfKey.CURRENT_PAGE).get(0), cconf)){
 							nextPage = cnp.getSuccessNextPage();
 						}else{
 							nextPage = cnp.getFailNextPage();
@@ -424,17 +425,15 @@ public class HtmlUnitUtil {
 		return LoginStatus.LoginNotNeeded;
 	}
 	
-	public static final int maxloop = 15; //number of wait time
-	public static final int waitTime = 1000; //ms for each wait
 	//total is maxloop * waitTime
-	public static boolean waitVerify(HtmlPage page, VerifyPage vp, Object param) throws InterruptedException{
+	public static boolean waitVerify(HtmlPage page, VerifyPage vp, Object param, CrawlConf cconf) throws InterruptedException{
 		int innerloop=0;
 		Date tick1 = null;
 		Date tick2 = null;
 		if (logger.isDebugEnabled()){
 			tick1 = new Date();
 		}
-		while(innerloop<maxloop){
+		while(innerloop<cconf.getMaxLoop()){
 			if (page != null){
 				if (vp !=null){
 					//if has verification, default is failed
@@ -447,8 +446,8 @@ public class HtmlUnitUtil {
 						return true;
 					}else{
 						synchronized(page){
-							page.wait(1000);//wait for the necessary js done
-							logger.warn(String.format("wait for the expected value come out, wait %d times, max %d times", innerloop, maxloop));
+							page.wait(cconf.getWaitTime());//wait for the necessary js done
+							logger.warn(String.format("wait for the expected value come out, wait %d times, max %d times", innerloop, cconf.getMaxLoop()));
 						}
 						innerloop++;
 					}
@@ -491,7 +490,7 @@ public class HtmlUnitUtil {
 				try {
 					page = getDirectPage(wc, np);
 					int innerloop=0;
-					while(innerloop<maxloop){
+					while(innerloop<cconf.getMaxLoop()){
 						//refetch the page
 						//page = (HtmlPage) page.getWebClient().getWebWindows().get(0).getEnclosedPage();
 						if (page != null){
@@ -530,9 +529,10 @@ public class HtmlUnitUtil {
 									return result;
 								}else{
 									synchronized(page){
-										page.wait(waitTime);//wait for the necessary js done
-										logger.warn(String.format("wait for the expected value come out, wait %d times, max %d times", innerloop, maxloop));
-										//logger.debug(page.asText());
+										page.wait(cconf.getWaitTime());//wait for the necessary js done
+										logger.warn(String.format("wait for the expected value come out, wait %d times, max %d times", innerloop, cconf.getMaxLoop()));
+										if (innerloop==cconf.getMaxLoop()-1 &&tried==cconf.getMaxRetry()-1)
+											logger.info(page.asText());
 									}
 									innerloop++;
 									result.setErrorCode(HtmlPageResult.VERIFY_FAILED);

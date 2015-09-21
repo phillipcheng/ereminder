@@ -1,13 +1,16 @@
 package org.cld.stock.nasdaq;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.cld.stock.StockConfig;
-import org.cld.util.ListUtil;
+
 
 public class NasdaqStockConfig implements StockConfig{
-	
+	private static Logger logger =  LogManager.getLogger(StockConfig.class);
 	public static final String MarketId_NASDAQ="NASDAQ";
 	public static final String MarketId_NYSE="NYSE";
 	
@@ -24,6 +27,8 @@ public class NasdaqStockConfig implements StockConfig{
 	public static final String DIVIDEND_HISTORY="nasdaq-issue-dividend-history";
 	
 	//holdings
+	public static final String HOLDING_SUMMARY="nasdaq-holding-summary";
+	public static final String HOLDING_TOP5="nasdaq-holding-top5";
 	public static final String HOLDING_INSTITUTIONAL="nasdaq-holding-institutional";
 	public static final String HOLDING_INSIDERS="nasdaq-holding-insiders";
 	
@@ -40,6 +45,25 @@ public class NasdaqStockConfig implements StockConfig{
 	public static final String MERGE_ROOT="/reminder/items/merge";
 	public static final String CHECK_ROOT="/reminder/items/check";
 	
+	public static final Map<String, String[]> cmdTableMap = new HashMap<String, String[]>();
+	static{
+		//fr
+		cmdTableMap.put(BALANCE_SHEET, new String[]{"NasdaqFrQuarterBalanceSheet"});
+		cmdTableMap.put(INCOME_STATEMENT, new String[]{"NasdaqFrQuarterIncomeStatement"});
+		cmdTableMap.put(CASH_FLOW, new String[]{"NasdaqFrQuarterCashFlow"});
+		cmdTableMap.put(REVENUE, new String[]{"NasdaqFrQuarterRevenue"});
+		//market(quote)
+		cmdTableMap.put(QUOTE_HISTORY, new String[]{"NasdaqQuoteHistory"});
+		cmdTableMap.put(QUOTE_PREMARKET, new String[]{"NasdaqPremarket"});
+		cmdTableMap.put(QUOTE_AFTERHOURS, new String[]{"NasdaqAfterhours"});
+		cmdTableMap.put(QUOTE_TICK, new String[]{"NasdaqTick"});
+		cmdTableMap.put(QUOTE_SHORT_INTEREST, new String[]{"NasdaqShortInterest"});
+		//stock holder
+		cmdTableMap.put(HOLDING_INSTITUTIONAL, new String[]{"NasdaqHoldingInstitutional"});
+		cmdTableMap.put(HOLDING_INSIDERS, new String[]{"NasdaqHoldingInsiders"});
+		//issue
+		cmdTableMap.put(DIVIDEND_HISTORY, new String[]{"NasdaqDividendHistory"});
+	}
 	
 	public static String[] corpConfs = new String[]{
 	};
@@ -58,6 +82,8 @@ public class NasdaqStockConfig implements StockConfig{
 	public static String[] holderConfs = new String[]{
 		HOLDING_INSTITUTIONAL,
 		HOLDING_INSIDERS,
+		HOLDING_SUMMARY,
+		HOLDING_TOP5
 	};	
 	public static String[] frConfs = new String[]{
 		BALANCE_SHEET, //
@@ -69,6 +95,8 @@ public class NasdaqStockConfig implements StockConfig{
 	public static String[] syncConf = new String[]{}; //other cmd need this result
 	//public static String[] allConf = (String[]) ListUtil.concatAll(corpConfs, quoteConfs, issueConfs, holderConfs, frConfs);
 	public static String[] allConf = new String[]{};
+	
+	
 	@Override
 	public String getTestMarketId() {
 		return NasdaqTestStockConfig.MarketId_NASDAQ_Test;
@@ -132,12 +160,11 @@ public class NasdaqStockConfig implements StockConfig{
 	}
 	@Override
 	public String[] getCurrentDayCmds() {
-		return new String[]{QUOTE_TICK, QUOTE_PREMARKET, QUOTE_AFTERHOURS};
+		return new String[]{QUOTE_TICK, QUOTE_PREMARKET, QUOTE_AFTERHOURS, HOLDING_SUMMARY, HOLDING_TOP5};
 	}
 	@Override
-	public String getTableByCmd() {
-		// TODO Auto-generated method stub
-		return null;
+	public String[] getTablesByCmd(String cmd) {
+		return cmdTableMap.get(cmd);
 	}
 	@Override
 	public String[] getPostProcessCmds() {
@@ -145,6 +172,57 @@ public class NasdaqStockConfig implements StockConfig{
 	}
 	@Override
 	public String getDatePart(String marketId, Date startDate, Date endDate) {
-		return marketId + "_" + sdf.format(endDate);
+		String strStartDate = null;
+		if (startDate == null){
+			strStartDate = "null";
+		}else{
+			strStartDate = sdf.format(startDate);
+		}
+		return marketId + "_" + strStartDate + "_" + sdf.format(endDate);
+	}
+	private String getMonth(int quarter){
+		String month = null;
+		if (quarter == 1){
+			month = "March";
+		}else if (quarter ==2){
+			month = "June";
+		}else if (quarter == 3){
+			month = "September";
+		}else if (quarter == 4){
+			month = "December  (FYE)";
+		}else{
+			logger.error(String.format("wrong quarter %d", quarter));
+		}
+		return month;
+	}
+	private String getDate(int year, int quarter){
+		String dt = null;
+		if (quarter == 1){
+			dt = "03-31";
+		}else if (quarter ==2){
+			dt = "06-30";
+		}else if (quarter == 3){
+			dt = "09-30";
+		}else if (quarter == 4){
+			dt = "12-31";
+		}else{
+			logger.error(String.format("wrong quarter %d", quarter));
+		}
+		return year + "-" + dt;
+	}
+	@Override
+	public String getByQuarterSQLByCmd(String cmd, int year, int quarter) {
+		if (BALANCE_SHEET.equals(cmd)){
+			return String.format("select distinct stockid from NasdaqFrQuarterBalanceSheet where reportPeriod='%s'", getDate(year,quarter));
+		}else if (INCOME_STATEMENT.equals(cmd)){
+			return String.format("select distinct stockid from NasdaqFrQuarterIncomeStatement where reportPeriod='%s'", getDate(year,quarter));
+		}else if (CASH_FLOW.equals(cmd)){
+			return String.format("select distinct stockid from NasdaqFrQuarterCashFlow where reportPeriod='%s'", getDate(year,quarter));
+		}else if (REVENUE.equals(cmd)){
+			return String.format("select distinct stockid from NasdaqFrQuarterRevenue where year='%s' and quarter='%s'", year, getMonth(quarter));
+		}else if (HOLDING_INSTITUTIONAL.equals(cmd)){
+			return String.format("select distinct stockid from NasdaqHoldingInstitutional where lastDate='%s'", getDate(year,quarter));
+		}
+		return null;
 	}
 }

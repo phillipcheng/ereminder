@@ -23,7 +23,6 @@ import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.datacrawl.util.SomePageErrorException;
 import org.cld.pagea.general.CategoryAnalyzeUtil;
 import org.cld.pagea.general.ListAnalyzeUtil;
-import org.cld.taskmgr.BinaryBoolOpEval;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.xml.mytaskdef.ConfKey;

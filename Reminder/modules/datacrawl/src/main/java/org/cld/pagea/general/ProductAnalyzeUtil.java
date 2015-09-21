@@ -22,12 +22,12 @@ import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.NextPage;
 import org.cld.datacrawl.ProductConf;
+import org.cld.datacrawl.mgr.BinaryBoolOpEval;
 import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.datacrawl.util.HtmlPageResult;
 import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.datacrawl.util.VerifyPageByXPath;
 import org.cld.datastore.entity.Product;
-import org.cld.taskmgr.BinaryBoolOpEval;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.StringUtil;
 import org.xml.mytaskdef.ConfKey;
@@ -233,7 +233,7 @@ public class ProductAnalyzeUtil {
 			logger.info(String.format("get next page element: %s from page:%s", dnsn, frame.getUrl().toExternalForm()));
 		}
 		if (bdt.getLastPageCondition()!=null){
-			finalPage= BinaryBoolOpEval.eval(bdt.getLastPageCondition(), product.getParamMap());
+			finalPage= BinaryBoolOpEval.eval(bdt.getLastPageCondition(), product.getParamMap(), curPage, cconf);
 		}
 		int curPageNum = 1;
 		//(totalPage not set or curPage less than totalPage) & curPage not null & not final & not finished
@@ -257,14 +257,15 @@ public class ProductAnalyzeUtil {
 				logger.debug(product.getParamMap());
 				if (externalistFinished)
 					break;
-				curPage=getNextPage(wc, curPage, task, taskDef, cconf, product);
-				curPageNum ++;
-				if (bdt.getLastPageCondition()!=null){
-					finalPage = BinaryBoolOpEval.eval(bdt.getLastPageCondition(), product.getParamMap());
-				}
+				/*
 				if (curPageNum % 5 ==0){//for every 10 pages, close all windows to save memory
 					CrawlUtil.closeWebClient(wc);
 					wc = CrawlUtil.getWebClient(cconf, task.getParsedTaskDef().getSkipUrls(), bdt.getBaseBrowseTask().isEnableJS());
+				}*/
+				curPage=getNextPage(wc, curPage, task, taskDef, cconf, product);
+				curPageNum ++;
+				if (bdt.getLastPageCondition()!=null){
+					finalPage = BinaryBoolOpEval.eval(bdt.getLastPageCondition(), product.getParamMap(), curPage, cconf);
 				}
 			}else{
 				break;
@@ -282,6 +283,9 @@ public class ProductAnalyzeUtil {
 			logger.info("curPageNum:" + curPageNum + ", totalPage:" + totalPage);
 			logger.debug(product.getParamMap());
 		}
+		
+		//clean up the next page in product
+		product.addParam(ConfKey.PRD_NEXTPAGE, null);
 		
 		//fill id back
 		if (product.getId().getId()==null && product.getParam(IdUrlMapping.ID_KEY)!=null){

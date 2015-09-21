@@ -31,12 +31,14 @@ import org.cld.taskmgr.entity.Task;
 import org.cld.util.StringUtil;
 import org.xml.taskdef.BrowseTaskType;
 import org.xml.taskdef.CsvOutputType;
+import org.xml.taskdef.CsvTransformType;
 
 public class HadoopTaskLauncher {
 
 	private static Logger logger =  LogManager.getLogger(HadoopTaskLauncher.class);
 	public static final String NAMED_OUTPUT_TXT = "txt";
 	private static final int DEFAULT_MB_MEM=1024;
+	private static final int DEFAULT_TASKS_PER_JOB=2;
 	
 	public static boolean hasMultipleOutput(Task t){
 		if (t.getParsedTaskDef()==null){//not a browse task
@@ -70,13 +72,9 @@ public class HadoopTaskLauncher {
 		}
 	}
 	
-	public static String getOutputDir(BrowseTaskType btt, Map<String, Object> taskParams){
-		if (btt!=null){
-			if (btt.getCsvtransform()!=null && btt.getCsvtransform().getOutputDir()!=null){
-				return (String)TaskUtil.eval(btt.getCsvtransform().getOutputDir(), taskParams);
-			}else{
-				return null;
-			}
+	public static String getOutputDir(CsvTransformType csvtrans, Map<String, Object> taskParams){
+		if (csvtrans!=null && csvtrans.getOutputDir()!=null){
+			return (String)TaskUtil.eval(csvtrans.getOutputDir(), taskParams);
 		}else{
 			return null;
 		}
@@ -95,6 +93,9 @@ public class HadoopTaskLauncher {
 	}
 	
 	public static int getTaskPerJob(Task t){
+		if (t.getParsedTaskDef()==null){//not a browse task
+			return DEFAULT_TASKS_PER_JOB;
+		}
 		BrowseTaskType btt = t.getBrowseTask(t.getName());
 		return btt.getTaskNumPerJob();
 	}
@@ -112,10 +113,6 @@ public class HadoopTaskLauncher {
 			conf.set("yarn.nodemanager.aux-services", "mapreduce_shuffle");
 		}
 		conf.set("fs.default.name", taskMgr.getHdfsDefaultName());
-		conf.set("mapred.textoutputformat.separator", ",");//default is tab
-		conf.set("mapreduce.task.timeout", "0");
-		conf.set("mapreduce.job.split.metainfo.maxsize", "-1");
-		conf.set("mapreduce.map.speculative", "false");//since we do not allow same map multiple instance
 		conf.setInt(NLineInputFormat.LINES_PER_MAP, taskMgr.getCrawlTasksPerMapper());
 		
 		for (String key:taskMgr.getHadoopConfigs().keySet()){

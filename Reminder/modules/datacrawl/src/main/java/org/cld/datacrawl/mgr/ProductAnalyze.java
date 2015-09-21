@@ -1,6 +1,18 @@
 package org.cld.datacrawl.mgr;
 
+import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.MapContext;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -8,10 +20,11 @@ import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 import org.cld.pagea.general.ProductAnalyzeUtil;
-import org.cld.taskmgr.BinaryBoolOpEval;
 import org.cld.taskmgr.entity.Task;
+import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.NextPage;
+import org.cld.datacrawl.task.BrowseProductTaskConf;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.Product;
@@ -24,14 +37,18 @@ import org.cld.datacrawl.util.VerifyPageByBoolOpXPath;
 import org.cld.datacrawl.util.VerifyPageByXPath;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.xml.mytaskdef.ParsedBrowsePrd;
+import org.xml.mytaskdef.ScriptEngineUtil;
 import org.xml.mytaskdef.XPathType;
 import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.BrowseDetailType;
+import org.xml.taskdef.CsvOutputType;
 import org.xml.taskdef.CsvTransformType;
+import org.xml.taskdef.VarType;
 
 public class ProductAnalyze{
 	
 	private static Logger logger =  LogManager.getLogger(ProductAnalyze.class);
+	public static final String VAR_CSV_NAME= "arr"; //name of the 1 dimension csv array passed to the filter
 	
 	private VerifyPage VPXP; //
 	
@@ -40,6 +57,91 @@ public class ProductAnalyze{
 	}
 	
 	public ProductAnalyze(){
+	}
+	
+	public static void writeCsvOut(CsvTransformType csvtrans, Map<String, BufferedWriter> hdfsByIdOutputMap, 
+			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos, 
+			CrawledItem ci, CrawlConf cconf, Task task){
+		try{
+			CsvOutputType cot = csvtrans.getOutputType();
+			FileSystem fs = FileSystem.get(context.getConfiguration());
+			String outputDirPrefix=null;
+			
+			if (cot == CsvOutputType.BY_ID){//all ci has the same id for multiple ci output
+				Map<String, Object> paramMap = new HashMap<String, Object>();
+				paramMap.putAll(task.getParamMap());
+				paramMap.putAll(ci.getParamMap());
+				outputDirPrefix = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" +
+						HadoopTaskLauncher.getOutputDir(csvtrans, paramMap) + "/" + ci.getId().getId();
+			}
+			String[][] csv = ci.getCsvValue();
+			if (csv!=null){
+				int total=csv.length;
+				logger.info(String.format("going to write out %d csvs", total));
+				for (int i=0; i<total; i++){
+					String[] v;
+					if (!csvtrans.isReverse()){
+						v = csv[i];
+					}else{
+						v = csv[total-1-i];
+					}
+					if (v.length==2){
+						if (v[1]!=null && !"".equals(v[1])){
+							String csvkey = v[0];
+							String csvvalue = v[1];
+							if (cot != CsvOutputType.BY_ID){
+								context.write(new Text(csvkey), new Text(csvvalue));
+							}else{
+								//
+								String outputFile = outputDirPrefix;
+								BufferedWriter br = null;
+								if (hdfsByIdOutputMap.containsKey(outputFile)){
+									br = hdfsByIdOutputMap.get(outputFile);
+								}else{
+									br = new BufferedWriter(new OutputStreamWriter(fs.create(new Path(outputFile),true)));
+									hdfsByIdOutputMap.put(outputFile, br);
+								}
+								if (AbstractCrawlItemToCSV.KEY_VALUE_UNDEFINED.equals(csvkey)){
+									br.write(csvvalue + "\n");
+								}else{
+									br.write(csvkey + "," + csvvalue + "\n");
+								}
+							}
+						}
+					}else if (v.length==3){
+						String outkey=v[0];
+						String outvalue=v[1];
+						String outfilePrefix=v[2];
+						if (cot == CsvOutputType.BY_JOB_MULTI){
+							mos.write(HadoopTaskLauncher.NAMED_OUTPUT_TXT, 
+									new Text(outkey), new Text(outvalue), outfilePrefix);
+						}else if (cot == CsvOutputType.BY_JOB_SINGLE){
+							context.write(new Text(outkey), new Text(outvalue));
+						}else if (cot == CsvOutputType.BY_ID){
+							String outputFile = outputDirPrefix + "_" + outfilePrefix;
+							BufferedWriter br = null;
+							if (hdfsByIdOutputMap.containsKey(outputFile)){
+								br = hdfsByIdOutputMap.get(outputFile);
+							}else{
+								br = new BufferedWriter(new OutputStreamWriter(fs.create(new Path(outputFile),true)));
+								hdfsByIdOutputMap.put(outputFile, br);
+							}
+							if (AbstractCrawlItemToCSV.KEY_VALUE_UNDEFINED.equals(outkey)){
+								br.write(outvalue + "\n");
+							}else{
+								br.write(outkey + "," + outvalue + "\n");
+							}
+						}
+					}else{
+						logger.error("wrong number of csv length: not 2 and 3 but:" + v.length);
+					}
+				}
+			}else{
+				//called from mapred, but no output specified.
+			}
+		}catch(Exception e){
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -56,11 +158,12 @@ public class ProductAnalyze{
 	 * @throws InterruptedException
 	 */
 	public CrawledItem addProduct(WebClient wc, String url, Product product, Product lastProduct, Task task, 
-			ParsedBrowsePrd taskDef, CrawlConf cconf, boolean retCsv, boolean addToDB) 
+			ParsedBrowsePrd taskDef, CrawlConf cconf, boolean retCsv, boolean addToDB, 
+			CsvTransformType csvtrans, Map<String, BufferedWriter> hdfsByIdOutputMap, 
+			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) 
 			throws InterruptedException{
 		logger.info(String.format("add product with start url:%s", url));
 		BrowseDetailType bdt = taskDef.getBrowsePrdTaskType();
-		boolean monitorPrice = bdt.isMonitorPrice();
 		DataStoreManager dsManager = null;
 		if (bdt.getBaseBrowseTask().getDsm()!=null){
 			dsManager = cconf.getDsm(bdt.getBaseBrowseTask().getDsm());
@@ -88,9 +191,7 @@ public class ProductAnalyze{
 				String title = ProductAnalyzeUtil.getTitle(details, task, taskDef, cconf);
 				product.setName(title);
 			}
-			if (monitorPrice){
-				//
-			}
+			
 			//call back
 			ProductAnalyzeUtil.callbackReadDetails(wc, details, product, task, taskDef, cconf);
 			product.getId().setCreateTime(new Date());
@@ -99,7 +200,7 @@ public class ProductAnalyze{
 			if (bdt.getBaseBrowseTask().getNextTask()!=null){
 				BinaryBoolOp bbo = bdt.getBaseBrowseTask().getNextTask().getCondition();
 				if (bbo!=null){
-					goNext=BinaryBoolOpEval.eval(bbo, product.getParamMap());
+					goNext=BinaryBoolOpEval.eval(bbo, product.getParamMap(), details, cconf);
 				}else{
 					goNext=true;
 				}
@@ -110,6 +211,7 @@ public class ProductAnalyze{
 				if (csvTransform!=null && csvTransform.getTransformClass()!=null){
 					//do the transform and set to crawledItem.csv
 					try {
+						//transform
 						AbstractCrawlItemToCSV cicsv = (AbstractCrawlItemToCSV) 
 								Class.forName(csvTransform.getTransformClass()).newInstance();
 						String[][] csv = cicsv.getCSV(product, null);
@@ -117,12 +219,31 @@ public class ProductAnalyze{
 						if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm()) && addToDB){
 							dsManager.addUpdateCrawledItem(product, lastProduct);
 						}
-						//cleanup some memory
-						for (int i=1; i<4;i++){
-							if (product.getParamMap().containsKey(AbstractCrawlItemToCSV.FIELD_NAME_DATA+i)){
-								product.addParam(AbstractCrawlItemToCSV.FIELD_NAME_DATA+i, null);
+						//filter the csv
+						String filterExp = bdt.getBaseBrowseTask().getFilter();
+						Map<String, Object> attributes = new HashMap<String, Object>();
+						attributes.putAll(product.getParamMap());
+						if (filterExp!=null){
+							List<String[]> passedCsv = new ArrayList<String[]>();
+							for (String[] arr:csv){
+								//anyway the csv[1] is the value list, i need to make it into an array
+								String[] varr = arr[1].split(",");
+								attributes.put(VAR_CSV_NAME, varr);
+								Boolean ret = (Boolean)ScriptEngineUtil.eval(filterExp, VarType.BOOLEAN, attributes);
+								if (ret!=null){
+									if (ret.booleanValue()){
+										passedCsv.add(arr);
+									}
+								}else{
+									logger.error(String.format("eval exp:%s to null.", filterExp));
+								}
 							}
+							String[][] passedCsvArray = new String[passedCsv.size()][];
+							passedCsvArray = passedCsv.toArray(passedCsvArray);
+							product.setCsvValue(passedCsvArray);
 						}
+						//write the output
+						writeCsvOut(csvtrans, hdfsByIdOutputMap, context, mos, product, cconf, task);
 						if (retCsv) return product;
 					} catch (Exception e) {
 						e.printStackTrace();

@@ -10,6 +10,8 @@
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:element name="Tasks" type="TasksType"/>
 	<xs:simpleType name="VarType">
@@ -221,6 +223,11 @@
 					<xs:documentation>ICrawlItemToCSV impl. will transform the crawledItem into a list of csv lines, and save to hdfs			</xs:documentation>
 				</xs:annotation>
 			</xs:element>
+			<xs:element name="filter" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>filter the csv output against the input params using expression, system variable of csv output entry : arr</xs:documentation>
+				</xs:annotation>
+			</xs:element>
 			<xs:element name="nextTask" type="ConditionalNextTask" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="taskName" type="xs:string" use="optional">
@@ -394,9 +401,15 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="BinaryBoolOp">
-		<xs:simpleContent>
-			<xs:extension base="xs:string"/>
-		</xs:simpleContent>
+		<xs:annotation>
+			<xs:documentation>lhs, rhs, operator is 1 group or you can use expression, but expression does not support xpath</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="lhs" type="ValueType" minOccurs="0"/>
+			<xs:element name="rhs" type="ValueType" minOccurs="0"/>
+			<xs:element name="expression" type="xs:string" minOccurs="0"/>
+		</xs:sequence>
+		<xs:attribute name="operator" type="OpType"/>
 	</xs:complexType>
 	<xs:complexType name="TokenType">
 		<xs:annotation>

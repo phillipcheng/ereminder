@@ -24,7 +24,7 @@
 				<value value="//table[@id='quotes_content_left_dividendhistoryGrid']/tbody/tr/td" toType="list" toEntryType="string" optional="true"/>
 			</userAttribute>
 			<csvtransform outputType="byId" reverse="true" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
-				<outputDir value="'raw/' + marketId + '/nasdaq-issue-dividend-history/' + endDate" fromType="expression"/>
+				<outputDir value="'raw/' + marketId + '_' + startDate + '_' + endDate + '/nasdaq-issue-dividend-history/'" fromType="expression"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

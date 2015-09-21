@@ -75,7 +75,7 @@ public class VerifyPageByXPath implements VerifyPage {
 				HtmlPage framePage = (HtmlPage) HtmlUnitUtil.getFramePage(page, xpathsSuccess[i].getFrameId());
 				Object result = framePage.getFirstByXPath(xpathsSuccess[i].getXpath());
 				if (result==null){
-					logger.warn(String.format("xpath:%s not found on page %s", xpathsSuccess[i], framePage.getUrl().toExternalForm()));;
+					logger.warn(String.format("xpath:%s not found on page %s", xpathsSuccess[i].getXpath(), framePage.getUrl().toExternalForm()));;
 					return false;
 				}else{
 					String strResult = CrawlTaskEval.getStringValue(result);

@@ -1,6 +1,7 @@
 package org.cld.etl.csv;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -20,8 +21,8 @@ public class MultiRowTablesAsCSV extends AbstractCrawlItemToCSV{
 	 * @param colnum
 	 * @return
 	 */
-	public List<String> rowTableToCSV(List<String> vl, int colnum, boolean hasHeader, 
-			List<String> dataTypes, int dateIdx){
+	public static List<String> rowTableToCSV(List<String> vl, int colnum, boolean hasHeader, 
+			List<String> dataTypes, int dateIdx, String dateCompareWithValue, Date startDate, Date endDate){
 		List<String> retList = new ArrayList<String>();
 		if (vl!=null){
 			StringBuffer sb = null;
@@ -43,7 +44,7 @@ public class MultiRowTablesAsCSV extends AbstractCrawlItemToCSV{
 					String dataType = dataTypes.get(coln);
 					try{
 						String v = TableUtil.getValue(vl.get(i), dataType);
-						if (coln==dateIdx && !checkDate(v)){
+						if (coln==dateIdx && !checkDate(v, dateCompareWithValue, startDate, endDate)){
 							sb = null;
 							i = (row+1) * colnum;
 							continue;
@@ -83,7 +84,7 @@ public class MultiRowTablesAsCSV extends AbstractCrawlItemToCSV{
 			
 			List<String> strs = null;
 			if (ls!=null && ls.size()>=colnum){
-				strs = rowTableToCSV(ls, colnum, hasHeader, dataTypes, dIdx);
+				strs = rowTableToCSV(ls, colnum, hasHeader, dataTypes, dIdx, dateCompareWithValue, startDate, endDate);
 			}
 			if (strs!=null){
 				if (rowcsvs!=null){

@@ -51,93 +51,75 @@ public class TestNasdaqStock {
 	public void testInitTestMarket() throws Exception{nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);}
 	
 	@Test
-	public void testRunAllCmd1() throws Exception{
-		nsb.runAllCmd(NasdaqTestStockConfig.date_Test_SD, NasdaqTestStockConfig.date_Test_END_D2);
-	}
+	public void testRunAllCmd1() throws Exception{nsb.runAllCmd(NasdaqTestStockConfig.date_Test_SD, NasdaqTestStockConfig.date_Test_END_D2);}
 	
 	@Test
-	public void testBrowseIdlist() throws Exception{
-		Date ed = sdf.parse("2015-08-02");
-		nsb.run_browse_idlist(NasdaqStockConfig.MarketId_NASDAQ, ed);
-	}
+	public void testBrowseIdlist() throws Exception{nsb.run_browse_idlist(NasdaqStockConfig.MarketId_NASDAQ, sdf.parse("2015-08-02"));}
 	
 	@Test
 	public void testCmd_QuoteTick(){
-		Date d = StockUtil.getUSLatestOpenMarketDate();
-		String strD = sdf.format(d);
-		logger.info("strD is:" + strD);
+		String strD = sdf.format(StockUtil.getUSLatestOpenMarketDate());
 		nsb.runCmd(NasdaqStockConfig.QUOTE_TICK, marketId, strD, strD);
 	}
-	
-	@Test
-	public void testCmd_QuoteAfterHours(){
-		Date d = StockUtil.getUSLatestOpenMarketDate();
-		String strD = sdf.format(d);
-		logger.info("strD is:" + strD);
-		nsb.runCmd(NasdaqStockConfig.QUOTE_AFTERHOURS, marketId, strD, strD);
-	}
-	
 	@Test
 	public void testCmd_QuotePreMarket(){
-		Date d = StockUtil.getUSLatestOpenMarketDate();
-		String strD = sdf.format(d);
-		logger.info("strD is:" + strD);
+		String strD = sdf.format(StockUtil.getUSLatestOpenMarketDate());
 		nsb.runCmd(NasdaqStockConfig.QUOTE_PREMARKET, marketId, strD, strD);
 	}
-	
+	@Test
+	public void testCmd_QuoteAfterHours(){
+		String strD = sdf.format(StockUtil.getUSLatestOpenMarketDate());
+		nsb.runCmd(NasdaqStockConfig.QUOTE_AFTERHOURS, marketId, strD, strD);
+	}
 	@Test
 	public void testCmd_Fr_QuarterlyIncomeStatement(){
-		Date d = StockUtil.getUSLatestOpenMarketDate();
-		String strD = sdf.format(d);
-		logger.info("strD is:" + strD);
-		nsb.runCmd(NasdaqStockConfig.INCOME_STATEMENT, marketId, strD, strD);
+		nsb.runCmd(NasdaqStockConfig.INCOME_STATEMENT, marketId, null, sdf.format(StockUtil.getUSLatestOpenMarketDate()));
 	}
-	
+	@Test
+	public void testCmd_Fr_QuarterlyIncomeStatementOneQ(){
+		nsb.runCmd(NasdaqStockConfig.INCOME_STATEMENT, marketId, sdf.format(StockUtil.getUSLatestOpenMarketDate()), sdf.format(StockUtil.getUSLatestOpenMarketDate()));
+	}
+	@Test
+	public void testCmd_Fr_QuarterlyBalanceSheet(){
+		nsb.runCmd(NasdaqStockConfig.BALANCE_SHEET, marketId, null, sdf.format(StockUtil.getUSLatestOpenMarketDate()));
+	}
 	@Test
 	public void testCmd_Fr_QuarterlyCashFlow(){
-		Date d = StockUtil.getUSLatestOpenMarketDate();
-		String strD = sdf.format(d);
-		logger.info("strD is:" + strD);
-		nsb.runCmd(NasdaqStockConfig.CASH_FLOW, marketId, strD, strD);
+		nsb.runCmd(NasdaqStockConfig.CASH_FLOW, marketId, null, sdf.format(StockUtil.getUSLatestOpenMarketDate()));
 	}
-	
+	@Test
+	public void testCmd_Fr_QuarterlyRevenueOneQ(){
+		nsb.runCmd(NasdaqStockConfig.REVENUE, marketId, sdf.format(StockUtil.getUSLatestOpenMarketDate()),  sdf.format(StockUtil.getUSLatestOpenMarketDate()));
+	}
 	@Test
 	public void testCmd_Fr_QuarterlyRevenue(){
-		Date d = StockUtil.getUSLatestOpenMarketDate();
-		String strD = sdf.format(d);
-		logger.info("strD is:" + strD);
-		nsb.runCmd(NasdaqStockConfig.REVENUE, marketId, strD, strD);
+		nsb.runCmd(NasdaqStockConfig.REVENUE, marketId, null,  sdf.format(StockUtil.getUSLatestOpenMarketDate()));
 	}
-	
 	@Test
 	public void testCmd_Issue_DividendHistory(){
-		Date d = StockUtil.getUSLatestOpenMarketDate();
-		String strD = sdf.format(d);
-		logger.info("strD is:" + strD);
-		nsb.runCmd(NasdaqStockConfig.DIVIDEND_HISTORY, marketId, strD, strD);
+		nsb.runCmd(NasdaqStockConfig.DIVIDEND_HISTORY, marketId, null, sdf.format(StockUtil.getUSLatestOpenMarketDate()));
 	}
 	
+	@Test
+	public void testCmd_QuoteHistorical(){
+		nsb.runCmd(NasdaqStockConfig.QUOTE_HISTORY, marketId, null, sdf.format(StockUtil.getUSLatestOpenMarketDate()));
+	}
 	@Test
 	public void testCmd_QuoteShortInterest(){
-		Date d = StockUtil.getUSLatestOpenMarketDate();
-		String strD = sdf.format(d);
-		logger.info("strD is:" + strD);
-		nsb.runCmd(NasdaqStockConfig.QUOTE_SHORT_INTEREST, marketId, strD, strD);
+		nsb.runCmd(NasdaqStockConfig.QUOTE_SHORT_INTEREST, marketId, null, sdf.format(StockUtil.getUSLatestOpenMarketDate()));
 	}
-	
 	@Test
-	public void testCmd_HolderInsiders(){
-		Date d = StockUtil.getUSLatestOpenMarketDate();
-		String strD = sdf.format(d);
-		logger.info("strD is:" + strD);
-		nsb.runCmd(NasdaqStockConfig.HOLDING_INSIDERS, marketId, strD, strD);
+	public void testCmd_HolderSummary(){
+		nsb.runCmd(NasdaqStockConfig.HOLDING_SUMMARY, marketId, null, sdf.format(StockUtil.getUSLatestOpenMarketDate()));
+		nsb.runCmd(NasdaqStockConfig.HOLDING_TOP5, marketId, null, sdf.format(StockUtil.getUSLatestOpenMarketDate()));
 	}
 	@Test
 	public void testCmd_HolderInstitutional(){
-		Date d = StockUtil.getUSLatestOpenMarketDate();
-		String strD = sdf.format(d);
-		logger.info("strD is:" + strD);
-		nsb.runCmd(NasdaqStockConfig.HOLDING_INSTITUTIONAL, marketId, strD, strD);
+		nsb.runCmd(NasdaqStockConfig.HOLDING_INSTITUTIONAL, marketId, null, sdf.format(StockUtil.getUSLatestOpenMarketDate()));
+	}
+	@Test
+	public void testCmd_HolderInsiders(){
+		nsb.runCmd(NasdaqStockConfig.HOLDING_INSIDERS, marketId, null, sdf.format(StockUtil.getUSLatestOpenMarketDate()));
 	}
 	
 	

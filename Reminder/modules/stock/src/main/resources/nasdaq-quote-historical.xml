@@ -2,6 +2,15 @@
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="nasdaq-quote-historical" productType="default">
 	<PrdTask tryPattern="false">
 		<baseBrowseTask enableJS="true" dsm="hdfs" taskName="quote-historical" mbMemoryNeeded="512">
@@ -9,14 +18,16 @@
 			<param name="stockid"/>
 			<param name="startDate"/>
 			<param name="endDate"/>
-			<param type="expression" value='startDate == null ? "last()" : "1"' name="optionIdx"/>
 			<!-- first option is 5 days -->
 			<startUrl value="http://www.nasdaq.com/symbol/[stockid]/historical"/>
 			<userAttribute name="id">
-				<value value="stockid" toType="string" fromType="expression"/>
+				<value value="stockid + '_' + endDate" toType="string" fromType="expression"/>
 			</userAttribute>
 			<userAttribute name="ColNum">
 				<value value="6" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="DataType1">
+				<value value="Date" toType="list" toEntryType="string"/>
 			</userAttribute>
 			<userAttribute name="data1">
 				<value value="//div[@id='quotes_content_left_pnlAJAX']/table[1]/tbody/tr[position()&gt;1]/td" toType="list" toEntryType="string"/>
@@ -25,13 +36,18 @@
 				<value value="0" toType="list" toEntryType="int"/>
 			</userAttribute>
 			<csvtransform outputType="byId" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
-				<outputDir value="raw/[marketId]/[startDate]_[endDate]/nasdaq-quote-historical/"/>
+				<outputDir value="raw/[marketId]_[startDate]_[endDate]/nasdaq-quote-historical/"/>
 			</csvtransform>
 		</baseBrowseTask>
 		<firstPageClickStream>
 			<link>
 				<input name="//select[@id='ddlTimeFrame']" nameType="xpath">
-					<value value='"//select[@id=&apos;ddlTimeFrame&apos;]/option[" + optionIdx + "]/@value"' toType="string" fromType="expression"/>
+					<value value="//select[@id='ddlTimeFrame']/option[last()]/@value" toType="string">
+						<pageVerify operator="!=">
+							<lhs value="//div[@id='quotes_content_left_pnlAJAX']/table[1]/tbody/tr[position()&gt;1]/td"/>
+							<rhs value="null"/>
+						</pageVerify>
+					</value>
 				</input>
 			</link>
 		</firstPageClickStream>

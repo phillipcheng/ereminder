@@ -41,7 +41,7 @@ public class TableUtil {
 	}
 	
 	public static Pattern negP = Pattern.compile("\\((.*)\\)");
-	public static Pattern endingP = Pattern.compile("([\\-\\.0-9]+)(.*)");
+	public static Pattern endingP = Pattern.compile("([\\-\\.0-9]+)\\((.*)\\)");
 	
 	public static String getFRNumber(String instr){
 		String str = instr;
@@ -59,7 +59,8 @@ public class TableUtil {
 		}
 		//remove money sign
 		str = str.replace("$", "");
-		
+		str = str.replace("\u00a0","");//remove &nbsp;
+		str = str.replace("\u0020", "");
 		//multiple scale
 		m = endingP.matcher(str);
 		if (m.matches()){
@@ -78,7 +79,7 @@ public class TableUtil {
 
 	
 	public static String getValue(String v, String dataType){
-		String ret = null;
+		String ret = "";
 		if (AbstractCrawlItemToCSV.DATA_TYPE_NUMBER.equals(dataType)){
 			ret = TableUtil.getFRNumber(v);
 		}else if (AbstractCrawlItemToCSV.DATA_TYPE_TEXT.equals(dataType)){

@@ -44,17 +44,15 @@ public class CrawlConf implements AppConf {
 	public static final String useProxy_Key="use.proxy";
 	public static final String proxyIP_Key="proxy.ip";
 	public static final String proxyPort_Key="proxy.port";
+	
 	public static final String maxRetry_Key="retry.num";
+	public static final String maxLoop_Key="max.loop";
+	public static final String waitTime_Key="wait.time";
 	public static final String timeout_Key="time.out";
 	public static final String enableStat_Key="enable.stat";
-	public static final String brokenRetry_Key="broken.retry";
+	
 	public static final String pluginDir_Key="plugin.dir";
-	public static final String pluginJar_Key="plugin.jar";	
-	public static final String productAnalyze_Key="product.analyze";
-	public static final String categoryAnalyze_Key="category.analyze";
-	public static final String productListAnalyze_Key="productlist.analyze";
-	public static final String listAnalyze_Key="list.analyze";
-	public static final String promotionAnalyze_Key="promotion.analyze";
+	public static final String pluginJar_Key="plugin.jar";
 	public static final String productType_Key="product.type";
 	public static final String crawlTaskConf_Key="crawl.taskconf";
 	//dsm can be a list, 1st is default, each site can pick one if not use default
@@ -64,19 +62,26 @@ public class CrawlConf implements AppConf {
 		public static final String crawlDsManager_Value_Hbase = "hbase";
 		public static final String crawlDsManager_Value_Hdfs = "hdfs";
 	public static final String crawlDBConnectionUrl_Key = "crawl.db.connection.url";
+	//result data manager
+	public static final String resultDmDriver_Key="result.dm.driver";
+	public static final String resultDmUrl_Key="result.dm.url";
+	public static final String resultDmUser_Key="result.dm.user";
+	public static final String resultDmPass_Key="result.dm.pass";
+	
 	public static final String systemProductClassName="org.cld.datastore.entity.Product";
-	
 	public static final String systemProductName="product";
-	
 	public static final String taskParamCConf_Key="cconf";
 	
 	private boolean useProxy=false;
 	private String proxyIP;
 	private int proxyPort;
-	private int maxRetry=3;//immediate #retry for each broken link	
+
+	private int maxRetry=2;//immediate #retry for each broken link
+	private int maxLoop=10;//immediate #retry for each broken link
+	private int waitTime=1000;//immediate #retry for each broken link
+
 	private int timeout; //page fetch time out in seconds
 	private boolean enableSuccessStat=false;
-	private int brokenRetry=0;//#retry after a whole set of op (top-link browse, all cat browse)
 	private String[] pluginDir;
 	private String[] pluginJar;
 	
@@ -90,6 +95,11 @@ public class CrawlConf implements AppConf {
 	//type to dsm instance, //TODO, name to dsm instance, same type can be multiple different dsm
 	private Map<String, DataStoreManager> dsmMap = new HashMap<String, DataStoreManager>();
 
+	private String resultDmDriver;
+	private String resultDmUrl;
+	private String resultDmUser;
+	private String resultDmPass;
+	
 	private Map<String, String> params = new HashMap<String, String>();//store all the parameters in name-value pair for toString
 	
 	private Map<String, ProductConf> prdConfMap = new ConcurrentHashMap<String, ProductConf>();
@@ -290,10 +300,12 @@ public class CrawlConf implements AppConf {
 					maxRetry = Integer.parseInt(strVal);
 				}else if (timeout_Key.equals(key)){
 					timeout=Integer.parseInt(strVal);
+				}else if (maxLoop_Key.equals(key)){
+					maxLoop =  Integer.parseInt(strVal);
+				}else if (waitTime_Key.equals(key)){
+					waitTime =  Integer.parseInt(strVal);
 				}else if (enableStat_Key.equals(key)){
 					enableSuccessStat = Boolean.parseBoolean(strVal);
-				}else if (brokenRetry_Key.equals(key)){
-					brokenRetry =  Integer.parseInt(strVal);
 				}else if (crawlDsManager_Key.equals(key)){
 					List<Object> listVal = properties.getList(key);
 					for (int i=0;  i<listVal.size(); i++){
@@ -312,6 +324,14 @@ public class CrawlConf implements AppConf {
 					}
 				}else if (crawlDBConnectionUrl_Key.equals(key)){
 					crawlDBConnectionUrl = strVal;
+				}else if (resultDmDriver_Key.equals(key)){
+					resultDmDriver = strVal;
+				}else if (resultDmUrl_Key.equals(key)){
+					resultDmUrl = strVal;
+				}else if (resultDmUser_Key.equals(key)){
+					resultDmUser = strVal;
+				}else if (resultDmPass_Key.equals(key)){
+					resultDmPass = strVal;
 				}else if (productType_Key.equals(key)){
 					List<Object> listVal = properties.getList(key);
 					for (int i=0;  i<listVal.size(); i++){
@@ -417,12 +437,6 @@ public class CrawlConf implements AppConf {
 	}
 	public void setEnableSuccessStat(boolean enableSuccessStat) {
 		this.enableSuccessStat = enableSuccessStat;
-	}
-	public int getBrokenRetry() {
-		return brokenRetry;
-	}
-	public void setBrokenRetry(int brokenRetry) {
-		this.brokenRetry = brokenRetry;
 	}
 	
 	public Map<String, ProductConf> getPrdConfMap(){
@@ -537,4 +551,52 @@ public class CrawlConf implements AppConf {
 	public void setPla(ProductListAnalyze pla) {
 		this.pla = pla;
 	}
+
+	public int getMaxLoop() {
+		return maxLoop;
+	}
+
+	public void setMaxLoop(int maxLoop) {
+		this.maxLoop = maxLoop;
+	}
+
+	public int getWaitTime() {
+		return waitTime;
+	}
+
+	public void setWaitTime(int waitTime) {
+		this.waitTime = waitTime;
+	}
+	public String getResultDmDriver() {
+		return resultDmDriver;
+	}
+
+	public void setResultDmDriver(String resultDmDriver) {
+		this.resultDmDriver = resultDmDriver;
+	}
+
+	public String getResultDmUrl() {
+		return resultDmUrl;
+	}
+
+	public void setResultDmUrl(String resultDmUrl) {
+		this.resultDmUrl = resultDmUrl;
+	}
+
+	public String getResultDmUser() {
+		return resultDmUser;
+	}
+
+	public void setResultDmUser(String resultDmUser) {
+		this.resultDmUser = resultDmUser;
+	}
+
+	public String getResultDmPass() {
+		return resultDmPass;
+	}
+
+	public void setResultDmPass(String resultDmPass) {
+		this.resultDmPass = resultDmPass;
+	}
+
 }

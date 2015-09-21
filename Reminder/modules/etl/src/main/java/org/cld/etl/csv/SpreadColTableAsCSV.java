@@ -1,6 +1,7 @@
 package org.cld.etl.csv;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -42,8 +43,8 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 	 * @param colnum: how many columns in the page table: e.g. colnum = 3
 	 * @return
 	 */
-	public List<String> colTableToCSV(List<String> vl, int colnum, boolean hasHeader, 
-			boolean genHeader, List<String> dataTypes, int colDateIdx){
+	public static List<String> colTableToCSV(List<String> vl, int colnum, boolean hasHeader, 
+			boolean genHeader, List<String> dataTypes, int colDateIdx, String dateCompareWithValue, Date startDate, Date endDate){
 		List<String> retList = new ArrayList<String>();
 		if (vl!=null){
 			for (int i=0; i<colnum; i++){
@@ -65,7 +66,7 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 						//header
 					}else{
 						//data do the filter
-						if (colDateIdx==row &&!checkDate(str)){
+						if (colDateIdx==row &&!checkDate(str, dateCompareWithValue, startDate, endDate)){
 							sb = null;
 							break;
 						}
@@ -125,7 +126,7 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 				oneTableValues = ls.subList(startIdx, endIdx);
 				startIdx +=valueFullTable;
 				endIdx +=valueFullTable;
-				csvs.addAll(colTableToCSV(oneTableValues, colnum, hasHeader, genHeader, dataTypes, colDateIdx));
+				csvs.addAll(colTableToCSV(oneTableValues, colnum, hasHeader, genHeader, dataTypes, colDateIdx, dateCompareWithValue, startDate, endDate));
 			}
 			oneTableValues = ls.subList(startIdx, ls.size());
 			int leftItems = ls.size()-startIdx;
@@ -133,7 +134,7 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 			if (rownum!=-1){
 				leftCol = leftItems/rownum;
 			}
-			csvs.addAll(colTableToCSV(oneTableValues, leftCol, hasHeader, genHeader, dataTypes, colDateIdx));
+			csvs.addAll(colTableToCSV(oneTableValues, leftCol, hasHeader, genHeader, dataTypes, colDateIdx, dateCompareWithValue, startDate, endDate));
 		}
 		
 		String[][] retlist = new String[csvs.size()][];

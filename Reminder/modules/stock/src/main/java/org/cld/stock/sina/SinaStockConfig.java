@@ -244,9 +244,8 @@ public class SinaStockConfig implements StockConfig {
 	}
 
 	@Override
-	public String getTableByCmd() {
-		// TODO Auto-generated method stub
-		return null;
+	public String[] getTablesByCmd(String cmd) {
+		return cmdTableMap.get(cmd);
 	}
 
 	@Override
@@ -263,5 +262,11 @@ public class SinaStockConfig implements StockConfig {
 			strStartDate = sdf.format(startDate);
 		}
 		return strStartDate + "_" + sdf.format(endDate);
+	}
+
+	@Override
+	public String getByQuarterSQLByCmd(String cmd, int year, int quarter) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

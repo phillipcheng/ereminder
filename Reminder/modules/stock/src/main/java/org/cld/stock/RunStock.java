@@ -23,6 +23,7 @@ public class RunStock {
 	//x.properties nasdaq ALL run_all_cmd - 2015-09-10
 	//x.properties nasdaq ALL_2015-09-09 run_cmd - - nasdaq-quote-tick
 	//x.properties sina hs_a run_special - - genNdLable xxx,x:xx,xx
+	//x.properties nasdaq ALL_2015-09-14 run_special - - run_merge
 	public static String getDefaultCmdLine(){
 		return "propFile stock_base marketId cmd startDate endDate method params";
 	}

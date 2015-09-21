@@ -8,7 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.NextPage;
-import org.cld.taskmgr.BinaryBoolOpEval;
+import org.cld.datacrawl.mgr.BinaryBoolOpEval;
 import org.xml.mytaskdef.ConfKey;
 import org.xml.mytaskdef.ParsedTasksDef;
 import org.xml.taskdef.BinaryBoolOp;
@@ -38,7 +38,7 @@ public class ListAnalyzeUtil {
 					Map<String, Object> values = new HashMap<String, Object>();
 					values.put(ConfKey.PRD_LIST_NextPage, he);
 					values.putAll(attrs);
-					if (BinaryBoolOpEval.eval(bbo, values)){
+					if (BinaryBoolOpEval.eval(bbo, values, listPage, cconf)){
 						return new NextPage(NextPage.STATUS_LASTPAGE);
 					}
 				}

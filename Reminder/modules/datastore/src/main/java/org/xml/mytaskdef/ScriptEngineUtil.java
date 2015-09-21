@@ -18,12 +18,14 @@ public class ScriptEngineUtil {
 	
 	public static Object eval(String exp, VarType toType, Map<String,Object> variables){
 		ScriptEngine jsEngine = manager.getEngineByName("JavaScript");
-		for (String key: variables.keySet()){
-			Object v = variables.get(key);
-			if (v instanceof Date){
-				jsEngine.put(key, ((Date)v).getTime());
-			}else{
-				jsEngine.put(key, v);
+		if (variables!=null){
+			for (String key: variables.keySet()){
+				Object v = variables.get(key);
+				if (v instanceof Date){
+					jsEngine.put(key, ((Date)v).getTime());
+				}else{
+					jsEngine.put(key, v);
+				}
 			}
 		}
 		try {

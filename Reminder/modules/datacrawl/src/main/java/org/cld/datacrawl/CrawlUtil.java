@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.cfg.Configuration;
@@ -37,7 +36,11 @@ public class CrawlUtil {
 	public static void closeWebClient(WebClient wc){
 		if (wc!=null){
 			logger.debug("close webclient.");
-			wc.closeAllWindows();
+			try {
+				wc.close();
+			}catch(Throwable t){
+				logger.error("", t);
+			}
 		}
 	}
 	

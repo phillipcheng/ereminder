@@ -24,7 +24,7 @@
 				<value value="//table[@id='quotes_content_left_ShortInterest1_ShortInterestGrid']/tbody/tr/td" toType="list" toEntryType="string" optional="true"/>
 			</userAttribute>
 			<csvtransform outputType="byId" reverse="true" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
-				<outputDir value="'raw/' + marketId + '/nasdaq-quote-short-interest/' + endDate" fromType="expression"/>
+				<outputDir value="'raw/' + marketId + '_' + startDate + '_' + endDate + '/nasdaq-quote-short-interest/'" fromType="expression"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

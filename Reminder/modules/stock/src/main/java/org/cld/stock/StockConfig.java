@@ -29,7 +29,7 @@ public interface StockConfig {
 	public String[] getTestStockSet2();
 	public String getTestShortStartDate();
 	public String[] getSlowCmds();
-	public String getTableByCmd();
+	public String[] getTablesByCmd(String cmd);
 	public String[] getPostProcessCmds();
 	
 	public Map<String, String> getPairedMarket(); //like MarketId_HS_A paired with MarketId_HS_A_ST
@@ -37,4 +37,6 @@ public interface StockConfig {
 	public String getStartDate(String cmdName);
 	
 	public String getDatePart(String marketId, Date startDate, Date endDate);
+	
+	public String getByQuarterSQLByCmd(String cmd, int year, int quarter);
 }

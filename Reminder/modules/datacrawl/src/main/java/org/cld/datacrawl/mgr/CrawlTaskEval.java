@@ -316,7 +316,6 @@ public class CrawlTaskEval {
 					xpathResult = page.getFirstByXPath(xpathValue);
 					if (xpathResult!=null){
 						if (VarType.PAGE==vt.getToType()){
-							BinaryBoolOp pvt = null;
 							HtmlPage pageGet = getPage(xpathResult, page, vt, vt.getPageVerify(), cconf, params);
 							if (pageGet!=null){
 								if (fw!=null){
@@ -418,7 +417,7 @@ public class CrawlTaskEval {
 					}
 				}else{
 					//keep current page but need to wait verify
-					boolean ret = HtmlUnitUtil.waitVerify(currentPage, new VerifyPageByBoolOp(vt.getPageVerify(), cconf), params);
+					boolean ret = HtmlUnitUtil.waitVerify(currentPage, new VerifyPageByBoolOp(vt.getPageVerify(), cconf), params, cconf);
 					if (!ret){
 						logger.error(String.format("page %s does not contain needed verifications.", currentPage.getUrl().toExternalForm()));
 					}

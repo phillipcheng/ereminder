@@ -21,13 +21,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
+import org.cld.datacrawl.mgr.BinaryBoolOpEval;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.CrawledItemId;
 import org.cld.datastore.entity.Product;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.cld.pagea.general.ProductListAnalyzeUtil;
-import org.cld.taskmgr.BinaryBoolOpEval;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
@@ -148,6 +148,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 			cachePageList.add(fullCachePage);
 		}
 	}
+	
 	/**
 	 * reusable browse detailed product and add to store if updated
 	 * @param task: task instance
@@ -260,87 +261,12 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 					WebClient wc = null;
 					try {
 						wc = CrawlUtil.getWebClient(cconf, taskTemplate.skipUrls, taskTemplate.enableJS);
-						ci = cconf.getPa().addProduct(wc, startUrl, thisProduct, null, task, pbpTemplate, cconf, retcsv, addToDB);
-						if (!ci.isGoNext()){//only output for final task
-							if (btt!=null){//called within mapper reducer, has all the 4 extra parameters
-								CsvTransformType csvtrans = btt.getCsvtransform();
-								if (csvtrans!=null){
-									CsvOutputType cot = csvtrans.getOutputType();
-									FileSystem fs = FileSystem.get(context.getConfiguration());
-									String outputDirPrefix=null;
-									
-									if (cot == CsvOutputType.BY_ID){//all ci has the same id for multiple ci output
-										outputDirPrefix = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" +
-												HadoopTaskLauncher.getOutputDir(btt, ci.getParamMap()) + "/" + ci.getId().getId();
-									}
-									String[][] csv = ci.getCsvValue();
-									if (csv!=null){
-										int total=csv.length;
-										logger.info(String.format("going to write out %d csvs", total));
-										for (int i=0; i<total; i++){
-											String[] v;
-											if (!csvtrans.isReverse()){
-												v = csv[i];
-											}else{
-												v = csv[total-1-i];
-											}
-											if (v.length==2){
-												if (v[1]!=null && !"".equals(v[1])){
-													String csvkey = v[0];
-													String csvvalue = v[1];
-													if (cot != CsvOutputType.BY_ID){
-														context.write(new Text(csvkey), new Text(csvvalue));
-													}else{
-														//
-														String outputFile = outputDirPrefix;
-														BufferedWriter br = null;
-														if (hdfsByIdOutputMap.containsKey(outputFile)){
-															br = hdfsByIdOutputMap.get(outputFile);
-														}else{
-															br = new BufferedWriter(new OutputStreamWriter(fs.create(new Path(outputFile),true)));
-															hdfsByIdOutputMap.put(outputFile, br);
-														}
-														if (AbstractCrawlItemToCSV.KEY_VALUE_UNDEFINED.equals(csvkey)){
-															br.write(csvvalue + "\n");
-														}else{
-															br.write(csvkey + "," + csvvalue + "\n");
-														}
-													}
-												}
-											}else if (v.length==3){
-												String outkey=v[0];
-												String outvalue=v[1];
-												String outfilePrefix=v[2];
-												if (cot == CsvOutputType.BY_JOB_MULTI){
-													mos.write(HadoopTaskLauncher.NAMED_OUTPUT_TXT, 
-															new Text(outkey), new Text(outvalue), outfilePrefix);
-												}else if (cot == CsvOutputType.BY_JOB_SINGLE){
-													context.write(new Text(outkey), new Text(outvalue));
-												}else if (cot == CsvOutputType.BY_ID){
-													String outputFile = outputDirPrefix + "_" + outfilePrefix;
-													BufferedWriter br = null;
-													if (hdfsByIdOutputMap.containsKey(outputFile)){
-														br = hdfsByIdOutputMap.get(outputFile);
-													}else{
-														br = new BufferedWriter(new OutputStreamWriter(fs.create(new Path(outputFile),true)));
-														hdfsByIdOutputMap.put(outputFile, br);
-													}
-													if (AbstractCrawlItemToCSV.KEY_VALUE_UNDEFINED.equals(outkey)){
-														br.write(outvalue + "\n");
-													}else{
-														br.write(outkey + "," + outvalue + "\n");
-													}
-												}
-											}else{
-												logger.error("wrong number of csv length: not 2 and 3 but:" + v.length);
-											}
-										}
-									}else{
-										//called from mapred, but no output specified.
-									}
-								}
-							}
+						CsvTransformType csvtrans = null;
+						if (btt!=null){
+							csvtrans = btt.getCsvtransform();
 						}
+						ci = cconf.getPa().addProduct(wc, startUrl, thisProduct, null, task, pbpTemplate, cconf, retcsv, addToDB, 
+								csvtrans, hdfsByIdOutputMap, context, mos);
 					}catch(Exception e){
 						logger.error("", e);
 					}finally{

@@ -49,7 +49,7 @@ public class CellTableAsCSV extends AbstractCrawlItemToCSV{
 		List<String> ls = (List<String>)ci.getParam(FIELD_NAME_DATA);
 		int cellrownum = (int)ci.getParam(FIELD_NAME_CELLROWNUMBER);
 		List<String> colHeaders = (List<String>) ci.getParam(FIELD_NAME_COLHEADER);
-		int colnum = colHeaders.size();
+		int colnum = (int)ci.getParam(FIELD_NAME_COLNUM);
 		List<String> rowHeaders = (List<String>) ci.getParam(FIELD_NAME_ROWHEADER);
 		List<String> dataTypes = (List<String>)ci.getParam(DATA_TYPE_KEY); //number of items in the cell not including the row-header and col-header
 		List<String[]> csvs = new ArrayList<String[]>();

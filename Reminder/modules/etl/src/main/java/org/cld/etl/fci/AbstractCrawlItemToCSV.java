@@ -86,7 +86,7 @@ public abstract class AbstractCrawlItemToCSV {
 	}
 	
 	//true: date belongs [startDate, endDate)
-	protected boolean checkDate(String date){
+	public static boolean checkDate(String date, String dateCompareWithValue, Date startDate, Date endDate){
 		try {
 			if (dateCompareWithValue==null){
 				Date d = null;

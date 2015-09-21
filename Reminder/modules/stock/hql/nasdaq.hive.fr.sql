@@ -10,3 +10,38 @@ create external table NasdaqFrQuarterCashFlow(stockid String, quarter String, re
 drop table if exists NasdaqFrQuarterIncomeStatement;
 create external table NasdaqFrQuarterIncomeStatement(stockid String, quarter String, reportPeriod Date, totalRevenue decimal(20,2), costOfRevenue decimal(20,2), grossProfit decimal(20,2), randd decimal(20,2), salesGeneralAdmin decimal(20,2), nonRecurringItems decimal(20,2), otherOperationgItems decimal(20,2), OperatingIncome decimal(20,2), AdditionalIncomeExpenseItems decimal(20,2), earningBeforeInterestTax decimal(20,2), interestExpense decimal(20,2), earningBeforeTax decimal(20,2), incomeTax decimal(20,2), minorityInterest decimal(20,2), equityEarningLossUnconsolidatedSubsidary decimal(20,2), netIncomeContOperations decimal(20,2), netIncome decimal(20,2), netIncomeToShareHolder decimal(20,2)) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-fr-quarter-IncomeStatement';
 
+--nasdaq-fr-quarter-revenue
+drop table if exists NasdaqFrQuarterRevenue;
+create external table NasdaqFrQuarterRevenue(stockid String, year String, quarter String, revenue decimal(20,2), eps decimal(10,3), dividends decimal(10,3)) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-fr-quarter-revenue';
+
+--nasdaq-issue-dividend-history
+drop table if exists NasdaqDividendHistory;
+create external table NasdaqDividendHistory(stockid String, EffDate Date, Type String, CashAmount decimal(20,4), DeclareDate Date, RecordDate Date, PaymentDate Date) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-issue-dividend-history';
+
+--nasdaq-quote-historical
+drop table if exists NasdaqQuoteHistory;
+create external table NasdaqQuoteHistory(stockid String, dt Date, Open decimal(20,2), high decimal(20,2), low decimal(20,2), close decimal(20,2), volume bigint) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-quote-historical';
+
+--nasdaq-quote-short-interest
+drop table if exists NasdaqShortInterest;
+create external table NasdaqShortInterest(stockid String, SettleDate Date, ShortInterest bigint, AvgDailyShareVolume bigint, daysToCover decimal(20,10)) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-quote-short-interest';
+
+--nasdaq-quote-premarket
+drop table if exists NasdaqPremarket;
+create external table NasdaqPremarket(stockid String, ttime Timestamp, price decimal(20,2), volume bigint) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-quote-premarket';
+
+--nasdaq-quote-afterhours
+drop table if exists NasdaqAfterhours;
+create external table NasdaqAfterhours(stockid String, ttime Timestamp, price decimal(20,2), volume bigint) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-quote-afterhours';
+
+--nasdaq-quote-tick
+drop table if exists NasdaqTick;
+create external table NasdaqTick(stockid String, ttime Timestamp, price decimal(20,2), volume bigint) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-quote-tick';
+
+--nasdaq-holding-insiders
+drop table if exists NasdaqHoldingInsiders;
+create external table NasdaqHoldingInsiders(stockid String, insider String, relation String, lastDate Date, transactionType String, ownerType String, sharesTraded decimal(20,2), lastPrice decimal(20,2), sharesHeld decimal(20,2)) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-holding-insiders';
+
+--nasdaq-holding-institutional
+drop table if exists NasdaqHoldingInstitutional;
+create external table NasdaqHoldingInstitutional(stockid String, institution String, lastDate Date, shareHeld bigint, shareChanges bigint, changePercent decimal(6,3), valueHeld bigint) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-holding-institutional';
