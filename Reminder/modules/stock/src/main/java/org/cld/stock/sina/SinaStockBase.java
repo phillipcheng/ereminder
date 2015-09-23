@@ -1,28 +1,19 @@
 package org.cld.stock.sina;
 
-import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
-import org.cld.etl.csv.CsvReformatMapredLauncher;
-import org.cld.datacrawl.CrawlUtil;
-import org.cld.datacrawl.task.TabularCSVConvertTask;
-import org.cld.stock.ETLUtil;
 import org.cld.stock.StockBase;
 import org.cld.stock.StockConfig;
 import org.cld.stock.sina.SinaStockConfig;
 import org.cld.stock.sina.task.TradeDetailCheckDownload;
 import org.cld.stock.sina.task.TradeDetailPostProcessTask;
 import org.cld.stock.task.GenNdLable;
-import org.cld.stock.task.MergeTask;
 
 public class SinaStockBase extends StockBase{
-	private StockConfig sc = new SinaStockConfig();
+	private static StockConfig sc = new SinaStockConfig();
 	
 	@Override
 	public StockConfig getStockConfig() {

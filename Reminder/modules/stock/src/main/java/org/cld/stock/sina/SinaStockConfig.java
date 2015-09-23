@@ -4,10 +4,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.StockConfig;
+import org.cld.stock.StockUtil;
 import org.cld.util.ListUtil;
 
 public class SinaStockConfig implements StockConfig {
@@ -42,22 +44,22 @@ public class SinaStockConfig implements StockConfig {
 	public static final String SINA_STOCK_CORP_RELATED="sina-stock-corp-related";
 	public static final String SINA_STOCK_CORP_RELATED_OTHER="sina-stock-corp-related-other";
 	//finance report
-	public static final String SINA_STOCK_FR_QUARTER_BALANCE_SHEET="sina-stock-fr-quarter-BalanceSheet";
-	public static final String SINA_STOCK_FR_QUARTER_PROFIT_STATEMENT="sina-stock-fr-quarter-ProfitStatement";
-	public static final String SINA_STOCK_FR_QUARTER_CASHFLOW="sina-stock-fr-quarter-CashFlow";
-	public static final String SINA_STOCK_FR_FOOTNOTE="sina-stock-fr-footnote";
-	public static final String SINA_STOCK_FR_AchieveNotice="sina-stock-fr-achievenotice";
-	public static final String SINA_STOCK_FR_GUIDELINE_YEAR="sina-stock-fr-guideline-year";
-	public static final String SINA_STOCK_FR_ASSETDEVALUE_YEAR="sina-stock-fr-assetdevalue-year";
-	//market
+	public static final String SINA_STOCK_FR_QUARTER_BALANCE_SHEET="sina-stock-fr-quarter-BalanceSheet";//quarterly update
+	public static final String SINA_STOCK_FR_QUARTER_PROFIT_STATEMENT="sina-stock-fr-quarter-ProfitStatement";//quarterly update
+	public static final String SINA_STOCK_FR_QUARTER_CASHFLOW="sina-stock-fr-quarter-CashFlow";//quarterly update
+	public static final String SINA_STOCK_FR_FOOTNOTE="sina-stock-fr-footnote";//quarterly update
+	public static final String SINA_STOCK_FR_AchieveNotice="sina-stock-fr-achievenotice";//daily update
+	public static final String SINA_STOCK_FR_GUIDELINE_YEAR="sina-stock-fr-guideline-year";//quarterly update
+	public static final String SINA_STOCK_FR_ASSETDEVALUE_YEAR="sina-stock-fr-assetdevalue-year";//quarterly update
+	//market daily update
 	public static final String SINA_STOCK_MARKET_HISTORY="sina-stock-market-history";//历史交易
 	public static final String SINA_STOCK_TRADE_DETAIL="sina-stock-market-tradedetail";//成交明细
 	public static final String SINA_STOCK_MARKET_RZRQ="sina-stock-market-rzrq";//融资融券
 	public static final String SINA_STOCK_MARKET_DZJY="sina-stock-market-dzjy";//大宗交易
 	public static final String SINA_STOCK_MARKET_FQ="sina-stock-market-fq"; //复权
-	//issue
+	//issue daily update
 	public static final String SINA_STOCK_ISSUE_SHAREBONUS="sina-stock-issue-sharebonus";
-	//stock holder
+	//stock holder daily update
 	public static final String SINA_STOCK_STOCK_STRUCTURE="sina-stock-stock-structure";
 	public static final String SINA_STOCK_STOCK_HOLDER="sina-stock-stock-holder";
 	public static final String SINA_STOCK_STOCK_HOLDER_CIRCULATE="sina-stock-stock-holder-circulate";
@@ -82,10 +84,10 @@ public class SinaStockConfig implements StockConfig {
 				"sinacorprelatedconcepts",
 				"sinacorprelatedindustries"});
 		//fr
-		cmdTableMap.put(SINA_STOCK_FR_QUARTER_BALANCE_SHEET, new String[]{"sinafrbalancesheet"});
-		cmdTableMap.put(SINA_STOCK_FR_QUARTER_PROFIT_STATEMENT, new String[]{"sinafrprofitstatement"});
-		cmdTableMap.put(SINA_STOCK_FR_QUARTER_CASHFLOW, new String[]{"sinafrcashflow"});
-		cmdTableMap.put(SINA_STOCK_FR_FOOTNOTE, new String[]{
+		cmdTableMap.put(SINA_STOCK_FR_QUARTER_BALANCE_SHEET, new String[]{"sinafrbalancesheet"}); //quarterly update
+		cmdTableMap.put(SINA_STOCK_FR_QUARTER_PROFIT_STATEMENT, new String[]{"sinafrprofitstatement"});//quarterly update
+		cmdTableMap.put(SINA_STOCK_FR_QUARTER_CASHFLOW, new String[]{"sinafrcashflow"});//quarterly update
+		cmdTableMap.put(SINA_STOCK_FR_FOOTNOTE, new String[]{//quarterly update
 				"sinafrfootnoteaccount",
 				"sinafrfootnoteinventory",
 				"sinafrfootnoterecievableaging",
@@ -93,10 +95,10 @@ public class SinaStockConfig implements StockConfig {
 				"sinafrfootnoteincomeindustry",
 				"sinafrfootnoteincomeproduct",
 				"sinafrfootnoteincomeregion"});
-		cmdTableMap.put(SINA_STOCK_FR_AchieveNotice, new String[]{"sinafrachievenotice"});
-		cmdTableMap.put(SINA_STOCK_FR_GUIDELINE_YEAR, new String[]{"sinafrguideline"});
-		cmdTableMap.put(SINA_STOCK_FR_ASSETDEVALUE_YEAR, new String[]{"sinafrassetdevalue"});
-		//market
+		cmdTableMap.put(SINA_STOCK_FR_AchieveNotice, new String[]{"sinafrachievenotice"});//daily update
+		cmdTableMap.put(SINA_STOCK_FR_GUIDELINE_YEAR, new String[]{"sinafrguideline"});//quarterly update
+		cmdTableMap.put(SINA_STOCK_FR_ASSETDEVALUE_YEAR, new String[]{"sinafrassetdevalue"});//quarterly update
+		//market-daily update
 		cmdTableMap.put(SINA_STOCK_MARKET_HISTORY, new String[]{"sinamarketdaily"});
 		cmdTableMap.put(SINA_STOCK_TRADE_DETAIL, new String[]{"sinamarkettradedetail"});
 		cmdTableMap.put(SINA_STOCK_MARKET_RZRQ, new String[]{
@@ -266,7 +268,51 @@ public class SinaStockConfig implements StockConfig {
 
 	@Override
 	public String getByQuarterSQLByCmd(String cmd, int year, int quarter) {
-		// TODO Auto-generated method stub
+		if (SINA_STOCK_FR_QUARTER_BALANCE_SHEET.equals(cmd)){
+			return String.format("select distinct stockid from sinafrbalancesheet where dt='%s'", StockUtil.getDate(year, quarter));
+		}else if (SINA_STOCK_FR_QUARTER_PROFIT_STATEMENT.equals(cmd)){
+			return String.format("select distinct stockid from sinafrprofitstatement where dt='%s'", StockUtil.getDate(year, quarter));
+		}else if (SINA_STOCK_FR_QUARTER_CASHFLOW.equals(cmd)){
+			return String.format("select distinct stockid from sinafrcashflow where dt='%s'", StockUtil.getDate(year, quarter));
+		}else if (SINA_STOCK_FR_FOOTNOTE.equals(cmd)){
+			return String.format("select distinct stockid from sinafrfootnoteaccount where pubdate='%s' "
+					+ "union select distinct stockid from sinafrfootnoteinventory where pubdate='%s' "
+					+ "union select distinct stockid from sinafrfootnoterecievableaging where pubdate='%s' "
+					+ "union select distinct stockid from sinafrfootnotetax where pubdate='%s' "
+					+ "union select distinct stockid from sinafrfootnoteincomeindustry where pubdate='%s' "
+					+ "union select distinct stockid from sinafrfootnoteincomeproduct where pubdate='%s' "
+					+ "union select distinct stockid from sinafrfootnoteincomeregion where pubdate='%s'", 
+					StockUtil.getDate(year, quarter), 
+					StockUtil.getDate(year, quarter),
+					StockUtil.getDate(year, quarter),
+					StockUtil.getDate(year, quarter),
+					StockUtil.getDate(year, quarter),
+					StockUtil.getDate(year, quarter),
+					StockUtil.getDate(year, quarter));
+		}else if (SINA_STOCK_FR_GUIDELINE_YEAR.equals(cmd)){
+			return String.format("select distinct stockid from sinafrguideline where pubdate='%s'", StockUtil.getDate(year, quarter));
+		}else if (SINA_STOCK_FR_ASSETDEVALUE_YEAR.equals(cmd)){
+			return String.format("select distinct stockid from SinaFrAssetDevalue where pubdate='%s'", StockUtil.getDate(year, quarter));
+		}else if (SINA_STOCK_STOCK_HOLDER_CIRCULATE.equals(cmd)){
+			return String.format("select distinct stockid from sinastocktopholdercirculate where dt='%s'", StockUtil.getDate(year, quarter));
+		}else if (SINA_STOCK_STOCK_HOLDER_FUND.equals(cmd)){
+			return String.format("select distinct stockid from sinastockfundholder where dt='%s'", StockUtil.getDate(year, quarter));
+		}else if (SINA_STOCK_STOCK_HOLDER.equals(cmd)){
+			return String.format("select distinct stockid from sinastocktopholder where dt='%s'", StockUtil.getDate(year, quarter));
+		}
 		return null;
+	}
+
+	@Override
+	public TimeZone getTimeZone() {
+		return TimeZone.getTimeZone("CTT");
+	}
+
+	@Override
+	public Date getLatestOpenMarketDate(Date d) {
+		while (!StockUtil.isOpenDay(d, StockUtil.CNHolidays)){
+			d = StockUtil.getLastOpenDay(d, StockUtil.CNHolidays);
+		}
+		return d;
 	}
 }

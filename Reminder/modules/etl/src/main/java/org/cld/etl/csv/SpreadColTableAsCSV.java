@@ -44,7 +44,7 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 	 * @return
 	 */
 	public static List<String> colTableToCSV(List<String> vl, int colnum, boolean hasHeader, 
-			boolean genHeader, List<String> dataTypes, int colDateIdx, String dateCompareWithValue, Date startDate, Date endDate){
+			boolean genHeader, List<String> dataTypes, int colDateIdx, Date startDate, Date endDate, AbstractCrawlItemToCSV aci){
 		List<String> retList = new ArrayList<String>();
 		if (vl!=null){
 			for (int i=0; i<colnum; i++){
@@ -66,7 +66,7 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 						//header
 					}else{
 						//data do the filter
-						if (colDateIdx==row &&!checkDate(str, dateCompareWithValue, startDate, endDate)){
+						if (colDateIdx==row &&!checkDate(str, startDate, endDate, aci)){
 							sb = null;
 							break;
 						}
@@ -126,7 +126,7 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 				oneTableValues = ls.subList(startIdx, endIdx);
 				startIdx +=valueFullTable;
 				endIdx +=valueFullTable;
-				csvs.addAll(colTableToCSV(oneTableValues, colnum, hasHeader, genHeader, dataTypes, colDateIdx, dateCompareWithValue, startDate, endDate));
+				csvs.addAll(colTableToCSV(oneTableValues, colnum, hasHeader, genHeader, dataTypes, colDateIdx, startDate, endDate, this));
 			}
 			oneTableValues = ls.subList(startIdx, ls.size());
 			int leftItems = ls.size()-startIdx;
@@ -134,7 +134,7 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 			if (rownum!=-1){
 				leftCol = leftItems/rownum;
 			}
-			csvs.addAll(colTableToCSV(oneTableValues, leftCol, hasHeader, genHeader, dataTypes, colDateIdx, dateCompareWithValue, startDate, endDate));
+			csvs.addAll(colTableToCSV(oneTableValues, leftCol, hasHeader, genHeader, dataTypes, colDateIdx, startDate, endDate, this));
 		}
 		
 		String[][] retlist = new String[csvs.size()][];

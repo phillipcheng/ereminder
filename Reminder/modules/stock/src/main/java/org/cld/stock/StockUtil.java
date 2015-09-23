@@ -45,6 +45,8 @@ public class StockUtil {
 
 	protected static Logger logger =  LogManager.getLogger(StockUtil.class);
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	
+	//http://markets.on.nytimes.com/research/markets/holidays/holidays.asp?display=market&exchange=SHH
 	public static List<Date> USHolidays = new ArrayList<Date>();
 	static{
 		try{
@@ -72,6 +74,50 @@ public class StockUtil {
 		}
 	}
 	
+	public static List<Date> CNHolidays = new ArrayList<Date>();
+	static{
+		try{
+			//
+			CNHolidays.add(sdf.parse("2015-01-01"));
+			CNHolidays.add(sdf.parse("2015-01-02"));
+			CNHolidays.add(sdf.parse("2015-02-18"));
+			CNHolidays.add(sdf.parse("2015-02-19"));
+			CNHolidays.add(sdf.parse("2015-02-20"));
+			CNHolidays.add(sdf.parse("2015-02-23"));
+			CNHolidays.add(sdf.parse("2015-02-24"));
+			CNHolidays.add(sdf.parse("2015-04-06"));
+			CNHolidays.add(sdf.parse("2015-05-01"));
+			CNHolidays.add(sdf.parse("2015-06-22"));
+			CNHolidays.add(sdf.parse("2015-09-03"));
+			CNHolidays.add(sdf.parse("2015-09-04"));
+			CNHolidays.add(sdf.parse("2015-10-01"));
+			CNHolidays.add(sdf.parse("2015-10-02"));
+			CNHolidays.add(sdf.parse("2015-10-05"));
+			CNHolidays.add(sdf.parse("2015-10-06"));
+			CNHolidays.add(sdf.parse("2015-10-07"));
+			//
+			CNHolidays.add(sdf.parse("2016-01-01"));
+			CNHolidays.add(sdf.parse("2016-02-08"));
+			CNHolidays.add(sdf.parse("2016-02-09"));
+			CNHolidays.add(sdf.parse("2016-02-10"));
+			CNHolidays.add(sdf.parse("2016-02-11"));
+			CNHolidays.add(sdf.parse("2016-02-12"));
+			CNHolidays.add(sdf.parse("2016-04-04"));
+			CNHolidays.add(sdf.parse("2016-05-02"));
+			CNHolidays.add(sdf.parse("2016-06-09"));
+			CNHolidays.add(sdf.parse("2016-06-10"));
+			CNHolidays.add(sdf.parse("2016-09-15"));
+			CNHolidays.add(sdf.parse("2016-09-16"));
+			CNHolidays.add(sdf.parse("2016-10-03"));
+			CNHolidays.add(sdf.parse("2016-10-04"));
+			CNHolidays.add(sdf.parse("2016-10-05"));
+			CNHolidays.add(sdf.parse("2016-10-06"));
+			CNHolidays.add(sdf.parse("2016-10-07"));
+		}catch(Exception e){
+			logger.error("", e);
+		}
+	}
+	
 	private static boolean daysContainDay(List<Date> dl, Date d){
 		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("EST"));
 		for (Date d1:dl){
@@ -88,9 +134,10 @@ public class StockUtil {
 		}
 		return false;
 	}
+	
 	//d without time
-	private static Date getLastMD(Date d){
-		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("EST"));
+	public static Date getLastOpenDay(Date d, List<Date> holidays){
+		Calendar c = Calendar.getInstance();
 		c.setTime(d);
 		int dow = c.get(Calendar.DAY_OF_WEEK);
 		//check weekend
@@ -99,35 +146,40 @@ public class StockUtil {
 		}else if (dow == Calendar.SATURDAY){
 			c.add(Calendar.DATE, -1);
 		}
-		if (USHolidays.contains(c.getTime())){
+		if (holidays.contains(c.getTime())){
 			c.add(Calendar.DATE, -1);
 		}
 		return c.getTime();
 	}
 	
-	private static boolean isOpenDay(Date d){
-		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("EST"));
+	public static boolean isOpenDay(Date d, List<Date> holidays){
+		Calendar c = Calendar.getInstance();
 		c.setTime(d);
 		int dow = c.get(Calendar.DAY_OF_WEEK);
 		//check weekend
 		if (dow==Calendar.SUNDAY ||
 				dow == Calendar.SATURDAY ||
-					daysContainDay(USHolidays, c.getTime())){
+					daysContainDay(holidays, c.getTime())){
 			return false;
 		}else{
 			return true;
 		}
 	}
-	public static Date getUSLatestOpenMarketDate(){
-		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("EST"));
-	    c.set(Calendar.MINUTE, 0);
-	    c.set(Calendar.SECOND, 0);
-	    c.set(Calendar.MILLISECOND, 0);
-		Date d = c.getTime();
-		while (!isOpenDay(d)){
-			d = getLastMD(d);
+
+	public static String getDate(int year, int quarter){
+		String dt = null;
+		if (quarter == 1){
+			dt = "03-31";
+		}else if (quarter ==2){
+			dt = "06-30";
+		}else if (quarter == 3){
+			dt = "09-30";
+		}else if (quarter == 4){
+			dt = "12-31";
+		}else{
+			logger.error(String.format("wrong quarter %d", quarter));
 		}
-		return d;
+		return year + "-" + dt;
 	}
 
 }

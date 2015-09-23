@@ -25,7 +25,7 @@ import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.test.TestBase;
 
 public abstract class StockBase extends TestBase{
-	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	public static final String KEY_IPODate_MAP="data";
 	public static final String AllCmdRun_STATUS="AllCmdRun";
 	public static final String KEY_IDS = "ids";
@@ -58,6 +58,7 @@ public abstract class StockBase extends TestBase{
 		this.cconf.getTaskMgr().getHadoopCrawledItemFolder();
 		dsm = this.cconf.getDsm(CrawlConf.crawlDsManager_Value_Hbase);
 		hdfsDsm = this.cconf.getDsm(CrawlConf.crawlDsManager_Value_Hdfs);
+		sdf.setTimeZone(this.getStockConfig().getTimeZone());
 	}
 	
 	public CrawlConf getCconf(){
@@ -138,7 +139,7 @@ public abstract class StockBase extends TestBase{
 	public void runCmd(String cmdName, String marketId, String startDate, String endDate) {
 		StockConfig sc = getStockConfig();
 		if (Arrays.asList(sc.getCurrentDayCmds()).contains(cmdName)){
-			Date d = StockUtil.getUSLatestOpenMarketDate();
+			Date d = sc.getLatestOpenMarketDate(new Date());
 			startDate = sdf.format(d);
 			endDate = startDate;
 		}else{
@@ -185,7 +186,9 @@ public abstract class StockBase extends TestBase{
 			}
 			String[] jobIds = ETLUtil.runTaskByCmd(sc, marketId, cconf, this.getPropFile(), cmdName, params);
 			for (String jobId:jobIds){
-				cs.getJsMap().put(jobId, 4);//PREPARE
+				if (jobId!=null){
+					cs.getJsMap().put(jobId, 4);//PREPARE
+				}
 			}
 			dsm.addUpdateCrawledItem(cs, null);
 		}
@@ -236,6 +239,25 @@ public abstract class StockBase extends TestBase{
 		return str;
 	}
 	
+	private void runFirstTime(StockConfig sc, CrawledItem ciIds, String curMarketId) throws InterruptedException {
+		//store the stock-ids for curMarket
+		ciIds.getId().setId(curMarketId);
+		List<String> curIds = (List<String>) ciIds.getParam(KEY_IDS);
+		logger.info(String.format("market %s 1st time fetch with size %d.", marketId, curIds.size()));
+		dsm.addUpdateCrawledItem(ciIds, null);//hbase persistence for curMarket
+		hdfsDsm.addUpdateCrawledItem(ciIds, null);//hdfs persistence for cur market
+		//store ipodate
+		String ipoCmd = sc.getIPODateCmd();
+		if (ipoCmd!=null){
+			runCmd(ipoCmd, curMarketId, getDateString(startDate), getDateString(endDate));
+		}
+		//store the market-id-crawl status
+		CmdStatus mcs = new CmdStatus(marketId, sc.getStockIdsCmd(), endDate, startDate, true);
+		dsm.addUpdateCrawledItem(mcs, null);
+		//do the (null, enDate) for the current market
+		runAllCmd(curMarketId, startDate, endDate, CMDTYPE_ALL);
+	}
+	
 	public void runAllCmd(Date startDate, Date endDate) throws InterruptedException {
 		StockConfig sc = getStockConfig();
 		Date lastRunDate = null;
@@ -263,84 +285,79 @@ public abstract class StockBase extends TestBase{
 			}
 			//get latest market-ids-crawl
 			CrawledItem ciPreIds = dsm.getCrawledItem(prevMarketId, sc.getStockIdsCmd(), CrawledItem.class);
-			List<String> preIds = (List<String>) ciPreIds.getParam(KEY_IDS);
-			//get the delta
-			deltaIds = new ArrayList<String>();
-			deltaIds.addAll(curIds);
-			deltaIds.removeAll(preIds);
-			
-			//get last all cmd run status, last run date
-			CmdStatus preAllCmdRunCS = CmdStatus.getCmdStatus(dsm, prevMarketId, AllCmdRun_STATUS);
-			if (preAllCmdRunCS==null){//last time AllCmdRunCS failed to generate
-				lastRunDate = endDate;
+			if (ciPreIds==null){
+				logger.error(String.format("can't find crawledItem for cmd %s on market %s, so run as first time", sc.getStockIdsCmd(), prevMarketId));
+				runFirstTime(sc, ciIds, curMarketId);
 			}else{
-				lastRunDate = preAllCmdRunCS.getId().getCreateTime();
-			}
-			logger.info(String.format("market %s has org size %d.", marketId, preIds.size()));
-			if (deltaIds.size()>0){
-				logger.info(String.format("market %s has delta size %d.", marketId, deltaIds.size()));
-				//has new delta market, let's create another 2 markets
-				dsm.addUpdateCrawledItem(ciIds, null);////hbase persistence for curMarket
-				hdfsDsm.addUpdateCrawledItem(ciIds, null);//hdfs persistence for curMarket
-				String deltaMarketId = marketId + idKeySep + strEndDate + "_delta"; //delta market
-				CrawledItem ciDelta = new CrawledItem(CrawledItem.CRAWLITEM_TYPE, "default", 
-						new CrawledItemId(deltaMarketId, sc.getStockIdsCmd(), endDate));
-				ciDelta.addParam(KEY_IDS, deltaIds);
-				dsm.addUpdateCrawledItem(ciDelta, null);
+				List<String> preIds = (List<String>) ciPreIds.getParam(KEY_IDS);
+				//get the delta
+				deltaIds = new ArrayList<String>();
+				deltaIds.addAll(curIds);
+				deltaIds.removeAll(preIds);
 				
-				//update ipodate (lastRunDate,endDate] for curMarket
-				String ipoCmd = sc.getIPODateCmd();
-				if (ipoCmd!=null){
-					runCmd(ipoCmd, curMarketId, getDateString(lastRunDate), getDateString(endDate));
-					CrawledItem prevIPODate = dsm.getCrawledItem(prevMarketId, ipoCmd, CrawledItem.class);
-					CrawledItem curIPODate = dsm.getCrawledItem(curMarketId, ipoCmd, CrawledItem.class);
-					Map<String, String> preMap = (Map<String, String>) prevIPODate.getParam(KEY_IPODate_MAP);
-					Map<String, String> curMap = (Map<String, String>) curIPODate.getParam(KEY_IPODate_MAP);
-					if (curMap==null){
-						curMap = new HashMap<String,String>();
-					}
-					curMap.putAll(preMap);
-					curIPODate.addParam(KEY_IPODate_MAP, curMap);
-					dsm.addUpdateCrawledItem(curIPODate, null);
+				//get last all cmd run status, last run date
+				CmdStatus preAllCmdRunCS = CmdStatus.getCmdStatus(dsm, prevMarketId, AllCmdRun_STATUS);
+				if (preAllCmdRunCS==null){//last time AllCmdRunCS failed to generate
+					lastRunDate = endDate;
+				}else{
+					lastRunDate = preAllCmdRunCS.getId().getCreateTime();
 				}
-				
-				//update the market-command-status
-				mcs.getId().setCreateTime(endDate);
-				dsm.addUpdateCrawledItem(mcs, null);
-				
-				//check the (null, lastRunDate) for the previous market
-				runAllCmd(prevMarketId, startDate, lastRunDate, CMDTYPE_ALL);
-				//apply (null, endDate) for delta market
-				runAllCmd(deltaMarketId, lastRunDate, endDate, CMDTYPE_STATIC);
-				//do the [lastRunDate,endDate) for the current market
-				runAllCmd(curMarketId, lastRunDate, endDate, CMDTYPE_DYNAMIC); //
-			}else{
-				//no new delta market, so the ids is not updated
-				//check the (null, lastRunDate) for the pre market
-				runAllCmd(prevMarketId, startDate, lastRunDate, CMDTYPE_ALL);
-				//do the [lastRunDate,endDate) for the pre market
-				if (CompareUtil.ObjectDiffers(lastRunDate, endDate)){
-					runAllCmd(prevMarketId, lastRunDate, endDate, CMDTYPE_DYNAMIC); //dynamic part
+				logger.info(String.format("market %s has org size %d.", marketId, preIds.size()));
+				if (deltaIds.size()>0){
+					logger.info(String.format("market %s has delta size %d.", marketId, deltaIds.size()));
+					//has new delta market, let's create another 2 markets
+					dsm.addUpdateCrawledItem(ciIds, null);////hbase persistence for curMarket
+					hdfsDsm.addUpdateCrawledItem(ciIds, null);//hdfs persistence for curMarket
+					String deltaMarketId = marketId + idKeySep + strEndDate + "_delta"; //delta market
+					CrawledItem ciDelta = new CrawledItem(CrawledItem.CRAWLITEM_TYPE, "default", 
+							new CrawledItemId(deltaMarketId, sc.getStockIdsCmd(), endDate));
+					ciDelta.addParam(KEY_IDS, deltaIds);
+					dsm.addUpdateCrawledItem(ciDelta, null);
+					
+					//update ipodate (lastRunDate,endDate] for curMarket
+					String ipoCmd = sc.getIPODateCmd();
+					if (ipoCmd!=null){
+						runCmd(ipoCmd, curMarketId, getDateString(lastRunDate), getDateString(endDate));
+						CrawledItem prevIPODate = dsm.getCrawledItem(prevMarketId, ipoCmd, CrawledItem.class);
+						CrawledItem curIPODate = dsm.getCrawledItem(curMarketId, ipoCmd, CrawledItem.class);
+						Map<String, String> preMap = (Map<String, String>) prevIPODate.getParam(KEY_IPODate_MAP);
+						Map<String, String> curMap = (Map<String, String>) curIPODate.getParam(KEY_IPODate_MAP);
+						if (curMap==null){
+							curMap = new HashMap<String,String>();
+						}
+						curMap.putAll(preMap);
+						curIPODate.addParam(KEY_IPODate_MAP, curMap);
+						dsm.addUpdateCrawledItem(curIPODate, null);
+					}
+					
+					//update the market-command-status
+					mcs.getId().setCreateTime(endDate);
+					dsm.addUpdateCrawledItem(mcs, null);
+					
+					//check the (null, lastRunDate) for the previous market
+					runAllCmd(prevMarketId, startDate, lastRunDate, CMDTYPE_ALL);
+					//apply (null, endDate) for delta market
+					runAllCmd(deltaMarketId, lastRunDate, endDate, CMDTYPE_STATIC);
+					//do the [lastRunDate,endDate) for the current market
+					runAllCmd(curMarketId, lastRunDate, endDate, CMDTYPE_DYNAMIC); //
+				}else{
+					logger.info("no delta market.");
+					//no new delta market, so the ids is not updated
+					//check the (null, lastRunDate) for the pre market
+					if (CompareUtil.ObjectDiffers(startDate, lastRunDate)){
+						logger.info(String.format("rerun all cmd for pre-market %s from %s to %s", prevMarketId, startDate, lastRunDate));
+						runAllCmd(prevMarketId, startDate, lastRunDate, CMDTYPE_ALL);	
+					}
+					//do the [lastRunDate,endDate) for the pre market
+					if (CompareUtil.ObjectDiffers(lastRunDate, endDate)){
+						logger.info(String.format("run dynamic cmd for market %s from %s to %s", prevMarketId, lastRunDate, endDate));
+						runAllCmd(prevMarketId, lastRunDate, endDate, CMDTYPE_DYNAMIC); //dynamic part
+					}
 				}
 			}
 		}else{
-			//store the stock-ids for curMarket
 			ciIds = run_browse_idlist(marketId, endDate);
-			ciIds.getId().setId(curMarketId);
-			curIds = (List<String>) ciIds.getParam(KEY_IDS);
-			logger.info(String.format("market %s 1st time fetch with size %d.", marketId, curIds.size()));
-			dsm.addUpdateCrawledItem(ciIds, null);//hbase persistence for curMarket
-			hdfsDsm.addUpdateCrawledItem(ciIds, null);//hdfs persistence for cur market
-			//store ipodate
-			String ipoCmd = sc.getIPODateCmd();
-			if (ipoCmd!=null){
-				runCmd(ipoCmd, curMarketId, getDateString(startDate), getDateString(endDate));
-			}
-			//store the market-id-crawl status
-			mcs = new CmdStatus(marketId, sc.getStockIdsCmd(), endDate, startDate, true);
-			dsm.addUpdateCrawledItem(mcs, null);
-			//do the (null, enDate) for the current market
-			runAllCmd(curMarketId, startDate, endDate, CMDTYPE_ALL);
+			runFirstTime(sc, ciIds, curMarketId);
 		}
 		CmdStatus allCmdRunStatus = new CmdStatus(curMarketId, AllCmdRun_STATUS, endDate, startDate, true);
 		dsm.addUpdateCrawledItem(allCmdRunStatus, null);

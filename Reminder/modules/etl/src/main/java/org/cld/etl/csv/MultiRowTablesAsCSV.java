@@ -22,7 +22,7 @@ public class MultiRowTablesAsCSV extends AbstractCrawlItemToCSV{
 	 * @return
 	 */
 	public static List<String> rowTableToCSV(List<String> vl, int colnum, boolean hasHeader, 
-			List<String> dataTypes, int dateIdx, String dateCompareWithValue, Date startDate, Date endDate){
+			List<String> dataTypes, int dateIdx, Date startDate, Date endDate, AbstractCrawlItemToCSV aci){
 		List<String> retList = new ArrayList<String>();
 		if (vl!=null){
 			StringBuffer sb = null;
@@ -44,7 +44,7 @@ public class MultiRowTablesAsCSV extends AbstractCrawlItemToCSV{
 					String dataType = dataTypes.get(coln);
 					try{
 						String v = TableUtil.getValue(vl.get(i), dataType);
-						if (coln==dateIdx && !checkDate(v, dateCompareWithValue, startDate, endDate)){
+						if (coln==dateIdx && !checkDate(v, startDate, endDate, aci)){
 							sb = null;
 							i = (row+1) * colnum;
 							continue;
@@ -84,7 +84,7 @@ public class MultiRowTablesAsCSV extends AbstractCrawlItemToCSV{
 			
 			List<String> strs = null;
 			if (ls!=null && ls.size()>=colnum){
-				strs = rowTableToCSV(ls, colnum, hasHeader, dataTypes, dIdx, dateCompareWithValue, startDate, endDate);
+				strs = rowTableToCSV(ls, colnum, hasHeader, dataTypes, dIdx, startDate, endDate, this);
 			}
 			if (strs!=null){
 				if (rowcsvs!=null){

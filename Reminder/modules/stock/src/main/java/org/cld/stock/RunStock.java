@@ -63,8 +63,11 @@ public class RunStock {
 			StockBase sb = null;
 			if (SINA_STOCK_BASE.equals(stockBase)){
 				sb = new SinaStockBase(propFile, marketId, startDate, endDate);
-			}else{
+			}else if (NASDAQ_STOCK_BASE.equals(stockBase)){
 				sb = new NasdaqStockBase(propFile, marketId, startDate, endDate);
+			}else{
+				logger.error(String.format("stockBase %s not supported.", stockBase));
+				return;
 			}
 			
 			int argIdx = 6;

@@ -159,33 +159,35 @@ public class HadoopTaskLauncher {
 	
 	public static String executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> hadoopParams, 
 			String sourceName, boolean sync, String mapperClass, String reducerClass){
-		TaskMgr taskMgr = nc.getTaskMgr();
-		Configuration conf = getHadoopConf(nc);
-		//generate task list file
-		try {
-			//generate the task file
-			FileSystem fs = FileSystem.get(conf);
-			String taskFileName = null;
-			StringBuffer fileContent = new StringBuffer();
-			for (Task t: taskList){
-				String fn = TaskUtil.taskToJson(t);
-				fileContent.append(fn).append("\n");
+		if (taskList.size()>0){
+			TaskMgr taskMgr = nc.getTaskMgr();
+			Configuration conf = getHadoopConf(nc);
+			//generate task list file
+			try {
+				//generate the task file
+				FileSystem fs = FileSystem.get(conf);
+				String taskFileName = null;
+				StringBuffer fileContent = new StringBuffer();
+				for (Task t: taskList){
+					String fn = TaskUtil.taskToJson(t);
+					fileContent.append(fn).append("\n");
+				}
+				if (sourceName==null) sourceName = getSourceName(taskList);
+				String escapedName = StringUtil.escapeFileName(sourceName);
+				taskFileName = taskMgr.getHdfsTaskFolder() + "/" + escapedName;
+				logger.info(String.format("task file: %s with length %d generated.", taskFileName, fileContent.length()));
+				Path fileNamePath = new Path(taskFileName);
+				FSDataOutputStream fin = fs.create(fileNamePath);
+				fin.writeBytes(fileContent.toString());
+				fin.close();
+				Task t = taskList.get(0);
+				updateHadoopParams(t, hadoopParams);
+				boolean multipleOutput = hasMultipleOutput(t);
+				String outputDir = getOutputDir(t);
+				return executeTasks(nc, hadoopParams, new String[]{taskFileName}, multipleOutput, outputDir, sync, mapperClass, reducerClass, true);
+			}catch (Exception e) {
+				logger.error("", e);
 			}
-			if (sourceName==null) sourceName = getSourceName(taskList);
-			String escapedName = StringUtil.escapeFileName(sourceName);
-			taskFileName = taskMgr.getHdfsTaskFolder() + "/" + escapedName;
-			logger.info(String.format("task file: %s with length %d generated.", taskFileName, fileContent.length()));
-			Path fileNamePath = new Path(taskFileName);
-			FSDataOutputStream fin = fs.create(fileNamePath);
-			fin.writeBytes(fileContent.toString());
-			fin.close();
-			Task t = taskList.get(0);
-			updateHadoopParams(t, hadoopParams);
-			boolean multipleOutput = hasMultipleOutput(t);
-			String outputDir = getOutputDir(t);
-			return executeTasks(nc, hadoopParams, new String[]{taskFileName}, multipleOutput, outputDir, sync, mapperClass, reducerClass, true);
-		}catch (Exception e) {
-			logger.error("", e);
 		}
 		return null;
 	}

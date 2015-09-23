@@ -40,6 +40,4 @@ public class ParsedBrowsePrd {
 	public Map<String, ParamType> getParamMap() {
 		return paramMap;
 	}
-
-
 }

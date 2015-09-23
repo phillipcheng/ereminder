@@ -27,7 +27,9 @@ import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.datacrawl.util.HtmlPageResult;
 import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.datacrawl.util.VerifyPageByXPath;
+import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.Product;
+import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.StringUtil;
 import org.xml.mytaskdef.ConfKey;
@@ -39,6 +41,7 @@ import org.xml.taskdef.AttributeType;
 import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.BrowseDetailType;
 import org.xml.taskdef.ClickStreamType;
+import org.xml.taskdef.CsvTransformType;
 import org.xml.taskdef.ValueType;
 
 public class ProductAnalyzeUtil {
@@ -191,12 +194,26 @@ public class ProductAnalyzeUtil {
 		}
 	}
 	
+	private static boolean taskNeedFilter(ParsedBrowsePrd taskDef, CrawledItem ci){
+		if ((taskDef.getPdtAttrMap().containsKey(AbstractCrawlItemToCSV.FIELD_NAME_ColDateIdx)
+				|| taskDef.getPdtAttrMap().containsKey(AbstractCrawlItemToCSV.FIELD_NAME_RowDateIdx)) 
+			&& ci.getParam(AbstractCrawlItemToCSV.FIELD_NAME_STARTDATE)!=null)
+			return true;
+		return false;
+	}
 	public static void callbackReadDetails(WebClient wc, HtmlPage inpage, Product product, Task task, 
-			ParsedBrowsePrd taskDef, CrawlConf cconf) throws InterruptedException {	
+			ParsedBrowsePrd taskDef, CrawlConf cconf, CsvTransformType csvTransform) throws InterruptedException {	
 		//set the user attributes in case there is default values
 		BrowseDetailType bdt = taskDef.getBrowsePrdTaskType();
 		CrawlTaskEval.setInitAttributes(bdt.getBaseBrowseTask().getUserAttribute(), product.getParamMap(), task.getParamMap());	
-		
+		AbstractCrawlItemToCSV cicsv = null;
+		if (csvTransform!=null){
+			try {
+				cicsv = (AbstractCrawlItemToCSV) Class.forName(csvTransform.getTransformClass()).newInstance();
+			}catch(Exception e){
+				logger.error("", e);
+			}
+		}
 		Map<String, List<? extends DomNode>> pageMap = null;
 		int totalPage = -1;
 		if (product.getLastUrl()==null){
@@ -206,7 +223,6 @@ public class ProductAnalyzeUtil {
 			product.setTotalPage(totalPage);
 		}else{
 			pageMap = new HashMap<String, List<? extends DomNode>>();
-			
 			HtmlPageResult hpResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(product.getLastUrl(), null, null), 
 					 new VerifyPageByXPath(getPageVerifyXPaths(task, taskDef)), null, task.getParsedTaskDef(), cconf);
 			if (hpResult.getErrorCode()==HtmlPageResult.SUCCSS){
@@ -222,7 +238,6 @@ public class ProductAnalyzeUtil {
 		if (product.getTotalPage()>0){
 			tryPattern = bdt.isTryPattern();
 		}
-		boolean externalistFinished=false;
 		HtmlPage curPage = (HtmlPage) pageMap.get(ConfKey.CURRENT_PAGE).get(0);
 		boolean finalPage=true;
 		//set variable nextPage, later it will be set while doing the getNextPage
@@ -238,6 +253,7 @@ public class ProductAnalyzeUtil {
 		int curPageNum = 1;
 		//(totalPage not set or curPage less than totalPage) & curPage not null & not final & not finished
 		boolean useTotalPage=false;
+		boolean externalistFinished=false;
 		while (curPage!=null && !externalistFinished){
 			boolean goon=false;
 			if (curPageNum<=totalPage){//count page 1st priority
@@ -253,15 +269,17 @@ public class ProductAnalyzeUtil {
 				pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
 				externalistFinished = CrawlTaskEval.setUserAttributes(pageMap, bdt.getBaseBrowseTask().getUserAttribute(), 
 						product.getParamMap(), cconf, task.getParamMap(), tryPattern);
+				if (taskNeedFilter(taskDef, product) && cicsv!=null){//check filter conditions (startDate, etc) to prevent useless crawl
+					cicsv.getCSV(product, null);
+					if (cicsv.isFiltered()){
+						externalistFinished = true;
+						logger.info("filter condition meet do not crawl further.");
+					}
+				}
 				logger.info("curPageNum:" + curPageNum + ", totalPage:" + totalPage);
 				logger.debug(product.getParamMap());
 				if (externalistFinished)
 					break;
-				/*
-				if (curPageNum % 5 ==0){//for every 10 pages, close all windows to save memory
-					CrawlUtil.closeWebClient(wc);
-					wc = CrawlUtil.getWebClient(cconf, task.getParsedTaskDef().getSkipUrls(), bdt.getBaseBrowseTask().isEnableJS());
-				}*/
 				curPage=getNextPage(wc, curPage, task, taskDef, cconf, product);
 				curPageNum ++;
 				if (bdt.getLastPageCondition()!=null){
@@ -272,7 +290,7 @@ public class ProductAnalyzeUtil {
 			}
 		}
 		
-		if (finalPage && curPage!=null && 
+		if (!externalistFinished && finalPage && curPage!=null && 
 				(curPageNum<=totalPage||totalPage==-1)){//totalPage not set or totalPage set and curPage<=totalPage
 			//operate on the final page
 			List<HtmlPage> pagelist = new ArrayList<HtmlPage>();

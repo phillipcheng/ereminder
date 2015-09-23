@@ -6,7 +6,7 @@ import org.cld.stock.StockConfig;
 import org.cld.stock.nasdaq.NasdaqStockConfig;
 
 public class NasdaqStockBase extends StockBase{
-	private StockConfig sc = new NasdaqStockConfig();
+	private static StockConfig sc = new NasdaqStockConfig();
 	
 	@Override
 	public StockConfig getStockConfig() {

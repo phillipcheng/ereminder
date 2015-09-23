@@ -7,7 +7,7 @@ set mapred.input.dir.recursive=true;
 
 --
 drop table if exists SinaShareBonusDividend;
-create external table SinaShareBonusDividend(stockid String, annouceDate Date, SongGu decimal(10,2), ZhuanZeng decimal(10,2), Devidend decimal(10,2), progress String, ExDate Date, RegDate Date, XStockPublicDate Date, comment String) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-issue-sharebonus/dividend';
+create external table SinaShareBonusDividend(stockid String, dt Date, SongGu decimal(10,2), ZhuanZeng decimal(10,2), Devidend decimal(10,2), progress String, ExDate Date, RegDate Date, XStockPublicDate Date, comment String) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-issue-sharebonus/dividend';
 
 --
 drop table if exists SinaShareBonusAlloted;

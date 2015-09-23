@@ -65,7 +65,7 @@ public class MultiVarRowTablesToCSV extends AbstractCrawlItemToCSV{
 					while (idx<vl.size()){
 						int rs = rsvl.get(row++);
 						String v1 = vl.get(idx++);
-						if (rowDateIdx==0 && !checkDate(v1, dateCompareWithValue, startDate, endDate)){//skip the whole row span block
+						if (rowDateIdx==0 && !checkDate(v1, startDate, endDate, this)){//skip the whole row span block
 							idx += rs*(colNum-1);
 							continue;
 						}
@@ -75,7 +75,7 @@ public class MultiVarRowTablesToCSV extends AbstractCrawlItemToCSV{
 							for (int j=0; j<colNum-1; j++){
 								sb.append(",");
 								String v = vl.get(idx++);
-								if ((j+1)==rowDateIdx && !checkDate(v, dateCompareWithValue, startDate, endDate)){
+								if ((j+1)==rowDateIdx && !checkDate(v, startDate, endDate, this)){
 									sb = new StringBuffer();//clean buffer
 									idx = idx -1 + colNum-1-j;//skip to next line
 									break;

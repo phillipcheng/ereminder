@@ -24,7 +24,6 @@ import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.NextPage;
-import org.cld.datacrawl.task.BrowseProductTaskConf;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.Product;
@@ -193,7 +192,8 @@ public class ProductAnalyze{
 			}
 			
 			//call back
-			ProductAnalyzeUtil.callbackReadDetails(wc, details, product, task, taskDef, cconf);
+			CsvTransformType csvTransform = bdt.getBaseBrowseTask().getCsvtransform();
+			ProductAnalyzeUtil.callbackReadDetails(wc, details, product, task, taskDef, cconf, csvTransform);
 			product.getId().setCreateTime(new Date());
 			logger.debug("product got:" + product);
 			boolean goNext=false;
@@ -207,7 +207,6 @@ public class ProductAnalyze{
 			}
 			product.setGoNext(goNext);
 			if (!goNext){//only transform for final task
-				CsvTransformType csvTransform = bdt.getBaseBrowseTask().getCsvtransform();
 				if (csvTransform!=null && csvTransform.getTransformClass()!=null){
 					//do the transform and set to crawledItem.csv
 					try {

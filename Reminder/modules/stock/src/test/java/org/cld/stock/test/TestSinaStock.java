@@ -56,9 +56,7 @@ public class TestSinaStock {
 	
 	//
 	@Test
-	public void testInitTestMarket() throws Exception{
-		ssb.getDsm().addUpdateCrawledItem(ssb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
-	}
+	public void testInitTestMarket() throws Exception{ssb.getDsm().addUpdateCrawledItem(ssb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);}
 	@Test
 	public void testRunAllCmd1() throws Exception{
 		ssb.runAllCmd(SinaTestStockConfig.date_Test_D1, SinaTestStockConfig.date_Test_D2);
@@ -245,7 +243,7 @@ public class TestSinaStock {
 	
 	@Test //Stock holder
 	public void run_stock_holder1(){
-		ssb.runCmd(SinaStockConfig.SINA_STOCK_STOCK_HOLDER, SinaStockConfig.MarketId_HS_Test, null, START_DATE);
+		ssb.runCmd(SinaStockConfig.SINA_STOCK_STOCK_HOLDER, SinaStockConfig.MarketId_HS_Test, "2014-11-01", "2015-11-01");
 	}
 	@Test
 	public void run_stock_holder2(){

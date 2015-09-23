@@ -3,6 +3,7 @@ package org.cld.stock;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
+import java.util.TimeZone;
 
 public interface StockConfig {
 	//
@@ -39,4 +40,7 @@ public interface StockConfig {
 	public String getDatePart(String marketId, Date startDate, Date endDate);
 	
 	public String getByQuarterSQLByCmd(String cmd, int year, int quarter);
+	
+	public TimeZone getTimeZone();
+	public Date getLatestOpenMarketDate(Date d);
 }

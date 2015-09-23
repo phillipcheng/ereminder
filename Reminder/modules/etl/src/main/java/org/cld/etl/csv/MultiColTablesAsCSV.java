@@ -51,7 +51,7 @@ public class MultiColTablesAsCSV extends AbstractCrawlItemToCSV{
 			
 			List<String> strs = null;
 			if (ls!=null && ls.size()>=colnum){
-				strs = SpreadColTableAsCSV.colTableToCSV(ls, colnum, hasHeader, genHeader, dataTypes, dIdx, dateCompareWithValue, startDate, endDate);
+				strs = SpreadColTableAsCSV.colTableToCSV(ls, colnum, hasHeader, genHeader, dataTypes, dIdx, startDate, endDate, this);
 			}
 			if (strs!=null){
 				if (colcsvs!=null){

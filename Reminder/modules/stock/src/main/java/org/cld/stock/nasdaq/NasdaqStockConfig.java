@@ -1,12 +1,16 @@
 package org.cld.stock.nasdaq;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.StockConfig;
+import org.cld.stock.StockUtil;
+import org.cld.util.ListUtil;
 
 
 public class NasdaqStockConfig implements StockConfig{
@@ -93,9 +97,7 @@ public class NasdaqStockConfig implements StockConfig{
 	};
 	
 	public static String[] syncConf = new String[]{}; //other cmd need this result
-	//public static String[] allConf = (String[]) ListUtil.concatAll(corpConfs, quoteConfs, issueConfs, holderConfs, frConfs);
-	public static String[] allConf = new String[]{};
-	
+	public static String[] allConf = (String[]) ListUtil.concatAll(corpConfs, quoteConfs, issueConfs, holderConfs, frConfs);
 	
 	@Override
 	public String getTestMarketId() {
@@ -195,34 +197,32 @@ public class NasdaqStockConfig implements StockConfig{
 		}
 		return month;
 	}
-	private String getDate(int year, int quarter){
-		String dt = null;
-		if (quarter == 1){
-			dt = "03-31";
-		}else if (quarter ==2){
-			dt = "06-30";
-		}else if (quarter == 3){
-			dt = "09-30";
-		}else if (quarter == 4){
-			dt = "12-31";
-		}else{
-			logger.error(String.format("wrong quarter %d", quarter));
-		}
-		return year + "-" + dt;
-	}
+
 	@Override
 	public String getByQuarterSQLByCmd(String cmd, int year, int quarter) {
 		if (BALANCE_SHEET.equals(cmd)){
-			return String.format("select distinct stockid from NasdaqFrQuarterBalanceSheet where reportPeriod='%s'", getDate(year,quarter));
+			return String.format("select distinct stockid from NasdaqFrQuarterBalanceSheet where reportPeriod='%s'", StockUtil.getDate(year,quarter));
 		}else if (INCOME_STATEMENT.equals(cmd)){
-			return String.format("select distinct stockid from NasdaqFrQuarterIncomeStatement where reportPeriod='%s'", getDate(year,quarter));
+			return String.format("select distinct stockid from NasdaqFrQuarterIncomeStatement where reportPeriod='%s'", StockUtil.getDate(year,quarter));
 		}else if (CASH_FLOW.equals(cmd)){
-			return String.format("select distinct stockid from NasdaqFrQuarterCashFlow where reportPeriod='%s'", getDate(year,quarter));
+			return String.format("select distinct stockid from NasdaqFrQuarterCashFlow where reportPeriod='%s'", StockUtil.getDate(year,quarter));
 		}else if (REVENUE.equals(cmd)){
 			return String.format("select distinct stockid from NasdaqFrQuarterRevenue where year='%s' and quarter='%s'", year, getMonth(quarter));
 		}else if (HOLDING_INSTITUTIONAL.equals(cmd)){
-			return String.format("select distinct stockid from NasdaqHoldingInstitutional where lastDate='%s'", getDate(year,quarter));
+			return String.format("select distinct stockid from NasdaqHoldingInstitutional where lastDate='%s'", StockUtil.getDate(year,quarter));
 		}
 		return null;
+	}
+	@Override
+	public TimeZone getTimeZone() {
+		return TimeZone.getTimeZone("EST");
+	}
+	
+	@Override
+	public Date getLatestOpenMarketDate(Date d) {
+		while (!StockUtil.isOpenDay(d, StockUtil.USHolidays)){
+			d = StockUtil.getLastOpenDay(d, StockUtil.USHolidays);
+		}
+		return d;
 	}
 }

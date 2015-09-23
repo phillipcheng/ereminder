@@ -24,7 +24,6 @@ public abstract class AbstractCrawlItemToCSV {
 	public static final String FIELD_NAME_ColDateIdx="ColDateIdx";//the idx of the date field of the colum table
 	public static final String FIELD_NAME_ROWCSV="RowCsvName";//name of row csv file
 	public static final String FIELD_NAME_RowDateIdx="RowDateIdx";//the idx of the date field of the row table
-	public static final String FIELD_NAME_DATECOMPARE_WTIH="dateCompareWith";//the date field compare with which value, can be parameter 'year', if not specified then startDate and endDate
 	public static final String FIELD_NAME_STATIC = "static";
 	
 	public static final String KEY_GENHEADER="GenHeader";
@@ -45,7 +44,7 @@ public abstract class AbstractCrawlItemToCSV {
 	protected boolean genHeader = false;
 	protected boolean hasHeader = true;
 	protected String keyid = KEY_VALUE_UNDEFINED;
-	protected String dateCompareWithValue = null;
+	private boolean filtered = false;
 	
 	private static Logger logger =  LogManager.getLogger(AbstractCrawlItemToCSV.class);
 	
@@ -79,17 +78,16 @@ public abstract class AbstractCrawlItemToCSV {
 		if (key!=null){
 			keyid = key;
 		}
-		String dateCompareWith = (String)ci.getParam(FIELD_NAME_DATECOMPARE_WTIH);
-		if (dateCompareWith!=null){
-			dateCompareWithValue = ci.getParam(dateCompareWith).toString();
-		}
 	}
 	
 	//true: date belongs [startDate, endDate)
-	public static boolean checkDate(String date, String dateCompareWithValue, Date startDate, Date endDate){
+	//false, the date is filtered out
+	public static boolean checkDate(String date, Date startDate, Date endDate, AbstractCrawlItemToCSV aci){
 		try {
-			if (dateCompareWithValue==null){
-				Date d = null;
+			Date d = null;
+			if ("".equals(date)){//ignore empty compare date records
+				return false;
+			}else{
 				try {
 					d = sdf.parse(date);
 				}catch(ParseException pe){
@@ -97,6 +95,7 @@ public abstract class AbstractCrawlItemToCSV {
 				}
 				if (startDate!=null){
 					if (startDate.after(d)){
+						aci.setFiltered(true);
 						return false;
 					}
 				}
@@ -108,12 +107,6 @@ public abstract class AbstractCrawlItemToCSV {
 					}
 				}else{
 					//endDate is null
-					return false;
-				}
-			}else{
-				if (date.contains(dateCompareWithValue)){
-					return true; //date contains the compare value
-				}else{
 					return false;
 				}
 			}
@@ -131,5 +124,13 @@ public abstract class AbstractCrawlItemToCSV {
 			dts.add(AbstractCrawlItemToCSV.DATA_TYPE_NUMBER);
 		}
 		return dts;
+	}
+
+	public boolean isFiltered() {
+		return filtered;
+	}
+
+	public void setFiltered(boolean filtered) {
+		this.filtered = filtered;
 	}
 }

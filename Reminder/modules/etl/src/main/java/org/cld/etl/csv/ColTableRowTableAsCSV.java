@@ -126,7 +126,7 @@ public class ColTableRowTableAsCSV extends AbstractCrawlItemToCSV{
 							rkfcKeys.add(k);
 						}
 						
-						if (i==colDateIdx && !checkDate(v, dateCompareWithValue, startDate, endDate)){//skip this line
+						if (i==colDateIdx && !checkDate(v, startDate, endDate, this)){//skip this line
 							sb = null;
 							skipRowTables = true;
 							break;
@@ -186,7 +186,7 @@ public class ColTableRowTableAsCSV extends AbstractCrawlItemToCSV{
 							boolean skipRow = false;
 							if (hasColumnTable){
 								for (String rkfcv:rkfcValues){
-									if (p==rowDateIdx && !checkDate(rkfcv, dateCompareWithValue, startDate, endDate)){//skip this line
+									if (p==rowDateIdx && !checkDate(rkfcv, startDate, endDate, this)){//skip this line
 										sb = null;//clean line
 										idx = idx + rownum;//
 										skipRow=true;
@@ -202,7 +202,7 @@ public class ColTableRowTableAsCSV extends AbstractCrawlItemToCSV{
 							if (!skipRow){
 								for (int j=0; j<rownum; j++){
 									String v = ls.get(idx++);
-									if (p==rowDateIdx && !checkDate(v, dateCompareWithValue, startDate, endDate)){//skip this line
+									if (p==rowDateIdx && !checkDate(v, startDate, endDate, this)){//skip this line
 										sb = null;//clean line
 										idx = idx -1 + rownum - j;//idx does not need to reset, since idx has been ++, so remove 1 first
 										break;

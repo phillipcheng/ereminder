@@ -7,6 +7,8 @@
 			<param name="stockid"/>
 			<param name="startDate" type="string"/>
 			<param name="endDate" type="string"/>
+			<param name="year" type="int" value="0"/>
+			<param name="quarter" type="int" value="0"/>
 			<startUrl value="http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CirculateStockHolder/stockid/[stockid].phtml"/>
 			<userAttribute name="id">
 				<value value="stockid" toType="string" fromScope="param"/>
@@ -44,6 +46,13 @@
 			<csvtransform transformClass="org.cld.etl.csv.ColTableRowTableAsCSV" outputType="byJobMulti"><!-- 1 file -->
 				<outputDir value="raw/[startDate]_[endDate]/sina-stock-stock-holder-circulate/"/>
 			</csvtransform>
+			<filter>function getDate(q) {
+    if (q=='1') return '-03-31'
+    if (q=='2') return '-06-30'
+    if (q=='3') return '-09-30'
+    if (q=='4') return '-12-31'
+}
+year==0 || quarter==0 || arr[0]==(year+getDate(quarter))</filter>
 		</baseBrowseTask>
 	</PrdTask>
 </Tasks>
