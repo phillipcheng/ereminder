@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="sina-stock-ids" productType="default">
 	<PrdTask tryPattern="false">
-		<baseBrowseTask enableJS="true" taskName="stock-list" mbMemoryNeeded="512">
+		<baseBrowseTask enableJS="true" dsm="nothing" taskName="stock-list" mbMemoryNeeded="512">
 			<param name="marketId"/>
 			<startUrl value="http://money.finance.sina.com.cn/mkt/#[marketId]"/>
 			<userAttribute name="ids">

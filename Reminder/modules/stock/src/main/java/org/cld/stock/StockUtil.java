@@ -1,53 +1,23 @@
 package org.cld.stock;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
-
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.util.DateTimeUtil;
 
 
 public class StockUtil {
-	/**
-	 * US 
-	 * TimeZone: ET
-	 * 2014	Holiday	Status
-		January 01, 2014	New Year's Day (Observed)	Closed
-		January 20, 2014	Martin Luther King, Jr. Day	Closed
-		February 17, 2014	President's Day - U.S.	Closed
-		April 18, 2014	Good Friday	Closed
-		May 26, 2014	Memorial Day - U.S.	Closed
-					July 03, 2014	Early Close - U.S.	1:00 p.m.
-		July 04, 2014	Independence Day - U.S.	Closed
-		September 01, 2014	Labor Day - U.S.	Closed
-		November 27, 2014	Thanksgiving Day - U.S.	Closed
-					November 28, 2014	Early Close - U.S.	1:00 p.m.
-					December 24, 2014	Early Close - U.S.	1:00 p.m.
-		December 25, 2014	Christmas Day	Closed
-
-	 * 2015	Holiday	Status
-		January 01, 2015	New Year's Day (Observed)	Closed
-		January 19, 2015	Martin Luther King, Jr. Day	Closed
-		February 16, 2015	President's Day - U.S.	Closed
-		April 3, 2015	Good Friday	Closed
-		May 25, 2015	Memorial Day - U.S.	Closed
-		July 03, 2015	Independence Day - U.S. (Observed)	Closed
-		September 07, 2015	Labor Day - U.S.	Closed
-		November 26, 2015	Thanksgiving Day - U.S.	Closed
-				November 27, 2015	Early Close - U.S.	1:00 p.m.
-				December 24, 2015	Christmas Eve	1:00 p.m.
-		December 25, 2015	Christmas Day	Closed
-	 */
 
 	protected static Logger logger =  LogManager.getLogger(StockUtil.class);
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
 	//http://markets.on.nytimes.com/research/markets/holidays/holidays.asp?display=market&exchange=SHH
-	public static List<Date> USHolidays = new ArrayList<Date>();
+	public static Set<Date> USHolidays = new HashSet<Date>();
 	static{
 		try{
 			USHolidays.add(sdf.parse("2014-01-01"));
@@ -74,9 +44,232 @@ public class StockUtil {
 		}
 	}
 	
-	public static List<Date> CNHolidays = new ArrayList<Date>();
+	public static Set<Date> CNHolidays = new HashSet<Date>();
 	static{
 		try{
+			//
+			CNHolidays.add(sdf.parse("2005-01-03"));
+			CNHolidays.add(sdf.parse("2005-02-07"));
+			CNHolidays.add(sdf.parse("2005-02-08"));
+			CNHolidays.add(sdf.parse("2005-02-09"));
+			CNHolidays.add(sdf.parse("2005-02-10"));
+			CNHolidays.add(sdf.parse("2005-02-11"));
+			CNHolidays.add(sdf.parse("2005-02-12"));
+			CNHolidays.add(sdf.parse("2005-02-13"));
+			CNHolidays.add(sdf.parse("2005-02-14"));
+			CNHolidays.add(sdf.parse("2005-02-15"));
+			CNHolidays.add(sdf.parse("2005-05-01"));
+			CNHolidays.add(sdf.parse("2005-05-02"));
+			CNHolidays.add(sdf.parse("2005-05-03"));
+			CNHolidays.add(sdf.parse("2005-05-04"));
+			CNHolidays.add(sdf.parse("2005-05-05"));
+			CNHolidays.add(sdf.parse("2005-05-06"));
+			CNHolidays.add(sdf.parse("2005-05-07"));
+			CNHolidays.add(sdf.parse("2005-10-01"));
+			CNHolidays.add(sdf.parse("2005-10-02"));
+			CNHolidays.add(sdf.parse("2005-10-03"));
+			CNHolidays.add(sdf.parse("2005-10-04"));
+			CNHolidays.add(sdf.parse("2005-10-05"));
+			CNHolidays.add(sdf.parse("2005-10-06"));
+			CNHolidays.add(sdf.parse("2005-10-07"));
+			CNHolidays.add(sdf.parse("2005-10-08"));
+			CNHolidays.add(sdf.parse("2005-10-09"));
+			//
+			CNHolidays.add(sdf.parse("2006-01-02"));
+			CNHolidays.add(sdf.parse("2006-01-03"));
+			CNHolidays.add(sdf.parse("2006-01-26"));
+			CNHolidays.add(sdf.parse("2006-01-27"));
+			CNHolidays.add(sdf.parse("2006-01-28"));
+			CNHolidays.add(sdf.parse("2006-01-29"));
+			CNHolidays.add(sdf.parse("2006-01-30"));
+			CNHolidays.add(sdf.parse("2006-01-31"));
+			CNHolidays.add(sdf.parse("2006-02-01"));
+			CNHolidays.add(sdf.parse("2006-02-02"));
+			CNHolidays.add(sdf.parse("2006-02-03"));
+			CNHolidays.add(sdf.parse("2006-05-01"));
+			CNHolidays.add(sdf.parse("2006-05-02"));
+			CNHolidays.add(sdf.parse("2006-05-03"));
+			CNHolidays.add(sdf.parse("2006-05-04"));
+			CNHolidays.add(sdf.parse("2006-05-05"));
+			CNHolidays.add(sdf.parse("2006-10-02"));
+			CNHolidays.add(sdf.parse("2006-10-03"));
+			CNHolidays.add(sdf.parse("2006-10-04"));
+			CNHolidays.add(sdf.parse("2006-10-05"));
+			CNHolidays.add(sdf.parse("2006-10-06"));
+			//
+			CNHolidays.add(sdf.parse("2007-01-01"));
+			CNHolidays.add(sdf.parse("2007-01-02"));
+			CNHolidays.add(sdf.parse("2007-01-03"));
+			CNHolidays.add(sdf.parse("2007-02-19"));
+			CNHolidays.add(sdf.parse("2007-02-20"));
+			CNHolidays.add(sdf.parse("2007-02-21"));
+			CNHolidays.add(sdf.parse("2007-02-22"));
+			CNHolidays.add(sdf.parse("2007-02-23"));
+			CNHolidays.add(sdf.parse("2007-05-01"));
+			CNHolidays.add(sdf.parse("2007-05-02"));
+			CNHolidays.add(sdf.parse("2007-05-03"));
+			CNHolidays.add(sdf.parse("2007-05-04"));
+			CNHolidays.add(sdf.parse("2007-05-05"));
+			CNHolidays.add(sdf.parse("2007-05-06"));
+			CNHolidays.add(sdf.parse("2007-05-07"));
+			CNHolidays.add(sdf.parse("2007-10-01"));
+			CNHolidays.add(sdf.parse("2007-10-02"));
+			CNHolidays.add(sdf.parse("2007-10-03"));
+			CNHolidays.add(sdf.parse("2007-10-04"));
+			CNHolidays.add(sdf.parse("2007-10-05"));
+			CNHolidays.add(sdf.parse("2007-10-06"));
+			CNHolidays.add(sdf.parse("2007-10-07"));
+			CNHolidays.add(sdf.parse("2007-12-31"));
+			//
+			CNHolidays.add(sdf.parse("2008-01-01"));
+			CNHolidays.add(sdf.parse("2008-02-06"));
+			CNHolidays.add(sdf.parse("2008-02-07"));
+			CNHolidays.add(sdf.parse("2008-02-08"));
+			CNHolidays.add(sdf.parse("2008-02-09"));
+			CNHolidays.add(sdf.parse("2008-02-10"));
+			CNHolidays.add(sdf.parse("2008-02-11"));
+			CNHolidays.add(sdf.parse("2008-02-12"));
+			CNHolidays.add(sdf.parse("2008-04-04"));
+			CNHolidays.add(sdf.parse("2008-05-01"));
+			CNHolidays.add(sdf.parse("2008-05-02"));
+			CNHolidays.add(sdf.parse("2008-06-09"));
+			CNHolidays.add(sdf.parse("2008-09-15"));
+			CNHolidays.add(sdf.parse("2008-09-29"));
+			CNHolidays.add(sdf.parse("2008-09-30"));
+			CNHolidays.add(sdf.parse("2008-10-01"));
+			CNHolidays.add(sdf.parse("2008-10-02"));
+			CNHolidays.add(sdf.parse("2008-10-03"));
+			//
+			CNHolidays.add(sdf.parse("2009-01-01"));
+			CNHolidays.add(sdf.parse("2009-01-02"));
+			CNHolidays.add(sdf.parse("2009-01-25"));
+			CNHolidays.add(sdf.parse("2009-01-26"));
+			CNHolidays.add(sdf.parse("2009-01-27"));
+			CNHolidays.add(sdf.parse("2009-01-28"));
+			CNHolidays.add(sdf.parse("2009-01-29"));
+			CNHolidays.add(sdf.parse("2009-01-30"));
+			CNHolidays.add(sdf.parse("2009-01-31"));
+			CNHolidays.add(sdf.parse("2009-04-06"));
+			CNHolidays.add(sdf.parse("2009-05-01"));
+			CNHolidays.add(sdf.parse("2009-05-02"));
+			CNHolidays.add(sdf.parse("2009-05-28"));
+			CNHolidays.add(sdf.parse("2009-05-29"));
+			CNHolidays.add(sdf.parse("2009-10-01"));
+			CNHolidays.add(sdf.parse("2009-10-02"));
+			CNHolidays.add(sdf.parse("2009-10-03"));
+			CNHolidays.add(sdf.parse("2009-10-04"));
+			CNHolidays.add(sdf.parse("2009-10-05"));
+			CNHolidays.add(sdf.parse("2009-10-06"));
+			CNHolidays.add(sdf.parse("2009-10-07"));
+			CNHolidays.add(sdf.parse("2009-10-08"));
+			//
+			CNHolidays.add(sdf.parse("2010-01-01"));
+			CNHolidays.add(sdf.parse("2010-01-02"));
+			CNHolidays.add(sdf.parse("2010-01-03"));
+			CNHolidays.add(sdf.parse("2010-02-13"));
+			CNHolidays.add(sdf.parse("2010-02-14"));
+			CNHolidays.add(sdf.parse("2010-02-15"));
+			CNHolidays.add(sdf.parse("2010-02-16"));
+			CNHolidays.add(sdf.parse("2010-02-17"));
+			CNHolidays.add(sdf.parse("2010-02-18"));
+			CNHolidays.add(sdf.parse("2010-02-19"));
+			CNHolidays.add(sdf.parse("2010-02-20"));
+			CNHolidays.add(sdf.parse("2010-02-21"));
+			CNHolidays.add(sdf.parse("2010-04-03"));
+			CNHolidays.add(sdf.parse("2010-04-04"));
+			CNHolidays.add(sdf.parse("2010-04-05"));
+			CNHolidays.add(sdf.parse("2010-05-01"));
+			CNHolidays.add(sdf.parse("2010-05-02"));
+			CNHolidays.add(sdf.parse("2010-05-03"));
+			CNHolidays.add(sdf.parse("2010-06-14"));
+			CNHolidays.add(sdf.parse("2010-06-15"));
+			CNHolidays.add(sdf.parse("2010-06-16"));
+			CNHolidays.add(sdf.parse("2010-09-22"));
+			CNHolidays.add(sdf.parse("2010-09-23"));
+			CNHolidays.add(sdf.parse("2010-09-24"));
+			CNHolidays.add(sdf.parse("2010-10-01"));
+			CNHolidays.add(sdf.parse("2010-10-02"));
+			CNHolidays.add(sdf.parse("2010-10-03"));
+			CNHolidays.add(sdf.parse("2010-10-04"));
+			CNHolidays.add(sdf.parse("2010-10-05"));
+			CNHolidays.add(sdf.parse("2010-10-06"));
+			CNHolidays.add(sdf.parse("2010-10-07"));
+			//
+			CNHolidays.add(sdf.parse("2011-01-03"));
+			CNHolidays.add(sdf.parse("2011-02-02"));
+			CNHolidays.add(sdf.parse("2011-02-03"));
+			CNHolidays.add(sdf.parse("2011-02-04"));
+			CNHolidays.add(sdf.parse("2011-02-07"));
+			CNHolidays.add(sdf.parse("2011-02-08"));
+			CNHolidays.add(sdf.parse("2011-04-04"));
+			CNHolidays.add(sdf.parse("2011-04-05"));
+			CNHolidays.add(sdf.parse("2011-05-02"));
+			CNHolidays.add(sdf.parse("2011-06-06"));
+			CNHolidays.add(sdf.parse("2011-09-12"));
+			CNHolidays.add(sdf.parse("2011-10-03"));
+			CNHolidays.add(sdf.parse("2011-10-04"));
+			CNHolidays.add(sdf.parse("2011-10-05"));
+			CNHolidays.add(sdf.parse("2011-10-06"));
+			CNHolidays.add(sdf.parse("2011-10-07"));
+			//
+			CNHolidays.add(sdf.parse("2012-01-02"));
+			CNHolidays.add(sdf.parse("2012-01-03"));
+			CNHolidays.add(sdf.parse("2012-01-23"));
+			CNHolidays.add(sdf.parse("2012-01-24"));
+			CNHolidays.add(sdf.parse("2012-01-25"));
+			CNHolidays.add(sdf.parse("2012-01-26"));
+			CNHolidays.add(sdf.parse("2012-01-27"));
+			CNHolidays.add(sdf.parse("2012-04-02"));
+			CNHolidays.add(sdf.parse("2012-04-03"));
+			CNHolidays.add(sdf.parse("2012-04-04"));
+			CNHolidays.add(sdf.parse("2012-04-30"));
+			CNHolidays.add(sdf.parse("2012-06-22"));
+			CNHolidays.add(sdf.parse("2012-10-01"));
+			CNHolidays.add(sdf.parse("2012-10-02"));
+			CNHolidays.add(sdf.parse("2012-10-03"));
+			CNHolidays.add(sdf.parse("2012-10-04"));
+			CNHolidays.add(sdf.parse("2012-10-05"));
+			//
+			CNHolidays.add(sdf.parse("2013-01-01"));
+			CNHolidays.add(sdf.parse("2013-01-02"));
+			CNHolidays.add(sdf.parse("2013-01-03"));
+			CNHolidays.add(sdf.parse("2013-02-11"));
+			CNHolidays.add(sdf.parse("2013-02-12"));
+			CNHolidays.add(sdf.parse("2013-02-13"));
+			CNHolidays.add(sdf.parse("2013-02-14"));
+			CNHolidays.add(sdf.parse("2013-02-15"));
+			CNHolidays.add(sdf.parse("2013-04-04"));
+			CNHolidays.add(sdf.parse("2013-04-05"));
+			CNHolidays.add(sdf.parse("2013-04-29"));
+			CNHolidays.add(sdf.parse("2013-04-30"));
+			CNHolidays.add(sdf.parse("2013-05-01"));
+			CNHolidays.add(sdf.parse("2013-06-10"));
+			CNHolidays.add(sdf.parse("2013-06-11"));
+			CNHolidays.add(sdf.parse("2013-06-12"));
+			CNHolidays.add(sdf.parse("2013-09-19"));
+			CNHolidays.add(sdf.parse("2013-09-20"));
+			CNHolidays.add(sdf.parse("2013-10-01"));
+			CNHolidays.add(sdf.parse("2013-10-02"));
+			CNHolidays.add(sdf.parse("2013-10-03"));
+			CNHolidays.add(sdf.parse("2013-10-04"));
+			CNHolidays.add(sdf.parse("2013-10-07"));
+			//
+			CNHolidays.add(sdf.parse("2014-01-01"));
+			CNHolidays.add(sdf.parse("2014-01-31"));
+			CNHolidays.add(sdf.parse("2014-02-03"));
+			CNHolidays.add(sdf.parse("2014-02-04"));
+			CNHolidays.add(sdf.parse("2014-02-05"));
+			CNHolidays.add(sdf.parse("2014-02-06"));
+			CNHolidays.add(sdf.parse("2014-04-07"));
+			CNHolidays.add(sdf.parse("2014-05-01"));
+			CNHolidays.add(sdf.parse("2014-05-02"));
+			CNHolidays.add(sdf.parse("2014-06-02"));
+			CNHolidays.add(sdf.parse("2014-09-08"));
+			CNHolidays.add(sdf.parse("2014-10-01"));
+			CNHolidays.add(sdf.parse("2014-10-02"));
+			CNHolidays.add(sdf.parse("2014-10-03"));
+			CNHolidays.add(sdf.parse("2013-10-06"));
+			CNHolidays.add(sdf.parse("2013-10-07"));
 			//
 			CNHolidays.add(sdf.parse("2015-01-01"));
 			CNHolidays.add(sdf.parse("2015-01-02"));
@@ -118,48 +311,69 @@ public class StockUtil {
 		}
 	}
 	
-	private static boolean daysContainDay(List<Date> dl, Date d){
-		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("EST"));
-		for (Date d1:dl){
-			c.setTime(d1);
-			int day1 = c.get(Calendar.DAY_OF_YEAR);
-			int year1 = c.get(Calendar.YEAR);
-			
-			c.setTime(d);
-			int day2 = c.get(Calendar.DAY_OF_YEAR);
-			int year2 = c.get(Calendar.YEAR);
-			if (day1==day2 && year1==year2){
-				return true;
+	//[fromDate, toDate)
+	public static LinkedList<Date> getOpenDayList(Date fromDate, Date toDate, Set<Date> holidays){
+		LinkedList<Date> dll = new LinkedList<Date>();
+		Calendar c = Calendar.getInstance();
+		c.setTime(fromDate);
+		Date d = fromDate;
+		while (d.before(toDate)){
+			if (isOpenDay(d, holidays)){
+				dll.add(d);
 			}
+			d = getNextOpenDay(d, holidays);
 		}
-		return false;
+		return dll;
 	}
 	
-	//d without time
-	public static Date getLastOpenDay(Date d, List<Date> holidays){
+	public static Date getNextOpenDay(Date d, Set<Date> holidays){
+		Calendar c = Calendar.getInstance();
+		Date day = DateTimeUtil.tomorrow(d);
+		c.setTime(day);
+		while (!isOpenDay(day, holidays)){
+			int dow = c.get(Calendar.DAY_OF_WEEK);
+			if (dow==Calendar.SUNDAY){
+				c.add(Calendar.DATE, +1);
+			}else if (dow == Calendar.SATURDAY){
+				c.add(Calendar.DATE, +2);
+			}
+			if (holidays.contains(c.getTime())){
+				c.add(Calendar.DATE, +1);
+			}
+			day = c.getTime();
+		}
+		return day;
+	}
+	
+	//including today
+	public static Date getLastOpenDay(Date d, Set<Date> holidays){
 		Calendar c = Calendar.getInstance();
 		c.setTime(d);
-		int dow = c.get(Calendar.DAY_OF_WEEK);
-		//check weekend
-		if (dow==Calendar.SUNDAY){
-			c.add(Calendar.DATE, -2);
-		}else if (dow == Calendar.SATURDAY){
-			c.add(Calendar.DATE, -1);
+		Date day = d;
+		while (!isOpenDay(day, holidays)){
+			int dow = c.get(Calendar.DAY_OF_WEEK);
+			//check weekend
+			if (dow==Calendar.SUNDAY){
+				c.add(Calendar.DATE, -2);
+			}else if (dow == Calendar.SATURDAY){
+				c.add(Calendar.DATE, -1);
+			}
+			if (holidays.contains(c.getTime())){
+				c.add(Calendar.DATE, -1);
+			}
+			day = c.getTime();
 		}
-		if (holidays.contains(c.getTime())){
-			c.add(Calendar.DATE, -1);
-		}
-		return c.getTime();
+		return day;
 	}
 	
-	public static boolean isOpenDay(Date d, List<Date> holidays){
+	public static boolean isOpenDay(Date d, Set<Date> holidays){
 		Calendar c = Calendar.getInstance();
 		c.setTime(d);
 		int dow = c.get(Calendar.DAY_OF_WEEK);
 		//check weekend
 		if (dow==Calendar.SUNDAY ||
 				dow == Calendar.SATURDAY ||
-					daysContainDay(holidays, c.getTime())){
+					holidays.contains(c.getTime())){
 			return false;
 		}else{
 			return true;

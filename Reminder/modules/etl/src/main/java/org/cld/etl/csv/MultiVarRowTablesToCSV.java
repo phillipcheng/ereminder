@@ -49,7 +49,7 @@ public class MultiVarRowTablesToCSV extends AbstractCrawlItemToCSV{
 			}
 			StringBuffer sb = new StringBuffer();
 			try{
-				if (vl!=null && rsvl!=null){
+				if (vl!=null && rsvl!=null && rsvl.size()>0){
 					int idx=0;
 					if (genHeader){
 						for (int j=0; j<colNum; j++){

@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,8 +23,9 @@ public class RunStock {
 	
 	//x.properties nasdaq ALL run_all_cmd - 2015-09-10
 	//x.properties nasdaq ALL_2015-09-09 run_cmd - - nasdaq-quote-tick
+	//x.properties nasdaq ALL run_special - - run_merge
 	//x.properties sina hs_a run_special - - genNdLable xxx,x:xx,xx
-	//x.properties nasdaq ALL_2015-09-14 run_special - - run_merge
+	//x.properties sina hs_a run_special 2015-08-29 2015-09-22 run_merge
 	public static String getDefaultCmdLine(){
 		return "propFile stock_base marketId cmd startDate endDate method params";
 	}
@@ -35,6 +37,7 @@ public class RunStock {
 		String cmd="";
 		String strStartDate = null;
 		String strEndDate = null;
+		sdf.setTimeZone(TimeZone.getTimeZone("PST"));//I am running from Santa Clara CA.
 		if (args.length>=6){
 			propFile = args[0]; //
 			stockBase = args[1]; //

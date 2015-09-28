@@ -53,31 +53,33 @@ public class CellTableAsCSV extends AbstractCrawlItemToCSV{
 		List<String> rowHeaders = (List<String>) ci.getParam(FIELD_NAME_ROWHEADER);
 		List<String> dataTypes = (List<String>)ci.getParam(DATA_TYPE_KEY); //number of items in the cell not including the row-header and col-header
 		List<String[]> csvs = new ArrayList<String[]>();
-		for (int j=0; j<colHeaders.size(); j++){
-			for (int k=0; k<rowHeaders.size(); k++){
-				String colHeader = colHeaders.get(j);
-				String rowHeader = rowHeaders.get(k);
-				String[] csv = new String[2];
-				StringBuffer sb = new StringBuffer();
-				sb.append(colHeader);
-				sb.append(",");
-				sb.append(rowHeader);
-				sb.append(",");
-				for (int i=0; i<cellrownum; i++){
-					String v = ls.get( k*colnum*cellrownum + i*colnum + j);
-					String dataType = AbstractCrawlItemToCSV.DATA_TYPE_NUMBER;
-					if (dataTypes!=null && dataTypes.size()>i){
-						dataType = dataTypes.get(i);
+		if (colHeaders!=null){
+			for (int j=0; j<colHeaders.size(); j++){
+				for (int k=0; k<rowHeaders.size(); k++){
+					String colHeader = colHeaders.get(j);
+					String rowHeader = rowHeaders.get(k);
+					String[] csv = new String[2];
+					StringBuffer sb = new StringBuffer();
+					sb.append(colHeader);
+					sb.append(",");
+					sb.append(rowHeader);
+					sb.append(",");
+					for (int i=0; i<cellrownum; i++){
+						String v = ls.get( k*colnum*cellrownum + i*colnum + j);
+						String dataType = AbstractCrawlItemToCSV.DATA_TYPE_NUMBER;
+						if (dataTypes!=null && dataTypes.size()>i){
+							dataType = dataTypes.get(i);
+						}
+						v = TableUtil.getValue(v, dataType);
+						sb.append(v);
+						if (i<cellrownum-1){
+							sb.append(",");
+						}
 					}
-					v = TableUtil.getValue(v, dataType);
-					sb.append(v);
-					if (i<cellrownum-1){
-						sb.append(",");
-					}
+					csv[0] = keyid;
+					csv[1] = sb.toString();
+					csvs.add(csv);
 				}
-				csv[0] = keyid;
-				csv[1] = sb.toString();
-				csvs.add(csv);
 			}
 		}
 		

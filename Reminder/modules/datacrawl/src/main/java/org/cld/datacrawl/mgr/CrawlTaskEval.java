@@ -146,11 +146,7 @@ public class CrawlTaskEval {
 		}else if (entry instanceof HtmlElement){
 			finalString = ((HtmlElement)entry).asText();
 		}else{
-			if (String.class.isAssignableFrom(entry.getClass())){
-				finalString = entry.toString();
-			}else{
-				logger.warn(String.format("still returned, entry %s of type %s in list can't cast to string", entry, entry.getClass()));
-			}
+			finalString = entry.toString();
 		}
 		return finalString.trim();
 	}

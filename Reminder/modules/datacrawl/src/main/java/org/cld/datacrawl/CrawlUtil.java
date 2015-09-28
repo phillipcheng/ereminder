@@ -35,11 +35,10 @@ public class CrawlUtil {
 	
 	public static void closeWebClient(WebClient wc){
 		if (wc!=null){
-			logger.debug("close webclient.");
 			try {
-				wc.close();
+				wc.closeAllWindows();
 			}catch(Throwable t){
-				logger.error("", t);
+				logger.error("ThreadDeath exception caught ignored", t);
 			}
 		}
 	}

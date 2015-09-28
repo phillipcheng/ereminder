@@ -149,7 +149,7 @@ public abstract class StockBase extends TestBase{
 		}
 		
 		Map<String, Object> params = getDateParamMap(startDate, endDate);
-		params.put(ETLUtil.PK_MARKETID, marketId);
+		params.put(AbstractCrawlItemToCSV.FN_MARKETID, marketId);
 		Date ed = null;
 		Date sd = null;
 		try{
@@ -241,6 +241,7 @@ public abstract class StockBase extends TestBase{
 	
 	private void runFirstTime(StockConfig sc, CrawledItem ciIds, String curMarketId) throws InterruptedException {
 		//store the stock-ids for curMarket
+		logger.info(String.format("run first time for market:%s", curMarketId));
 		ciIds.getId().setId(curMarketId);
 		List<String> curIds = (List<String>) ciIds.getParam(KEY_IDS);
 		logger.info(String.format("market %s 1st time fetch with size %d.", marketId, curIds.size()));
@@ -295,12 +296,16 @@ public abstract class StockBase extends TestBase{
 				deltaIds.addAll(curIds);
 				deltaIds.removeAll(preIds);
 				
-				//get last all cmd run status, last run date
-				CmdStatus preAllCmdRunCS = CmdStatus.getCmdStatus(dsm, prevMarketId, AllCmdRun_STATUS);
-				if (preAllCmdRunCS==null){//last time AllCmdRunCS failed to generate
-					lastRunDate = endDate;
+				if (startDate!=null){
+					lastRunDate = startDate;
 				}else{
-					lastRunDate = preAllCmdRunCS.getId().getCreateTime();
+					//get last all cmd run status, last run date
+					CmdStatus preAllCmdRunCS = CmdStatus.getCmdStatus(dsm, prevMarketId, AllCmdRun_STATUS);
+					if (preAllCmdRunCS==null){//last time AllCmdRunCS failed to generate
+						lastRunDate = endDate;
+					}else{
+						lastRunDate = preAllCmdRunCS.getId().getCreateTime();
+					}
 				}
 				logger.info(String.format("market %s has org size %d.", marketId, preIds.size()));
 				if (deltaIds.size()>0){
@@ -334,19 +339,20 @@ public abstract class StockBase extends TestBase{
 					mcs.getId().setCreateTime(endDate);
 					dsm.addUpdateCrawledItem(mcs, null);
 					
-					//check the (null, lastRunDate) for the previous market
-					runAllCmd(prevMarketId, startDate, lastRunDate, CMDTYPE_ALL);
+					//do not check the (null, lastRunDate) for the previous market
+					//runAllCmd(prevMarketId, startDate, lastRunDate, CMDTYPE_ALL);
 					//apply (null, endDate) for delta market
 					runAllCmd(deltaMarketId, lastRunDate, endDate, CMDTYPE_STATIC);
 					//do the [lastRunDate,endDate) for the current market
 					runAllCmd(curMarketId, lastRunDate, endDate, CMDTYPE_DYNAMIC); //
 				}else{
-					logger.info("no delta market.");
+					logger.info("no delta market, so curMarket is prevMarket");
+					curMarketId = prevMarketId;//so that prevMarketId's allCmdRun status can be updated
 					//no new delta market, so the ids is not updated
 					//check the (null, lastRunDate) for the pre market
 					if (CompareUtil.ObjectDiffers(startDate, lastRunDate)){
 						logger.info(String.format("rerun all cmd for pre-market %s from %s to %s", prevMarketId, startDate, lastRunDate));
-						runAllCmd(prevMarketId, startDate, lastRunDate, CMDTYPE_ALL);	
+						runAllCmd(prevMarketId, startDate, lastRunDate, CMDTYPE_ALL);
 					}
 					//do the [lastRunDate,endDate) for the pre market
 					if (CompareUtil.ObjectDiffers(lastRunDate, endDate)){

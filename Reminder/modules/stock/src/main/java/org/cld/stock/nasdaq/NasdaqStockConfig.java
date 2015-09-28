@@ -1,9 +1,11 @@
 package org.cld.stock.nasdaq;
 
-import java.util.Calendar;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
@@ -13,10 +15,13 @@ import org.cld.stock.StockUtil;
 import org.cld.util.ListUtil;
 
 
-public class NasdaqStockConfig implements StockConfig{
+public class NasdaqStockConfig extends StockConfig{
 	private static Logger logger =  LogManager.getLogger(StockConfig.class);
 	public static final String MarketId_NASDAQ="NASDAQ";
 	public static final String MarketId_NYSE="NYSE";
+	public static final String MarketId_AMEX="AMEX";
+	public static final String MarketId_ALL="ALL";
+	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
 	//file name of the xml conf and the store id as well
 	public static final String STOCK_IDS ="nasdaq-ids";
@@ -99,6 +104,15 @@ public class NasdaqStockConfig implements StockConfig{
 	public static String[] syncConf = new String[]{}; //other cmd need this result
 	public static String[] allConf = (String[]) ListUtil.concatAll(corpConfs, quoteConfs, issueConfs, holderConfs, frConfs);
 	
+	public static final String START_MARKET="1989-01-01";
+	public static Date date_START_MARKET=null;
+	static{
+		try{
+			date_START_MARKET = sdf.parse(START_MARKET);
+		}catch(Exception e){
+			logger.error("", e);
+		}
+	}
 	@Override
 	public String getTestMarketId() {
 		return NasdaqTestStockConfig.MarketId_NASDAQ_Test;
@@ -125,8 +139,7 @@ public class NasdaqStockConfig implements StockConfig{
 	}
 	@Override
 	public Date getMarketStartDate() {
-		// TODO Auto-generated method stub
-		return null;
+		return date_START_MARKET;
 	}
 	@Override
 	public String getTestMarketChangeDate() {
@@ -182,37 +195,7 @@ public class NasdaqStockConfig implements StockConfig{
 		}
 		return marketId + "_" + strStartDate + "_" + sdf.format(endDate);
 	}
-	private String getMonth(int quarter){
-		String month = null;
-		if (quarter == 1){
-			month = "March";
-		}else if (quarter ==2){
-			month = "June";
-		}else if (quarter == 3){
-			month = "September";
-		}else if (quarter == 4){
-			month = "December  (FYE)";
-		}else{
-			logger.error(String.format("wrong quarter %d", quarter));
-		}
-		return month;
-	}
 
-	@Override
-	public String getByQuarterSQLByCmd(String cmd, int year, int quarter) {
-		if (BALANCE_SHEET.equals(cmd)){
-			return String.format("select distinct stockid from NasdaqFrQuarterBalanceSheet where reportPeriod='%s'", StockUtil.getDate(year,quarter));
-		}else if (INCOME_STATEMENT.equals(cmd)){
-			return String.format("select distinct stockid from NasdaqFrQuarterIncomeStatement where reportPeriod='%s'", StockUtil.getDate(year,quarter));
-		}else if (CASH_FLOW.equals(cmd)){
-			return String.format("select distinct stockid from NasdaqFrQuarterCashFlow where reportPeriod='%s'", StockUtil.getDate(year,quarter));
-		}else if (REVENUE.equals(cmd)){
-			return String.format("select distinct stockid from NasdaqFrQuarterRevenue where year='%s' and quarter='%s'", year, getMonth(quarter));
-		}else if (HOLDING_INSTITUTIONAL.equals(cmd)){
-			return String.format("select distinct stockid from NasdaqHoldingInstitutional where lastDate='%s'", StockUtil.getDate(year,quarter));
-		}
-		return null;
-	}
 	@Override
 	public TimeZone getTimeZone() {
 		return TimeZone.getTimeZone("EST");
@@ -224,5 +207,13 @@ public class NasdaqStockConfig implements StockConfig{
 			d = StockUtil.getLastOpenDay(d, StockUtil.USHolidays);
 		}
 		return d;
+	}
+	@Override
+	public String[] getUntrimmedStockIdCmds() {
+		return new String[]{};
+	}
+	@Override
+	public Set<Date> getHolidays() {
+		return StockUtil.USHolidays;
 	}
 }

@@ -17,6 +17,7 @@ import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
 import org.junit.Before;
 import org.junit.Test;
+import org.mortbay.log.Log;
 
 public class TestNasdaqStock {
 	private static Logger logger =  LogManager.getLogger(TestNasdaqStock.class);
@@ -36,7 +37,8 @@ public class TestNasdaqStock {
 		}
 	}
 	
-	private String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test;
+	//private String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test;
+	private String marketId = NasdaqStockConfig.MarketId_AMEX;
 	private String propFile = "client1-v2.properties";
 	
 	private NasdaqStockBase nsb;
@@ -46,13 +48,19 @@ public class TestNasdaqStock {
 	}
 	
 	@Before
-	public void setUp(){nsb = new NasdaqStockBase(propFile, marketId, startDate, endDate);}
+	public void setUp()throws Exception{
+		nsb = new NasdaqStockBase(propFile, marketId, startDate, endDate);
+	}
 	
 	@Test
-	public void testInitTestMarket() throws Exception{nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);}
+	public void testInitTestMarket() throws Exception{
+		nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
+	}
 	
 	@Test
-	public void testRunAllCmd1() throws Exception{nsb.runAllCmd(NasdaqTestStockConfig.date_Test_SD, NasdaqTestStockConfig.date_Test_END_D2);}
+	public void testRunAllCmd1() throws Exception{
+		nsb.runAllCmd(null, sdf.parse("2015-09-25"));
+	}
 	
 	@Test
 	public void testBrowseIdlist() throws Exception{nsb.run_browse_idlist(NasdaqStockConfig.MarketId_NASDAQ, sdf.parse("2015-08-02"));}

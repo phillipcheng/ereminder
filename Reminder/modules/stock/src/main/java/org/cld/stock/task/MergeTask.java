@@ -154,10 +154,14 @@ public class MergeTask extends Task implements Serializable{
 							//some cmd has post-processed, so the input folder changed
 							storePath = new Path(storePath.toString().replace("raw", "postprocess"));
 						}
-						Path[] leafDirs = HadoopUtil.getLeafPath(fs, storePath);
-						for (Path leafDir:leafDirs){
-							MergeTask t = new MergeTask(leafDir.toString(), datePart, storeid, needOverwrite);
-							tl.add(t);
+						try{
+							Path[] leafDirs = HadoopUtil.getLeafPath(fs, storePath);
+							for (Path leafDir:leafDirs){
+								MergeTask t = new MergeTask(leafDir.toString(), datePart, storeid, needOverwrite);
+								tl.add(t);
+							}
+						}catch(Exception e){
+							logger.warn(String.format("cmd %s data %s not exist, skip..", storeid, storePath));
 						}
 					}
 				}

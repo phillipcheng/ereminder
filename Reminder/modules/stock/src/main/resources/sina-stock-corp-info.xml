@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="sina-stock-corp-info" productType="default">
 	<PrdTask>
-		<baseBrowseTask enableJS="true" taskName="corp-info" dsm="hbase" mbMemoryNeeded="512">
+		<baseBrowseTask enableJS="true" taskName="corp-info" dsm="hdfs" mbMemoryNeeded="512">
+			<param name="marketId"/>
 			<param name="stockid"/>
 			<param name="startDate" type="string"/>
 			<param name="endDate" type="string"/>

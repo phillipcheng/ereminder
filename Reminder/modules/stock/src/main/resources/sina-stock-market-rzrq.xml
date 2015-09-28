@@ -4,6 +4,7 @@
 	<!-- HS_A market allows rzrq since 2012/11/12 -->
 	<PrdTask tryPattern="false">
 		<baseBrowseTask enableJS="true" taskName="market-rzrq" dsm="hdfs">
+			<param name="marketId"/>
 			<param name="date"/>
 			<param name="startDate" type="string"/>
 			<param name="endDate" type="string"/>

@@ -128,9 +128,13 @@ public class HdfsDataStoreManagerImpl implements DataStoreManager{
 		try {
 			FileSystem fs = FileSystem.get(hadoopConfig);
 			osw = new BufferedWriter(new OutputStreamWriter(fs.create(op,true), "gb2312"));
-			for (String[] v:ci.getCsvValue()){
-				osw.write(v[1]);//write out value only
-				osw.write("\n");
+			if (ci.getCsvValue()!=null){
+				for (String[] v:ci.getCsvValue()){
+					if (v[1]!=null){
+						osw.write(v[1]);//write out value only
+						osw.write("\n");
+					}
+				}
 			}
 		}catch(Exception e){
 			logger.error("", e);

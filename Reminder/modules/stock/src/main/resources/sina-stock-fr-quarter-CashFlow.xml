@@ -5,6 +5,7 @@
 <Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="sina-stock-fr-quarter-CashFlow" productType="default">
 	<PrdTask>
 		<baseBrowseTask enableJS="true" taskName="cashflow">
+			<param name="marketId"/>
 			<param name="stockid"/>
 			<param name="year"/>
 			<param name="quarter"/>

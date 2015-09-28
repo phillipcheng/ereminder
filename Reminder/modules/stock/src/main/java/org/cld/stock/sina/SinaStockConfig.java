@@ -3,7 +3,9 @@ package org.cld.stock.sina;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
@@ -12,10 +14,9 @@ import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.util.ListUtil;
 
-public class SinaStockConfig implements StockConfig {
+public class SinaStockConfig extends StockConfig {
 	protected static Logger logger =  LogManager.getLogger(SinaStockBase.class);
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	
 	
 	public static final String MarketId_HS_A ="hs_a"; //hu sheng A gu
 	public static final String MarketId_HS_A_ST="shfxjs"; //上证所风险警示板
@@ -267,43 +268,6 @@ public class SinaStockConfig implements StockConfig {
 	}
 
 	@Override
-	public String getByQuarterSQLByCmd(String cmd, int year, int quarter) {
-		if (SINA_STOCK_FR_QUARTER_BALANCE_SHEET.equals(cmd)){
-			return String.format("select distinct stockid from sinafrbalancesheet where dt='%s'", StockUtil.getDate(year, quarter));
-		}else if (SINA_STOCK_FR_QUARTER_PROFIT_STATEMENT.equals(cmd)){
-			return String.format("select distinct stockid from sinafrprofitstatement where dt='%s'", StockUtil.getDate(year, quarter));
-		}else if (SINA_STOCK_FR_QUARTER_CASHFLOW.equals(cmd)){
-			return String.format("select distinct stockid from sinafrcashflow where dt='%s'", StockUtil.getDate(year, quarter));
-		}else if (SINA_STOCK_FR_FOOTNOTE.equals(cmd)){
-			return String.format("select distinct stockid from sinafrfootnoteaccount where pubdate='%s' "
-					+ "union select distinct stockid from sinafrfootnoteinventory where pubdate='%s' "
-					+ "union select distinct stockid from sinafrfootnoterecievableaging where pubdate='%s' "
-					+ "union select distinct stockid from sinafrfootnotetax where pubdate='%s' "
-					+ "union select distinct stockid from sinafrfootnoteincomeindustry where pubdate='%s' "
-					+ "union select distinct stockid from sinafrfootnoteincomeproduct where pubdate='%s' "
-					+ "union select distinct stockid from sinafrfootnoteincomeregion where pubdate='%s'", 
-					StockUtil.getDate(year, quarter), 
-					StockUtil.getDate(year, quarter),
-					StockUtil.getDate(year, quarter),
-					StockUtil.getDate(year, quarter),
-					StockUtil.getDate(year, quarter),
-					StockUtil.getDate(year, quarter),
-					StockUtil.getDate(year, quarter));
-		}else if (SINA_STOCK_FR_GUIDELINE_YEAR.equals(cmd)){
-			return String.format("select distinct stockid from sinafrguideline where pubdate='%s'", StockUtil.getDate(year, quarter));
-		}else if (SINA_STOCK_FR_ASSETDEVALUE_YEAR.equals(cmd)){
-			return String.format("select distinct stockid from SinaFrAssetDevalue where pubdate='%s'", StockUtil.getDate(year, quarter));
-		}else if (SINA_STOCK_STOCK_HOLDER_CIRCULATE.equals(cmd)){
-			return String.format("select distinct stockid from sinastocktopholdercirculate where dt='%s'", StockUtil.getDate(year, quarter));
-		}else if (SINA_STOCK_STOCK_HOLDER_FUND.equals(cmd)){
-			return String.format("select distinct stockid from sinastockfundholder where dt='%s'", StockUtil.getDate(year, quarter));
-		}else if (SINA_STOCK_STOCK_HOLDER.equals(cmd)){
-			return String.format("select distinct stockid from sinastocktopholder where dt='%s'", StockUtil.getDate(year, quarter));
-		}
-		return null;
-	}
-
-	@Override
 	public TimeZone getTimeZone() {
 		return TimeZone.getTimeZone("CTT");
 	}
@@ -314,5 +278,13 @@ public class SinaStockConfig implements StockConfig {
 			d = StockUtil.getLastOpenDay(d, StockUtil.CNHolidays);
 		}
 		return d;
+	}
+	@Override
+	public String[] getUntrimmedStockIdCmds() {
+		return new String[]{SINA_STOCK_TRADE_DETAIL};
+	}
+	@Override
+	public Set<Date> getHolidays() {
+		return StockUtil.CNHolidays;
 	}
 }

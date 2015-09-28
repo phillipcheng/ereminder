@@ -2,45 +2,85 @@ package org.cld.stock;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 
-public interface StockConfig {
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public abstract class StockConfig {
+	protected static Logger logger =  LogManager.getLogger(StockConfig.class);
 	//
 	public static final String RAW_ROOT="/reminder/items/raw";
 	public static final String MERGE_ROOT="/reminder/items/merge";
 	public static final String CHECK_ROOT="/reminder/items/check";
 
-	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	protected SimpleDateFormat sdf = null;
 	
-	public String getTestMarketId();
+	public abstract String getTestMarketId();
 	
-	public String trimStockId(String stockid);
+	public abstract String trimStockId(String stockid);
 	
-	public String getStockIdsCmd();
-	public String getIPODateCmd(); //null, then ipo date info is within StockIds
-	public String[] getAllCmds(String marketId);
-	public String[] getSyncCmds();
-	public Date getMarketStartDate();
-	public String[] getCurrentDayCmds();
+	public abstract String getStockIdsCmd();
+	public abstract String getIPODateCmd(); //null, then ipo date info is within StockIds
+	public abstract String[] getAllCmds(String marketId);
+	public abstract String[] getSyncCmds();
+	public abstract Date getMarketStartDate();
+	public abstract String[] getCurrentDayCmds();
+	public abstract String[] getUntrimmedStockIdCmds();
 	
 	
-	public String getTestMarketChangeDate();//date before this using test_stock_set1, date after this using test_stock_set2
-	public String[] getTestStockSet1();
-	public String[] getTestStockSet2();
-	public String getTestShortStartDate();
-	public String[] getSlowCmds();
-	public String[] getTablesByCmd(String cmd);
-	public String[] getPostProcessCmds();
+	public abstract String getTestMarketChangeDate();//date before this using test_stock_set1, date after this using test_stock_set2
+	public abstract String[] getTestStockSet1();
+	public abstract String[] getTestStockSet2();
+	public abstract String getTestShortStartDate();
+	public abstract String[] getSlowCmds();
+	public abstract String[] getTablesByCmd(String cmd);
+	public abstract String[] getPostProcessCmds();
 	
-	public Map<String, String> getPairedMarket(); //like MarketId_HS_A paired with MarketId_HS_A_ST
+	public abstract Map<String, String> getPairedMarket(); //like MarketId_HS_A paired with MarketId_HS_A_ST
 
-	public String getStartDate(String cmdName);
+	public abstract String getStartDate(String cmdName);
 	
-	public String getDatePart(String marketId, Date startDate, Date endDate);
+	public abstract String getDatePart(String marketId, Date startDate, Date endDate);
 	
-	public String getByQuarterSQLByCmd(String cmd, int year, int quarter);
+	public abstract TimeZone getTimeZone();
+	public abstract Date getLatestOpenMarketDate(Date d);
+	public abstract Set<Date> getHolidays();
 	
-	public TimeZone getTimeZone();
-	public Date getLatestOpenMarketDate(Date d);
+	public StockConfig() {
+		sdf = new SimpleDateFormat("yyyy-MM-dd");
+		sdf.setTimeZone(this.getTimeZone());
+	}
+	
+	public String getLUDateByCmd(String cmd){
+		String[] tables = getTablesByCmd(cmd);
+		if (tables == null){
+			logger.error(String.format("tables are not defined for cmd: %s", cmd));
+			return null;
+		}
+		String sql = null;
+		if (tables.length==1){
+			sql = String.format("select stockid, max(dt) from %s group by stockid", tables[0]);
+		}else{
+			StringBuffer sb = new StringBuffer("select stockid, max(ludt) from (");
+			for (int i=0; i<tables.length; i++){
+				String table = tables[i];
+				if (i>0){
+					sb.append(" union ");
+				}
+				sb.append(String.format("select stockid, max(dt) as ludt from %s group by stockid", table));
+			}
+			sb.append(") as stocklu group by stockid");
+			sql = sb.toString();
+		}
+		logger.info(String.format("get lu date sql defined for %s is %s", cmd, sql));
+		return sql;
+	}
+
+	public SimpleDateFormat getSdf(){
+		return sdf;
+	}
 }

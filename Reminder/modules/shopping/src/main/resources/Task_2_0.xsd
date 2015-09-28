@@ -12,6 +12,8 @@
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:element name="Tasks" type="TasksType"/>
 	<xs:simpleType name="VarType">
@@ -23,6 +25,7 @@
 			<xs:enumeration value="date"/>
 			<xs:enumeration value="page"/>
 			<xs:enumeration value="list"/>
+			<xs:enumeration value="array"/>
 			<xs:enumeration value="pagelist"/>
 			<xs:enumeration value="regexp"/>
 			<xs:enumeration value="expression"/>
@@ -283,7 +286,7 @@ dsm set to hbase means generate hbase entry for each product browsed.</xs:docume
 				<xs:documentation>memory for each mapper and reducer</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
-		<xs:attribute name="taskNumPerJob" type="xs:int" default="10">
+		<xs:attribute name="taskNumPerJob" type="xs:int" default="50">
 			<xs:annotation>
 				<xs:documentation>number of tasks per Mapper</xs:documentation>
 			</xs:annotation>
@@ -565,16 +568,30 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 	</xs:complexType>
 	<xs:complexType name="CsvTransformType">
 		<xs:sequence>
+			<xs:element name="ops" type="TransformOp" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="outputDir" type="ValueType" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="reverse" type="xs:boolean" default="false"/>
-		<xs:attribute name="transformClass" type="xs:string"/>
+		<xs:attribute name="transformClass" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>this translates the data (string list type) into arrays of csv</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
 		<xs:attribute name="outputType" type="CsvOutputType"/>
 	</xs:complexType>
 	<xs:complexType name="ConditionalNextTask">
 		<xs:sequence>
 			<xs:element name="condition" type="BinaryBoolOp" minOccurs="0"/>
 			<xs:element name="invokeTask" type="TaskInvokeType"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="TransformOp">
+		<xs:sequence>
+			<xs:element name="expression" type="xs:string">
+				<xs:annotation>
+					<xs:documentation>javascript expression to transform arr into another arr</xs:documentation>
+				</xs:annotation>
+			</xs:element>
 		</xs:sequence>
 	</xs:complexType>
 </xs:schema>

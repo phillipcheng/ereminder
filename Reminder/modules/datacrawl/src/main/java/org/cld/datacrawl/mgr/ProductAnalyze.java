@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
@@ -42,12 +43,14 @@ import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.BrowseDetailType;
 import org.xml.taskdef.CsvOutputType;
 import org.xml.taskdef.CsvTransformType;
+import org.xml.taskdef.TransformOp;
 import org.xml.taskdef.VarType;
 
 public class ProductAnalyze{
 	
 	private static Logger logger =  LogManager.getLogger(ProductAnalyze.class);
 	public static final String VAR_CSV_NAME= "arr"; //name of the 1 dimension csv array passed to the filter
+	public static final String VAR_RET_NAME= "ret"; //name of the array return object
 	
 	private VerifyPage VPXP; //
 	
@@ -71,7 +74,7 @@ public class ProductAnalyze{
 				paramMap.putAll(task.getParamMap());
 				paramMap.putAll(ci.getParamMap());
 				outputDirPrefix = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" +
-						HadoopTaskLauncher.getOutputDir(csvtrans, paramMap) + "/" + ci.getId().getId();
+						task.getOutputDir(paramMap) + "/" + ci.getId().getId();
 			}
 			String[][] csv = ci.getCsvValue();
 			if (csv!=null){
@@ -210,10 +213,23 @@ public class ProductAnalyze{
 				if (csvTransform!=null && csvTransform.getTransformClass()!=null){
 					//do the transform and set to crawledItem.csv
 					try {
-						//transform
+						//transform from data to array
 						AbstractCrawlItemToCSV cicsv = (AbstractCrawlItemToCSV) 
 								Class.forName(csvTransform.getTransformClass()).newInstance();
 						String[][] csv = cicsv.getCSV(product, null);
+						logger.info(String.format("csv get from crawledItem: %d.", csv.length));
+						//transform operations
+						if (csvTransform.getOps()!=null){
+							for (TransformOp top: csvTransform.getOps()){
+								for (int i=0; i<csv.length; i++){
+									Map<String, Object> attributes = new HashMap<String, Object>();
+									String[] varr = csv[i][1].split(",");//split value
+									attributes.put(VAR_CSV_NAME, varr);
+									String svarr = (String) ScriptEngineUtil.eval(top.getExpression(), VarType.STRING, attributes);//return a joined string
+									csv[i][1] = svarr;
+								}
+							}
+						}
 						product.setCsvValue(csv);
 						if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm()) && addToDB){
 							dsManager.addUpdateCrawledItem(product, lastProduct);
@@ -242,10 +258,11 @@ public class ProductAnalyze{
 							product.setCsvValue(passedCsvArray);
 						}
 						//write the output
-						writeCsvOut(csvtrans, hdfsByIdOutputMap, context, mos, product, cconf, task);
+						if (csvtrans!=null)
+							writeCsvOut(csvtrans, hdfsByIdOutputMap, context, mos, product, cconf, task);
 						if (retCsv) return product;
 					} catch (Exception e) {
-						e.printStackTrace();
+						logger.error("", e);
 					}
 				}else{
 					if (CrawlConf.crawlDsManager_Value_Hdfs.equals(bdt.getBaseBrowseTask().getDsm())){

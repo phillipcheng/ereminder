@@ -11,7 +11,7 @@ create external table SinaCorpInfo(stockid String,name String,EnglishName String
 
 --corp manager
 drop table if exists SinaCorpManager;
-create external table SinaCorpManager( stockid String, name String, title String, startDate Date, endDate Date) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/sina-stock-corp-manager';
+create external table SinaCorpManager( stockid String, name String, title String, dt Date, endDate Date) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/sina-stock-corp-manager';
 
 --corp related securities
 drop table if exists SinaCorpRelatedSecurities;

@@ -52,21 +52,7 @@ public class DateTimeUtil {
 	public static final SimpleDateFormat yMdHm_DF= new SimpleDateFormat(yMdHm_DateFormat, chinaLocale);
 	public static final SimpleDateFormat MdHm_DF= new SimpleDateFormat(MdHm_DateFormat, chinaLocale);
 	public static final SimpleDateFormat MdHms_DF= new SimpleDateFormat(MdHms_DateFormat, chinaLocale);
-	
-	//include fromDate, not including toDate [fromDate, toDate)
-	public static LinkedList<Date> getWorkingDayList(Date fromDate, Date toDate){
-		LinkedList<Date> dll = new LinkedList<Date>();
-		Calendar c = Calendar.getInstance();
-		c.setTime(fromDate);
-		while (c.getTime().before(toDate)){
-			int dow = c.get(Calendar.DAY_OF_WEEK);
-			if (dow!=Calendar.SUNDAY && dow!=Calendar.SATURDAY){
-				dll.add(c.getTime());
-			}
-			c.add(Calendar.DATE, 1);
-		}
-		return dll;
-	}
+
 	
 	public static Date getDate(String date, SimpleDateFormat sdf){
 		try {
@@ -169,35 +155,13 @@ public class DateTimeUtil {
 		long newDay = from.getTime() + delta * MILL_SEC_DAY;
 		return new Date(newDay);
 	}
-	
-	public static Date nextWorkingDay(Date day){
-		Calendar c = Calendar.getInstance();
-		c.setTime(day);
-		int weekday = c.get(Calendar.DAY_OF_WEEK);
-		if (weekday == Calendar.FRIDAY){
-			c.add(Calendar.DAY_OF_YEAR, 3); //roll to next Monday
-		}else if (weekday == Calendar.SATURDAY){
-			c.add(Calendar.DAY_OF_YEAR, 2); //roll to next Monday
-		}else {
-			c.add(Calendar.DAY_OF_YEAR, 1); //roll to next day
-		}
-		return c.getTime();
-	}
-	
-	
-	public static boolean isWorkingDay(Date day){
-		Calendar c = Calendar.getInstance();
-		c.setTime(day);
-		int weekday = c.get(Calendar.DAY_OF_WEEK);
-		if (weekday == Calendar.SATURDAY || weekday == Calendar.SUNDAY){
-			return false;
-		}else{
-			return true;
-		}
-	}
-	
+
 	public static Date yesterday(Date day){
 		return new Date(day.getTime() - MILL_SEC_DAY);
+	}
+	
+	public static Date tomorrow(Date day){
+		return new Date(day.getTime() + MILL_SEC_DAY);
 	}
 	
 	public static Date getDayBegin(Date day){

@@ -270,7 +270,11 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 					}catch(Exception e){
 						logger.error("", e);
 					}finally{
-						CrawlUtil.closeWebClient(wc);
+						try {
+							CrawlUtil.closeWebClient(wc);
+						}catch(Throwable t){
+							logger.error("close web client error caught, ignore.", t);
+						}
 					}
 				}
 				if (ci.isGoNext()){
@@ -352,6 +356,36 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 			}
 		}else{
 			logger.error(String.format("task %s not found in config.", getName()));
+		}
+	}
+	
+	@Override
+	public String getOutputDir(Map<String, Object> paramMap){
+		if (paramMap==null){
+			paramMap = this.getParamMap();
+		}
+		if (getParsedTaskDef()==null){//not a browse task
+			return null;
+		}
+		BrowseTaskType btt = getBrowseTask(getName());
+		if (btt!=null){
+			CsvTransformType csvtrans = btt.getCsvtransform();
+			if (csvtrans!=null){//using the default
+				//raw/[marketId]_[endDate]/storeid/[year]_[quarter]
+				StringBuffer od = new StringBuffer("raw/");
+				od.append(paramMap.get(AbstractCrawlItemToCSV.FN_MARKETID));
+				od.append("_");
+				od.append(paramMap.get(AbstractCrawlItemToCSV.FIELD_NAME_ENDDATE));
+				od.append("/");
+				od.append(this.getStoreId());
+				od.append("/");
+				logger.info(String.format("output dir is %s.", od.toString()));
+				return od.toString();
+			}else{
+				return null;
+			}
+		}else{
+			return null;
 		}
 	}
 	

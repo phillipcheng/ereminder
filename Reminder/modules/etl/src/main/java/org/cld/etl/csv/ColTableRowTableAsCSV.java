@@ -239,22 +239,34 @@ public class ColTableRowTableAsCSV extends AbstractCrawlItemToCSV{
 			logger.error(String.format("no %s found.", FIELD_NAME_DATA));
 		}
 		
-		String[][] retlist = new String[colString.size()+rowString.size()][3];
+		String[][] retlist = null;
 		if (colcsvname!=null){
+			retlist =  new String[colString.size()+rowString.size()][3];
 			for (int i=0; i<colString.size();i++){
 				retlist[i][0]=keyid;
 				retlist[i][1]=colString.get(i);
 				retlist[i][2]=colcsvname;
 			}
-		}
-		int colSize = colString.size();
-		if (rowcsvname!=null){
-			for (int i=0; i<rowString.size(); i++){
-				retlist[colSize+i][0]=keyid;
-				retlist[colSize+i][1]=rowString.get(i);
-				retlist[colSize+i][2]=rowcsvname;
+			int colSize = colString.size();
+			if (rowcsvname!=null){
+				for (int i=0; i<rowString.size(); i++){
+					retlist[colSize+i][0]=keyid;
+					retlist[colSize+i][1]=rowString.get(i);
+					retlist[colSize+i][2]=rowcsvname;
+				}
+			}
+		}else{
+			//only output rowcsv
+			retlist =  new String[rowString.size()][3];
+			if (rowcsvname!=null){
+				for (int i=0; i<rowString.size(); i++){
+					retlist[i][0]=keyid;
+					retlist[i][1]=rowString.get(i);
+					retlist[i][2]=rowcsvname;
+				}
 			}
 		}
+		
 		return retlist;
 	}
 }

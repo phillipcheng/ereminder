@@ -331,4 +331,8 @@ public class Task implements Comparable<Task>, Serializable{
 	public void setConfName(String confName) {
 		this.confName = confName;
 	}
+	
+	public String getOutputDir(Map<String, Object> paramMap){
+		return "";
+	}
 }

@@ -56,30 +56,6 @@ public class HadoopTaskLauncher {
 		}
 	}
 	
-	public static String getOutputDir(Task t){
-		if (t.getParsedTaskDef()==null){//not a browse task
-			return null;
-		}
-		BrowseTaskType btt = t.getBrowseTask(t.getName());
-		if (btt!=null){
-			if (btt.getCsvtransform()!=null && btt.getCsvtransform().getOutputDir()!=null){
-				return (String)TaskUtil.eval(btt.getCsvtransform().getOutputDir(), t.getParamMap());
-			}else{
-				return null;
-			}
-		}else{
-			return null;
-		}
-	}
-	
-	public static String getOutputDir(CsvTransformType csvtrans, Map<String, Object> taskParams){
-		if (csvtrans!=null && csvtrans.getOutputDir()!=null){
-			return (String)TaskUtil.eval(csvtrans.getOutputDir(), taskParams);
-		}else{
-			return null;
-		}
-	}
-	
 	public static int getMbMemory(Task t){
 		if (t.getParsedTaskDef()==null){//not a browse task
 			return DEFAULT_MB_MEM;
@@ -183,7 +159,7 @@ public class HadoopTaskLauncher {
 				Task t = taskList.get(0);
 				updateHadoopParams(t, hadoopParams);
 				boolean multipleOutput = hasMultipleOutput(t);
-				String outputDir = getOutputDir(t);
+				String outputDir = t.getOutputDir(null);
 				return executeTasks(nc, hadoopParams, new String[]{taskFileName}, multipleOutput, outputDir, sync, mapperClass, reducerClass, true);
 			}catch (Exception e) {
 				logger.error("", e);
@@ -219,7 +195,7 @@ public class HadoopTaskLauncher {
 				t0.initParsedTaskDef();
 				updateHadoopParams(t0, hadoopParams);
 				boolean multipleOutput = hasMultipleOutput(t0);
-				String outputDir = getOutputDir(t0);
+				String outputDir = t0.getOutputDir(null);
 				return executeTasks(nc, hadoopParams, taskFileName, multipleOutput, outputDir, false, mapperClass, reducerClass, true);
 			}else{
 				logger.error(String.format("task file %s not exist.", taskFileName[0]));
@@ -286,7 +262,8 @@ public class HadoopTaskLauncher {
 				Path in = new Path(tfn);
 				FileInputFormat.addInputPath(job, in);
 			}
-			if (outputDir!=null){
+			if (outputDir!=null && !"".equals(outputDir)){
+				logger.info(String.format("going to be deleted!!! output dir is %s", outputDir));
 				Path out = null;
 				if (outputDir.startsWith("/")){
 					out = new Path(outputDir);
