@@ -2,11 +2,9 @@ package org.cld.crbook.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,43 +13,22 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.DomNamespaceNode;
-import com.gargoylesoftware.htmlunit.html.DomNode;
-import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
-import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlImage;
-import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlSpan;
-
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.ProductHandler;
-import org.cld.datacrawl.mgr.BinaryBoolOpEval;
-import org.cld.datacrawl.mgr.CrawlTaskEval;
-import org.cld.datacrawl.util.HtmlPageResult;
-import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.datastore.entity.Category;
 import org.cld.datastore.entity.Product;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.PatternIO;
-import org.cld.util.PatternResult;
 import org.cld.util.StringUtil;
 import org.json.JSONArray;
-import org.xml.mytaskdef.BrowseCatInst;
-import org.xml.mytaskdef.ConfKey;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 import org.xml.taskdef.AttributeType;
-import org.xml.taskdef.BinaryBoolOp;
-import org.xml.taskdef.BrowseCatType;
-import org.xml.taskdef.BrowseDetailType;
-import org.xml.taskdef.ClickStreamType;
-import org.xml.taskdef.ClickType;
-import org.xml.taskdef.ValueType;
 import org.xml.taskdef.VarType;
 
 import cy.common.entity.Book;
-import cy.common.entity.EntityUtil;
 import cy.common.entity.Page;
 import cy.common.entity.Reading;
 import cy.common.entity.Volume;
