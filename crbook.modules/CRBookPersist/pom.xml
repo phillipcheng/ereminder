@@ -15,16 +15,6 @@
         	<version>1.0.0</version>
         </dependency>
         <dependency>
-        	<groupId>org.cld.utils</groupId>
-			<artifactId>cld-util</artifactId>
-        	<version>1.0.0</version>
-        </dependency>
-        <dependency>
-        	<groupId>org.cld.datastore</groupId>
-			<artifactId>cld-datastore</artifactId>
-			<version>1.0.0</version>
-        </dependency>
-        <dependency>
 			<groupId>commons-configuration</groupId>
 			<artifactId>commons-configuration</artifactId>
 			</dependency>

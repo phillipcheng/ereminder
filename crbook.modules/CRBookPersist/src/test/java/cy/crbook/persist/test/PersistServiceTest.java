@@ -38,7 +38,9 @@ public class PersistServiceTest {
 	}
 	
 
+	
 	public void recreateDB(){
+		setUp();
 		pService.dropDB(ds);
 		pService.createDB(ds);
 	}

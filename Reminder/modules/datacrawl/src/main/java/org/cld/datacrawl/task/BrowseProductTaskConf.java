@@ -114,7 +114,9 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		//since the start url is get from xml file, so un-escape is needed,
 		//Just for display and id purpose, since for list type parameters, the value is wrong, it should be generated into a list of start url
 		//this.startURL= (String) CrawlTaskEval.eval(bdt.getBaseBrowseTask().getStartUrl(), params);
-		this.startURL = bdt.getBaseBrowseTask().getStartUrl().getValue();
+		if (bdt.getBaseBrowseTask().getStartUrl()!=null){
+			this.startURL = bdt.getBaseBrowseTask().getStartUrl().getValue();
+		}
 		this.productType = tasks.getProductType();
 		if (tasks.getSkipUrl()!=null){
 			int size = tasks.getSkipUrl().size();
@@ -218,7 +220,11 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 			}
 		}else{
 			//no parameter, just a string
-			startUrlList.add(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl().getValue());
+			if (task.getStartURL()!=null || !"".equals(task.getStartURL())){
+				startUrlList.add(task.getStartURL());
+			}else{
+				startUrlList.add(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl().getValue());
+			}
 		}
 		
 		//cache page if needed

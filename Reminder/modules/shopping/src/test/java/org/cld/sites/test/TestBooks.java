@@ -64,6 +64,11 @@ public class TestBooks extends TestBase {
 		
 	}
 	
+	@Test
+	public void runone() throws Exception{
+		catNavigate(MOM001_CONF, null, browse_type.recursive);
+	}
+	
 	//sequential
 	@Test
 	public void regressionAll() throws Exception{

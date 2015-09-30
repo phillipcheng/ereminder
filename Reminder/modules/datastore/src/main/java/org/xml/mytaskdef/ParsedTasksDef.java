@@ -168,20 +168,16 @@ public class ParsedTasksDef {
 	}
 	
 	public ParsedBrowsePrd getBrowseDetailTask(String taskName){
-		if (taskName==null || "".equals(taskName)){
+		if (taskName==null || !browsePrdTaskMap.containsKey(taskName)){
 			return defaultBrowsePrdTask;
 		}else{
-			ParsedBrowsePrd pbp = browsePrdTaskMap.get(taskName);
-			if (pbp==null){
-				logger.error(String.format("browse product task %s not found.", taskName));
-			}
-			return pbp;
+			return browsePrdTaskMap.get(taskName);
 		}
 	}
 	
 	public BrowseTaskType getBrowseTask(String taskName){
 		//if taskName is null, usually from TestTask return first
-		if (taskName==null){
+		if (taskName==null || !allBrowseTasks.containsKey(taskName)){
 			return (BrowseTaskType) allBrowseTasks.values().toArray()[0];
 		}else{
 			return allBrowseTasks.get(taskName);

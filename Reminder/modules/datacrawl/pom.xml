@@ -52,6 +52,11 @@
 			<artifactId>cld-util</artifactId>
 			<version>1.0.0</version>
 		</dependency>
+		<dependency>
+			<groupId>org.cld.hadooputils</groupId>
+			<artifactId>cld-hadooputil</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 	</dependencies>
 	
 	<build>

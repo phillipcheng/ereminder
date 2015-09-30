@@ -42,4 +42,16 @@ version="3.0">
   <listener>
   	<listener-class>cy.crbook.wsserver.InitListener</listener-class>
   </listener>
+  <context-param>
+    <param-name>resteasy.scan</param-name>
+    <param-value>false</param-value>
+  </context-param>
+  <context-param>
+    <param-name>resteasy.scan.providers</param-name>
+    <param-value>false</param-value>
+  </context-param>
+  <context-param>
+    <param-name>resteasy.scan.resources</param-name>
+    <param-value>false</param-value>
+  </context-param>
 </web-app>

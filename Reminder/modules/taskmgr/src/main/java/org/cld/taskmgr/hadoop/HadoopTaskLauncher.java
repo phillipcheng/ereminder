@@ -72,7 +72,7 @@ public class HadoopTaskLauncher {
 		if (t.getParsedTaskDef()==null){//not a browse task
 			return DEFAULT_TASKS_PER_JOB;
 		}
-		BrowseTaskType btt = t.getBrowseTask(t.getName());
+		BrowseTaskType btt = t.getBrowseTask(t.getName());//
 		return btt.getTaskNumPerJob();
 	}
 	

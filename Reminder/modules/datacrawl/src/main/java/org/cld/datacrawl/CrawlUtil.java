@@ -9,6 +9,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.cfg.Configuration;
+
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.IncorrectnessListener;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
@@ -20,6 +21,7 @@ import org.cld.datacrawl.hadoop.CrawlTaskMapper;
 import org.cld.datastore.DBConf;
 import org.cld.datastore.DBFactory;
 import org.cld.datastore.impl.HibernateDataStoreManagerImpl;
+import org.cld.hadooputil.HdfsDownloadUtil;
 import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskTypeConf;
@@ -180,13 +182,13 @@ public class CrawlUtil {
 	}
 	
 	public static void downloadPage(CrawlConf cconf, String url, String fileName){
-		DownloadUtil.downloadFileToHdfs(url, cconf.isUseProxy(), cconf.getProxyIP(), cconf.getProxyPort(), 
+		HdfsDownloadUtil.downloadFileToHdfs(url, cconf.isUseProxy(), cconf.getProxyIP(), cconf.getProxyPort(), 
 				cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + fileName, cconf.getTaskMgr().getHdfsDefaultName());
 		
 	}
 	
 	public static void downloadPage(CrawlConf cconf, InputStream is, String fileName){
-		DownloadUtil.downloadFileToHdfs(is, cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + fileName, cconf.getTaskMgr().getHdfsDefaultName());
+		HdfsDownloadUtil.downloadFileToHdfs(is, cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + fileName, cconf.getTaskMgr().getHdfsDefaultName());
 		
 	}
 }

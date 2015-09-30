@@ -218,17 +218,8 @@
         	<version>1.0.0</version>
         </dependency>
         <dependency>
-        	<groupId>org.cld.datastore</groupId>
-			<artifactId>cld-datastore</artifactId>
-			<version>1.0.0</version>
-        </dependency>
-        <dependency>
 			<groupId>commons-httpclient</groupId>
 			<artifactId>commons-httpclient</artifactId>
-		</dependency>
-        <dependency>
-			<groupId>javax.ws.rs</groupId>
-			<artifactId>jsr311-api</artifactId>
 		</dependency>
 		<dependency>
 		    <groupId>org.quartz-scheduler</groupId>

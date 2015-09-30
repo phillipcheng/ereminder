@@ -13,6 +13,7 @@
 
 	<modules>
 		<module>util</module>
+		<module>hadooputil</module>
 		<module>datastore</module>
 		<module>taskmgr</module>
 		<module>etl</module>

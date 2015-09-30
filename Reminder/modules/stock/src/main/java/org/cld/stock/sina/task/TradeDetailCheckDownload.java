@@ -23,11 +23,11 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
+import org.cld.hadooputil.WholeFileInputFormat;
 import org.cld.stock.sina.SinaStockConfig;
 import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
-import org.cld.util.hadoop.WholeFileInputFormat;
 
 
 public class TradeDetailCheckDownload {

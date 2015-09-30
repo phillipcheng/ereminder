@@ -1,10 +1,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.cld.utils</groupId>
-	<artifactId>cld-util</artifactId>
+	<groupId>org.cld.hadooputils</groupId>
+	<artifactId>cld-hadooputil</artifactId>
 	<packaging>jar</packaging>
-	<name>Utils for reminder</name>
+	<name>Hadoop Utils</name>
 
 	<parent>
 		<artifactId>env</artifactId>
@@ -67,6 +67,11 @@
 			<groupId>commons-pool</groupId>
 			<artifactId>commons-pool</artifactId>
 		</dependency>
+
+		<dependency>
+	      		<groupId>org.apache.hadoop</groupId>
+	      		<artifactId>hadoop-client</artifactId>
+	    	</dependency>
 	</dependencies>
 
 </project>

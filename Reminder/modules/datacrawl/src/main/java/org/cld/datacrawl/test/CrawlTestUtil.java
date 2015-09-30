@@ -230,12 +230,8 @@ public class CrawlTestUtil{
 	 * propFile specific to hadoop taskmgr
 	 */
 	public static void executeTasks(List<Task> tl, CrawlConf cconf, String propFile){
-		if (cconf.getNodeConf().getTaskMgrFramework().equals(NodeConf.tmframework_hadoop)){
-			if (tl.size()>0){
-				CrawlUtil.hadoopExecuteCrawlTasks(propFile, cconf, tl, null, false);
-			}
-		}else{
-			logger.error("unsupported taskMgrFramework.");
+		if (tl.size()>0){
+			CrawlUtil.hadoopExecuteCrawlTasks(propFile, cconf, tl, null, false);
 		}
 	}
 	

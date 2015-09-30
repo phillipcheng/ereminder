@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.DomAttr;
 import com.gargoylesoftware.htmlunit.html.DomNamespaceNode;
 import com.gargoylesoftware.htmlunit.html.DomNode;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
@@ -147,6 +148,7 @@ public class ProductAnalyzeUtil {
 		return pageMap;
 	}
 	
+	private static final String LocationHref="location.href=";
 	private static HtmlPage getNextPage(WebClient wc, HtmlPage curPage, Task task, 
 			ParsedBrowsePrd taskDef, CrawlConf cconf, Product product) throws InterruptedException{
 		BrowseDetailType bdt = taskDef.getBrowsePrdTaskType();
@@ -171,6 +173,20 @@ public class ProductAnalyzeUtil {
 					} catch (MalformedURLException e) {
 						logger.error("", e);
 					}
+				}
+			}else if (dnsn instanceof DomAttr){
+				DomAttr da = (DomAttr)dnsn;
+				//location.href='3.html#pic'
+				String val = da.getValue();
+				if (val.contains(LocationHref)){
+					val = val.substring(LocationHref.length()+1, val.length()-1);
+					try {
+						url = frame.getFullyQualifiedUrl(val).toExternalForm();
+					} catch (MalformedURLException e) {
+						logger.error("", e);
+					}
+				}else{
+					logger.error("DomAttr %s as next page item has no %s", da.toString(), LocationHref);
 				}
 			}else{
 				nextPageEle = (HtmlElement) dnsn;

@@ -261,6 +261,9 @@ public class Task implements Comparable<Task>, Serializable{
 	}
 	
 	public void putAllParams(Map<String, Object> params){
+		if (paramMap==null){
+			paramMap = new TreeMap<String, Object>();
+		}
 		paramMap.putAll(params);
 	}
 	public String getParamData() {

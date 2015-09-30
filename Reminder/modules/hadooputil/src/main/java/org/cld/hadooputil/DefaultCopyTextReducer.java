@@ -1,4 +1,4 @@
-package org.cld.util.hadoop;
+package org.cld.hadooputil;
 
 import java.io.IOException;
 
