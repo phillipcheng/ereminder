@@ -79,17 +79,13 @@ public class CrawlTaskEval {
 			vp = new VerifyPageByBoolOp(pvtList.toArray(new BinaryBoolOp[pvtList.size()]), cconf);
 		}
 		hpResult = HtmlUnitUtil.clickNextPageWithRetryValidate(null, np, vp, params, null, cconf);
-		
-		if (hpResult!=null){
-			if (hpResult.getErrorCode()==HtmlPageResult.SUCCSS){
-				HtmlPage hp = hpResult.getPage();
-				logger.debug(hp.toString());
-				return hp;
-			}else{
-				logger.error("get page error:" + hpResult);
-			}
+		if (hpResult.getErrorCode()==HtmlPageResult.SUCCSS){
+			HtmlPage hp = hpResult.getPage();
+			return hp;
+		}else{
+			logger.error("get page error:" + hpResult);
+			return null;
 		}
-		return null;
 	}
 	
 	
@@ -302,6 +298,7 @@ public class CrawlTaskEval {
 								}
 							}else{
 								logger.error(String.format("can't get page for xpath: %s", xpathRes));
+								pagelist.add(null);
 							}
 						}
 						logger.debug("pagelist got is:" + pagelist);
@@ -321,6 +318,8 @@ public class CrawlTaskEval {
 								}else{
 									rpageList.add(pageGet);
 								}
+							}else{
+								rpageList.add(null);
 							}
 						}else if (VarType.FILE == vt.getToType()){
 							processFile(vt, (HtmlElement)xpathResult, params, cconf, page);	//no return value needed
@@ -402,23 +401,15 @@ public class CrawlTaskEval {
 			}else if (VarType.URL == fromType){
 				List<? extends DomNode> currentPages = pageMap.get(ConfKey.CURRENT_PAGE);
 				HtmlPage currentPage = (HtmlPage) currentPages.get(0);
-				if (!currentPage.getUrl().toExternalForm().equals(vt.getValue())){
-					//load new page
-					HtmlPageResult pageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(currentPage.getWebClient(), 
-								new NextPage(vt.getValue()), new VerifyPageByBoolOp(vt.getPageVerify(), cconf), params, null, cconf);
-					if (pageResult.getErrorCode()==HtmlPageResult.SUCCSS){
-						currentPage = pageResult.getPage();
-					}else{
-						logger.error(String.format("get page %s failed.", vt.getValue()));
-					}
+				HtmlPageResult pageResult = HtmlUnitUtil.clickNextPageWithRetryValidate(currentPage.getWebClient(), 
+							new NextPage(vt.getValue()), new VerifyPageByBoolOp(vt.getPageVerify(), cconf), params, null, cconf);
+				if (pageResult.getErrorCode()==HtmlPageResult.SUCCSS){
+					currentPage = pageResult.getPage();
+					rpageList.add(currentPage);
 				}else{
-					//keep current page but need to wait verify
-					boolean ret = HtmlUnitUtil.waitVerify(currentPage, new VerifyPageByBoolOp(vt.getPageVerify(), cconf), params, cconf);
-					if (!ret){
-						logger.error(String.format("page %s does not contain needed verifications.", currentPage.getUrl().toExternalForm()));
-					}
-				}
-				rpageList.add(currentPage);
+					logger.error(String.format("get page %s failed.", vt.getValue()));
+					rpageList.add(null);
+				}		
 			}else{
 				logger.error(String.format("unsupported fromType: %s", fromType));
 			}

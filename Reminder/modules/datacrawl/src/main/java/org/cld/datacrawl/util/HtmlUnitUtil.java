@@ -252,7 +252,7 @@ public class HtmlUnitUtil {
 	 * @param currentNP, the url of current page for log
 	 * @throws InterruptedException 
 	 */
-	public static void clickClickStream(ClickStreamType clickstream, Map<String, List<? extends DomNode>> pageMap, 
+	public static boolean clickClickStream(ClickStreamType clickstream, Map<String, List<? extends DomNode>> pageMap, 
 			Map<String, Object> params, CrawlConf cconf, NextPage currentNP) throws InterruptedException{
 		//setup the map
 		Map<String, ClickType> clickMap = new HashMap<String, ClickType>(); //click name to click definition map
@@ -336,9 +336,10 @@ public class HtmlUnitUtil {
 							pageMap.put(nextPage.getName(), pagelist1);
 							pageMap.put(ConfKey.CURRENT_PAGE, pagelist1); //set current page
 						}else{
+							//page not displayable
 							logger.error(String.format("click stream:%s eval to %s, not a page, check toType. prdPage is:%s", 
 									vt.getValue(), value, currentNP==null? "null":currentNP));
-							break;
+							return false;
 						}
 					}
 					//get the next click
@@ -358,6 +359,7 @@ public class HtmlUnitUtil {
 				}
 			}
 		}
+		return true;
 	}
 
 	/**
@@ -426,7 +428,7 @@ public class HtmlUnitUtil {
 	}
 	
 	//total is maxloop * waitTime
-	public static boolean waitVerify(HtmlPage page, VerifyPage vp, Object param, CrawlConf cconf) throws InterruptedException{
+	private static boolean waitVerify(HtmlPage page, VerifyPage vp, Object param, CrawlConf cconf) throws InterruptedException{
 		int innerloop=0;
 		Date tick1 = null;
 		Date tick2 = null;

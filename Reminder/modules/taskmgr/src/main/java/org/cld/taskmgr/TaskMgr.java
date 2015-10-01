@@ -299,7 +299,7 @@ public class TaskMgr {
 	public static final String taskParamTaskIndex="taskindex"; //the index of the specific task
 	
 	//
-	public Task getTaskInstance(String taskType, TasksType tasks, ClassLoader pluginClassLoader, 
+	private Task getTaskInstance(String taskType, TasksType tasks, ClassLoader pluginClassLoader, 
 			Map<String, Object> params, Date utime, String taskName){
 		try{
 			TaskTypeConf ttypeConf = ttypeConfs.get(taskType);

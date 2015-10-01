@@ -1,0 +1,10 @@
+/target
+/test.log
+.DS_Store
+test.log
+.project
+.settings
+.classpath
+.metadata
+/target
+/target/

@@ -181,11 +181,8 @@ public class ProductAnalyze{
 		VerifyPageByXPath vpbxp = bbops!=null? new VerifyPageByXPath(xpaths):null;
 		VPXP = new VerifyPageByBoolOpXPath(vpbbo, vpbxp);
 		
-		//
-		HtmlPageResult detailsResult;
-		HtmlPage details = null;
-		detailsResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(url), VPXP, null, task.getParsedTaskDef(), cconf);	
-		details = detailsResult.getPage();
+		HtmlPageResult detailsResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(url), VPXP, null, task.getParsedTaskDef(), cconf);	
+		HtmlPage details  = detailsResult.getPage();
 		
 		if (detailsResult.getErrorCode() == HtmlPageResult.SUCCSS){			
 			//product name
@@ -272,6 +269,8 @@ public class ProductAnalyze{
 				if (dsManager!=null && addToDB)
 					dsManager.addUpdateCrawledItem(product, lastProduct);	
 			}
+		}else{
+			product.setCompleted(false);
 		}
 		
 		return product;

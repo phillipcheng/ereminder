@@ -57,6 +57,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 	//configurable values
 	private String startURL;
 	private String productType;
+	private String catId;
 	//following transient attributes exists on the taskMgr's taskConf cache, but not in the db
 	transient String[] skipUrls;
 	transient boolean enableJS;
@@ -164,6 +165,14 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 	 * @return
 	 * @throws InterruptedException
 	 */
+	
+	private static String getDsm(BrowseDetailType bdt, CrawlConf cconf){
+		if (bdt.getBaseBrowseTask().getDsm()!=null){
+			return bdt.getBaseBrowseTask().getDsm();
+		}else{
+			return cconf.getCrawlDsManagerValue().get(0);
+		}
+	}
 	public static List<CrawledItem> browseProduct(BrowseProductTaskConf task, CrawlConf cconf, String storeId, 
 			String catId, String taskName, Map<String, Object> params, boolean retcsv, Date crawlDateTime, boolean addToDB, 
 			BrowseTaskType btt, Map<String, BufferedWriter> hdfsByIdOutputMap, 
@@ -172,12 +181,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		Product thisProduct = null;
 		ParsedBrowsePrd pbpTemplate = task.getBrowseDetailTask(taskName);
 		BrowseDetailType bdt = pbpTemplate.getBrowsePrdTaskType();
-		DataStoreManager dsManager = null;
-		if (bdt.getBaseBrowseTask().getDsm()!=null){
-			dsManager = cconf.getDsm(bdt.getBaseBrowseTask().getDsm());
-		}else{
-			dsManager = cconf.getDefaultDsm();
-		}
+		DataStoreManager dsManager = cconf.getDsm(getDsm(bdt, cconf));
 		//re-evaluate params
 		task.putAllParams(params);
 		task.evalParams(bdt);
@@ -244,16 +248,18 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 				boolean needCrawl = true;
 				Product lastProduct = null;
 				String prdId = ProductListAnalyzeUtil.getInternalId(startUrl, task, pbpTemplate);
-				if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm())){
+				if (CrawlConf.crawlDsManager_Value_Hbase.equals(getDsm(bdt, cconf))){
 					//check any update
 					if (prdId!=null && !"".equals(prdId)){			
 						if (dsManager!=null){
 							lastProduct = (Product) dsManager.getCrawledItem(prdId, storeId, Product.class);
 							ci = lastProduct;
 						}
-						if (lastProduct != null && !CompareUtil.ObjectDiffers(crawlDateTime, lastProduct.getId().getCreateTime()) && lastProduct.isCompleted()){
+						if (lastProduct != null && lastProduct.isCompleted()){
+							//TODO check last update time
+							//!CompareUtil.ObjectDiffers(crawlDateTime, lastProduct.getId().getCreateTime()) 
 							needCrawl= false;
-							logger.info("last product has the same crawl time and is complete, skip browsing.");
+							logger.info("last product is complete, skip browsing.");
 						}
 					}
 				}
@@ -297,8 +303,10 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 							params.remove(pt.getName());
 						}
 					}
-					BrowseProductTaskConf t = (BrowseProductTaskConf) cconf.getTaskMgr().getTaskInstance("org.cld.datacrawl.task.BrowseProductTaskConf", 
-							task.getTasks(), cconf.getPluginClassLoader(), params, new Date(), callTaskName);
+					BrowseProductTaskConf t = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(callTaskName);
+					t = t.clone(cconf.getPluginClassLoader());
+					t.putAllParams(params);
+					t.genId();
 					List<CrawledItem> cilist1 = browseProduct(t, cconf, storeId, catId, callTaskName, t.getParamMap(), 
 							retcsv, crawlDateTime, addToDB, btt, hdfsByIdOutputMap, context, mos);
 					if (btt==null)
@@ -320,7 +328,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
 		BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
 		this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
-		browseProduct(this, cconf, this.getStoreId(), null, this.getName(), this.getParamMap(), false, this.getStartDate(), true, null, null, null, null);
+		browseProduct(this, cconf, this.getStoreId(), this.catId, this.getName(), this.getParamMap(), false, this.getStartDate(), true, null, null, null, null);
 		return new ArrayList<Task>();
 	}
 	
@@ -332,7 +340,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
 		if (taskTemplate!=null){
 			this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
-			return browseProduct(this, cconf, getStoreId(), null, getName(), getParamMap(), true, getStartDate(), addToDB, null, null, null, null);
+			return browseProduct(this, cconf, getStoreId(), this.catId, getName(), getParamMap(), true, getStartDate(), addToDB, null, null, null, null);
 		}else{
 			logger.error(String.format("task %s not found in config.", getName()));
 			return null;
@@ -349,7 +357,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 			Map<String, BufferedWriter> hdfsByIdOutputMap = new HashMap<String, BufferedWriter>();
 			try{
 				this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
-				browseProduct(this, cconf, getStoreId(), null, getName(), getParamMap(), true, getStartDate(), addToDB, 
+				browseProduct(this, cconf, getStoreId(), this.catId, getName(), getParamMap(), true, getStartDate(), addToDB, 
 						btt, hdfsByIdOutputMap, context, mos);
 			}finally{
 				for (BufferedWriter br: hdfsByIdOutputMap.values()){
@@ -407,5 +415,11 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 	}
 	public void setProductType(String productType) {
 		this.productType = productType;
+	}
+	public String getCatId() {
+		return catId;
+	}
+	public void setCatId(String catId) {
+		this.catId = catId;
 	}
 }

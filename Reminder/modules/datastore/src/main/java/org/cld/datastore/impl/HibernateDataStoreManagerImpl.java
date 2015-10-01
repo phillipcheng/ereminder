@@ -72,12 +72,6 @@ public class HibernateDataStoreManagerImpl implements DataStoreManager {
 			session.close();
 		}
 	}
-	
-	@Override
-	public List<CrawledItem> getCrawledItem(String id, String storeId,
-			int maxVersion, Class<? extends CrawledItem> crawledItemClazz) {
-		throw new UnsupportedOperationException();
-	}
 
 	@Override
 	public boolean addUpdateCrawledItem(CrawledItem ci, CrawledItem oldCi) {

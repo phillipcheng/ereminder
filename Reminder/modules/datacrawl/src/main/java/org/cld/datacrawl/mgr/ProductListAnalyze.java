@@ -85,9 +85,11 @@ public class ProductListAnalyze implements ListProcessInf{
 			}else{
 				taskName = task.getParsedTaskDef().getBrowseDetailTask(null).getBrowsePrdTaskType().getBaseBrowseTask().getTaskName();
 			}
-			BrowseProductTaskConf t = (BrowseProductTaskConf) cconf.getTaskMgr().getTaskInstance("org.cld.datacrawl.task.BrowseProductTaskConf", 
-					task.getTasks(), cconf.getPluginClassLoader(), taskParams, new Date(), taskName);
+			BrowseProductTaskConf t = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(taskName);
+			t = t.clone(cconf.getPluginClassLoader());
+			t.putAllParams(taskParams);
 			t.setStartURL(fullOutput.getStartUrl());
+			t.setCatId(catId);
 			t.genId();
 			BDTProcessType processType = t.getBrowseDetailTask(fullOutput.getTaskName()).getBrowsePrdTaskType().getProcessType();
 			if (processType == BDTProcessType.GENBPT){

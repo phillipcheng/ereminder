@@ -14,22 +14,8 @@
 	</profiles>
 	<dependencies>
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.cld.taskmgr</groupId>
-			<artifactId>cld-taskmgr</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-		<dependency>
 			<groupId>org.cld.datacrawl</groupId>
 			<artifactId>cld-datacrawl</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.cld.etl</groupId>
-			<artifactId>cld-etl</artifactId>
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
@@ -50,7 +36,6 @@
 			<artifactId>hive-exec</artifactId>
 			<version>1.2.1</version>
 		</dependency>
-		
 	</dependencies>
 	
 	<build>

@@ -63,6 +63,11 @@ public class TestNasdaqStock {
 	}
 	
 	@Test
+	public void testRunCmd1() throws Exception{
+		nsb.runCmd(NasdaqStockConfig.BALANCE_SHEET, marketId, sdf.format(startDate), sdf.format(endDate));
+	}
+	
+	@Test
 	public void testBrowseIdlist() throws Exception{nsb.run_browse_idlist(NasdaqStockConfig.MarketId_NASDAQ, sdf.parse("2015-08-02"));}
 	//daily
 	@Test

@@ -1,4 +1,6 @@
-create 'crawledItem', 'cf'
+create 'mom001', 'cf'
+
+create 'CmdStatus', 'cf'
 
 if hbase can't start and complaining :hbase exists
 You can access ZooKeeper via several methods, 

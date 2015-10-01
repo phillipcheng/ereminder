@@ -40,21 +40,6 @@ public class HbaseCrawledItemTest {
 		
 		assertTrue(ci2.contentEquals(ci));
 	}
-	
-	@Test
-	public void testAdd2Version(){//add 2 version and get
-		HbaseDataStoreManagerImpl ds = new HbaseDataStoreManagerImpl(new Configuration());
-		CrawledItem ci = new CrawledItem();
-		String id = "abc";
-		String storeid="store1";
-		ci.setFullUrl("http://fullurl1");
-		ci.addParam("book", "book3content");
-		CrawledItemId ciid = new CrawledItemId(id, storeid, new Date());
-		ci.setId(ciid);
-		ds.addUpdateCrawledItem(ci, null);
-		
-		List<CrawledItem> cil = ds.getCrawledItem(id, storeid, 2, null);
-		logger.info("ci list get from db:" + cil);
-	}
+
 
 }

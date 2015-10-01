@@ -122,9 +122,11 @@ public class TestBase {
 				logger.error(String.format("usage: TestBase propFile site-conf-file-name %s tasktype starturls", cmd));
 			}
 			String taskType = args[3];
-			String startUrls = args[4];
-			
-			String[] surls = startUrls.split(START_URL_SEP);
+			String[] surls = new String[]{""};//init with empty start url
+			if (args.length>4){
+				String startUrls = args[4];
+				surls = startUrls.split(START_URL_SEP);
+			}
 			for (String starturl: surls){
 				try {
 					if (TASK_TYPE_BCT.equals(taskType)){

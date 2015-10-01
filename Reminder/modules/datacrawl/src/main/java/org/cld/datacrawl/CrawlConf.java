@@ -91,6 +91,7 @@ public class CrawlConf implements AppConf {
 	private ProductListAnalyze pla = new ProductListAnalyze();
 	
 	private List<String> crawlDsManagerValue = new ArrayList<String>();
+
 	private String crawlDBConnectionUrl;
 	//type to dsm instance, //TODO, name to dsm instance, same type can be multiple different dsm
 	private Map<String, DataStoreManager> dsmMap = new HashMap<String, DataStoreManager>();
@@ -598,5 +599,12 @@ public class CrawlConf implements AppConf {
 	public void setResultDmPass(String resultDmPass) {
 		this.resultDmPass = resultDmPass;
 	}
+	
+	public List<String> getCrawlDsManagerValue() {
+		return crawlDsManagerValue;
+	}
 
+	public void setCrawlDsManagerValue(List<String> crawlDsManagerValue) {
+		this.crawlDsManagerValue = crawlDsManagerValue;
+	}
 }

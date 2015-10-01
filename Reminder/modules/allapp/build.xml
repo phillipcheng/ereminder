@@ -1,0 +1,47 @@
+<project name="MyProject" default="dist" basedir=".">
+    <description>
+        simple example build file
+    </description>
+	<property name="src"  location="src"/>
+	<property name="dist"  location="target"/>
+	
+	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
+  
+	<target name="dist">
+		<delete file="${dist}/cld-shopping-1.0.0-tests.jar"/>
+		<jar destfile="${dist}/cld-shopping-1.0.0-tests.jar">
+    		<fileset dir="${dist}/test-classes"
+            	 includes="**/*.class"/>
+  			</jar>
+		<jar destfile="${dist}/lib/cld-test-config.jar" basedir="${src}/test/resources"/>
+	    <jar destfile="${dist}/lib/cld-test-sites.jar" basedir="${src}/test/resources/sites"/>
+		<copy file="${dist}/cld-shopping-1.0.0.jar" todir="${dist}/lib/"/>
+		<copy file="${dist}/cld-shopping-1.0.0-tests.jar" todir="${dist}/lib/"/>
+	</target>
+	<!--
+	hadoop fs -mkdir /reminder/lib 
+	hadoop fs -put ${dist}/lib/* /reminder/lib/
+	hadoop fs -rm /reminder/lib/*
+	hadoop fs -put /Users/chengyi/Documents/ereminder/Reminder/modules/shopping/target/lib/* /reminder/lib/
+	-->
+	<target name="deploy">
+		<fileset id="libfiles" dir="${dist}" >
+	  			<include name="lib/cld-*.jar"/>
+	  			<include name="lib/crbook-*.jar"/>
+	  			<include name="lib/cy-*.jar"/>
+	  			<include name="cld-shopping*.jar"/>
+		</fileset>
+			
+	  <scp trust="yes" sftp="true" todir="root@192.85.143.37:/opt/reminder/" password="root123">
+	  		<fileset refid="libfiles"/>
+	  </scp>
+	  
+	  <scp trust="yes" sftp="true" todir="root@192.85.143.36:/opt/reminder/" password="root123">
+	  		<fileset refid="libfiles"/>
+	  </scp>
+	  
+	  <scp trust="yes" sftp="true" todir="root@192.85.143.40:/opt/reminder/" password="root123">
+	  		<fileset refid="libfiles"/>
+	  </scp>
+	</target>
+</project>

@@ -24,15 +24,7 @@ public interface DataStoreManager {
 	 * @return the latest version
 	 */
 	public CrawledItem getCrawledItem(String id, String storeId, Class<? extends CrawledItem> crawledItemClazz);
-	/**
-	 * return a list of maxVersion, order by timestamp desc
-	 * @param id
-	 * @param storeId
-	 * @param maxVersion
-	 * @param crawledItemClazz
-	 * @return
-	 */
-	public List<CrawledItem> getCrawledItem(String id, String storeId, int maxVersion, Class<? extends CrawledItem> crawledItemClazz);
+	
 	/**
 	 * if content different, will add a new version
 	 * @param ci

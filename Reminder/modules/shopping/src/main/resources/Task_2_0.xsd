@@ -14,6 +14,7 @@
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:element name="Tasks" type="TasksType"/>
 	<xs:simpleType name="VarType">
@@ -471,11 +472,12 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 				<xs:documentation>max # threads can be used to crawl this site, default 0 for unlimited</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
-		<xs:attribute name="productType" use="optional" default="book">
+		<xs:attribute name="productType" use="optional" default="default">
 			<xs:simpleType>
 				<xs:restriction base="xs:string">
 					<xs:enumeration value="book"/>
 					<xs:enumeration value="default"/>
+					<xs:enumeration value="stock"/>
 				</xs:restriction>
 			</xs:simpleType>
 		</xs:attribute>

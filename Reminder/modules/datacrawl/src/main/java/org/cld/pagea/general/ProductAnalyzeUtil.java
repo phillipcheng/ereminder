@@ -134,15 +134,14 @@ public class ProductAnalyzeUtil {
 			pageMap.put(ConfKey.START_PAGE, pagelist);
 			pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
 		}else{//open this url via firstPageClicks
-			if (firstPageClicks.getFinishCondition()==null){
-				List<HtmlPage> pagelist= new ArrayList<HtmlPage>();
-				pagelist.add(prdPage);
-				pageMap.put(ConfKey.START_PAGE, pagelist);
-				pageMap.put(ConfKey.CURRENT_PAGE, pagelist);//set current page
-				HtmlUnitUtil.clickClickStream(firstPageClicks, pageMap, task.getParamMap(), cconf, 
-						new NextPage(prdPage.getUrl().toExternalForm(), null, null));
-			}else{
-				logger.error("click stream does not support finish condition now.");
+			List<HtmlPage> pagelist= new ArrayList<HtmlPage>();
+			pagelist.add(prdPage);
+			pageMap.put(ConfKey.START_PAGE, pagelist);
+			pageMap.put(ConfKey.CURRENT_PAGE, pagelist);//set current page
+			boolean ret = HtmlUnitUtil.clickClickStream(firstPageClicks, pageMap, task.getParamMap(), cconf, 
+					new NextPage(prdPage.getUrl().toExternalForm(), null, null));
+			if (!ret){
+				pageMap.put(ConfKey.CURRENT_PAGE, null);
 			}
 		}
 		return pageMap;
@@ -217,6 +216,7 @@ public class ProductAnalyzeUtil {
 			return true;
 		return false;
 	}
+	
 	public static void callbackReadDetails(WebClient wc, HtmlPage inpage, Product product, Task task, 
 			ParsedBrowsePrd taskDef, CrawlConf cconf, CsvTransformType csvTransform) throws InterruptedException {	
 		//set the user attributes in case there is default values
@@ -232,9 +232,14 @@ public class ProductAnalyzeUtil {
 		}
 		Map<String, List<? extends DomNode>> pageMap = null;
 		int totalPage = -1;
+		boolean firstPageSuccess = true;
 		if (product.getLastUrl()==null){
 			//go to first page if there is click stream
 			pageMap = getFirstPage(wc, inpage, bdt.getFirstPageClickStream(), task, cconf);
+			if (pageMap.get(ConfKey.CURRENT_PAGE)==null){
+				//failed to go to first page
+				firstPageSuccess = false;
+			}
 			totalPage = getTotalPage(pageMap, task, taskDef, cconf);
 			product.setTotalPage(totalPage);
 		}else{
@@ -247,77 +252,90 @@ public class ProductAnalyzeUtil {
 				pagelist.add(inpage);
 				pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
 			}else{
+				logger.error(String.format("product %s try to start from lastUrl %s, but failed.", product.getId(), product.getLastUrl()));
 				//as nothing happened, restart from the same place
 			}
 		}
-		boolean tryPattern= false;
-		if (product.getTotalPage()>0){
-			tryPattern = bdt.isTryPattern();
-		}
-		HtmlPage curPage = (HtmlPage) pageMap.get(ConfKey.CURRENT_PAGE).get(0);
-		boolean finalPage=true;
-		//set variable nextPage, later it will be set while doing the getNextPage
-		if (bdt.getNextPage()!=null){
-			HtmlPage frame = (HtmlPage) HtmlUnitUtil.getFramePage(curPage, bdt.getNextPage().getFrameId());
-			DomNamespaceNode dnsn = frame.getFirstByXPath(bdt.getNextPage().getValue());
-			product.addParam(ConfKey.PRD_NEXTPAGE, dnsn);
-			logger.info(String.format("get next page element: %s from page:%s", dnsn, frame.getUrl().toExternalForm()));
-		}
-		if (bdt.getLastPageCondition()!=null){
-			finalPage= BinaryBoolOpEval.eval(bdt.getLastPageCondition(), product.getParamMap(), curPage, cconf);
-		}
-		int curPageNum = 1;
-		//(totalPage not set or curPage less than totalPage) & curPage not null & not final & not finished
-		boolean useTotalPage=false;
-		boolean externalistFinished=false;
-		while (curPage!=null && !externalistFinished){
-			boolean goon=false;
-			if (curPageNum<=totalPage){//count page 1st priority
-				goon= true;
-				useTotalPage=true;
-			} else if (!useTotalPage && !finalPage){//use final page condition
-				goon = true;
+		if (firstPageSuccess){
+			boolean tryPattern= false;
+			if (product.getTotalPage()>0){
+				tryPattern = bdt.isTryPattern();
 			}
-			if (goon){
-				//eval on curPage again
+			HtmlPage curPage = (HtmlPage) pageMap.get(ConfKey.CURRENT_PAGE).get(0);
+			boolean finalPage=true;
+			//set variable nextPage, later it will be set while doing the getNextPage
+			if (bdt.getNextPage()!=null){
+				HtmlPage frame = (HtmlPage) HtmlUnitUtil.getFramePage(curPage, bdt.getNextPage().getFrameId());
+				DomNamespaceNode dnsn = frame.getFirstByXPath(bdt.getNextPage().getValue());
+				product.addParam(ConfKey.PRD_NEXTPAGE, dnsn);
+				logger.info(String.format("get next page element: %s from page:%s", dnsn, frame.getUrl().toExternalForm()));
+			}
+			if (bdt.getLastPageCondition()!=null){
+				finalPage= BinaryBoolOpEval.eval(bdt.getLastPageCondition(), product.getParamMap(), curPage, cconf);
+			}
+			int curPageNum = 1;
+			//(totalPage not set or curPage less than totalPage) & curPage not null & not final & not finished
+			boolean useTotalPage=false;
+			boolean externalistFinished=false; //finished by detecting the pattern instead of browsing till the final page (final condition satisfied) or page num
+			while (curPage!=null && !externalistFinished){
+				boolean goon=false;
+				if (curPageNum<=totalPage){//count page 1st priority
+					goon= true;
+					useTotalPage=true;
+				} else if (!useTotalPage && !finalPage){//use final page condition
+					goon = true;
+				}
+				if (goon){
+					//eval on curPage again
+					List<HtmlPage> pagelist = new ArrayList<HtmlPage>();
+					pagelist.add(curPage);
+					pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
+					externalistFinished = CrawlTaskEval.setUserAttributes(pageMap, bdt.getBaseBrowseTask().getUserAttribute(), 
+							product.getParamMap(), cconf, task.getParamMap(), tryPattern);
+					if (taskNeedFilter(taskDef, product) && cicsv!=null){//check filter conditions (startDate, etc) to prevent useless crawl
+						cicsv.getCSV(product, null);
+						if (cicsv.isFiltered()){
+							externalistFinished = true;
+							logger.info("filter condition meet do not crawl further.");
+						}
+					}
+					logger.info("curPageNum:" + curPageNum + ", totalPage:" + totalPage);
+					logger.debug(product.getParamMap());
+					if (externalistFinished)
+						break;
+					curPage=getNextPage(wc, curPage, task, taskDef, cconf, product);
+					curPageNum ++;
+					if (bdt.getLastPageCondition()!=null){
+						finalPage = BinaryBoolOpEval.eval(bdt.getLastPageCondition(), product.getParamMap(), curPage, cconf);
+					}
+				}else{
+					break;
+				}
+			}
+			
+			if (!externalistFinished && finalPage && curPage!=null && 
+					(curPageNum<=totalPage||totalPage==-1)){//totalPage not set or totalPage set and curPage<=totalPage
+				//operate on the final page
 				List<HtmlPage> pagelist = new ArrayList<HtmlPage>();
 				pagelist.add(curPage);
 				pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
-				externalistFinished = CrawlTaskEval.setUserAttributes(pageMap, bdt.getBaseBrowseTask().getUserAttribute(), 
+				CrawlTaskEval.setUserAttributes(pageMap, bdt.getBaseBrowseTask().getUserAttribute(), 
 						product.getParamMap(), cconf, task.getParamMap(), tryPattern);
-				if (taskNeedFilter(taskDef, product) && cicsv!=null){//check filter conditions (startDate, etc) to prevent useless crawl
-					cicsv.getCSV(product, null);
-					if (cicsv.isFiltered()){
-						externalistFinished = true;
-						logger.info("filter condition meet do not crawl further.");
-					}
-				}
 				logger.info("curPageNum:" + curPageNum + ", totalPage:" + totalPage);
 				logger.debug(product.getParamMap());
-				if (externalistFinished)
-					break;
-				curPage=getNextPage(wc, curPage, task, taskDef, cconf, product);
-				curPageNum ++;
-				if (bdt.getLastPageCondition()!=null){
-					finalPage = BinaryBoolOpEval.eval(bdt.getLastPageCondition(), product.getParamMap(), curPage, cconf);
-				}
+				product.setCompleted(true);
+			}else if(curPageNum>totalPage && totalPage!=-1){
+				//we have totalPage, and we browse passed totalPage meaning we get all pages, and we do not need to process the final page
+				product.setCompleted(true);
+			}else if (externalistFinished){
+				product.setCompleted(true);
 			}else{
-				break;
+				product.setCompleted(false);
 			}
+		}else{
+			product.setCompleted(false);
 		}
-		
-		if (!externalistFinished && finalPage && curPage!=null && 
-				(curPageNum<=totalPage||totalPage==-1)){//totalPage not set or totalPage set and curPage<=totalPage
-			//operate on the final page
-			List<HtmlPage> pagelist = new ArrayList<HtmlPage>();
-			pagelist.add(curPage);
-			pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
-			CrawlTaskEval.setUserAttributes(pageMap, bdt.getBaseBrowseTask().getUserAttribute(), 
-					product.getParamMap(), cconf, task.getParamMap(), tryPattern);
-			logger.info("curPageNum:" + curPageNum + ", totalPage:" + totalPage);
-			logger.debug(product.getParamMap());
-		}
-		
+
 		//clean up the next page in product
 		product.addParam(ConfKey.PRD_NEXTPAGE, null);
 		
@@ -326,11 +344,7 @@ public class ProductAnalyzeUtil {
 			product.getId().setId((String) product.getParam(IdUrlMapping.ID_KEY));
 			logger.debug(String.format("fill id:%s back.", product.getId().getId()));
 		}
-		
-		if (finalPage || externalistFinished){
-			product.setCompleted(true);
-		}
-		
+
 		ProductConf pconf = cconf.getPrdConfMap().get(product.getItemType());
 		if (pconf!=null){
 			if (pconf.getPrdHandler()!=null){
