@@ -4,11 +4,13 @@ import java.io.IOException;
 
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class DefaultCopyTextReducer extends Reducer<Text,Text,Text,Text>{
 
-	public static final Logger logger = Logger.getLogger(DefaultCopyTextReducer.class);
+	public static final Logger logger = LogManager.getLogger(DefaultCopyTextReducer.class);
 	
 	@Override
 	public void reduce(Text key, Iterable<Text> values, Context context ) throws IOException, InterruptedException {

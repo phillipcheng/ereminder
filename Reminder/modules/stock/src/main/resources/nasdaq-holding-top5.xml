@@ -30,7 +30,6 @@
 				<value value="//div[@id='topinsiders']/../following-sibling::div[1]/div[1]/table/tbody/tr/th[1]|//div[@id='topinsiders']/../following-sibling::div[1]/div[1]/table/tbody/tr/td" toType="list" toEntryType="string" optional="true"/>
 			</userAttribute>
 			<csvtransform outputType="byJobMulti" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
-				<outputDir value="'raw/' + marketId + '_' + startDate + '_' + endDate + '/nasdaq-holding-top5/'" fromType="expression"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

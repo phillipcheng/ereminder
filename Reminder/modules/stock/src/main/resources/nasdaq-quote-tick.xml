@@ -23,7 +23,6 @@
 				<value value="//table[@id='AfterHoursPagingContents_Table']/tbody/tr/td" toType="list" toEntryType="string" optional="true"/>
 			</userAttribute>
 			<csvtransform outputType="byId" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" reverse="true">
-				<outputDir value="raw/[marketId]_[startDate]_[endDate]/nasdaq-quote-tick/"/>
 			</csvtransform>
 			<nextTask>
 				<condition>

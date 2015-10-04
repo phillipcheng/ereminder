@@ -42,7 +42,6 @@
 				<value value="Number,Text,Number,Number,Text" toType="list" toEntryType="string"/>
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.ColTableRowTableAsCSV" outputType="byJobMulti"><!-- 1 file -->
-				<outputDir value="raw/[startDate]_[endDate]/sina-stock-stock-holder/"/>
 			</csvtransform><filter>function getDate(q) {
     if (q=='1') return '-03-31'
     if (q=='2') return '-06-30'

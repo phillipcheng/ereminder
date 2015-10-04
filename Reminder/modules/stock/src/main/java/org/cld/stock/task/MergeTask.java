@@ -11,6 +11,7 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
@@ -113,7 +114,6 @@ public class MergeTask extends Task implements Serializable{
 					FileUtil.copyMerge(fs, lp, fs, dest, false, hconf, "");
 				}
 			}
-			
 		}catch(Exception e){
 			logger.error("", e);
 		}
@@ -144,23 +144,35 @@ public class MergeTask extends Task implements Serializable{
 			for (FileStatus store: fsList){
 				if (!store.isFile()){
 					logger.info(String.format("store %s found.", store.getPath().toString()));
-					String storeid = store.getPath().getName();
-					if (whichStore == null || (whichStore!=null && whichStore.equals(storeid))){
-						boolean needOverwrite = ETLUtil.needOverwrite(cconf, storeid);
-						Path storePath = store.getPath();
-						if (Arrays.asList(sc.getPostProcessCmds()).contains(storeid)){
-							//some cmd has post-processed, so the input folder changed
-							storePath = new Path(storePath.toString().replace("raw", "postprocess"));
-						}
-						try{
-							Path[] leafDirs = HadoopUtil.getLeafPath(fs, storePath);
-							for (Path leafDir:leafDirs){
-								MergeTask t = new MergeTask(leafDir.toString(), datePart, storeid, needOverwrite);
-								tl.add(t);
+					ContentSummary cs = fs.getContentSummary(store.getPath());
+					if (cs.getLength()>0){
+						String storeid = store.getPath().getName();
+						if (whichStore == null || (whichStore!=null && whichStore.equals(storeid))){
+							boolean needOverwrite = ETLUtil.needOverwrite(cconf, storeid);
+							Path storePath = store.getPath();
+							if (Arrays.asList(sc.getPostProcessCmds()).contains(storeid)){
+								//some cmd has post-processed, so the input folder changed
+								storePath = new Path(storePath.toString().replace("raw", "postprocess"));
 							}
-						}catch(Exception e){
-							logger.warn(String.format("cmd %s data %s not exist, skip..", storeid, storePath));
+							try{
+								Path[] leafDirs = HadoopUtil.getLeafPath(fs, storePath);
+								for (Path leafDir:leafDirs){
+									MergeTask t = new MergeTask(leafDir.toString(), datePart, storeid, needOverwrite);
+									cs = fs.getContentSummary(leafDir);
+									if (cs.getLength()>0){
+										tl.add(t);
+									}else{
+										logger.info(String.format("empty leaf folder found:%s, delete it!!!", leafDir));
+										fs.delete(leafDir, true);
+									}
+								}
+							}catch(Exception e){
+								logger.warn(String.format("cmd %s data %s not exist, skip..", storeid, storePath));
+							}
 						}
+					}else{
+						logger.info(String.format("empty store folder found:%s, delete it!!!", store.getPath()));
+						fs.delete(store.getPath(), true);
 					}
 				}
 			}

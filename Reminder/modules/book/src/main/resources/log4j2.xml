@@ -15,7 +15,7 @@
       <AppenderRef ref="Console"/>
     </Root>
         
-    <Logger name="org.cld" level="DEBUG" additivity="false">
+    <Logger name="org.cld" level="INFO" additivity="false">
       <AppenderRef ref="Console"/>
     </Logger>
     

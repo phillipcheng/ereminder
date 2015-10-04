@@ -5,7 +5,6 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -29,9 +28,8 @@ import org.cld.datastore.entity.CrawledItem;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.DateTimeUtil;
+import org.xml.mytaskdef.ConfKey;
 import org.xml.mytaskdef.ParsedBrowsePrd;
-
-import com.sun.tools.javac.code.Attribute.Array;
 
 public class ETLUtil {
 	
@@ -44,11 +42,17 @@ public class ETLUtil {
 	public static final String PK_LOOKAHEADE="lookahead";//how many time unit (quarter) to look ahead, can be 0, 1, 2, etc
 	public static final String PK_MAPPER="mapper";
 	public static final String PK_REDUCER="reducer";
-	
+
+	public static final int maxBatchSize=1000000;
 	//parameter keys define in the browseTask
 	
 	public static final String DEFAULT_MAPPER="org.cld.datacrawl.hadoop.CrawlTaskMapper";
 
+	public static String getStartUrl(Task t){
+		ParsedBrowsePrd btt = t.getBrowseDetailTask(t.getName());
+		return btt.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl().getValue();
+	}
+	
 	public static boolean isStatic(Task t){
 		ParsedBrowsePrd btt = t.getBrowseDetailTask(t.getName());
 		if (btt.getParamMap().containsKey(AbstractCrawlItemToCSV.FIELD_NAME_STATIC) && 
@@ -505,7 +509,7 @@ public class ETLUtil {
 					updateMarketIdParam(t1);
 					tlist.add(t1);
 					//since tlist can be very large, generate job in between
-					if (tlist.size()>=100000){
+					if (tlist.size()>=maxBatchSize){
 						Map<String, Object> taskParams = new HashMap<String, Object>();
 						taskParams.put(AbstractCrawlItemToCSV.FN_MARKETID, marketId);
 						taskParams.put(BatchId_Key, batchId);
@@ -548,6 +552,11 @@ public class ETLUtil {
 			return retYQ;
 		}
 	}
+	enum OpenUrlType{
+		byYearAndQuarter,
+		byYear,
+		byIdOnly
+	}
 	//if startDate is null, means no filter, otherwise set year and quarter parameter as filter
 	private static String[] runTaskByStockYearQuarter(StockConfig sc, String marketId, CrawlConf cconf, String propfile, Task t, 
 			Date startDate, Date endDate, String cmd, Map<String, Object> params, 
@@ -565,6 +574,18 @@ public class ETLUtil {
 		endQuarter = retYQ[1];
 		List<String> allIds = Arrays.asList(getStockIdByMarketId(sc, marketId, cconf, cmd));
 		
+		OpenUrlType out;
+		String startUrl = getStartUrl(t);
+		if (startUrl.contains(ConfKey.PARAM_PRE+AbstractCrawlItemToCSV.FN_YEAR+ConfKey.PARAM_POST) && 
+				startUrl.contains(ConfKey.PARAM_PRE+AbstractCrawlItemToCSV.FN_QUARTER+ConfKey.PARAM_POST)){
+			//need to open url for each year and quarter, so we need to use ipo start date.
+			out = OpenUrlType.byYearAndQuarter;
+		}else if (startUrl.contains(ConfKey.PARAM_PRE+AbstractCrawlItemToCSV.FN_YEAR+ConfKey.PARAM_POST)){
+			out = OpenUrlType.byYear;
+		}else{
+			out = OpenUrlType.byIdOnly;
+		}
+		
 		for (String stockid: allIds){
 			Date sd = null;
 			if (stockLUMap.containsKey(stockid)){
@@ -573,44 +594,71 @@ public class ETLUtil {
 					sd = DateTimeUtil.tomorrow(sd);
 				}
 			}
+			int startYear=0, startQuarter=0;
 			if (sd==null){
-				//get the ipo date?
-				sd = getIPODateByStockId(sc, marketId, stockid, cconf, cmd);
+				//get all history
+				if (out==OpenUrlType.byYearAndQuarter || out==OpenUrlType.byYear){
+					//need to open url for each year and quarter, so we need to use ipo start date.
+					sd = getIPODateByStockId(sc, marketId, stockid, cconf, cmd);
+				}
 			}
-			int[] yq = DateTimeUtil.getYearQuarter(sd);
-			int startYear, startQuarter;
-			startYear = yq[0];
-			startQuarter = yq[1];
 			
-			int year;
-			int quarter;
-			for (year=startYear; year<=endYear; year++){
-				int startQ;
-				int endQ;
-				if (startYear==endYear){//same year
-					startQ=startQuarter;
-					endQ =endQuarter;
-				}else{
-					if (year==startYear){//1st year
-						startQ = startQuarter;
-						endQ=4;
-					}else if (year==endYear){//last year
-						startQ=1;
-						endQ=endQuarter;
-					}else{//for any year between
-						startQ=1;
-						endQ=4;
+			if (sd!=null){
+				int[] yq = DateTimeUtil.getYearQuarter(sd);
+				startYear = yq[0];
+				startQuarter = yq[1];
+			}
+			
+			if (out==OpenUrlType.byYearAndQuarter){
+				int year;
+				int quarter;
+				for (year=startYear; year<=endYear; year++){
+					int startQ;
+					int endQ;
+					if (startYear==endYear){//same year
+						startQ=startQuarter;
+						endQ =endQuarter;
+					}else{
+						if (year==startYear){//1st year
+							startQ = startQuarter;
+							endQ=4;
+						}else if (year==endYear){//last year
+							startQ=1;
+							endQ=endQuarter;
+						}else{//for any year between
+							startQ=1;
+							endQ=4;
+						}
+					}
+					for (quarter=startQ;quarter<=endQ;quarter++){
+						Task t1 = t.clone(ETLUtil.class.getClassLoader());
+						t1.putParam("stockid", stockid);
+						t1.putParam("year", year);
+						t1.putParam("quarter", quarter);
+						t1.putAllParams(params);
+						updateMarketIdParam(t1);
+						tlist.add(t1);
 					}
 				}
-				for (quarter=startQ;quarter<=endQ;quarter++){
+			}else if (out==OpenUrlType.byYear){
+				int year;
+				for (year=startYear; year<=endYear; year++){
 					Task t1 = t.clone(ETLUtil.class.getClassLoader());
 					t1.putParam("stockid", stockid);
 					t1.putParam("year", year);
-					t1.putParam("quarter", quarter);
+					t1.putParam("quarter", 0);
 					t1.putAllParams(params);
 					updateMarketIdParam(t1);
 					tlist.add(t1);
 				}
+			}else if (out==OpenUrlType.byIdOnly){
+				Task t1 = t.clone(ETLUtil.class.getClassLoader());
+				t1.putParam("stockid", stockid);
+				t1.putParam("year", 0);
+				t1.putParam("quarter", 0);
+				t1.putAllParams(params);
+				updateMarketIdParam(t1);
+				tlist.add(t1);
 			}
 		}
 		Map<String, Object> taskParams = new HashMap<String, Object>();

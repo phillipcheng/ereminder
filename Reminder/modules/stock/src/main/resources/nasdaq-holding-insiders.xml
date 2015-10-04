@@ -30,7 +30,6 @@
 				<value value="2" toType="list" toEntryType="int"/>
 			</userAttribute>
 			<csvtransform outputType="byId" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
-				<outputDir value="'raw/'  + marketId + '_' + startDate + '_' + endDate + '/nasdaq-holding-insiders/'" fromType="expression"/>
 			</csvtransform>
 		</baseBrowseTask>
 		<nextPage value="//ul[@id='pager']/ul[1]/li[last()-1]/a"/>

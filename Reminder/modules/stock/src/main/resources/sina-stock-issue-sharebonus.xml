@@ -30,8 +30,7 @@
 				<lhs value="//table[@id='sharebonus_2']/tbody/tr"></lhs>
 				<rhs value="null"></rhs>
 			</pageVerify>
-			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byJobMulti"><!-- 2 files -->
-				<outputDir value="raw/[startDate]_[endDate]/sina-stock-issue-sharebonus/"/>
+			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byJobMulti">
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

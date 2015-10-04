@@ -13,26 +13,6 @@ import org.apache.hadoop.fs.PathFilter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-class DirFilter implements PathFilter{	
-	private static Logger logger =  LogManager.getLogger(DirFilter.class);
-	private FileSystem fs;
-	
-	public DirFilter(FileSystem fs){
-		this.fs = fs;
-	}
-
-	@Override
-	public boolean accept(Path p) {
-		try {
-			FileStatus fst = fs.getFileStatus(p);
-			return !fst.isFile();
-		}catch(Exception e){
-			logger.error("", e);
-		}
-		return false;
-	}
-}
-
 class FirstFileFilter implements PathFilter{
 	private static Logger logger =  LogManager.getLogger(FirstFileFilter.class);
 	private Set<String> prefixes = new HashSet<String>();//prefix-name
@@ -67,6 +47,27 @@ class FirstFileFilter implements PathFilter{
 		return false;
 	}	
 }
+
+class DirFilter implements PathFilter{	
+	private static Logger logger =  LogManager.getLogger(DirFilter.class);
+	private FileSystem fs;
+	
+	public DirFilter(FileSystem fs){
+		this.fs = fs;
+	}
+
+	@Override
+	public boolean accept(Path p) {
+		try {
+			FileStatus fst = fs.getFileStatus(p);
+			return !fst.isFile();
+		}catch(Exception e){
+			logger.error("", e);
+		}
+		return false;
+	}
+}
+
 
 public class HadoopUtil {
 	

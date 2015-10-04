@@ -1,0 +1,3 @@
+create 'sina-stock-ipo', 'cf'
+create 'sina-stock-ids', 'cf'
+create 'nasdaq-ids', 'cf'

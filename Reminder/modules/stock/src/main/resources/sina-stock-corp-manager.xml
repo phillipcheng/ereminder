@@ -24,8 +24,7 @@
 			<userAttribute name="RowCsvName">
 				<value value="CorpManager" toType="string"/>
 			</userAttribute>
-			<csvtransform transformClass="org.cld.etl.csv.ColTableRowTableAsCSV" outputType="byJobMulti"><!-- output 1 file -->
-				<outputDir value="raw/[startDate]_[endDate]/sina-stock-corp-manager/"/>
+			<csvtransform transformClass="org.cld.etl.csv.ColTableRowTableAsCSV" outputType="byJobMulti">
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

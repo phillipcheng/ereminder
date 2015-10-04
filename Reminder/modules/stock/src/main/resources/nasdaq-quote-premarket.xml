@@ -28,7 +28,6 @@
 				<rhs value="null"/>
 			</pageVerify>
 			<csvtransform outputType="byId" reverse="true" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
-				<outputDir value="raw/[marketId]_[startDate]_[endDate]/nasdaq-quote-premarket/"/>
 			</csvtransform>
 			<nextTask>
 				<condition>
@@ -64,7 +63,6 @@
 				<rhs value="null"/>
 			</pageVerify>
 			<csvtransform outputType="byId" reverse="true" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
-				<outputDir value="raw/[marketId]/nasdaq-quote-premarket/[endDate]"/>
 			</csvtransform>
 		</baseBrowseTask>
 		<nextPage value="//div[@id='pagerContainer']/div[1]/ul[1]/li[last()-1]/a" optional="true"/>

@@ -32,8 +32,7 @@
 				<lhs value="//div[@id='con02-0']/table[2]/tbody/tr[1]/td"></lhs>
 				<rhs value="null"></rhs>
 			</pageVerify>
-			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byJobMulti"><!-- output 2 files -->
-				<outputDir value="raw/[startDate]_[endDate]/sina-stock-corp-related-other/"/>
+			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byJobMulti">
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

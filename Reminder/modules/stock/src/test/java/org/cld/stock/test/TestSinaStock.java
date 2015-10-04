@@ -61,6 +61,11 @@ public class TestSinaStock {
 		ssb.getDsm().addUpdateCrawledItem(ssb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
 	}
 	@Test
+	public void testInitIPODate() throws Exception{
+		ssb.runCmd(SinaStockConfig.SINA_STOCK_IPODate, SinaStockConfig.MarketId_HS_A, null, sdf.format(new Date()));
+	}
+	
+	@Test
 	public void testRunAllCmd1() throws Exception{
 		ssb.runAllCmd(SinaTestStockConfig.date_Test_D1, SinaTestStockConfig.date_Test_D2);
 	}
@@ -94,10 +99,6 @@ public class TestSinaStock {
 		Date ed = sdf.parse("2015-08-02");
 		ssb.run_browse_idlist(SinaStockConfig.MarketId_HS_A, ed);
 	}
-	@Test
-	public void testIPODate() throws Exception{
-		ssb.runCmd(SinaStockConfig.SINA_STOCK_IPODate, SinaStockConfig.MarketId_HS_A, "2014-01-01", sdf.format(new Date()));
-	}
 	/*****
 	 * Market history 行情走势
 	 **/
@@ -122,7 +123,7 @@ public class TestSinaStock {
 	//复权交易
 	@Test
 	public void run_browse_market_fq_quarter() throws ParseException {
-		ssb.runCmd(SinaStockConfig.SINA_STOCK_MARKET_FQ, SinaStockConfig.MarketId_HS_Test, "2015-08-29", "2015-09-22");
+		ssb.runCmd(SinaStockConfig.SINA_STOCK_MARKET_FQ, SinaStockConfig.MarketId_HS_Test, null, "2015-09-22");
 	}
 	//历史交易
 	@Test

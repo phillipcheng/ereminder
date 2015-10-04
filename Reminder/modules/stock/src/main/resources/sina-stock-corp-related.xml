@@ -27,8 +27,7 @@
 			<userAttribute name="RowCsvName">
 				<value value="securities,indices,xis" toType="list" toEntryType="string"/>
 			</userAttribute>
-			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byJobMulti"><!-- output 3 files -->
-				<outputDir value="raw/[startDate]_[endDate]/sina-stock-corp-related/"/>
+			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byJobMulti">
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

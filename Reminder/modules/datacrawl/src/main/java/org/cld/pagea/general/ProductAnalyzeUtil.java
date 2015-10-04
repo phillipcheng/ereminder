@@ -262,7 +262,7 @@ public class ProductAnalyzeUtil {
 				tryPattern = bdt.isTryPattern();
 			}
 			HtmlPage curPage = (HtmlPage) pageMap.get(ConfKey.CURRENT_PAGE).get(0);
-			boolean finalPage=true;
+			boolean finalPage=false;
 			//set variable nextPage, later it will be set while doing the getNextPage
 			if (bdt.getNextPage()!=null){
 				HtmlPage frame = (HtmlPage) HtmlUnitUtil.getFramePage(curPage, bdt.getNextPage().getFrameId());

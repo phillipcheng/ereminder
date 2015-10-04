@@ -19,8 +19,6 @@
 				<Token value=".phtml" name="suffix" type="string"/>
 			</idUrlMapping>
 			<csvtransform transformClass="org.cld.etl.csv.SpreadColTableAsCSV" outputType="byJobSingle">
-				<!-- output 1 file -->
-				<outputDir value="raw/[startDate]_[endDate]/sina-stock-corp-info/"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

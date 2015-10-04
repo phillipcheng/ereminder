@@ -21,7 +21,6 @@
 				<value value="//table[@id='BenifitChangeNewTable0']/tbody/tr[count(td)>1]/td" optional="true" toType="list"/>
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.SpreadColTableAsCSV" outputType="byJobSingle">
-				<outputDir value="raw/[startDate]_[endDate]/sina-stock-fr-assetdevalue-year/[year]"/>
 			</csvtransform>
 			<filter>function getDate(q) {
     if (q=='1') return '-03-31'

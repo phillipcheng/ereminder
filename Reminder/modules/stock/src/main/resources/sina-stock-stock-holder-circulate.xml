@@ -39,7 +39,6 @@
 				<value value="Text" toType="string"/>
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.ColTableRowTableAsCSV" outputType="byJobMulti"><!-- 1 file -->
-				<outputDir value="raw/[startDate]_[endDate]/sina-stock-stock-holder-circulate/"/>
 			</csvtransform>
 			<filter>function getDate(q) {
     if (q=='1') return '-03-31'

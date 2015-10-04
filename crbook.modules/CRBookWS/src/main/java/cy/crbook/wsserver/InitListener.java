@@ -19,6 +19,7 @@ import org.quartz.impl.StdSchedulerFactory;
 
 import cy.crbook.persist.JDBCPersistService;
 import cy.crbook.wserver.jobs.SetBookNumJob;
+import cy.crbook.wserver.jobs.SetVolumeCoverJob;
 
 public class InitListener implements ServletContextListener {
 	
@@ -45,13 +46,16 @@ public class InitListener implements ServletContextListener {
 	        //pass the servlet context to the job
 	        JobDataMap jobDataMap = new JobDataMap();
 	        jobDataMap.put(PARAM_SERVLET_CONTEXT, sce.getServletContext());
-	        // define the job and tie it to our job's class
-	        JobDetail job = JobBuilder.newJob(SetBookNumJob.class).withIdentity("job1", "group1").usingJobData(jobDataMap).build();
-	        // Trigger the job to run now, and then repeat every 3 seconds
-	        Trigger trigger = TriggerBuilder.newTrigger().withIdentity("trigger1", "group1").startNow()
+	        //
+	        JobDetail setBookNumJob = JobBuilder.newJob(SetBookNumJob.class).withIdentity("SetBookNumJob", "group1").usingJobData(jobDataMap).build();
+	        Trigger trigger1 = TriggerBuilder.newTrigger().withIdentity("trigger1", "group1").startNow()
 	              .withSchedule(SimpleScheduleBuilder.simpleSchedule().withIntervalInMilliseconds(600000L).repeatForever()).build();
-	        // Tell quartz to schedule the job using our trigger
-	        scheduler.scheduleJob(job, trigger);
+	        scheduler.scheduleJob(setBookNumJob, trigger1);
+	        //
+	        JobDetail setVolumeCoverJob = JobBuilder.newJob(SetVolumeCoverJob.class).withIdentity("SetVolumeCoverJob", "group2").usingJobData(jobDataMap).build();
+	        Trigger trigger2 = TriggerBuilder.newTrigger().withIdentity("trigger2", "group2").startNow()
+		              .withSchedule(SimpleScheduleBuilder.simpleSchedule().withIntervalInMilliseconds(600000L).repeatForever()).build();
+	        scheduler.scheduleJob(setVolumeCoverJob, trigger2);
 	        // and start it off
 	        scheduler.start();
 		}catch(Exception e){

@@ -12,11 +12,8 @@
 			<userAttribute name="id">
 				<value value="stockid + '_' + year + '_' + quarter" toType="string" fromType="expression"/>
 			</userAttribute>
-			<userAttribute name="quarterAvail">
-				<value value="count(//table[@id='BalanceSheetNewTable0']/tbody/tr[1]/td)" toType="int" optional="true"/>
-			</userAttribute>
 			<userAttribute name="data">
-				<value value="quarterAvail>quarter? &quot;//table[@id='BalanceSheetNewTable0']/tbody/tr[count(td)>1]/td[&quot; + (quarterAvail + 1 - quarter) + &quot;]&quot; : null" toType="list" fromType="expression" optional="true"/>
+				<value value="//table[@id='BalanceSheetNewTable0']/tbody/tr[count(td)>1]/td[position()>1]" toType="list" optional="true"/>
 			</userAttribute>
 			<userAttribute name="ColNum">
 				<value value="1" toType="int"/>
@@ -30,9 +27,15 @@
 				<rhs value="null">
 				</rhs>
 			</pageVerify>
-			<csvtransform transformClass="org.cld.etl.csv.SpreadColTableAsCSV" outputType="byJobSingle"><!-- 1 quarter 1 file -->
-				<outputDir value="raw/[startDate]_[endDate]/sina-stock-fr-quarter-BalanceSheet/[year]_[quarter]"/>
+			<csvtransform transformClass="org.cld.etl.csv.SpreadColTableAsCSV" outputType="byJobSingle">
 			</csvtransform>
+			<filter>function getDate(q) {
+    if (q=='1') return '-03-31'
+    if (q=='2') return '-06-30'
+    if (q=='3') return '-09-30'
+    if (q=='4') return '-12-31'
+}
+year==0 || quarter==0 || arr[0]==(year+getDate(quarter))</filter>
 		</baseBrowseTask>
 	</PrdTask>
 </Tasks>

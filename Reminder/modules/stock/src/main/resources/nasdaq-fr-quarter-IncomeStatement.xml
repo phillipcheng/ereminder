@@ -28,7 +28,6 @@
 				<value value="//div[@id='financials-iframe-wrap']/div[1]/table[1]/thead/tr/th[position()>2]|//div[@id='financials-iframe-wrap']/div[1]/table[1]/tbody/tr/td[position()>1]" toType="list" toEntryType="string" optional="true"/>
 			</userAttribute>
 			<csvtransform outputType="byId" reverse="true" transformClass="org.cld.etl.csv.SpreadColTableAsCSV">
-				<outputDir value="'raw/' + marketId + '_' + startDate + '_' + endDate + '/nasdaq-fr-quarter-IncomeStatement/'" fromType="expression"/>
 			</csvtransform>
 			<filter>year==0 || quarter==0 || (arr[0].substring(0,1)==quarter &amp;&amp; arr[1].substring(0,4) == year)</filter>
 		</baseBrowseTask>

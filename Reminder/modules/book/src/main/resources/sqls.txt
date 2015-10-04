@@ -39,10 +39,9 @@ select count(*), substring_index(id, '.', 1) from books group by substring_index
 select count(*), substring_index(id, '.', 1) from volumes group by substring_index(id, '.', 1);
 select count(*), substring_index(id, '.', 1) from boards group by substring_index(id, '.', 1);
 
-delete from books where id like 'xiaorenshu123%';
-delete from volumes where id like '52xrs%';
-delete from boards where id like '52xrs%'
-select from volumes where id like 'a8z8%'
+delete from books where id like 'a8z8%';
+delete from volumes where id like 'a8z8%';
+delete from boards where id like 'a8z8%'
 
 
 #crawl db

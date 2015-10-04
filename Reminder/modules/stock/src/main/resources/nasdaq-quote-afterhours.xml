@@ -28,7 +28,6 @@
 				<rhs value="null"/>
 			</pageVerify>
 			<csvtransform outputType="byId" reverse="true" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
-				<outputDir value="'raw/'  + marketId + '_' + startDate + '_' + endDate +  '/nasdaq-quote-afterhours/'" fromType="expression"/>
 			</csvtransform>
 			<nextTask>
 				<condition>

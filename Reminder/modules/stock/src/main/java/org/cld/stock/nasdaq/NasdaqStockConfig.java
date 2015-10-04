@@ -183,17 +183,16 @@ public class NasdaqStockConfig extends StockConfig{
 	}
 	@Override
 	public String[] getPostProcessCmds() {
-		return new String[]{};
+		return new String[]{QUOTE_TICK, QUOTE_PREMARKET, QUOTE_AFTERHOURS};
 	}
+	
 	@Override
 	public String getDatePart(String marketId, Date startDate, Date endDate) {
-		String strStartDate = null;
 		if (startDate == null){
-			strStartDate = "null";
+			return marketId + "_" + sdf.format(endDate);
 		}else{
-			strStartDate = sdf.format(startDate);
+			return marketId + "_" + sdf.format(startDate) + "_" + sdf.format(endDate);
 		}
-		return marketId + "_" + strStartDate + "_" + sdf.format(endDate);
 	}
 
 	@Override

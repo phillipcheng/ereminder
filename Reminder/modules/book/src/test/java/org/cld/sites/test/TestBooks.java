@@ -65,8 +65,18 @@ public class TestBooks extends TestBase {
 	}
 	
 	@Test
-	public void runone() throws Exception{
-		catNavigate(MOM001_CONF, null, browse_type.recursive);
+	public void runMom001Main() throws Exception{
+		catNavigate(MOM001_CONF, "http://www.mom001.com/", browse_type.recursive);
+	}
+	
+	@Test
+	public void runMom001Group() throws Exception{
+		catNavigate(MOM001_CONF, "http://lianhuanhua.mom001.com/groups/index.html", browse_type.recursive);
+	}
+	
+	@Test
+	public void runA8Z8Main() throws Exception{
+		catNavigate(A8Z8_CONF, null, browse_type.recursive);
 	}
 	
 	//sequential

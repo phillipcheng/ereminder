@@ -33,8 +33,7 @@ import org.xml.taskdef.BinaryBoolOp;
 public class ListAnalyze {
 	
 	private static Logger logger =  LogManager.getLogger(ListAnalyze.class);	
-	public static int NUM_WRONG_LIST_URL = 10;//the max # of error list pages got to browse the list page for a category
-	public static int NUM_WHOLE_LIST_RETRY=3;
+	public static int NUM_WRONG_LIST_URL = 1;//the max # of error list pages got to browse the list page for a category
 	
 	private CrawlConf cconf;
 	private ListProcessInf lpInf; //process the result
@@ -178,10 +177,7 @@ public class ListAnalyze {
 			}while (np.getStatus()!=NextPage.STATUS_LASTPAGE && numWrongUrl< maxWrongTry);
 			
 			if (numWrongUrl >= maxWrongTry){
-				logger.warn("exceeds max # retries for error list page:" + maxWrongTry + ", last problem url:" + initUrl + ", problem next_url:" + np);
-				SomePageErrorException spe = new SomePageErrorException();
-				spe.setErrorPage(np);
-				throw spe;
+				logger.error("exceeds max # retries for error list page:" + maxWrongTry + ", last problem url:" + initUrl + ", problem next_url:" + np);
 			}
 		}finally{
 			CrawlUtil.closeWebClient(wc);

@@ -394,6 +394,15 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 				od.append(this.getStoreId());
 				od.append("/");
 				logger.info(String.format("output dir is %s.", od.toString()));
+				if (paramMap.containsKey(AbstractCrawlItemToCSV.FN_YEAR)){
+					int year = (int) paramMap.get(AbstractCrawlItemToCSV.FN_YEAR);
+					od.append(year);
+				}
+				if (paramMap.containsKey(AbstractCrawlItemToCSV.FN_QUARTER)){
+					int quarter = (int) paramMap.get(AbstractCrawlItemToCSV.FN_QUARTER);
+					od.append("_");
+					od.append(quarter);
+				}
 				return od.toString();
 			}else{
 				return null;

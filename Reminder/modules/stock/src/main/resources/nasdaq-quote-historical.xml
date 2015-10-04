@@ -25,7 +25,6 @@
 				<value value="0" toType="list" toEntryType="int"/>
 			</userAttribute>
 			<csvtransform outputType="byId" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
-				<outputDir value="raw/[marketId]_[startDate]_[endDate]/nasdaq-quote-historical/"/>
 			</csvtransform>
 		</baseBrowseTask>
 		<firstPageClickStream>

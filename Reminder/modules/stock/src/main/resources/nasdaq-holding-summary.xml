@@ -24,7 +24,6 @@
 				<value value="//div[@id='holders-stacked']/following-sibling::div[1]/div[1]/table/tbody/tr/td" toType="list" toEntryType="string" optional="true"/>
 			</userAttribute>
 			<csvtransform outputType="byJobMulti" transformClass="org.cld.etl.csv.MultiColTablesAsCSV">
-				<outputDir value="'raw/' + marketId + '_' + startDate + '_' + endDate + '/nasdaq-holding-summary/'" fromType="expression"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

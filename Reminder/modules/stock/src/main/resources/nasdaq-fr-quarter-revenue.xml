@@ -51,7 +51,6 @@ function merge(arr){
 arr[1] = getQuarterEndDateFromMonth(arr[1])
 merge(arr)</expression>
 				</ops>
-				<outputDir value="'raw/'  + marketId + '_' + startDate + '_' + endDate +  '/nasdaq-fr-quarter-revenue/'" fromType="expression"/>
 			</csvtransform>
 			<filter>function getDate(q) {
     if (q=='1') return '-03-31'

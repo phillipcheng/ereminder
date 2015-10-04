@@ -503,12 +503,13 @@ public class CrawlTaskEval {
 						if (elistvarorg!=null){
 							Object last = elistvarorg.get(elistvarorg.size()-1);
 							Object first = elistvarorg.get(0);
-							/*
-							//default final condition: circlic and not duplicate
-							if (entry.equals(last)||entry.equals(first)){
-								logger.info(String.format("this entry %s equals last %s or first %s", entry, last, first));
-								externalistFinished=true;
-							}*/
+							if (vt.isCirclicEntry()){
+								//circlic
+								if (entry.equals(last)||entry.equals(first)){
+									logger.info(String.format("this entry %s equals last %s or first %s", entry, last, first));
+									externalistFinished=true;
+								}
+							}
 							if (doTryPattern){
 								PatternIO pio = (PatternIO) paramMap.get(patternVarName);
 								if (pio==null){

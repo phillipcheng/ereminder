@@ -37,8 +37,6 @@
 				<rhs value="null"/>
 			</pageVerify>
 			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byId">
-				<!-- 2 file per day -->
-				<outputDir value="raw/[startDate]_[endDate]/sina-stock-market-rzrq/"/>
 			</csvtransform>
 		</baseBrowseTask>
 		<totalPage value="1" toType="int"/>

@@ -28,7 +28,6 @@
 				<value value="0" toType="list" toEntryType="int"/>
 			</userAttribute>
 			<csvtransform outputType="byId" reverse="true" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
-				<outputDir value="'raw/' + marketId + '_' + startDate + '_' + endDate + '/nasdaq-quote-short-interest/'" fromType="expression"/>
 			</csvtransform>
 		</baseBrowseTask>
 	</PrdTask>

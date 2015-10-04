@@ -19,6 +19,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
+import org.cld.stock.ETLUtil;
+import org.cld.stock.nasdaq.task.QuotePostProcessTask;
 import org.cld.stock.sina.SinaStockConfig;
 import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskMgr;
@@ -74,6 +76,7 @@ public class TradeDetailPostProcessTask extends Task implements Serializable{
 			if (fileName.contains(".")){
 				fileName = fileName.substring(0, fileName.indexOf("."));
 				String[] fp = fileName.split(stockId_date_sep);
+				int itemsPerLine = 6;
 				if (fp.length==2){
 					String stockId=fp[0];
 					stockId = stockId.substring(2);
@@ -81,13 +84,13 @@ public class TradeDetailPostProcessTask extends Task implements Serializable{
 					String content = isr.readLine();
 					while (content!=null){
 						String[] fields = content.split("\\s+");
-						if (fields.length==6 && //remove empty data file
+						if (fields.length==itemsPerLine && //remove empty data file
 								!firstTitle.equals(fields[0])){ //remove title line
 							StringBuffer sb = new StringBuffer();
 							sb.append(stockId);
 							sb.append(",");
 							String timestamp;
-							for (int i=0; i<6; i++){
+							for (int i=0; i<itemsPerLine; i++){
 								if (i==0){//time field idx
 									String time = fields[i];
 									timestamp = date + " " + time;
@@ -107,7 +110,7 @@ public class TradeDetailPostProcessTask extends Task implements Serializable{
 								}else{
 									sb.append(fields[i]);
 								}
-								if (i<5)
+								if (i<(itemsPerLine-1))
 									sb.append(",");
 							}
 							osw.write(sb.append("\n").toString());
@@ -134,6 +137,17 @@ public class TradeDetailPostProcessTask extends Task implements Serializable{
 		this.pathName = pathName;
 	}
 	
+	private static String submitTasks(int batchId, String datePart, String propfile, List<Task> tl, CrawlConf cconf){
+		String taskName = QuotePostProcessTask.class.getSimpleName()+ "_" + datePart + "_" + batchId;
+		int mbMem = 3072;
+		String optValue = "-Xmx" + mbMem + "M";
+		Map<String, String> hadoopJobParams = new HashMap<String, String>();
+		hadoopJobParams.put("mapreduce.map.speculative", "false");
+		hadoopJobParams.put("mapreduce.map.memory.mb", mbMem + "");
+		hadoopJobParams.put("mapreduce.map.java.opts", optValue);
+		return CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tl, taskName, false, hadoopJobParams);
+	}
+	
 	//return jobId list
 	public static String[] launch(String propfile, CrawlConf cconf, String datePart){
 		NodeConf nc = cconf.getNodeConf();
@@ -152,23 +166,13 @@ public class TradeDetailPostProcessTask extends Task implements Serializable{
 				LocatedFileStatus lfs = fsit.next();
 				TradeDetailPostProcessTask t = new TradeDetailPostProcessTask(lfs.getPath().toString());
 				tl.add(t);
-				if (tl.size()>=100000){
-					String taskName = "TradeDetailPostProcess_" + datePart + "_" + batchId;
-					jobIdList.add(CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tl, taskName, false));
-					logger.info(String.format("sending out:%d tasks for hadoop task %s.", tl.size(), taskName));
+				if (tl.size()>=ETLUtil.maxBatchSize){
+					jobIdList.add(submitTasks(batchId, datePart, propfile, tl, cconf));
 					batchId++;
 					tl = new ArrayList<Task>();
 				}
 			}
-			String taskName = "TradeDetailPostProcess_" + batchId;
-			int mbMem = 3072;
-			String optValue = "-Xmx" + mbMem + "M";
-			Map<String, String> hadoopJobParams = new HashMap<String, String>();
-			hadoopJobParams.put("mapreduce.map.speculative", "false");//since we do not allow same map multiple instance
-			hadoopJobParams.put("mapreduce.map.memory.mb", mbMem+"");
-			hadoopJobParams.put("mapreduce.map.java.opts", optValue);
-			jobIdList.add(CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tl, "TradeDetailPostProcess_" + batchId, false, hadoopJobParams));
-			logger.info(String.format("sending out:%d tasks for hadoop task %s.", tl.size(), taskName));
+			jobIdList.add(submitTasks(batchId, datePart, propfile, tl, cconf));
 			String[] jobIds = new String[jobIdList.size()];
 			return jobIdList.toArray(jobIds);
 		}catch (Exception e) {
