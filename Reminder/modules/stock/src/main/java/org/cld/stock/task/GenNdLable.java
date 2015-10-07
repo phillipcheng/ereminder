@@ -185,7 +185,7 @@ public class GenNdLable extends Task implements Serializable{
 			if (doMR){
 				String taskName = GenNdLable.class.getName() + "_" + inputFolder;
 				Map<String, String> hadoopJobParams = new HashMap<String, String>();
-				HadoopTaskLauncher.updateHadoopParams(3072, hadoopJobParams);
+				HadoopTaskLauncher.updateHadoopMemParams(3072, hadoopJobParams);
 				jobIdList.add(CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tl, taskName, false, hadoopJobParams));
 				logger.info(String.format("sending out:%d tasks for hadoop task %s.", tl.size(), taskName));
 				String[] jobIds = new String[jobIdList.size()];

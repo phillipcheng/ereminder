@@ -3,6 +3,7 @@ package org.cld.stock.nasdaq;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,7 +23,34 @@ public class NasdaqStockConfig extends StockConfig{
 	public static final String MarketId_AMEX="AMEX";
 	public static final String MarketId_ALL="ALL";
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	
+	//http://markets.on.nytimes.com/research/markets/holidays/holidays.asp?display=market&exchange=SHH
+	public static Set<Date> USHolidays = new HashSet<Date>();
+	static{
+		sdf.setTimeZone(TimeZone.getTimeZone("EST"));
+		try{
+			USHolidays.add(sdf.parse("2014-01-01"));
+			USHolidays.add(sdf.parse("2014-01-20"));
+			USHolidays.add(sdf.parse("2014-02-17"));
+			USHolidays.add(sdf.parse("2014-04-18"));
+			USHolidays.add(sdf.parse("2014-05-26"));
+			USHolidays.add(sdf.parse("2014-07-04"));
+			USHolidays.add(sdf.parse("2014-09-01"));
+			USHolidays.add(sdf.parse("2014-11-27"));
+			USHolidays.add(sdf.parse("2014-12-25"));
+			//
+			USHolidays.add(sdf.parse("2015-01-01"));
+			USHolidays.add(sdf.parse("2015-01-19"));
+			USHolidays.add(sdf.parse("2015-02-16"));
+			USHolidays.add(sdf.parse("2015-04-03"));
+			USHolidays.add(sdf.parse("2015-05-25"));
+			USHolidays.add(sdf.parse("2015-07-03"));
+			USHolidays.add(sdf.parse("2015-09-07"));
+			USHolidays.add(sdf.parse("2015-11-26"));
+			USHolidays.add(sdf.parse("2015-12-25"));
+		}catch(Exception e){
+			logger.error("", e);
+		}
+	}
 	//file name of the xml conf and the store id as well
 	public static final String STOCK_IDS ="nasdaq-ids";
 	//market
@@ -185,15 +213,6 @@ public class NasdaqStockConfig extends StockConfig{
 	public String[] getPostProcessCmds() {
 		return new String[]{QUOTE_TICK, QUOTE_PREMARKET, QUOTE_AFTERHOURS};
 	}
-	
-	@Override
-	public String getDatePart(String marketId, Date startDate, Date endDate) {
-		if (startDate == null){
-			return marketId + "_" + sdf.format(endDate);
-		}else{
-			return marketId + "_" + sdf.format(startDate) + "_" + sdf.format(endDate);
-		}
-	}
 
 	@Override
 	public TimeZone getTimeZone() {
@@ -202,8 +221,8 @@ public class NasdaqStockConfig extends StockConfig{
 	
 	@Override
 	public Date getLatestOpenMarketDate(Date d) {
-		while (!StockUtil.isOpenDay(d, StockUtil.USHolidays)){
-			d = StockUtil.getLastOpenDay(d, StockUtil.USHolidays);
+		while (!StockUtil.isOpenDay(d, USHolidays, this.getTimeZone())){
+			d = StockUtil.getLastOpenDay(d, USHolidays, this.getTimeZone());
 		}
 		return d;
 	}
@@ -213,6 +232,6 @@ public class NasdaqStockConfig extends StockConfig{
 	}
 	@Override
 	public Set<Date> getHolidays() {
-		return StockUtil.USHolidays;
+		return USHolidays;
 	}
 }

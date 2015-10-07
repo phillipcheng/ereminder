@@ -39,12 +39,9 @@ public abstract class StockConfig {
 	public abstract String[] getSlowCmds();
 	public abstract String[] getTablesByCmd(String cmd);
 	public abstract String[] getPostProcessCmds();
-	
 	public abstract Map<String, String> getPairedMarket(); //like MarketId_HS_A paired with MarketId_HS_A_ST
 
 	public abstract String getStartDate(String cmdName);
-	
-	public abstract String getDatePart(String marketId, Date startDate, Date endDate);
 	
 	public abstract TimeZone getTimeZone();
 	public abstract Date getLatestOpenMarketDate(Date d);
@@ -82,5 +79,9 @@ public abstract class StockConfig {
 
 	public SimpleDateFormat getSdf(){
 		return sdf;
+	}
+	
+	public String getDatePart(String marketId, Date startDate, Date endDate) {
+		return marketId + "_" + sdf.format(endDate);
 	}
 }

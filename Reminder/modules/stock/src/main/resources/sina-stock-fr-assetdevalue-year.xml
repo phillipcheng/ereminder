@@ -28,7 +28,7 @@
     if (q=='3') return '-09-30'
     if (q=='4') return '-12-31'
 }
-year==0 || quarter==0 || arr[0]==(year+getDate(quarter))</filter>
+year==0 || quarter==0 || arr[0]&gt;=(year+getDate(quarter))</filter>
 		</baseBrowseTask>
 	</PrdTask>
 </Tasks>

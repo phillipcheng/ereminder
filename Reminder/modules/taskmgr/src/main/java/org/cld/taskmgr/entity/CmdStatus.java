@@ -5,6 +5,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.CrawledItemId;
@@ -21,34 +23,42 @@ import org.cld.datastore.entity.CrawledItemId;
    KILLED(5);
 */
 public class CmdStatus extends CrawledItem{
+	protected static Logger logger =  LogManager.getLogger(CmdStatus.class);
 	public static final String CRAWLITEM_TYPE="org.cld.taskmgr.entity.CmdStatus";
 	public static final String STORE_ID="CmdStatus";
 	
 	private static final String sep="|";
 	private String marketId;
 	private String cmdName;
-	
+
 	private Map<String, Integer> jsMap = new HashMap<String, Integer>();
-	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private Date startTime;
+	private Date endTime;
 	
 	//default constructor for json
-	public CmdStatus(){
-		
+	public CmdStatus(){	
 	}
 	
 	//timeless cmd, static info, only related to market, not related to time
-	public CmdStatus(String marketId, String cmdName, Date endTime, Date startTime, boolean timeless){
+	public CmdStatus(String marketId, String cmdName, Date endTime, Date startTime, boolean timeless, SimpleDateFormat sdf){
 		super(CRAWLITEM_TYPE, "default");
 		if (timeless){
 			this.setId(new CrawledItemId(getId(marketId, cmdName), STORE_ID, endTime));
 		}else{
-			this.setId(new CrawledItemId(getId(marketId, cmdName, endTime), STORE_ID, endTime));
+			this.setId(new CrawledItemId(getId(marketId, cmdName, endTime, sdf), STORE_ID, endTime));
 		}
+		this.marketId=marketId;
+		this.cmdName=cmdName;
 		this.startTime = startTime;
+		this.setEndTime(endTime);
 	}
 	
-	public static String getId(String marketId, String cmdName, Date endTime){
+	public String toString(){
+		return String.format("id: %s, marketId:%s, cmdName:%s, startTime:%s, endTime:%s, jobStatusMap:%s", 
+				this.getId(), marketId, cmdName, startTime, endTime, jsMap);
+	}
+	
+	public static String getId(String marketId, String cmdName, Date endTime, SimpleDateFormat sdf){
 		String strEndTime = "null";
 		if (endTime!=null){
 			strEndTime = sdf.format(endTime);
@@ -60,8 +70,8 @@ public class CmdStatus extends CrawledItem{
 		return marketId + sep + cmdName;
 	}
 	
-	public static CmdStatus getCmdStatus(DataStoreManager dsm, String marketId, String cmd, Date endTime){
-		String id = getId(marketId, cmd, endTime);
+	public static CmdStatus getCmdStatus(DataStoreManager dsm, String marketId, String cmd, Date endTime, SimpleDateFormat sdf){
+		String id = getId(marketId, cmd, endTime, sdf);
 		return (CmdStatus) dsm.getCrawledItem(id, CmdStatus.STORE_ID, CmdStatus.class);
 	}
 	
@@ -101,6 +111,12 @@ public class CmdStatus extends CrawledItem{
 	public void setStartTime(Date startTime) {
 		this.startTime = startTime;
 	}
-	
-	
+
+	public Date getEndTime() {
+		return endTime;
+	}
+
+	public void setEndTime(Date endTime) {
+		this.endTime = endTime;
+	}
 }

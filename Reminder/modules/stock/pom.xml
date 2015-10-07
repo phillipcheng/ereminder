@@ -36,17 +36,29 @@
 			<artifactId>hive-exec</artifactId>
 			<version>1.2.1</version>
 		</dependency>
+		<dependency>
+		    <groupId>org.quartz-scheduler</groupId>
+		    <artifactId>quartz</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>org.quartz-scheduler</groupId>
+		    <artifactId>quartz-jobs</artifactId>
+		</dependency>
 	</dependencies>
 	
 	<build>
 		<resources>
-      <resource>
-          <directory>src/main/resources</directory>
-          <filtering>false</filtering>
-      </resource>
+			<resource>
+				<directory>src/main/resources</directory>
+				<excludes>
+                	<exclude>hbase-site.xml</exclude>
+                    <exclude>**/*.txt</exclude>
+                </excludes>
+				<filtering>false</filtering>
+			</resource>
 		</resources>
-       
-    <pluginManagement>
+	       
+		<pluginManagement>
 		  <plugins>
 		    <plugin>
 		      <groupId>org.eclipse.m2e</groupId>

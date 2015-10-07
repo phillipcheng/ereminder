@@ -24,7 +24,13 @@
 			</userAttribute>
 			<csvtransform outputType="byId" reverse="true" transformClass="org.cld.etl.csv.SpreadColTableAsCSV">
 			</csvtransform>
-			<filter>year==0 || quarter==0 || (arr[0].substring(0,1)==quarter &amp;&amp; arr[1].substring(0,4) == year)</filter>
+			<filter>function getDate(q) {
+    if (q=='1') return '-03-31'
+    if (q=='2') return '-06-30'
+    if (q=='3') return '-09-30'
+    if (q=='4') return '-12-31'
+}
+year==0 || quarter==0 || arr[1]&gt;=(year+getDate(quarter))</filter>
 		</baseBrowseTask>
 	</PrdTask>
 </Tasks>

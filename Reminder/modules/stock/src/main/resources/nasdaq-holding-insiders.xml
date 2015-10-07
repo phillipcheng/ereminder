@@ -32,7 +32,7 @@
 			<csvtransform outputType="byId" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
 			</csvtransform>
 		</baseBrowseTask>
-		<nextPage value="//ul[@id='pager']/ul[1]/li[last()-1]/a"/>
+		<nextPage value="//ul[@id='pager']/ul[1]/li[last()-1]/a" optional="true"/>
 		<lastPageCondition>
 			<expression>nextPage == null</expression>
 		</lastPageCondition>

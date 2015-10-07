@@ -94,7 +94,6 @@ public class HadoopTaskLauncher {
 		for (String key:taskMgr.getHadoopConfigs().keySet()){
 			String value = taskMgr.getHadoopConfigs().get(key);
 			conf.set(key, value);
-			logger.info(String.format("key:%s, value:%s", key, value));
 		}
 		return conf;
 	}
@@ -120,12 +119,16 @@ public class HadoopTaskLauncher {
 	}
 	
 	public static void updateHadoopParams(Task t, Map<String, String> hadoopParams){
-		int mbMapperMem = getMbMemory(t);
-		hadoopParams.put(NLineInputFormat.LINES_PER_MAP, getTaskPerJob(t)+"");
-		updateHadoopParams(mbMapperMem, hadoopParams);
+		if (!hadoopParams.containsKey(NLineInputFormat.LINES_PER_MAP)){
+			hadoopParams.put(NLineInputFormat.LINES_PER_MAP, getTaskPerJob(t)+"");
+		}
+		if (!hadoopParams.containsKey("mapreduce.map.memory.mb")){
+			int mbMapperMem = getMbMemory(t);
+			updateHadoopMemParams(mbMapperMem, hadoopParams);
+		}
 	}
 	
-	public static void updateHadoopParams(int mbMapperMem, Map<String, String> hadoopParams){
+	public static void updateHadoopMemParams(int mbMapperMem, Map<String, String> hadoopParams){
 		String optValue = "-Xmx" + mbMapperMem + "M";
 		hadoopParams.put("mapreduce.map.memory.mb", mbMapperMem+"");
 		hadoopParams.put("mapreduce.map.java.opts", optValue);
@@ -156,8 +159,10 @@ public class HadoopTaskLauncher {
 				FSDataOutputStream fin = fs.create(fileNamePath);
 				fin.writeBytes(fileContent.toString());
 				fin.close();
+				logger.info("before update hadoop params:" + hadoopParams);
 				Task t = taskList.get(0);
 				updateHadoopParams(t, hadoopParams);
+				logger.info("after update hadoop params:" + hadoopParams);
 				boolean multipleOutput = hasMultipleOutput(t);
 				String outputDir = t.getOutputDir(null);
 				return executeTasks(nc, hadoopParams, new String[]{taskFileName}, multipleOutput, outputDir, sync, mapperClass, reducerClass, true);

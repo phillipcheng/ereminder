@@ -25,6 +25,7 @@ import org.cld.datacrawl.NextPage;
 import org.cld.datacrawl.ProductConf;
 import org.cld.datacrawl.mgr.BinaryBoolOpEval;
 import org.cld.datacrawl.mgr.CrawlTaskEval;
+import org.cld.datacrawl.mgr.ProductAnalyze;
 import org.cld.datacrawl.util.HtmlPageResult;
 import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.datacrawl.util.VerifyPageByXPath;
@@ -222,14 +223,6 @@ public class ProductAnalyzeUtil {
 		//set the user attributes in case there is default values
 		BrowseDetailType bdt = taskDef.getBrowsePrdTaskType();
 		CrawlTaskEval.setInitAttributes(bdt.getBaseBrowseTask().getUserAttribute(), product.getParamMap(), task.getParamMap());	
-		AbstractCrawlItemToCSV cicsv = null;
-		if (csvTransform!=null){
-			try {
-				cicsv = (AbstractCrawlItemToCSV) Class.forName(csvTransform.getTransformClass()).newInstance();
-			}catch(Exception e){
-				logger.error("", e);
-			}
-		}
 		Map<String, List<? extends DomNode>> pageMap = null;
 		int totalPage = -1;
 		boolean firstPageSuccess = true;
@@ -292,13 +285,11 @@ public class ProductAnalyzeUtil {
 					pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
 					externalistFinished = CrawlTaskEval.setUserAttributes(pageMap, bdt.getBaseBrowseTask().getUserAttribute(), 
 							product.getParamMap(), cconf, task.getParamMap(), tryPattern);
-					if (taskNeedFilter(taskDef, product) && cicsv!=null){//check filter conditions (startDate, etc) to prevent useless crawl
-						cicsv.getCSV(product, null);
-						if (cicsv.isFiltered()){
-							externalistFinished = true;
-							logger.info("filter condition meet do not crawl further.");
-						}
+					if (ProductAnalyze.postCrawlProcess(bdt.getBaseBrowseTask(), product)){//suppose the data are listed in the desc order
+						externalistFinished = true; //if there is any data filtered, we donot need go further
+						logger.info("filter condition meet do not crawl further.");
 					}
+					
 					logger.info("curPageNum:" + curPageNum + ", totalPage:" + totalPage);
 					logger.debug(product.getParamMap());
 					if (externalistFinished)

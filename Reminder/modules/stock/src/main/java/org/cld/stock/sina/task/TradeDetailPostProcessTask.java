@@ -15,6 +15,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
+import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
@@ -139,12 +140,13 @@ public class TradeDetailPostProcessTask extends Task implements Serializable{
 	
 	private static String submitTasks(int batchId, String datePart, String propfile, List<Task> tl, CrawlConf cconf){
 		String taskName = QuotePostProcessTask.class.getSimpleName()+ "_" + datePart + "_" + batchId;
-		int mbMem = 3072;
+		int mbMem = 512;
 		String optValue = "-Xmx" + mbMem + "M";
 		Map<String, String> hadoopJobParams = new HashMap<String, String>();
 		hadoopJobParams.put("mapreduce.map.speculative", "false");
 		hadoopJobParams.put("mapreduce.map.memory.mb", mbMem + "");
 		hadoopJobParams.put("mapreduce.map.java.opts", optValue);
+		hadoopJobParams.put(NLineInputFormat.LINES_PER_MAP, "500");
 		return CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tl, taskName, false, hadoopJobParams);
 	}
 	
@@ -166,7 +168,7 @@ public class TradeDetailPostProcessTask extends Task implements Serializable{
 				LocatedFileStatus lfs = fsit.next();
 				TradeDetailPostProcessTask t = new TradeDetailPostProcessTask(lfs.getPath().toString());
 				tl.add(t);
-				if (tl.size()>=ETLUtil.maxBatchSize){
+				if (tl.size()>=200000){
 					jobIdList.add(submitTasks(batchId, datePart, propfile, tl, cconf));
 					batchId++;
 					tl = new ArrayList<Task>();

@@ -37,8 +37,7 @@ public class TestNasdaqStock {
 		}
 	}
 	
-	//private String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test;
-	private String marketId = NasdaqStockConfig.MarketId_AMEX;
+	private String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test;
 	private String propFile = "client1-v2.properties";
 	
 	private NasdaqStockBase nsb;
@@ -50,6 +49,7 @@ public class TestNasdaqStock {
 	@Before
 	public void setUp()throws Exception{
 		nsb = new NasdaqStockBase(propFile, marketId, startDate, endDate);
+		nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
 	}
 	
 	@Test
@@ -115,7 +115,7 @@ public class TestNasdaqStock {
 	}	
 	@Test
 	public void testCmd_HolderInstitutional(){
-		nsb.runCmd(NasdaqStockConfig.HOLDING_INSTITUTIONAL, marketId, null, sdf.format(nsb.getStockConfig().getLatestOpenMarketDate(new Date())));
+		nsb.runCmd(NasdaqStockConfig.HOLDING_INSTITUTIONAL, marketId, null, "2015-10-06");
 	}
 	//date range
 	@Test

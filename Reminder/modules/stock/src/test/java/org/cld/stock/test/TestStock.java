@@ -10,6 +10,7 @@ import java.util.TimeZone;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.StockUtil;
+import org.cld.stock.sina.SinaStockConfig;
 import org.junit.Test;
 
 public class TestStock {
@@ -33,24 +34,24 @@ public class TestStock {
 	@Test
 	public void testOpenDay() throws Exception{
 		Date d = sdf.parse("2015-09-30");
-		Date nd = StockUtil.getNextOpenDay(d, StockUtil.CNHolidays);
+		Date nd = StockUtil.getNextOpenDay(d, SinaStockConfig.CNHolidays,TimeZone.getTimeZone("CTT"));
 		logger.info(String.format("nd is %s", sdf.format(nd)));
 		assertTrue("2015-10-08".equals(sdf.format(nd)));
 		
 		d = sdf.parse("2015-12-31");
-		nd = StockUtil.getNextOpenDay(d, StockUtil.CNHolidays);
+		nd = StockUtil.getNextOpenDay(d, SinaStockConfig.CNHolidays, TimeZone.getTimeZone("CTT"));
 		logger.info(String.format("nd is %s", sdf.format(nd)));
 		assertTrue("2016-01-04".equals(sdf.format(nd)));
 		
 		Date fd = sdf.parse("2015-09-30");
 		Date td = sdf.parse("2016-01-05");
 		
-		List<Date> dl = StockUtil.getOpenDayList(fd, td, StockUtil.CNHolidays);
+		List<Date> dl = StockUtil.getOpenDayList(fd, td, SinaStockConfig.CNHolidays, TimeZone.getTimeZone("CTT"));
 		logger.info(String.format("dl is %s", dl));
 		
 		fd = sdf.parse("2004-10-01");
 		td = sdf.parse("2015-09-26");
-		dl = StockUtil.getOpenDayList(fd, td, StockUtil.CNHolidays);
+		dl = StockUtil.getOpenDayList(fd, td, SinaStockConfig.CNHolidays, TimeZone.getTimeZone("CTT"));
 		logger.info(String.format("dl is %s", dl));
 	}
 

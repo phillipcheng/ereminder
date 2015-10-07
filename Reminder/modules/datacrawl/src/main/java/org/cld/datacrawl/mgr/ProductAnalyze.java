@@ -41,6 +41,7 @@ import org.xml.mytaskdef.ScriptEngineUtil;
 import org.xml.mytaskdef.XPathType;
 import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.BrowseDetailType;
+import org.xml.taskdef.BrowseTaskType;
 import org.xml.taskdef.CsvOutputType;
 import org.xml.taskdef.CsvTransformType;
 import org.xml.taskdef.TransformOp;
@@ -146,6 +147,64 @@ public class ProductAnalyze{
 		}
 	}
 
+	//return true for there are records filtered
+	public static boolean postCrawlProcess(BrowseTaskType btt, CrawledItem product){
+		CsvTransformType csvTransform = btt.getCsvtransform();
+		if (csvTransform!=null){
+			//transform from data to array
+			AbstractCrawlItemToCSV cicsv = null;
+			try{
+				cicsv = (AbstractCrawlItemToCSV) 
+						Class.forName(csvTransform.getTransformClass()).newInstance();
+			}catch(Exception e){
+				logger.error(e);
+			}
+			String[][] csv = cicsv.getCSV(product, null);
+			logger.info(String.format("csv get from crawledItem: %d.", csv.length));
+			//transform operations
+			if (csvTransform.getOps()!=null){
+				for (TransformOp top: csvTransform.getOps()){
+					for (int i=0; i<csv.length; i++){
+						Map<String, Object> attributes = new HashMap<String, Object>();
+						String[] varr = csv[i][1].split(",");//split value
+						attributes.put(VAR_CSV_NAME, varr);
+						String svarr = (String) ScriptEngineUtil.eval(top.getExpression(), VarType.STRING, attributes);//return a joined string
+						csv[i][1] = svarr;
+					}
+				}
+			}
+			product.setCsvValue(csv);
+			//filter the csv
+			String filterExp = btt.getFilter();
+			Map<String, Object> attributes = new HashMap<String, Object>();
+			attributes.putAll(product.getParamMap());
+			boolean hasFiltered=false;
+			if (filterExp!=null){
+				List<String[]> passedCsv = new ArrayList<String[]>();
+				for (String[] arr:csv){
+					//anyway the csv[1] is the value list, i need to make it into an array
+					String[] varr = arr[1].split(",");
+					attributes.put(VAR_CSV_NAME, varr);
+					Boolean ret = (Boolean)ScriptEngineUtil.eval(filterExp, VarType.BOOLEAN, attributes);
+					if (ret!=null){
+						if (ret.booleanValue()){
+							passedCsv.add(arr);
+						}else{
+							hasFiltered=true;
+						}
+					}else{
+						logger.error(String.format("eval exp:%s to null.", filterExp));
+					}
+				}
+				String[][] passedCsvArray = new String[passedCsv.size()][];
+				passedCsvArray = passedCsv.toArray(passedCsvArray);
+				product.setCsvValue(passedCsvArray);
+			}
+			return (cicsv.isFiltered()||hasFiltered);//filter by dateIdx or filter exp
+		}else{
+			return false;
+		}
+	}
 	/**
 	 * 
 	 * @param wc
@@ -210,53 +269,13 @@ public class ProductAnalyze{
 				if (csvTransform!=null && csvTransform.getTransformClass()!=null){
 					//do the transform and set to crawledItem.csv
 					try {
-						//transform from data to array
-						AbstractCrawlItemToCSV cicsv = (AbstractCrawlItemToCSV) 
-								Class.forName(csvTransform.getTransformClass()).newInstance();
-						String[][] csv = cicsv.getCSV(product, null);
-						logger.info(String.format("csv get from crawledItem: %d.", csv.length));
-						//transform operations
-						if (csvTransform.getOps()!=null){
-							for (TransformOp top: csvTransform.getOps()){
-								for (int i=0; i<csv.length; i++){
-									Map<String, Object> attributes = new HashMap<String, Object>();
-									String[] varr = csv[i][1].split(",");//split value
-									attributes.put(VAR_CSV_NAME, varr);
-									String svarr = (String) ScriptEngineUtil.eval(top.getExpression(), VarType.STRING, attributes);//return a joined string
-									csv[i][1] = svarr;
-								}
-							}
-						}
-						product.setCsvValue(csv);
-						if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm()) && addToDB){
-							dsManager.addUpdateCrawledItem(product, lastProduct);
-						}
-						//filter the csv
-						String filterExp = bdt.getBaseBrowseTask().getFilter();
-						Map<String, Object> attributes = new HashMap<String, Object>();
-						attributes.putAll(product.getParamMap());
-						if (filterExp!=null){
-							List<String[]> passedCsv = new ArrayList<String[]>();
-							for (String[] arr:csv){
-								//anyway the csv[1] is the value list, i need to make it into an array
-								String[] varr = arr[1].split(",");
-								attributes.put(VAR_CSV_NAME, varr);
-								Boolean ret = (Boolean)ScriptEngineUtil.eval(filterExp, VarType.BOOLEAN, attributes);
-								if (ret!=null){
-									if (ret.booleanValue()){
-										passedCsv.add(arr);
-									}
-								}else{
-									logger.error(String.format("eval exp:%s to null.", filterExp));
-								}
-							}
-							String[][] passedCsvArray = new String[passedCsv.size()][];
-							passedCsvArray = passedCsv.toArray(passedCsvArray);
-							product.setCsvValue(passedCsvArray);
-						}
+						postCrawlProcess(bdt.getBaseBrowseTask(), product);
 						//write the output
 						if (csvtrans!=null)
 							writeCsvOut(csvtrans, hdfsByIdOutputMap, context, mos, product, cconf, task);
+						if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm()) && addToDB){
+							dsManager.addUpdateCrawledItem(product, lastProduct);
+						}
 						if (retCsv) return product;
 					} catch (Exception e) {
 						logger.error("", e);

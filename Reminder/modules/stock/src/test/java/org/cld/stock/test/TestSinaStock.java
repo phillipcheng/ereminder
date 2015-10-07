@@ -41,6 +41,7 @@ public class TestSinaStock {
 	
 	private String marketId = SinaStockConfig.MarketId_HS_Test;
 	private String propFile = "client1-v2.properties";
+	//private String propFile = "cld-stock-cluster.properties";
 	
 	private SinaStockBase ssb;
 
@@ -54,7 +55,6 @@ public class TestSinaStock {
 		ssb.getCconf().getTaskMgr().getHadoopCrawledItemFolder();
 		ssb.getDsm().addUpdateCrawledItem(ssb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
 	}
-	
 	//
 	@Test
 	public void testInitTestMarket() throws Exception{
@@ -118,7 +118,7 @@ public class TestSinaStock {
 	//大宗交易
 	@Test
 	public void run_browse_market_dzjy() throws ParseException{
-		ssb.runCmd(SinaStockConfig.SINA_STOCK_MARKET_DZJY, SinaStockConfig.MarketId_HS_Test, null, START_DATE);
+		ssb.runCmd(SinaStockConfig.SINA_STOCK_MARKET_DZJY, SinaStockConfig.MarketId_HS_Test, "2015-10-02", "2015-10-06");
 	}
 	//复权交易
 	@Test

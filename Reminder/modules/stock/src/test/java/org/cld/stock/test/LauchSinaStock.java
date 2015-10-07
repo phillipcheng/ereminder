@@ -31,7 +31,7 @@ public class LauchSinaStock {
 	@Test
 	public void testSplitByStock1(){
 		Map<String, String> hadoopParams = new HashMap<String, String>();
-		HadoopTaskLauncher.updateHadoopParams(1024, hadoopParams);
+		HadoopTaskLauncher.updateHadoopMemParams(1024, hadoopParams);
 		HadoopTaskLauncher.executeTasks(ssb.getCconf().getNodeConf(), hadoopParams, 
 				new String[]{"/reminder/items/merge/sina-stock-market-fq"}, true, 
 				"/reminder/items/mlinput/sina-stock-market-fq", 

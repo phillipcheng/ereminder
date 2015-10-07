@@ -1,6 +1,5 @@
 package org.cld.stock;
 
-import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -105,17 +104,11 @@ public class RunStock {
 				sb.setMarketId(marketId);
 				if (args.length>=argIdx+1){
 					String method = args[argIdx];
+					String specialParam = null;
 					if (args.length>=argIdx+2){
-						String specialParam = args[argIdx+1];
-						sb.setSpecialParam(specialParam);
+						specialParam = args[argIdx+1];
 					}
-					Method m;
-					try {
-						m = sb.getClass().getMethod(method);
-						m.invoke(sb);
-					} catch (Exception e) {
-						logger.error("", e);
-					}
+					sb.runSpecial(method, specialParam);
 				}else{
 					System.out.println(getDefaultCmdLine() + " methodName");
 				}

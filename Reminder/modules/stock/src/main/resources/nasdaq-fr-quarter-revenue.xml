@@ -10,6 +10,7 @@
 			<param name="endDate"/>
 			<param name="quarter" type="int" value="0"/>
 			<param name="year" type="int" value="0"/>
+			<!-- since url is by id, so the quarter and year meaning the start quarter and year -->
 			<startUrl value="http://fundamentals.nasdaq.com/redpage.asp?selected=[stockid]"/>
 			<userAttribute name="id">
 				<value value="stockid + '_' + endDate" fromType="expression"/>
@@ -35,9 +36,17 @@
     var q = new String(qrt)
     q = q.replace(/\(FYE\)/g, "")
     q = q.replace(/^\s+|\s+$/g, '')
+    if (q=='January') return '01-31'
+    if (q=='February') return '02-28'
     if (q=='March') return '03-31'
+    if (q=='April') return '04-30'
+    if (q=='May') return '05-31'
     if (q=='June') return '06-30'
+    if (q=='July') return '07-31'
+    if (q=='August') return '08-31'
     if (q=='September') return '09-30'
+    if (q=='October') return '10-31'
+    if (q=='November') return '11-30'
     if (q=='December') return '12-31'
     return q
 }
@@ -58,7 +67,7 @@ merge(arr)</expression>
     if (q=='3') return '-09-30'
     if (q=='4') return '-12-31'
 }
-(((year==0 || quarter==0)&amp;&amp; arr[0].indexOf('Total')==-1) || arr[0]==(year+getDate(quarter))) &amp;&amp; arr.length>3</filter>
+(year==0 || quarter==0 || arr[0]&gt;=(year+getDate(quarter))) &amp;&amp; arr.length>3 &amp;&amp; arr[0].indexOf('Total')==-1</filter>
 		</baseBrowseTask>
 		<nextPage value="//table[@class='ipos']/tbody/tr[last()]/td/a[text()='Previous 3 Years']" optional="true"/>
 		<lastPageCondition>

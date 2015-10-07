@@ -64,19 +64,8 @@ public class DateTimeUtil {
 		}
 	}
 	
-	//return like [2011,1] for year 2011, first quarter
-	public static int[] getYearQuarter(String date, SimpleDateFormat sdf){
-		try {
-			Date d = sdf.parse(date);
-			return getYearQuarter(d);
-		}catch(Exception e){
-			logger.error(e.getMessage());
-			return null;
-		}
-	}
-	
-	public static int[] getYearQuarter(Date d){
-		Calendar calInst = Calendar.getInstance();
+	public static int[] getYearQuarter(Date d, TimeZone tz){
+		Calendar calInst = Calendar.getInstance(tz);
 		calInst.setTime(d);
 		int year = calInst.get(Calendar.YEAR);
 		int month = calInst.get(Calendar.MONTH);
