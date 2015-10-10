@@ -4,3 +4,4 @@ test.log
 .classpath
 .project
 .settings
+/output/
