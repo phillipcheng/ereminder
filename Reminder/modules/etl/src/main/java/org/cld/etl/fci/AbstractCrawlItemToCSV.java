@@ -34,6 +34,7 @@ public abstract class AbstractCrawlItemToCSV {
 	public static final String KEY_GENHEADER="GenHeader";
 	public static final String KEY_HASHEADER="HasHeader"; //default to true
 	
+	//if type is list, then other unspecified types are default(number), if type is a string, then means all the types are this value
 	public static final String DATA_TYPE_KEY="DataType";
 	public static final String DATA_TYPE_NUMBER="Number";
 	public static final String DATA_TYPE_TEXT="Text";
@@ -127,6 +128,14 @@ public abstract class AbstractCrawlItemToCSV {
 		}
 		for (int i=dts.size(); i<colnum; i++){
 			dts.add(AbstractCrawlItemToCSV.DATA_TYPE_NUMBER);
+		}
+		return dts;
+	}
+	
+	public List<String> getDefaultDataType(String dt, int colnum){
+		List<String> dts = new ArrayList<String>();
+		for (int i=0; i<colnum; i++){
+			dts.add(dt);
 		}
 		return dts;
 	}

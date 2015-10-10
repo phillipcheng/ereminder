@@ -38,11 +38,6 @@ public class SinaStockBase extends StockBase{
 		return new String[]{TradeDetailCheckDownload.launch(cconf, datePart)};
 	}
 	
-	public String[] postprocess(String param){
-		String datePart = sc.getDatePart(marketId, startDate, endDate);
-		return TradeDetailPostProcessTask.launch(this.propFile, cconf, datePart);
-	}
-	
 	//sina-stock-market-fq
 	public String[] splitByStock(){
 		Map<String, String> hadoopParams = new HashMap<String, String>();

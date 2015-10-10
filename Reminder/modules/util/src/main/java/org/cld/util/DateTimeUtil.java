@@ -64,8 +64,8 @@ public class DateTimeUtil {
 		}
 	}
 	
-	public static int[] getYearQuarter(Date d, TimeZone tz){
-		Calendar calInst = Calendar.getInstance(tz);
+	public static int[] getYearQuarter(Date d){
+		Calendar calInst = Calendar.getInstance();
 		calInst.setTime(d);
 		int year = calInst.get(Calendar.YEAR);
 		int month = calInst.get(Calendar.MONTH);
@@ -193,6 +193,14 @@ public class DateTimeUtil {
 		int lastDate = c.getActualMaximum(Calendar.DATE);
 		c.set(Calendar.DATE, lastDate);
 		return c.getTime();
+	}
+	
+	//data originTimeZone is treated as utc while loading, and converted to fetchTimeZone(defaultTimeZone) while fetching, I need to convert it back to origin
+	public static Date getCorrectedDateFromUTC(Date d, TimeZone originTimeZone){
+		long fetchFromUTC = TimeZone.getDefault().getOffset(d.getTime());
+		long orgFromUTC = originTimeZone.getOffset(d.getTime());
+		Date d1 = new Date(d.getTime() - fetchFromUTC + orgFromUTC);
+		return d1;
 	}
 
 }

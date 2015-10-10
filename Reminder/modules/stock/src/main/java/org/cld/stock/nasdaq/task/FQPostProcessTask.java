@@ -28,30 +28,28 @@ import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 
-
-public class QuotePostProcessTask extends Task implements Serializable, LaunchableTask {
+public class FQPostProcessTask extends Task implements Serializable, LaunchableTask {
 	private static final long serialVersionUID = 1L;
-	private static Logger logger = LogManager.getLogger(QuotePostProcessTask.class);
+	private static Logger logger = LogManager.getLogger(FQPostProcessTask.class);
 	public static final String sep = "-";
 	public static final String stockId_date_sep = "_";
+	
+	private static FQPostProcessTask instance;
+	public static LaunchableTask getLaunchInstance() {
+		if (instance==null){
+			instance=new FQPostProcessTask();
+		}
+		return instance;
+	}
 
 	private String pathName;
 	private CrawlConf cconf;
 
-	private static QuotePostProcessTask instance;
-	
-	public static LaunchableTask getLaunchInstance() {
-		if (instance==null){
-			instance=new QuotePostProcessTask();
-		}
-		return instance;
-	}
-	
-	public QuotePostProcessTask() {
-		this.setId(QuotePostProcessTask.class.getName());
+	public FQPostProcessTask() {
+		this.setId(FQPostProcessTask.class.getName());
 	}
 
-	public QuotePostProcessTask(String pathName) {
+	public FQPostProcessTask(String pathName) {
 		this.pathName = pathName;
 		genId();
 	}
@@ -81,28 +79,18 @@ public class QuotePostProcessTask extends Task implements Serializable, Launchab
 			String[] fp = fileName.split(stockId_date_sep);
 			if (fp.length == 2) {
 				String stockId = fp[0];
-				String date = fp[1];
 				String content = isr.readLine();
-				int itemsPerLine = 4;
-				while (content != null) {
-					String[] fields = content.split(",");
-					if (fields.length == itemsPerLine) { 
+				boolean firstLine=true;
+				while (content != null) {//remove 1st line and add stockid to 1st column
+					if (!firstLine){
 						StringBuffer sb = new StringBuffer();
-						String timestamp;
-						for (int i = 0; i < itemsPerLine; i++) {
-							if (i == 1) {// time field idx
-								String time = fields[i];
-								timestamp = date + " " + time;
-								sb.append(timestamp);
-							} else {
-								sb.append(fields[i]);
-							}
-							if (i < (itemsPerLine-1))
-								sb.append(",");
-						}
+						sb.append(stockId);
+						sb.append(",");
+						sb.append(content);
 						osw.write(sb.append("\n").toString());
 					}
 					content = isr.readLine();
+					firstLine = false;
 				}
 			}
 			isr.close();
@@ -125,8 +113,8 @@ public class QuotePostProcessTask extends Task implements Serializable, Launchab
 	}
 
 	private static String submitTasks(int batchId, String datePart, String propfile, List<Task> tl, CrawlConf cconf, String cmd){
-		String taskName = QuotePostProcessTask.class.getSimpleName()+ "_" + cmd + "_" + datePart + "_" + batchId;
-		int mbMem = 1024;
+		String taskName = FQPostProcessTask.class.getSimpleName()+ "_" + cmd + "_" + datePart + "_" + batchId;
+		int mbMem = 256;
 		String optValue = "-Xmx" + mbMem + "M";
 		Map<String, String> hadoopJobParams = new HashMap<String, String>();
 		hadoopJobParams.put("mapreduce.map.speculative", "false");
@@ -135,7 +123,7 @@ public class QuotePostProcessTask extends Task implements Serializable, Launchab
 		return CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tl, taskName, false, hadoopJobParams);
 	}
 	
-	@Override
+	// return jobId list
 	public String[] launch(String propfile, CrawlConf cconf, String datePart, String[] cmds) {
 		NodeConf nc = cconf.getNodeConf();
 		Configuration conf = HadoopTaskLauncher.getHadoopConf(nc);
@@ -152,7 +140,7 @@ public class QuotePostProcessTask extends Task implements Serializable, Launchab
 				int batchId = 0;
 				while (fsit.hasNext()) {
 					LocatedFileStatus lfs = fsit.next();
-					QuotePostProcessTask t = new QuotePostProcessTask(lfs.getPath().toString());
+					FQPostProcessTask t = new FQPostProcessTask(lfs.getPath().toString());
 					tl.add(t);
 					if (tl.size() >= ETLUtil.maxBatchSize) {
 						jobIdList.add(submitTasks(batchId, datePart, propfile, tl, cconf, cmd));
@@ -169,4 +157,6 @@ public class QuotePostProcessTask extends Task implements Serializable, Launchab
 			return null;
 		}
 	}
+
+
 }

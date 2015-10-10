@@ -119,7 +119,7 @@ public class HbaseDataStoreManagerImpl implements DataStoreManager {
 		try{
 			table = new HTable(hbaseConf, storeId);
 			String rowKey = getRowKey(id, storeId);
-			logger.info("getCrawledItem rowkey:" + rowKey);
+			logger.debug("getCrawledItem rowkey:" + rowKey);
 	        Get get = new Get(rowKey.getBytes());
 	        Result rs = table.get(get);
 	        return getCrawledItemFromResult(id, storeId, rs);
@@ -144,7 +144,7 @@ public class HbaseDataStoreManagerImpl implements DataStoreManager {
 			try {
 				table = new HTable(hbaseConf, ci.getId().getStoreId());
 				String rowKey = getRowKey(ci.getId());
-				logger.info("addUpdateCrawledItem rowkey:" + rowKey);
+				logger.debug("addUpdateCrawledItem rowkey:" + rowKey);
 	            Put put = new Put(Bytes.toBytes(rowKey));
 	            put.add(Bytes.toBytes(CRAWLEDITEM_CF), Bytes.toBytes(CRAWLEDITEM_DATA), ci.getId().getCreateTime().getTime(),
 	            		Bytes.toBytes(ci.toJson()));

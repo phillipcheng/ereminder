@@ -17,9 +17,4 @@ public class NasdaqStockBase extends StockBase{
 	public NasdaqStockBase(String propFile, String marketId, Date sd, Date ed){
 		super(propFile, marketId, sd, ed);
 	}
-
-	public String[] postprocess(String param){
-		String datePart = sc.getDatePart(marketId, startDate, endDate);
-		return QuotePostProcessTask.launch(this.propFile, cconf, datePart, sc.getPostProcessCmds());
-	}
 }

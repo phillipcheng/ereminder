@@ -1,10 +1,5 @@
 package org.cld.stock;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +23,7 @@ import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.task.CrawlTaskConf;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
+import org.cld.stock.persistence.StockPersistMgr;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.DateTimeUtil;
 import org.xml.mytaskdef.ConfKey;
@@ -44,16 +40,19 @@ public class ETLUtil {
 	public static final String PK_LOOKAHEADE="lookahead";//how many time unit (quarter) to look ahead, can be 0, 1, 2, etc
 	public static final String PK_MAPPER="mapper";
 	public static final String PK_REDUCER="reducer";
-	private static final SimpleDateFormat utcsdf = new SimpleDateFormat("yyyy-MM-dd");
-	static{
-		utcsdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-	}
 
 	public static final int maxBatchSize=1000000;
 	//parameter keys define in the browseTask
 	
 	public static final String DEFAULT_MAPPER="org.cld.datacrawl.hadoop.CrawlTaskMapper";
-
+	private static String[] stockidsCache = null;
+	private static Map<String, Date> ipoCache = new HashMap<String, Date>();//stockid to ipodate string cache
+	
+	public static void cleanCaches(){
+		stockidsCache=null;
+		ipoCache.clear();
+	}
+	
 	public static String getStartUrl(Task t){
 		ParsedBrowsePrd btt = t.getBrowseDetailTask(t.getName());
 		return btt.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl().getValue();
@@ -126,112 +125,43 @@ public class ETLUtil {
 	}
 	
 	public static String[] getStockIdByMarketId(StockConfig sc, String marketId, CrawlConf cconf, String cmd){
-		CrawledItem ci = cconf.getDsm("hbase").getCrawledItem(marketId, sc.getStockIdsCmd(), null);
-		List<String> ids = (List<String>) ci.getParam(StockBase.KEY_IDS);
-		String[] idarray = new String[ids.size()];
-		if (Arrays.asList(sc.getUntrimmedStockIdCmds()).contains(cmd)){
-			return ids.toArray(idarray);
-		}else{
-			for (int i=0; i<ids.size(); i++){
-				idarray[i] = sc.trimStockId(ids.get(i));
-			}
-			return idarray;
-		}
-	}
-	
-	public static Map<String, Date> getStockLUDateByCmd(StockConfig sc, String cmd, CrawlConf cconf){
-		Map<String, Date> stockLUMap = new HashMap<String, Date>();
-		String confFileName = cmd + ".xml";
-		List<Task> tl = cconf.setUpSite(confFileName, null);
-		Task t = tl.get(0);
-		if (isStatic(t)){
-			return stockLUMap;//skip for static tasks
-		}else if (Arrays.asList(sc.getCurrentDayCmds()).contains(cmd)){
-			return stockLUMap; //skip for current day cmd
-		}
-		
-		try{
-			Class.forName(cconf.getResultDmDriver());
-		}catch (Exception e){
-			logger.error("", e);
-		}
-		Connection con = null;
-		Statement stmt = null;
-		String query = "";
-		try{
-			con = DriverManager.getConnection(cconf.getResultDmUrl(), cconf.getResultDmUser(), cconf.getResultDmPass());			
-			query = sc.getLUDateByCmd(cmd);
-			if (query!=null){
-				stmt = con.createStatement();
-				ResultSet res = stmt.executeQuery(query);
-				while (res.next()){
-					stockLUMap.put(res.getString(1), res.getDate(2));
-				}
-				res.close();
+		if (stockidsCache == null){
+			CrawledItem ci = cconf.getDsm("hbase").getCrawledItem(marketId, sc.getStockIdsCmd(), null);
+			List<String> ids = (List<String>) ci.getParam(StockBase.KEY_IDS);
+			String[] idarray = new String[ids.size()];
+			if (Arrays.asList(sc.getUntrimmedStockIdCmds()).contains(cmd)){
+				return ids.toArray(idarray);
 			}else{
-				logger.error(String.format("get stock lu date sql is not defined for cmd: %s", cmd));
-			}
-		}catch(Exception e){
-			logger.error(String.format("exceptin while execute %s", query), e);
-		}finally{
-			if (stmt!=null){
-				try{
-					stmt.close();
-				}catch(Exception e){
-					logger.error("", e);
+				for (int i=0; i<ids.size(); i++){
+					idarray[i] = sc.trimStockId(ids.get(i));
 				}
+				return idarray;
 			}
-			if (con!=null){
-				try{
-					con.close();
-				}catch(Exception e){
-					logger.error("", e);
-				}
-			}
+		}else{
+			return stockidsCache;
 		}
-		return stockLUMap;
 	}
 	
-	private static Map<String, String> ipoCache = null;
-	private static SimpleDateFormat yearSdf = new SimpleDateFormat("yyyy");
 	public static Date getIPODateByStockId(StockConfig sc, String marketId, String stockId, CrawlConf cconf, String cmd){
 		//get the IPODate
-		if (ipoCache==null){
-			CrawledItem ipodateCI =null;
-			if (sc.getIPODateCmd()!=null){
-				ipodateCI = cconf.getDsm("hbase").getCrawledItem(marketId, sc.getIPODateCmd(), null);
-			}else{
-				ipodateCI = cconf.getDsm("hbase").getCrawledItem(marketId, sc.getStockIdsCmd(), null);
-			}
-			ipoCache = (Map<String, String>)ipodateCI.getParam(StockBase.KEY_IPODate_MAP);
+		if (ipoCache.size()==0){
+			ipoCache = StockPersistMgr.getStockIPOData(sc, cconf);
 		}
 		//we need trimmed stockid for ipoCache
 		if (Arrays.asList(sc.getUntrimmedStockIdCmds()).contains(cmd)){
 			stockId = sc.trimStockId(stockId);
 		}
-		String strDate = ipoCache.get(stockId);
-		Date d = sc.getMarketStartDate();
-		if (strDate!=null){
-			try {
-				d = sc.getSdf().parse(strDate);
-			} catch (ParseException e) {
-				try {
-					d = yearSdf.parse(strDate);
-				}catch(ParseException e1){
-					logger.warn(String.format("start date %s for stock %s is not parsable, using market start date.", strDate, stockId));
-				}
-			}
-		}
-		if (d.before(sc.getMarketStartDate())){
+		Date d = ipoCache.get(stockId);
+		if (d==null){
 			d = sc.getMarketStartDate();
 		}
-		logger.info(String.format("stock %s ipo date: %s", stockId, sc.getSdf().format(d)));
+		logger.debug(String.format("stock %s ipo date: %s", stockId, sc.getSdf().format(d)));
 		return d;
 	}
 	
 	public static int[] getStartYearQuarterByStockId(StockConfig sc, String marketId, String stockid, CrawlConf cconf, String cmd){
 		Date d = getIPODateByStockId(sc, marketId, stockid, cconf, cmd);//IPO date UTC timezone
-		return DateTimeUtil.getYearQuarter(d, TimeZone.getTimeZone("UTC"));
+		return DateTimeUtil.getYearQuarter(d);
 	}
 	
 	private static Date getDate(StockConfig sc, String key, Map<String, Object> params){
@@ -250,9 +180,9 @@ public class ETLUtil {
 	
 	//all will be filtered with startDate, endDate
 	//params in the task def:						method                       sample
-	//marketid, stockid, year, quarter:	runTaskByStockYearQuarter	nasdaq-fr-quarter-BalanceSheet, sina-stock-fr-quarter-CashFlow 
+	//marketid, stockid, year, quarter:	runTaskByStockYearQuarter	BalanceSheet, CashFlow, sina-fq, sina-historical
 	//marketid, stockid, date         : runTaskByStockDate			sina-stock-market-tradedetail
-	//marketid, stockid,			  :	runTaskByStock				holding-insiders, dividend-history, quote-historical, short-interest, corp-info
+	//marketid, stockid,			  :	runTaskByStock				holding-insiders, dividend-history, quote-historical, short-interest, corp-info, nasdaq-fq
 	//marketid, date                  : runTaskByDate				sina-stock-market-dzjy, rzrq 
 	//marketid                        : runTaskByMarket		        stock-ids
 	//marketid, stockid, year, month  : runTaskByMarketYearMonth    sina-stock-ipo
@@ -322,6 +252,19 @@ public class ETLUtil {
 		}
 	}
 	
+	private static boolean needCheckDB(StockConfig sc, CrawlConf cconf, String cmd){
+		String confFileName = cmd + ".xml";
+		List<Task> tl = cconf.setUpSite(confFileName, null);
+		Task t = tl.get(0);
+		if (ETLUtil.isStatic(t)){
+			return false;
+		}else if (Arrays.asList(sc.getCurrentDayCmds()).contains(cmd)){
+			return false; //skip for current day cmd
+		}
+		return true;
+	}
+	
+	//sina-ipo, nasdaq-ipo
 	private static String[] runTaskByMarketYearMonth(StockConfig sc, CrawlConf cconf, String propfile, Task t, String cmd, 
 			Map<String, Object> params, boolean sync, String mapperClassName, String reducerClassName){
 		logger.info("into runTaskByMarketYearMonth");
@@ -371,7 +314,7 @@ public class ETLUtil {
 				mapperClassName, reducerClassName, hadoopJobParams);
 		return new String[]{jobId};
 	}
-	
+	//stock-ids
 	private static String[] runTaskByMarket(StockConfig sc, CrawlConf cconf, String propfile, Task t, String cmd, 
 			Map<String, Object> params, boolean sync, String mapperClassName, String reducerClassName){
 		logger.info("into runTaskByMarket");
@@ -387,15 +330,20 @@ public class ETLUtil {
 			return new String[]{};
 		}
 	}
-	
+	//sina-stock-market-dzjy, rzrq 
 	private static String[] runTaskByDate(StockConfig sc, Date startDate, Date endDate, CrawlConf cconf, String propfile, Task t, 
 			Map<String, Object> params, String cmd, boolean sync, String mapperClassName, String reducerClassName){
 		logger.info("into runTaskByDate");
-		Date toDate = new Date();
-		if (endDate!=null){
-			toDate = endDate;
+		Date luDate = StockPersistMgr.getMarketLUDateByCmd(sc, cmd, cconf);
+		Date sd = null;
+		if (luDate!=null){
+			sd = DateTimeUtil.tomorrow(luDate);
+		}else if (startDate!=null){
+			sd = startDate;
+		}else{
+			sd = sc.getMarketStartDate();
 		}
-		LinkedList<Date> dll = StockUtil.getOpenDayList(startDate, toDate, sc.getHolidays(), sc.getTimeZone());
+		LinkedList<Date> dll = StockUtil.getOpenDayList(sd, endDate, sc.getHolidays());
 		List<Task> tlist = new ArrayList<Task>();
 		Iterator<Date> tryDates = dll.listIterator();
 		while(tryDates.hasNext()){
@@ -423,25 +371,35 @@ public class ETLUtil {
 		}
 	}
 	
-	/**
-	 */
+	//sina-stock-market-tradedetail
 	private static String[] runTaskByStockDate(StockConfig sc, String marketId, Date startDate, Date endDate, 
 			CrawlConf cconf, String propfile, Task t, Map<String, Object> params, String cmd, 
 			boolean sync, String mapperClassName, String reducerClassName){
 		logger.info(String.format("into runTaskByStockDate with marketId:%s", marketId));
 		String[] ids = getStockIdByMarketId(sc, marketId, cconf, cmd);
+		Map<String, Date> stockLUMap = new HashMap<String, Date>();
+		if (needCheckDB(sc, cconf, cmd)){
+			stockLUMap = StockPersistMgr.getStockLUDateByCmd(sc, cmd, cconf);
+		}
+		
 		List<Task> tlist = new ArrayList<Task>();
 		int batchId = 0;
 		LinkedList<Date> cacheDates = new LinkedList<Date>();
 		List<String> jobIdList = new ArrayList<String>();
 		for (String id: ids){
-			Date fDate = getIPODateByStockId(sc, marketId, id, cconf, cmd);
-			if (startDate!=null){
-				if (fDate.before(startDate)){
-					fDate = startDate;
+			Date sd = null;
+			String idForDB = sc.trimStockId(id);
+			if (stockLUMap.containsKey(idForDB)){
+				sd = stockLUMap.get(idForDB);
+				if (sd!=null){//since we crawl [startDate, endDate)
+					sd = DateTimeUtil.tomorrow(sd);
 				}
 			}
-			logger.info(String.format("%s: ipo date %s", id, sc.getSdf().format(fDate)));
+			if (sd==null){
+				//need to open url for each year and quarter, so we need to use ipo start date.
+				sd = getIPODateByStockId(sc, marketId, id, cconf, cmd);
+			}
+			logger.info(String.format("%s: start date for cmd %s is %s", id, cmd, sc.getSdf().format(sd)));
 			//update cache if necessary
 			Date cacheFirstDate = null;
 			if (!cacheDates.isEmpty())
@@ -453,14 +411,14 @@ public class ETLUtil {
 					cacheFirstDate = endDate;
 				}
 			}
-			LinkedList<Date> dll = StockUtil.getOpenDayList(fDate, cacheFirstDate,sc.getHolidays(), sc.getTimeZone());
+			LinkedList<Date> dll = StockUtil.getOpenDayList(sd, cacheFirstDate,sc.getHolidays());
 			cacheDates.addAll(0, dll);
 			//get dates from cache
 			Date firstWorkingDay = null;
-			if (StockUtil.isOpenDay(fDate, sc.getHolidays(), sc.getTimeZone())){
-				firstWorkingDay = fDate;
+			if (StockUtil.isOpenDay(sd, sc.getHolidays())){
+				firstWorkingDay = sd;
 			}else{
-				firstWorkingDay = StockUtil.getNextOpenDay(fDate, sc.getHolidays(), sc.getTimeZone());
+				firstWorkingDay = StockUtil.getNextOpenDay(sd, sc.getHolidays());
 			}
 			int idx = cacheDates.indexOf(firstWorkingDay);
 			if (idx==-1){
@@ -501,22 +459,32 @@ public class ETLUtil {
 		String[] jobIds = new String[jobIdList.size()];
 		return jobIdList.toArray(jobIds);
 	}
-	
+	//holding-insiders, dividend-history, quote-historical, short-interest, corp-info, nasdaq-fq
 	private static String[] runTaskByStock(StockConfig sc, String marketId, CrawlConf cconf, String propfile, Task t, 
 			Map<String, Object> params, String cmd, boolean sync, String mapperClassName, String reducerClassName){
 		logger.info("into runTaskByStock");
-		Map<String, Date> stockLUMap = getStockLUDateByCmd(sc, cmd, cconf);
+		Map<String, Date> stockLUMap = new HashMap<String, Date>();
+		if (needCheckDB(sc, cconf, cmd)){
+			stockLUMap = StockPersistMgr.getStockLUDateByCmd(sc, cmd, cconf);
+		}
 		List<Task> tlist = new ArrayList<Task>();
 		List<String> allIds = Arrays.asList(getStockIdByMarketId(sc, marketId, cconf, cmd));
 		for (String stockid: allIds){
-			String strSd = null;
+			Date sd = null;
 			if (stockLUMap.containsKey(stockid)){
-				Date sd = stockLUMap.get(stockid);//date in the db is UTC
+				sd = stockLUMap.get(stockid);//date in the db is loaded from text files which are displayed on webpage which is in each market's tz
 				if (sd!=null) {
 					sd = DateTimeUtil.tomorrow(sd);
-					strSd = utcsdf.format(sd);
 				}
 			}
+			if (sd==null){
+				//need to open url for each year and quarter, so we need to use ipo start date.
+				sd = getIPODateByStockId(sc, marketId, stockid, cconf, cmd);
+			}
+			if (sd==null){
+				sd = sc.getMarketStartDate();
+			}
+			String strSd = sc.getSdf().format(sd);
 			Task t1 = t.clone(ETLUtil.class.getClassLoader());
 			if (params!=null){
 				t1.putAllParams(params);
@@ -568,8 +536,11 @@ public class ETLUtil {
 			boolean sync, String mapperClassName, String reducerClassName) {
 		List<String> jobIds = new ArrayList<String>();
 		List<Task> tlist = new ArrayList<Task>();
-		Map<String, Date> stockLUMap = getStockLUDateByCmd(sc, cmd, cconf);
-		int[] eyq = DateTimeUtil.getYearQuarter(endDate, sc.getTimeZone());
+		Map<String, Date> stockLUMap = new HashMap<String, Date>();
+		if (needCheckDB(sc, cconf, cmd)){
+			stockLUMap = StockPersistMgr.getStockLUDateByCmd(sc, cmd, cconf);
+		}
+		int[] eyq = DateTimeUtil.getYearQuarter(endDate);
 		int endYear = eyq[0];
 		int endQuarter = eyq[1];
 		int lookahead = getLookahead(t); //how many quarter to look ahead of the current one
@@ -603,7 +574,7 @@ public class ETLUtil {
 				//need to open url for each year and quarter, so we need to use ipo start date.
 				sd = getIPODateByStockId(sc, marketId, stockid, cconf, cmd);
 			}
-			int[] yq = DateTimeUtil.getYearQuarter(sd, TimeZone.getTimeZone("UTC"));//sd is either from db or ipo date
+			int[] yq = DateTimeUtil.getYearQuarter(sd);
 			int startYear = yq[0];
 			int startQuarter = yq[1];
 		

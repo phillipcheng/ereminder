@@ -1,8 +1,11 @@
 package org.cld.util;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URL;
@@ -62,6 +65,30 @@ public class DownloadUtil {
 				}
 				if (fos!=null){
 					fos.close();
+				}
+			}catch(Exception e){
+				logger.error("", e);
+			}
+		}
+	}
+	
+	public static void outputToFile(String[] lines, String directory, String fileName){
+		FileOutputStream fos = null;
+		BufferedWriter bw = null;
+		try{
+			new File(directory).mkdirs();
+			fos = new FileOutputStream(directory + File.separator + fileName);
+			bw = new BufferedWriter(new OutputStreamWriter(fos));
+			for (String line:lines){
+				bw.write(line);
+				bw.write("\n");
+			}
+		}catch(Exception e){
+			logger.error("", e);
+		}finally{
+			try{
+				if (bw!=null){
+					bw.close();
 				}
 			}catch(Exception e){
 				logger.error("", e);

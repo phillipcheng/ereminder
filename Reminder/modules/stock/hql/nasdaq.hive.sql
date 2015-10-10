@@ -1,3 +1,7 @@
+--NasdaqIPO
+drop table if exists NasdaqIPO;
+create external table NasdaqIPO(name String, stockid String, marketid String, ipoprice decimal(10,2), shares decimal(20,2), offerAmount decimal(20, 2), dt Date) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-ipo';
+
 --NasdaqFrQuarterBalanceSheet
 drop table if exists NasdaqFrQuarterBalanceSheet;
 create external table NasdaqFrQuarterBalanceSheet(stockid String, quarter String, dt Date, cash decimal(20,2), shortTermInvestment decimal(20,2), NetReceivables decimal(20,2), OtherCurrentAssets decimal(20,2), totalCurrentAssets decimal(20,2), longTermInvestment decimal(20,2), fixedAssets decimal(20,2), goodwill decimal(20,2), intangibleAssets decimal(20,2), otherAssets decimal(20,2), deferredAssetChanges decimal(20,2), totalAssets decimal(20,2), accountsPayable decimal(20,2), shortTermDebt decimal(20,2), otherCurrentLiabilities decimal(20,2), totalCurrentLiabilities decimal(20,2), longTermDebt decimal(20,2), otherLiabilities decimal(20,2), deferredLiabilityCharges decimal(20,2), miscStocks decimal(20,2), minorityInterest decimal(20,2), totalLiabilities decimal(20,2), commonStock decimal(20,2), capitalSurplus decimal(20,2), retainedEarnings decimal(20,2), treasuryStock decimal(20,2), otherEquity decimal(20,2), totalEquity decimal(20,2), totalLiabilityEquity decimal(20,2)) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-fr-quarter-BalanceSheet';
@@ -17,6 +21,11 @@ create external table NasdaqFrQuarterRevenue(stockid String, dt Date, revenue de
 --nasdaq-issue-dividend-history
 drop table if exists NasdaqDividendHistory;
 create external table NasdaqDividendHistory(stockid String, EffDate Date, Type String, CashAmount decimal(20,4), dt Date, RecordDate Date, PaymentDate Date) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-issue-dividend-history';
+
+
+--nasdaq-quote-historical
+drop table if exists NasdaqFqHistory;
+create external table NasdaqFqHistory(stockid String, dt Date, Open decimal(20,2), high decimal(20,2), low decimal(20,2), close decimal(20,2), volume bigint, adjClose decimal(20,2)) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-quote-fq-historical';
 
 --nasdaq-quote-historical
 drop table if exists NasdaqQuoteHistory;

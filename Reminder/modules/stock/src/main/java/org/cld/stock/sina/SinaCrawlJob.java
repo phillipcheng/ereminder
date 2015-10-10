@@ -20,8 +20,8 @@ public class SinaCrawlJob implements Job {
 	public void execute(JobExecutionContext context) throws JobExecutionException {
 		String propFile = "cld-stock-cluster.properties";
 		String marketId = SinaStockConfig.MarketId_HS_A;
-		Date now = new Date();
-		StockBase nsb = new SinaStockBase(propFile, marketId, null, now);
+		Date d = DateTimeUtil.tomorrow(new Date());
+		StockBase nsb = new SinaStockBase(propFile, marketId, null, d);
 		try{
 			logger.info("start to run ..." + nsb);
 			nsb.updateAll(null);

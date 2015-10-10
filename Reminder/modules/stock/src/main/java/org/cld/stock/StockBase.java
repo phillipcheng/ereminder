@@ -21,6 +21,7 @@ import org.cld.taskmgr.entity.CmdStatus;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.CompareUtil;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
+import org.cld.stock.nasdaq.task.QuotePostProcessTask;
 import org.cld.stock.task.MergeTask;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
@@ -31,11 +32,9 @@ public abstract class StockBase extends TestBase{
 	protected static Logger logger =  LogManager.getLogger(StockBase.class);
 	
 	public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	public static final String KEY_IPODate_MAP="data";
 	public static final String AllCmdRun_STATUS="AllCmdRun";
 	public static final String KEY_IDS = "ids";
 	public static final String idKeySep = "_";
-	public static final String KEY_IPODates = "ipoDates";
 	
 	protected String marketId;
 	protected String propFile;
@@ -63,7 +62,7 @@ public abstract class StockBase extends TestBase{
 		this.cconf.getTaskMgr().getHadoopCrawledItemFolder();
 		dsm = this.cconf.getDsm(CrawlConf.crawlDsManager_Value_Hbase);
 		hdfsDsm = this.cconf.getDsm(CrawlConf.crawlDsManager_Value_Hdfs);
-		sdf.setTimeZone(this.getStockConfig().getTimeZone());
+		//sdf.setTimeZone(this.getStockConfig().getTimeZone());
 	}
 	
 	public String toString(){
@@ -120,16 +119,6 @@ public abstract class StockBase extends TestBase{
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("marketId", marketId);
 		CrawledItem ciOrg = browsePrd(sc.getStockIdsCmd() + ".xml", null, params, endDate, false).get(0);
-		//set ipoCache if no seperate ipoDate crawl
-		if (sc.getIPODateCmd()==null){
-			List<String> ids = (List<String>) ciOrg.getParam(StockBase.KEY_IDS);
-			List<String> ipoDates = (List<String>) ciOrg.getParam(StockBase.KEY_IPODates);
-			Map<String, String> ipoMap = new HashMap<String, String>();
-			for (int i=0; i<ids.size(); i++){
-				ipoMap.put(ids.get(i), ipoDates.get(i));
-			}
-			ciOrg.addParam(KEY_IPODate_MAP, ipoMap);
-		}
 		logger.debug("ci we got:" + ciOrg);
 		if (sc.getPairedMarket()!=null && sc.getPairedMarket().containsKey(marketId)){
 			String pairMarketId = sc.getPairedMarket().get(marketId);
@@ -165,6 +154,9 @@ public abstract class StockBase extends TestBase{
 		}else{
 			if (startDate==null){
 				startDate = sc.getStartDate(cmdName);
+				if (startDate==null){
+					startDate = sdf.format(sc.getMarketStartDate());
+				}
 			}
 		}
 		
@@ -223,6 +215,7 @@ public abstract class StockBase extends TestBase{
 	
 	//return all the cmds run
 	private List<CmdStatus> runAllCmd(String marketId, Date sd, Date ed, int type){
+		ETLUtil.cleanCaches();
 		List<CmdStatus> cmdStatusList = new ArrayList<CmdStatus>();
 		StockConfig sc = getStockConfig();
 		String strSd = null;
@@ -276,7 +269,7 @@ public abstract class StockBase extends TestBase{
 		logger.info(String.format("market %s 1st time fetch with size %d.", marketId, curIds.size()));
 		dsm.addUpdateCrawledItem(ciIds, null);//hbase persistence for curMarket
 		hdfsDsm.addUpdateCrawledItem(ciIds, null);//hdfs persistence for cur market
-		//store ipodate
+		//run ipo cmd
 		String ipoCmd = sc.getIPODateCmd();
 		if (ipoCmd!=null){
 			runCmd(ipoCmd, curMarketId, getDateString(startDate), getDateString(endDate));//sync cmd do not need to track
@@ -355,16 +348,6 @@ public abstract class StockBase extends TestBase{
 					String ipoCmd = sc.getIPODateCmd();
 					if (ipoCmd!=null){
 						runCmd(ipoCmd, curMarketId, getDateString(lastRunDate), getDateString(endDate));
-						CrawledItem prevIPODate = dsm.getCrawledItem(prevMarketId, ipoCmd, CrawledItem.class);
-						CrawledItem curIPODate = dsm.getCrawledItem(curMarketId, ipoCmd, CrawledItem.class);
-						Map<String, String> preMap = (Map<String, String>) prevIPODate.getParam(KEY_IPODate_MAP);
-						Map<String, String> curMap = (Map<String, String>) curIPODate.getParam(KEY_IPODate_MAP);
-						if (curMap==null){
-							curMap = new HashMap<String,String>();
-						}
-						curMap.putAll(preMap);
-						curIPODate.addParam(KEY_IPODate_MAP, curMap);
-						dsm.addUpdateCrawledItem(curIPODate, null);
 					}
 					
 					//update the market-command-status
@@ -444,7 +427,7 @@ public abstract class StockBase extends TestBase{
 							int newStatus = orgStatus;
 							if (rjob!=null){
 								newStatus = rjob.getJobStatus().getState().getValue();
-								logger.info(String.format("job %s got status %d", jid, newStatus));
+								logger.debug(String.format("job %s got status %d", jid, newStatus));
 							}else{
 								logger.info(String.format("job %s not found in jobClient.", jid));
 								//try history server ?
@@ -465,11 +448,26 @@ public abstract class StockBase extends TestBase{
 						cs.getJsMap().put(jid, newStatusMap.get(jid));
 					}
 					dsm.addUpdateCrawledItem(cs, null);
-					logger.info(String.format("update status for cmd:%s", cmd));
+					logger.info(String.format("update status for cmd:%s to %s", cmd, newStatusMap));
 				}
 			}
 		}
 		return finished;
+	}
+	
+	public String[] postprocess(String param){
+		List<String> jobIds = new ArrayList<String>();
+		String datePart = getStockConfig().getDatePart(marketId, startDate, endDate);
+		Map<LaunchableTask, String[]> ppMap = this.getStockConfig().getPostProcessMap();
+		for (LaunchableTask t:ppMap.keySet()){
+			String[] cmds = ppMap.get(t);
+			String[] jobIdsOneCmd = t.launch(this.propFile, cconf, datePart, cmds);
+			if (jobIdsOneCmd!=null){
+				jobIds.addAll(Arrays.asList(jobIdsOneCmd));
+			}
+		}
+		String[] rt = new String[jobIds.size()];
+		return jobIds.toArray(rt);
 	}
 	
 	public String[] run_merge(String param){
@@ -503,7 +501,7 @@ public abstract class StockBase extends TestBase{
 		return null;
 	}
 	
-	private static final int poll_interval=10000;
+	private static final int poll_interval=20000;
 	
 	//this will do all the crawling, postprocessing and merge
 	public void updateAll(String param) throws InterruptedException{
@@ -560,16 +558,25 @@ public abstract class StockBase extends TestBase{
 	public String getMarketId() {
 		return marketId;
 	}
-
 	public void setMarketId(String marketId) {
 		this.marketId = marketId;
 	}
-
 	public String getSpecialParam() {
 		return specialParam;
 	}
-
 	public void setSpecialParam(String specialParam) {
 		this.specialParam = specialParam;
+	}
+	public Date getEndDate() {
+		return endDate;
+	}
+	public void setEndDate(Date endDate) {
+		this.endDate = endDate;
+	}
+	public Date getStartDate() {
+		return startDate;
+	}
+	public void setStartDate(Date startDate) {
+		this.startDate = startDate;
 	}
 }

@@ -33,8 +33,8 @@ public class SinaTestStockConfig {
 			logger.error("", e);
 		}
 	}
-	public static final String[] Test_D1_Stocks = new String[]{"sh600345"};
-	public static final String[] Test_D3_Stocks = new String[]{"sh600345", "sz000001"};
+	public static final String[] Test_D1_Stocks = new String[]{"sh600070"};
+	public static final String[] Test_D3_Stocks = new String[]{"sh600070"};
 
 	public static String[] testAllConf = (String[]) ArrayUtils.addAll(SinaStockConfig.corpConfs, SinaStockConfig.SINA_STOCK_FR_FOOTNOTE);
 }

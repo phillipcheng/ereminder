@@ -19,23 +19,23 @@ public class StockUtil {
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
 	//[fromDate, toDate)
-	public static LinkedList<Date> getOpenDayList(Date fromDate, Date toDate, Set<Date> holidays, TimeZone tz){
+	public static LinkedList<Date> getOpenDayList(Date fromDate, Date toDate, Set<Date> holidays){
 		LinkedList<Date> dll = new LinkedList<Date>();
 		Date d = fromDate;
 		while (d.before(toDate)){
-			if (isOpenDay(d, holidays, tz)){
+			if (isOpenDay(d, holidays)){
 				dll.add(d);
 			}
-			d = getNextOpenDay(d, holidays, tz);
+			d = getNextOpenDay(d, holidays);
 		}
 		return dll;
 	}
 	
-	public static Date getNextOpenDay(Date d, Set<Date> holidays, TimeZone tz){
+	public static Date getNextOpenDay(Date d, Set<Date> holidays){
 		Date day = DateTimeUtil.tomorrow(d);
-		Calendar c = Calendar.getInstance(tz);
+		Calendar c = Calendar.getInstance();
 		c.setTime(day);
-		while (!isOpenDay(day, holidays, tz)){
+		while (!isOpenDay(day, holidays)){
 			int dow = c.get(Calendar.DAY_OF_WEEK);
 			if (dow==Calendar.SUNDAY){
 				c.add(Calendar.DATE, +1);
@@ -51,11 +51,11 @@ public class StockUtil {
 	}
 	
 	//including today
-	public static Date getLastOpenDay(Date d, Set<Date> holidays, TimeZone tz){
-		Calendar c = Calendar.getInstance(tz);
+	public static Date getLastOpenDay(Date d, Set<Date> holidays){
+		Calendar c = Calendar.getInstance();
 		c.setTime(d);
 		Date day = d;
-		while (!isOpenDay(day, holidays, tz)){
+		while (!isOpenDay(day, holidays)){
 			int dow = c.get(Calendar.DAY_OF_WEEK);
 			//check weekend
 			if (dow==Calendar.SUNDAY){
@@ -71,8 +71,8 @@ public class StockUtil {
 		return day;
 	}
 	
-	public static boolean isOpenDay(Date d, Set<Date> holidays, TimeZone tz){
-		Calendar c = Calendar.getInstance(tz);
+	public static boolean isOpenDay(Date d, Set<Date> holidays){
+		Calendar c = Calendar.getInstance();
 		c.setTime(d);
 		int dow = c.get(Calendar.DAY_OF_WEEK);
 		//check weekend

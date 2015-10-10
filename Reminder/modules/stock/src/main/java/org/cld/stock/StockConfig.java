@@ -1,6 +1,8 @@
 package org.cld.stock;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +40,6 @@ public abstract class StockConfig {
 	public abstract String getTestShortStartDate();
 	public abstract String[] getSlowCmds();
 	public abstract String[] getTablesByCmd(String cmd);
-	public abstract String[] getPostProcessCmds();
 	public abstract Map<String, String> getPairedMarket(); //like MarketId_HS_A paired with MarketId_HS_A_ST
 
 	public abstract String getStartDate(String cmdName);
@@ -46,16 +47,18 @@ public abstract class StockConfig {
 	public abstract TimeZone getTimeZone();
 	public abstract Date getLatestOpenMarketDate(Date d);
 	public abstract Set<Date> getHolidays();
+	public abstract Map<LaunchableTask, String[]> getPostProcessMap();
 	
 	public StockConfig() {
 		sdf = new SimpleDateFormat("yyyy-MM-dd");
-		sdf.setTimeZone(this.getTimeZone());
+		//sdf.setTimeZone(this.getTimeZone());
 	}
 	
-	public String getLUDateByCmd(String cmd){
+	//last update date per stock by cmd
+	public String getStockLUDateByCmd(String cmd){
 		String[] tables = getTablesByCmd(cmd);
 		if (tables == null){
-			logger.error(String.format("tables are not defined for cmd: %s", cmd));
+			logger.error(String.format("tables for stock last update are not defined for cmd: %s", cmd));
 			return null;
 		}
 		String sql = null;
@@ -76,6 +79,32 @@ public abstract class StockConfig {
 		logger.info(String.format("get lu date sql defined for %s is %s", cmd, sql));
 		return sql;
 	}
+	
+	//last update date per stock by cmd
+	public String getMarketLUDateByCmd(String cmd){
+		String[] tables = getTablesByCmd(cmd);
+		if (tables == null){
+			logger.error(String.format("tables for market last update are not defined for cmd: %s", cmd));
+			return null;
+		}
+		String sql = null;
+		if (tables.length==1){
+			sql = String.format("select max(dt) from %s", tables[0]);
+		}else{
+			StringBuffer sb = new StringBuffer("select max(ludt) from (");
+			for (int i=0; i<tables.length; i++){
+				String table = tables[i];
+				if (i>0){
+					sb.append(" union ");
+				}
+				sb.append(String.format("select max(dt) as ludt from %s", table));
+			}
+			sb.append(") as marketlu");
+			sql = sb.toString();
+		}
+		logger.info(String.format("get market lu date sql defined for %s is %s", cmd, sql));
+		return sql;
+	}
 
 	public SimpleDateFormat getSdf(){
 		return sdf;
@@ -83,5 +112,15 @@ public abstract class StockConfig {
 	
 	public String getDatePart(String marketId, Date startDate, Date endDate) {
 		return marketId + "_" + sdf.format(endDate);
+	}
+	
+	public String[] getPostProcessCmds(){
+		List<String> ls = new ArrayList<String>();
+		Map<LaunchableTask, String[]> map = this.getPostProcessMap();
+		for (String[] cmds:map.values()){
+			ls.addAll(Arrays.asList(cmds));
+		}
+		String[] ret = new String[ls.size()];
+		return ls.toArray(ret);
 	}
 }

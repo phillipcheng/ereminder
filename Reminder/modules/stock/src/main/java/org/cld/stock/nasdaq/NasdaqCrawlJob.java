@@ -20,8 +20,8 @@ public class NasdaqCrawlJob implements Job {
 	public void execute(JobExecutionContext context) throws JobExecutionException {
 		String propFile = "cld-stock-cluster.properties";
 		String marketId = NasdaqStockConfig.MarketId_ALL;
-		Date now = new Date();
-		StockBase nsb = new NasdaqStockBase(propFile, marketId, null, now);
+		Date d = DateTimeUtil.tomorrow(new Date());
+		StockBase nsb = new NasdaqStockBase(propFile, marketId, null, d);
 		try{
 			logger.info("start to run ..." + nsb);
 			nsb.updateAll(null);

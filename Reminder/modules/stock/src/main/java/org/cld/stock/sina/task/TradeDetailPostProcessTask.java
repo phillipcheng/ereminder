@@ -20,8 +20,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
-import org.cld.stock.ETLUtil;
-import org.cld.stock.nasdaq.task.QuotePostProcessTask;
+import org.cld.stock.LaunchableTask;
 import org.cld.stock.sina.SinaStockConfig;
 import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskMgr;
@@ -29,7 +28,7 @@ import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 
-public class TradeDetailPostProcessTask extends Task implements Serializable{
+public class TradeDetailPostProcessTask extends Task implements Serializable, LaunchableTask{
 	private static final long serialVersionUID = 1L;
 	private static Logger logger =  LogManager.getLogger(TradeDetailPostProcessTask.class);
 	public static String encoding="GBK";
@@ -42,9 +41,17 @@ public class TradeDetailPostProcessTask extends Task implements Serializable{
 	
 	private String pathName; // fullname /reminder/items/raw/date-part/sina-stock-market-tradedetail	
 	private CrawlConf cconf;
+	
+	private static TradeDetailPostProcessTask instance;
+	public static LaunchableTask getLaunchInstance() {
+		if (instance==null){
+			instance=new TradeDetailPostProcessTask();
+		}
+		return instance;
+	}
 
-
-	public TradeDetailPostProcessTask(){	
+	public TradeDetailPostProcessTask(){
+		this.setId(TradeDetailPostProcessTask.class.getName());
 	}
 	
 	public TradeDetailPostProcessTask(String pathName){
@@ -139,7 +146,7 @@ public class TradeDetailPostProcessTask extends Task implements Serializable{
 	}
 	
 	private static String submitTasks(int batchId, String datePart, String propfile, List<Task> tl, CrawlConf cconf){
-		String taskName = QuotePostProcessTask.class.getSimpleName()+ "_" + datePart + "_" + batchId;
+		String taskName = TradeDetailPostProcessTask.class.getSimpleName()+ "_" + datePart + "_" + batchId;
 		int mbMem = 512;
 		String optValue = "-Xmx" + mbMem + "M";
 		Map<String, String> hadoopJobParams = new HashMap<String, String>();
@@ -150,8 +157,8 @@ public class TradeDetailPostProcessTask extends Task implements Serializable{
 		return CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tl, taskName, false, hadoopJobParams);
 	}
 	
-	//return jobId list
-	public static String[] launch(String propfile, CrawlConf cconf, String datePart){
+	@Override
+	public String[] launch(String propfile, CrawlConf cconf, String datePart, String[] cmds){
 		NodeConf nc = cconf.getNodeConf();
 		Configuration conf = HadoopTaskLauncher.getHadoopConf(nc);
 		//generate task list file

@@ -27,7 +27,6 @@ import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskTypeConf;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
-import org.cld.util.DownloadUtil;
 
 public class CrawlUtil {
 	private static Logger logger =  LogManager.getLogger(CrawlUtil.class);

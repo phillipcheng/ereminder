@@ -29,8 +29,6 @@ import org.cld.hadooputil.HadoopUtil;
 import org.cld.stock.ETLUtil;
 import org.cld.stock.StockConfig;
 
-@Entity
-@DiscriminatorValue("org.cld.stock.sina.task.MergeTask")
 public class MergeTask extends Task implements Serializable{
 	private static final long serialVersionUID = 1L;
 	private static Logger logger =  LogManager.getLogger(MergeTask.class);

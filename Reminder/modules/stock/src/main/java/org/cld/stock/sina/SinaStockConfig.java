@@ -10,8 +10,10 @@ import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.stock.LaunchableTask;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
+import org.cld.stock.sina.task.TradeDetailPostProcessTask;
 import org.cld.util.ListUtil;
 
 public class SinaStockConfig extends StockConfig {
@@ -19,7 +21,7 @@ public class SinaStockConfig extends StockConfig {
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	public static Set<Date> CNHolidays = new HashSet<Date>();
 	static{
-		sdf.setTimeZone(TimeZone.getTimeZone("CTT"));
+		//sdf.setTimeZone(TimeZone.getTimeZone("CTT"));
 		try{
 			//
 			CNHolidays.add(sdf.parse("2005-01-03"));
@@ -305,8 +307,8 @@ public class SinaStockConfig extends StockConfig {
 
 	//file name of the xml conf and the store id as well
 	public static final String SINA_STOCK_IDS ="sina-stock-ids";
-	public static final String SINA_STOCK_IPODate="sina-stock-ipo";
 	//corp material
+	public static final String SINA_STOCK_IPO="sina-stock-ipo";
 	public static final String SINA_STOCK_CORP_INFO="sina-stock-corp-info";//
 	public static final String SINA_STOCK_CORP_MANAGER="sina-stock-corp-manager";//
 	public static final String SINA_STOCK_CORP_RELATED="sina-stock-corp-related";
@@ -343,6 +345,7 @@ public class SinaStockConfig extends StockConfig {
 	static{
 		//corp
 		cmdTableMap.put(SINA_STOCK_CORP_INFO, new String[]{"sinacorpinfo"});
+		cmdTableMap.put(SINA_STOCK_IPO, new String[]{"SinaCorpIPO"});
 		cmdTableMap.put(SINA_STOCK_CORP_MANAGER, new String[]{"sinacorpmanager"});
 		cmdTableMap.put(SINA_STOCK_CORP_RELATED, new String[]{
 				"sinacorprelatedindices", 
@@ -388,6 +391,7 @@ public class SinaStockConfig extends StockConfig {
 	}
 	
 	public static String[] corpConfs = new String[]{//not related with time
+		SINA_STOCK_IPO,
 		SINA_STOCK_CORP_INFO, //公司简介
 		SINA_STOCK_CORP_MANAGER, //公司高管
 		SINA_STOCK_CORP_RELATED, //相关证券 所属指数 所属系
@@ -419,7 +423,7 @@ public class SinaStockConfig extends StockConfig {
 		SINA_STOCK_FR_QUARTER_PROFIT_STATEMENT, //资产负债表
 	};
 	
-	public static String[] syncConf = new String[]{SINA_STOCK_IPODate}; //other cmd need this result
+	public static String[] syncConf = new String[]{SINA_STOCK_IPO}; //other cmd need this result
 	public static String[] allConf = (String[]) ListUtil.concatAll(corpConfs, tradeConfs, issueConfs, holderConfs, frConfs);
 
 	@Override
@@ -434,7 +438,7 @@ public class SinaStockConfig extends StockConfig {
 
 	@Override
 	public String getIPODateCmd() {
-		return SINA_STOCK_IPODate;
+		return SINA_STOCK_IPO;
 	}
 
 	@Override
@@ -496,7 +500,7 @@ public class SinaStockConfig extends StockConfig {
 
 	@Override
 	public String[] getSyncCmds() {
-		return new String[]{SINA_STOCK_IPODate};
+		return new String[]{SINA_STOCK_IPO};
 	}
 
 	@Override
@@ -519,19 +523,14 @@ public class SinaStockConfig extends StockConfig {
 	}
 
 	@Override
-	public String[] getPostProcessCmds() {
-		return new String[]{SINA_STOCK_TRADE_DETAIL};
-	}
-
-	@Override
 	public TimeZone getTimeZone() {
 		return TimeZone.getTimeZone("CTT");
 	}
 	
 	@Override
 	public Date getLatestOpenMarketDate(Date d) {
-		while (!StockUtil.isOpenDay(d, CNHolidays, this.getTimeZone())){
-			d = StockUtil.getLastOpenDay(d, CNHolidays, this.getTimeZone());
+		while (!StockUtil.isOpenDay(d, CNHolidays)){
+			d = StockUtil.getLastOpenDay(d, CNHolidays);
 		}
 		return d;
 	}
@@ -544,5 +543,12 @@ public class SinaStockConfig extends StockConfig {
 	@Override
 	public Set<Date> getHolidays() {
 		return CNHolidays;
+	}
+
+	@Override
+	public Map<LaunchableTask, String[]> getPostProcessMap() {
+		Map<LaunchableTask, String[]> map = new HashMap<LaunchableTask, String[]>();
+		map.put(TradeDetailPostProcessTask.getLaunchInstance(), new String[]{SINA_STOCK_TRADE_DETAIL});
+		return map;
 	}
 }

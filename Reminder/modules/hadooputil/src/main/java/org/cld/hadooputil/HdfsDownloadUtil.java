@@ -1,5 +1,6 @@
 package org.cld.hadooputil;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -39,40 +40,6 @@ public class HdfsDownloadUtil {
 		return is;
 	}
 	
-	public static void downloadFile(String url, boolean useProxy, String proxyIp, int port, 
-			String directory, String fileName){
-		InputStream is = null;
-		FileOutputStream fos = null;
-		try{
-			int tryNum=0;
-			while (is==null && tryNum<tryMax){
-				is = getInputStream(url, useProxy, proxyIp, port);
-				tryNum++;
-			}
-			if (is!=null){
-				new File(directory).mkdirs();
-				ReadableByteChannel rbc = Channels.newChannel(is);
-				fos = new FileOutputStream(directory + File.separator + fileName);
-				fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
-			}else{
-				logger.error(String.format("try max %d reached.", tryNum));
-			}
-		}catch(Exception e){
-			logger.error("", e);
-		}finally{
-			try{
-				if (is!=null){
-					is.close();
-				}
-				if (fos!=null){
-					fos.close();
-				}
-			}catch(Exception e){
-				logger.error("", e);
-			}
-		}
-	}
-	
 	public static void downloadFileToHdfs(String url, boolean useProxy, String proxyIp, int port, 
 			String filePath, String fsDefaultName){
 		InputStream is = null;
@@ -86,7 +53,7 @@ public class HdfsDownloadUtil {
 				downloadFileToHdfs(is, filePath, fsDefaultName);
 			}
 		}catch(Exception e){
-			logger.error("",e);
+			logger.error(String.format("exception got while try to get url:%s", url),e);
 		}finally{
 			try{
 				if (is!=null){
@@ -112,6 +79,33 @@ public class HdfsDownloadUtil {
 				fos.write(IOUtils.toByteArray(is));
 			}else{
 				logger.error("inputstream is null");
+			}
+		}catch(Exception e){
+			logger.error("",e);
+		}finally{
+			try{
+				if (fos!=null){
+					fos.close();
+				}
+			}catch(Exception e){
+				logger.error("", e);
+			}
+		}
+	}
+	
+	public static void outputToHdfs(String[] lines, String filePath, String fsDefaultName){
+		FSDataOutputStream fos = null;
+		FileSystem fs = null;
+		
+		try{
+			Configuration conf = new Configuration();
+			conf.set("fs.defaultFS", fsDefaultName);
+			fs = FileSystem.get(conf);//fs can't be closed
+			Path fileNamePath = new Path(filePath);
+			fos = fs.create(fileNamePath);
+			for (String line:lines){
+				fos.writeBytes(line);
+				fos.writeBytes("\n");
 			}
 		}catch(Exception e){
 			logger.error("",e);

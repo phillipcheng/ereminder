@@ -191,7 +191,11 @@ public class SqlUtil {
 		if (offset<0){
 			return "";
 		}else if (offset == 0){
-			return LIMIT_KEY + " " + limit+"";
+			if (limit>0){
+				return LIMIT_KEY + " " + limit+"";
+			}else{
+				return "";
+			}
 		}else{
 			return LIMIT_KEY + " " + offset+","+limit;
 		}
@@ -246,7 +250,7 @@ public class SqlUtil {
 			ResultSet rs= statement.executeQuery();
 			while(rs.next()){				
 				Object c = mapper.getObject(rs);
-				logger.info("got object: " + c);
+				logger.debug("got object: " + c);
 				objects.add(c);
 			}
 			if(rs != null && !rs.isClosed()){

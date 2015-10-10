@@ -4,15 +4,17 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.stock.LaunchableTask;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
+import org.cld.stock.nasdaq.task.FQPostProcessTask;
+import org.cld.stock.nasdaq.task.QuotePostProcessTask;
 import org.cld.util.ListUtil;
 
 
@@ -26,7 +28,7 @@ public class NasdaqStockConfig extends StockConfig{
 	//http://markets.on.nytimes.com/research/markets/holidays/holidays.asp?display=market&exchange=SHH
 	public static Set<Date> USHolidays = new HashSet<Date>();
 	static{
-		sdf.setTimeZone(TimeZone.getTimeZone("EST"));
+		//sdf.setTimeZone(TimeZone.getTimeZone("EST"));
 		try{
 			USHolidays.add(sdf.parse("2014-01-01"));
 			USHolidays.add(sdf.parse("2014-01-20"));
@@ -53,12 +55,14 @@ public class NasdaqStockConfig extends StockConfig{
 	}
 	//file name of the xml conf and the store id as well
 	public static final String STOCK_IDS ="nasdaq-ids";
+	public static final String STOCK_IPO = "nasdaq-ipo";
 	//market
 	public static final String QUOTE_HISTORY="nasdaq-quote-historical";//start-end
 	public static final String QUOTE_PREMARKET="nasdaq-quote-premarket";//current day
 	public static final String QUOTE_AFTERHOURS="nasdaq-quote-afterhours";//current day
 	public static final String QUOTE_TICK="nasdaq-quote-tick";//current day
 	public static final String QUOTE_SHORT_INTEREST="nasdaq-quote-short-interest";
+	public static final String QUOTE_FQ_HISTORY="nasdaq-quote-fq-historical";//start-end
 	
 	//issue
 	public static final String DIVIDEND_HISTORY="nasdaq-issue-dividend-history";
@@ -84,6 +88,8 @@ public class NasdaqStockConfig extends StockConfig{
 	
 	public static final Map<String, String[]> cmdTableMap = new HashMap<String, String[]>();
 	static{
+		//corp
+		cmdTableMap.put(STOCK_IPO, new String[]{"NasdaqIPO"});
 		//fr
 		cmdTableMap.put(BALANCE_SHEET, new String[]{"NasdaqFrQuarterBalanceSheet"});
 		cmdTableMap.put(INCOME_STATEMENT, new String[]{"NasdaqFrQuarterIncomeStatement"});
@@ -95,6 +101,7 @@ public class NasdaqStockConfig extends StockConfig{
 		cmdTableMap.put(QUOTE_AFTERHOURS, new String[]{"NasdaqAfterhours"});
 		cmdTableMap.put(QUOTE_TICK, new String[]{"NasdaqTick"});
 		cmdTableMap.put(QUOTE_SHORT_INTEREST, new String[]{"NasdaqShortInterest"});
+		cmdTableMap.put(QUOTE_FQ_HISTORY, new String[]{"NasdaqFqHistory"});
 		//stock holder
 		cmdTableMap.put(HOLDING_INSTITUTIONAL, new String[]{"NasdaqHoldingInstitutional"});
 		cmdTableMap.put(HOLDING_INSIDERS, new String[]{"NasdaqHoldingInsiders"});
@@ -103,6 +110,7 @@ public class NasdaqStockConfig extends StockConfig{
 	}
 	
 	public static String[] corpConfs = new String[]{
+		STOCK_IPO,
 	};
 	
 	public static String[] quoteConfs = new String[]{
@@ -111,7 +119,7 @@ public class NasdaqStockConfig extends StockConfig{
 		QUOTE_AFTERHOURS, //4:00PM ET - 8:00PM ET, will be posted 4:15 p.m. ET to 3:30 p.m. ET of the following day
 		QUOTE_TICK, // 9:30AM ET - 4:00PM ET
 		QUOTE_SHORT_INTEREST,
-		//QUOTE_ONEMINUTE // trading + extended hours, 8:00AM-8:00PM, max get the past 5 days
+		QUOTE_FQ_HISTORY,
 	};
 	public static String[] issueConfs = new String[]{
 		DIVIDEND_HISTORY, //
@@ -129,7 +137,7 @@ public class NasdaqStockConfig extends StockConfig{
 		REVENUE,
 	};
 	
-	public static String[] syncConf = new String[]{}; //other cmd need this result
+	public static String[] syncConf = new String[]{STOCK_IPO}; //other cmd need this result
 	public static String[] allConf = (String[]) ListUtil.concatAll(corpConfs, quoteConfs, issueConfs, holderConfs, frConfs);
 	
 	public static final String START_MARKET="1989-01-01";
@@ -150,8 +158,8 @@ public class NasdaqStockConfig extends StockConfig{
 		return STOCK_IDS;
 	}
 	@Override
-	public String getIPODateCmd() {//get with stock_ids
-		return null;
+	public String getIPODateCmd() {
+		return STOCK_IPO;
 	}
 	@Override
 	public String[] getAllCmds(String marketId) {
@@ -193,6 +201,7 @@ public class NasdaqStockConfig extends StockConfig{
 	public Map<String, String> getPairedMarket() {//no pair market
 		return null;
 	}
+
 	@Override
 	public String getStartDate(String cmdName) {
 		return null;
@@ -210,19 +219,14 @@ public class NasdaqStockConfig extends StockConfig{
 		return cmdTableMap.get(cmd);
 	}
 	@Override
-	public String[] getPostProcessCmds() {
-		return new String[]{QUOTE_TICK, QUOTE_PREMARKET, QUOTE_AFTERHOURS};
-	}
-
-	@Override
 	public TimeZone getTimeZone() {
 		return TimeZone.getTimeZone("EST");
 	}
 	
 	@Override
 	public Date getLatestOpenMarketDate(Date d) {
-		while (!StockUtil.isOpenDay(d, USHolidays, this.getTimeZone())){
-			d = StockUtil.getLastOpenDay(d, USHolidays, this.getTimeZone());
+		while (!StockUtil.isOpenDay(d, USHolidays)){
+			d = StockUtil.getLastOpenDay(d, USHolidays);
 		}
 		return d;
 	}
@@ -233,5 +237,12 @@ public class NasdaqStockConfig extends StockConfig{
 	@Override
 	public Set<Date> getHolidays() {
 		return USHolidays;
+	}
+	@Override
+	public Map<LaunchableTask, String[]> getPostProcessMap() {
+		Map<LaunchableTask, String[]> map = new HashMap<LaunchableTask, String[]>();
+		map.put(QuotePostProcessTask.getLaunchInstance(), new String[]{QUOTE_TICK, QUOTE_PREMARKET, QUOTE_AFTERHOURS});
+		map.put(FQPostProcessTask.getLaunchInstance(), new String[]{QUOTE_FQ_HISTORY});
+		return map;
 	}
 }

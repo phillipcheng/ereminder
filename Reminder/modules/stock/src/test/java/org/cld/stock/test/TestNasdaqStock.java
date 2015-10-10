@@ -13,11 +13,11 @@ import org.cld.datastore.entity.CrawledItem;
 import org.cld.stock.nasdaq.NasdaqStockBase;
 import org.cld.stock.nasdaq.NasdaqStockConfig;
 import org.cld.stock.nasdaq.NasdaqTestStockConfig;
+import org.cld.stock.strategy.CompareSelectSuite;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
 import org.junit.Before;
 import org.junit.Test;
-import org.mortbay.log.Log;
 
 public class TestNasdaqStock {
 	private static Logger logger =  LogManager.getLogger(TestNasdaqStock.class);
@@ -69,6 +69,20 @@ public class TestNasdaqStock {
 	
 	@Test
 	public void testBrowseIdlist() throws Exception{nsb.run_browse_idlist(NasdaqStockConfig.MarketId_NASDAQ, sdf.parse("2015-08-02"));}
+	
+	@Test
+	public void testIPO() throws Exception{
+		nsb.runCmd(NasdaqStockConfig.STOCK_IPO, marketId, null, "2015-10-09");
+	}
+	@Test
+	public void testCmd_QuoteFq() throws Exception{
+		nsb.runCmd(NasdaqStockConfig.QUOTE_FQ_HISTORY, marketId, null, "2015-10-10");
+	}
+	@Test
+	public void testPostProcess() throws Exception{
+		nsb.setEndDate(sdf.parse("2015-10-09"));
+		nsb.postprocess(null);
+	}
 	//daily
 	@Test
 	public void testCmd_QuoteTick(){
@@ -138,7 +152,11 @@ public class TestNasdaqStock {
 	public void testCmd_HolderInsidersDateRange(){
 		nsb.runCmd(NasdaqStockConfig.HOLDING_INSIDERS, marketId, "2015-02-01", sdf.format(nsb.getStockConfig().getLatestOpenMarketDate(new Date())));
 	}
-	
+	@Test
+	public void testCompareSelectSuite(){
+		CompareSelectSuite.selectNasdaqAllTimeLow("2015-10-09", nsb.getCconf(), "C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
+		CompareSelectSuite.selectNasdaqBreakIPO("2015-10-09", nsb.getCconf(), "C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
+	}
 	
 	@Test
 	public void testCrawl_QuoteHistorical() throws InterruptedException {

@@ -16,6 +16,7 @@ import org.cld.stock.sina.SinaTestStockConfig;
 import org.cld.stock.sina.SinaStockConfig;
 import org.cld.stock.sina.task.TradeDetailCheckDownload;
 import org.cld.stock.sina.task.TradeDetailPostProcessTask;
+import org.cld.stock.strategy.CompareSelectSuite;
 import org.cld.stock.task.MergeTask;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
@@ -62,7 +63,7 @@ public class TestSinaStock {
 	}
 	@Test
 	public void testInitIPODate() throws Exception{
-		ssb.runCmd(SinaStockConfig.SINA_STOCK_IPODate, SinaStockConfig.MarketId_HS_A, null, sdf.format(new Date()));
+		ssb.runCmd(SinaStockConfig.SINA_STOCK_IPO, SinaStockConfig.MarketId_HS_A, null, sdf.format(new Date()));
 	}
 	
 	@Test
@@ -70,8 +71,13 @@ public class TestSinaStock {
 		ssb.runAllCmd(SinaTestStockConfig.date_Test_D1, SinaTestStockConfig.date_Test_D2);
 	}
 	@Test
+	public void testPostProcess() throws Exception{
+		ssb.setEndDate(sdf.parse("2015-10-09"));
+		ssb.postprocess(null);
+	}
+	@Test
 	public void tradedetail_postprocess_1() {
-		TradeDetailPostProcessTask.launch(this.propFile, ssb.getCconf(), SinaTestStockConfig.Test_D1 + "_" + SinaTestStockConfig.Test_D2);
+		new TradeDetailPostProcessTask().launch(this.propFile, ssb.getCconf(), SinaTestStockConfig.Test_D1 + "_" + SinaTestStockConfig.Test_D2, new String[]{});
 	}
 	@Test
 	public void testMerge_1() throws Exception{
@@ -104,7 +110,7 @@ public class TestSinaStock {
 	 **/
 	@Test
 	public void run_browse_tradedetail() throws ParseException{
-		ssb.runCmd(SinaStockConfig.SINA_STOCK_TRADE_DETAIL, SinaStockConfig.MarketId_HS_Test, "2004-12-28", sdf.format(new Date()));
+		ssb.runCmd(SinaStockConfig.SINA_STOCK_TRADE_DETAIL, SinaStockConfig.MarketId_HS_Test, null, sdf.format(new Date()));
 	}
 	@Test
 	public void tradedetail_checkdownload() {
@@ -113,7 +119,7 @@ public class TestSinaStock {
 	//融资融券
 	@Test
 	public void run_browse_market_rzrq() throws ParseException{
-		ssb.runCmd(SinaStockConfig.SINA_STOCK_MARKET_RZRQ, SinaStockConfig.MarketId_HS_Test, null, START_DATE);
+		ssb.runCmd(SinaStockConfig.SINA_STOCK_MARKET_RZRQ, SinaStockConfig.MarketId_HS_Test, null, "2015-10-09");
 	}
 	//大宗交易
 	@Test
@@ -123,7 +129,7 @@ public class TestSinaStock {
 	//复权交易
 	@Test
 	public void run_browse_market_fq_quarter() throws ParseException {
-		ssb.runCmd(SinaStockConfig.SINA_STOCK_MARKET_FQ, SinaStockConfig.MarketId_HS_Test, null, "2015-09-22");
+		ssb.runCmd(SinaStockConfig.SINA_STOCK_MARKET_FQ, SinaStockConfig.MarketId_HS_Test, null, "2015-10-10");
 	}
 	//历史交易
 	@Test
@@ -209,6 +215,12 @@ public class TestSinaStock {
 	@Test
 	public void run_fr_assetdevalue(){
 		ssb.runCmd(SinaStockConfig.SINA_STOCK_FR_ASSETDEVALUE_YEAR, SinaStockConfig.MarketId_HS_Test, "2015-08-29", "2015-09-22");
+	}
+	
+	@Test
+	public void testCompareSelectSuite(){
+		CompareSelectSuite.selectHSAAllTimeLow("2015-10-09", ssb.getCconf(), "C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
+		CompareSelectSuite.selectHSABreakIPO("2015-10-09", ssb.getCconf(), "C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
 	}
 	
 	//test crawl

@@ -16,19 +16,8 @@ public class TableUtil {
 	
 	public static final Map<String, Integer> unitMap = new HashMap<String, Integer>();
 	
-	public static final String[] units = new String[]{"万股","百万","万元","千元","元","（元）"};
-	public static final int[] numUnits = new int[]{10000,1000000,10000,1000,1,1};
-	public static final Map<String, Integer> scales = new HashMap<String, Integer>();
-	static{
-		scales.put("万股", 10000);
-		scales.put("百万", 1000000);
-		scales.put("万股", 10000);
-		scales.put("千元", 1000);
-		scales.put("元", 1);
-		scales.put("（元）", 1);
-		scales.put("(t)", 1000);
-		scales.put("(m)", 1000000);
-	}
+	public static final String[] units = new String[]{"万股","百万","万元","千元","元","（元）","(t)","(m)"};
+	public static final int[] numUnits = new int[]{10000,1000000,10000,1000,1,1,1000,1000000};
 	public static final SimpleDateFormat sdf1 = new SimpleDateFormat("MM/dd/yyyy");
 	public static final SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -62,16 +51,13 @@ public class TableUtil {
 		str = str.replace("\u00a0","");//remove &nbsp;
 		str = str.replace("\u0020", "");
 		//multiple scale
-		m = endingP.matcher(str);
-		if (m.matches()){
-			float f = Float.parseFloat(m.group(1));
-			String unit = m.group(2).trim();
-			if (scales.containsKey(unit)){
-				f = f * scales.get(unit);
-				str = Float.toString(f);
-			}else{
-				//remove suffix anyway
-				str = m.group(1);
+		for (int i=0;i<units.length;i++){
+			int idx = str.lastIndexOf(units[i]);
+			if (idx>-1){
+				str = str.substring(0, idx);
+				float f = Float.parseFloat(str.trim());
+				f = f * numUnits[i];
+				return Float.toString(f);
 			}
 		}
 		return str;
@@ -84,7 +70,7 @@ public class TableUtil {
 			ret = TableUtil.getFRNumber(v);
 		}else if (AbstractCrawlItemToCSV.DATA_TYPE_TEXT.equals(dataType)){
 			//replace comma and new line for string
-			ret = v.replace(",", "\\,").replaceAll("\\r\\n|\\r|\\n", " ");
+			ret = v.replace(",", "\\,").replaceAll("\\r\\n|\\r|\\n", " ").replace("\u0020", " ").replace("\u00a0"," ");
 		}else if (AbstractCrawlItemToCSV.DATA_TYPE_DATE.equals(dataType)){
 			Date d = null;
 			try{
