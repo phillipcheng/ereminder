@@ -9,9 +9,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.StockBase;
 import org.cld.stock.StockConfig;
+import org.cld.stock.StockUtil;
 import org.cld.stock.sina.SinaStockConfig;
 import org.cld.stock.sina.task.TradeDetailCheckDownload;
-import org.cld.stock.sina.task.TradeDetailPostProcessTask;
 import org.cld.stock.task.GenNdLable;
 
 public class SinaStockBase extends StockBase{
@@ -24,7 +24,7 @@ public class SinaStockBase extends StockBase{
 	}
 	
 	public SinaStockBase(String propFile, String marketId, Date sd, Date ed){
-		super(propFile, marketId, sd, ed);
+		super(propFile, marketId, sd, ed, StockUtil.SINA_STOCK_BASE);
 	}
 
 	public String[] run_tradedetail_checkdownload(){

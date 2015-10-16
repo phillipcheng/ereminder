@@ -31,6 +31,9 @@ public class ScriptEngineUtil {
 		try {
 			Object ret = jsEngine.eval(exp);
 			logger.debug(String.format("eval %s get result %s", exp, ret));
+			if (toType == VarType.OBJECT){
+				return ret;
+			}
 			if (ret!=null){
 				if (ret instanceof String){
 					if (toType == VarType.STRING){
@@ -43,6 +46,8 @@ public class ScriptEngineUtil {
 				}else if (ret instanceof Double){
 					if (toType ==VarType.INT){
 						ret = ((Double)ret).intValue();
+					}else if (toType==VarType.FLOAT){
+						ret = ((Double)ret).floatValue();
 					}else{
 						logger.error(String.format("unsupported to type for double result: %s", toType));
 					}

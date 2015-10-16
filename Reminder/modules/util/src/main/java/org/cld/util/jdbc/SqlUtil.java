@@ -17,6 +17,19 @@ import org.apache.logging.log4j.Logger;
 public class SqlUtil {
 	private static Logger logger = LogManager.getLogger(SqlUtil.class);
 	
+	public static String generateInParameterValues(List<String> params){
+		String ret = "(";
+		for (int i=0; i<params.size(); i++){
+			String paramValue = params.get(i);
+			if (i<params.size()-1){
+				ret = ret + paramValue + ",";
+			}else{
+				ret = ret + paramValue;
+			}
+		}
+		return ret+")";
+	}
+	
 	public static String generateInParameters(List<String> params){
 		String ret = "(";
 		for (int i=0; i<params.size(); i++){
@@ -253,12 +266,12 @@ public class SqlUtil {
 				logger.debug("got object: " + c);
 				objects.add(c);
 			}
-			if(rs != null && !rs.isClosed()){
+			if(rs != null){
 				rs.close();
 			}
 			return objects;
 		}catch(Exception e){
-			logger.error("",e);
+			logger.error("error exec: " + sql,e);
 			return objects;
 		}finally{
 			SqlUtil.closeResources(null, statement);

@@ -22,6 +22,8 @@ public class NasdaqCrawlJob implements Job {
 		String marketId = NasdaqStockConfig.MarketId_ALL;
 		Date d = DateTimeUtil.tomorrow(new Date());
 		StockBase nsb = new NasdaqStockBase(propFile, marketId, null, d);
+		d = DateTimeUtil.convertDateToServerTZFromTZ(d, nsb.getStockConfig().getTimeZone());
+		nsb.setEndDate(d);
 		try{
 			logger.info("start to run ..." + nsb);
 			nsb.updateAll(null);

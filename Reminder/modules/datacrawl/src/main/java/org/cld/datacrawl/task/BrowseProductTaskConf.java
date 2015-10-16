@@ -263,6 +263,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 						}
 					}
 				}
+				logger.debug(String.format("needCrawl:%b", needCrawl));
 				if (needCrawl){
 					//add new product and price
 					thisProduct = cconf.getProductInstance(task.getTasks().getProductType());
@@ -279,6 +280,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 						}
 						ci = cconf.getPa().addProduct(wc, startUrl, thisProduct, null, task, pbpTemplate, cconf, retcsv, addToDB, 
 								csvtrans, hdfsByIdOutputMap, context, mos);
+						logger.debug(String.format("after add product, ci:%s", ci));
 					}catch(Exception e){
 						logger.error("", e);
 					}finally{
@@ -346,10 +348,19 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 			return null;
 		}
 	}
-	
+
 	@Override
-	public void runMyselfAndOutput(Map<String, Object> params, boolean addToDB, BrowseTaskType btt, 
+	public boolean hasOutput(){
+		return true;
+	}
+	@Override
+	public void runMyselfAndOutput(Map<String, Object> params, 
 			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
+		BrowseTaskType btt = null;
+		if (getParsedTaskDef()!=null){
+			btt = getBrowseTask(getName());
+			logger.info("btt:" + btt.getTaskName());
+		}
 		this.putAllParams(params);
 		CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
 		BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
@@ -357,7 +368,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 			Map<String, BufferedWriter> hdfsByIdOutputMap = new HashMap<String, BufferedWriter>();
 			try{
 				this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
-				browseProduct(this, cconf, getStoreId(), this.catId, getName(), getParamMap(), true, getStartDate(), addToDB, 
+				browseProduct(this, cconf, getStoreId(), this.catId, getName(), getParamMap(), true, getStartDate(), true, 
 						btt, hdfsByIdOutputMap, context, mos);
 			}finally{
 				for (BufferedWriter br: hdfsByIdOutputMap.values()){

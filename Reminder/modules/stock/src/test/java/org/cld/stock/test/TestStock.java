@@ -8,22 +8,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-import org.apache.calcite.avatica.util.DateTimeUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.test.CrawlTestUtil;
-import org.cld.stock.StockConfig;
+import org.cld.stock.StockBase;
 import org.cld.stock.StockUtil;
 import org.cld.stock.nasdaq.NasdaqStockBase;
 import org.cld.stock.persistence.StockPersistMgr;
+import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.SinaStockConfig;
-import org.cld.util.DateTimeUtil;
+import org.cld.stock.strategy.CompareSelectSuite;
+import org.cld.stock.strategy.SelectStrategy;
+import org.cld.stock.strategy.SellStrategy;
+import org.cld.stock.strategy.StrategyValidationTask;
 import org.junit.Test;
 
 public class TestStock {
 	private static Logger logger =  LogManager.getLogger(TestStock.class);
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	private static SimpleDateFormat mdssdf = new SimpleDateFormat("MMddhhmmss");
 	
 	@Test
 	public void testDateInHbase() throws Exception{
@@ -80,4 +84,27 @@ public class TestStock {
 		logger.info(String.format("dl is %s", dl));
 	}
 
+	@Test
+	public void testStrategyValidation() throws Exception{
+		String time = mdssdf.format(new Date());
+		String outputDir = String.format("/reminder/sresult/test_%s", time);
+		SelectStrategy scs = CompareSelectSuite.getHSAAllTimeLow(outputDir);
+		SellStrategy sls = new SellStrategy(3, 5, 2);
+		Date startDate = sdf.parse("2015-09-02");
+		Date endDate = sdf.parse("2015-09-10");
+		String pFile = "client1-v2.properties";
+		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
+		String marketBaseId ="sina";
+		StrategyValidationTask.launch(pFile, cconf, marketBaseId, scs, sls, startDate, endDate, outputDir);
+	}
+	
+	@Test
+	public void testStrategyValidationFromFile() throws Exception{
+		String pFile = "client1-v2.properties";
+		String marketId = "hs_a"; //not used
+		Date sd = sdf.parse("2015-09-02");
+		Date ed = sdf.parse("2015-09-10");
+		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
+		sb.validateStrategy("strategy1.properties");
+	}
 }

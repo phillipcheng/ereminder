@@ -11,6 +11,7 @@ import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.util.jdbc.JDBCMapper;
 
 public abstract class StockConfig {
 	protected static Logger logger =  LogManager.getLogger(StockConfig.class);
@@ -33,21 +34,24 @@ public abstract class StockConfig {
 	public abstract String[] getCurrentDayCmds();
 	public abstract String[] getUntrimmedStockIdCmds();
 	
-	
 	public abstract String getTestMarketChangeDate();//date before this using test_stock_set1, date after this using test_stock_set2
 	public abstract String[] getTestStockSet1();
 	public abstract String[] getTestStockSet2();
 	public abstract String getTestShortStartDate();
 	public abstract String[] getSlowCmds();
-	public abstract String[] getTablesByCmd(String cmd);
+	public abstract Map<LaunchableTask, String[]> getPostProcessMap();
+	
 	public abstract Map<String, String> getPairedMarket(); //like MarketId_HS_A paired with MarketId_HS_A_ST
 
 	public abstract String getStartDate(String cmdName);
-	
 	public abstract TimeZone getTimeZone();
 	public abstract Date getLatestOpenMarketDate(Date d);
 	public abstract Set<Date> getHolidays();
-	public abstract Map<LaunchableTask, String[]> getPostProcessMap();
+	
+	//db
+	public abstract String[] getTablesByCmd(String cmd);
+	public abstract JDBCMapper getDailyQuoteTableMapper();
+	public abstract JDBCMapper getFQDailyQuoteTableMapper();
 	
 	public StockConfig() {
 		sdf = new SimpleDateFormat("yyyy-MM-dd");

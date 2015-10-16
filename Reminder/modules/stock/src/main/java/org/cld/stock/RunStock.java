@@ -17,14 +17,12 @@ public class RunStock {
 	protected static Logger logger =  LogManager.getLogger(RunStock.class);
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
-	public static final String SINA_STOCK_BASE="sina";
-	public static final String NASDAQ_STOCK_BASE="nasdaq";
-	
 	//x.properties nasdaq ALL run_all_cmd - 2015-09-10
 	//x.properties nasdaq ALL_2015-09-09 run_cmd - - nasdaq-quote-tick
 	//x.properties nasdaq ALL run_special - - run_merge
 	//x.properties sina hs_a run_special - - genNdLable xxx,x:xx,xx
 	//x.properties sina hs_a run_special 2015-08-29 2015-09-22 run_merge
+	//x.properties sina hs_a run_special 2015-08-29 2015-09-22 
 	public static String getDefaultCmdLine(){
 		return "propFile stock_base marketId cmd startDate endDate method params";
 	}
@@ -63,9 +61,9 @@ public class RunStock {
 				logger.error("", e);
 			}
 			StockBase sb = null;
-			if (SINA_STOCK_BASE.equals(stockBase)){
+			if (StockUtil.SINA_STOCK_BASE.equals(stockBase)){
 				sb = new SinaStockBase(propFile, marketId, startDate, endDate);
-			}else if (NASDAQ_STOCK_BASE.equals(stockBase)){
+			}else if (StockUtil.NASDAQ_STOCK_BASE.equals(stockBase)){
 				sb = new NasdaqStockBase(propFile, marketId, startDate, endDate);
 			}else{
 				logger.error(String.format("stockBase %s not supported.", stockBase));

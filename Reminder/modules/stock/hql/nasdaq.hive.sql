@@ -59,4 +59,4 @@ create external table NasdaqHoldingInstitutional(stockid String, institution Str
 drop table if exists NasdaqHoldingSummary;
 
 --nasdaq-holding-top5
-drop table if exists NasdaqHoldingTop5
+drop table if exists NasdaqHoldingTop5;

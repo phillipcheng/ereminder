@@ -16,6 +16,7 @@ import org.cld.stock.StockUtil;
 import org.cld.stock.nasdaq.task.FQPostProcessTask;
 import org.cld.stock.nasdaq.task.QuotePostProcessTask;
 import org.cld.util.ListUtil;
+import org.cld.util.jdbc.JDBCMapper;
 
 
 public class NasdaqStockConfig extends StockConfig{
@@ -244,5 +245,13 @@ public class NasdaqStockConfig extends StockConfig{
 		map.put(QuotePostProcessTask.getLaunchInstance(), new String[]{QUOTE_TICK, QUOTE_PREMARKET, QUOTE_AFTERHOURS});
 		map.put(FQPostProcessTask.getLaunchInstance(), new String[]{QUOTE_FQ_HISTORY});
 		return map;
+	}
+	@Override
+	public JDBCMapper getDailyQuoteTableMapper() {
+		return NasdaqDailyQuoteCQJDBCMapper.getInstance();
+	}
+	@Override
+	public JDBCMapper getFQDailyQuoteTableMapper() {
+		return NasdaqFQDailyQuoteCQJDBCMapper.getInstance();
 	}
 }

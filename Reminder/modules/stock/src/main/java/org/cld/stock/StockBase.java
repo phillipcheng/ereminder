@@ -1,5 +1,6 @@
 package org.cld.stock;
 
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -8,6 +9,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobID;
@@ -21,7 +25,9 @@ import org.cld.taskmgr.entity.CmdStatus;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.CompareUtil;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
-import org.cld.stock.nasdaq.task.QuotePostProcessTask;
+import org.cld.stock.strategy.SelectStrategy;
+import org.cld.stock.strategy.SellStrategy;
+import org.cld.stock.strategy.StrategyValidationTask;
 import org.cld.stock.task.MergeTask;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
@@ -32,16 +38,18 @@ public abstract class StockBase extends TestBase{
 	protected static Logger logger =  LogManager.getLogger(StockBase.class);
 	
 	public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	private static SimpleDateFormat mdssdf = new SimpleDateFormat("MMddhhmmss");
 	public static final String AllCmdRun_STATUS="AllCmdRun";
 	public static final String KEY_IDS = "ids";
 	public static final String idKeySep = "_";
 	
 	protected String marketId;
 	protected String propFile;
-	protected Date endDate;
+	protected Date endDate; //of server timezone, since the static holidays, the dynamic date from hbase are all in server timezone
 	protected Date startDate;
 	protected String specialParam = null;//for special cmd to use as parameter
-   
+	private String marketBaseId;
+	
 	protected DataStoreManager dsm = null;
 	protected DataStoreManager hdfsDsm = null;
 	protected JobClient jobClient = null;
@@ -52,8 +60,9 @@ public abstract class StockBase extends TestBase{
 		return dsm;
 	}
 	
-	public StockBase(String propFile, String marketId, Date sd, Date ed){
+	public StockBase(String propFile, String marketId, Date sd, Date ed, String marketBaseId){
 		super();
+		this.marketBaseId = marketBaseId;
 		this.marketId = marketId;
 		super.setProp(propFile);
 		this.propFile = propFile;
@@ -188,7 +197,7 @@ public abstract class StockBase extends TestBase{
 			if (isStatic){
 				needRun = false;
 			}else if (!CompareUtil.ObjectDiffers(ed, cs.getId().getCreateTime())){//compare only end time
-				needRun = false;
+				//needRun = false;  //always run for dynamic
 			}
 		}
 		if (needRun){
@@ -473,6 +482,40 @@ public abstract class StockBase extends TestBase{
 	public String[] run_merge(String param){
 		String datePart = getStockConfig().getDatePart(marketId, startDate, endDate);
 		return MergeTask.launch(getStockConfig(), this.propFile, cconf, datePart, param, true);
+	}
+	
+	private static String KEY_OUTPUTDIR="output.dir";
+	private static String KEY_SELLS_DURATION="sls.duration";
+	private static String KEY_SELLS_LIMIT_PERCENTAGE="sls.limitPercentage";
+	private static String KEY_SELLS_TRAIL_PERCENTAGE="sls.stopTrailingPercentage";
+	private static String KEY_SELECTS_TYPE="scs.type";
+	private static String KEY_SELECTS_NAME="scs.name";
+	
+	//param the strategy configure file
+	public String[] validateStrategy(String param){
+		try{
+			PropertiesConfiguration props = new PropertiesConfiguration(param);
+			
+	        String outputDirPrefix = props.getString(KEY_OUTPUTDIR);
+	        String time = mdssdf.format(new Date());
+			String outputDir = String.format("%s_%s", outputDirPrefix, time);
+	        int duration = props.getInt(KEY_SELLS_DURATION);
+	        float limitPercentage = props.getFloat(KEY_SELLS_LIMIT_PERCENTAGE);
+	        float stopTrailingPercentage = props.getFloat(KEY_SELLS_TRAIL_PERCENTAGE);
+	        String scsType = props.getString(KEY_SELECTS_TYPE);
+	        String scsName = props.getString(KEY_SELECTS_NAME);
+	        Class selectSuite = Class.forName(scsType);
+	        Method getSelectMethod = selectSuite.getMethod("get"+scsName, String.class);
+	        SelectStrategy scs = (SelectStrategy) getSelectMethod.invoke(null, outputDir);
+	        SellStrategy sls = new SellStrategy();
+	        sls.setHoldDuration(duration);
+	        sls.setLimitPercentage(limitPercentage);
+	        sls.setStopTrailingPercentage(stopTrailingPercentage);
+	        return StrategyValidationTask.launch(this.propFile, cconf, marketBaseId, scs, sls, startDate, endDate, outputDir);
+		}catch(Exception e){
+			logger.error("", e);
+		}
+		return null;
 	}
 	
 	public CmdStatus runSpecial(String method, String param){

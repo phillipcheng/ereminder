@@ -47,4 +47,9 @@ public class GeneralJDBCMapper implements JDBCMapper{
 		return ol;
 	}
 
+	@Override
+	public String getTableName() {
+		return null;//for general it can be any
+	}
+
 }

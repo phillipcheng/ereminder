@@ -3,26 +3,39 @@ package org.cld.stock;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
-import java.util.TimeZone;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.stock.nasdaq.NasdaqStockConfig;
+import org.cld.stock.sina.SinaStockConfig;
 import org.cld.util.DateTimeUtil;
 
 
 public class StockUtil {
-
+	public static final String SINA_STOCK_BASE="sina";
+	public static final String NASDAQ_STOCK_BASE="nasdaq";
+	
 	protected static Logger logger =  LogManager.getLogger(StockUtil.class);
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	
+	public static StockConfig getStockConfig(String stockBase){
+		if (SINA_STOCK_BASE.equals(stockBase)){
+			return new SinaStockConfig();
+		}else if (NASDAQ_STOCK_BASE.equals(stockBase)){
+			return new NasdaqStockConfig();
+		}else{
+			logger.error(String.format("stockBase %s not supported.", stockBase));
+			return null;
+		}
+	}
 	
 	//[fromDate, toDate)
 	public static LinkedList<Date> getOpenDayList(Date fromDate, Date toDate, Set<Date> holidays){
 		LinkedList<Date> dll = new LinkedList<Date>();
 		Date d = fromDate;
 		while (d.before(toDate)){
+		//while (!toDate.after(d)){
 			if (isOpenDay(d, holidays)){
 				dll.add(d);
 			}
@@ -30,7 +43,15 @@ public class StockUtil {
 		}
 		return dll;
 	}
-	
+	//get up to n open days
+	public static Date getNextOpenDay(Date d, Set<Date> holidays, int n){
+		Date nd = d;
+		for(int i=0;i<n;i++){
+			nd = getNextOpenDay(nd, holidays);
+		}
+		return nd;
+	}
+	//get 1 next open days
 	public static Date getNextOpenDay(Date d, Set<Date> holidays){
 		Date day = DateTimeUtil.tomorrow(d);
 		Calendar c = Calendar.getInstance();

@@ -16,7 +16,7 @@ public class TableUtil {
 	
 	public static final Map<String, Integer> unitMap = new HashMap<String, Integer>();
 	
-	public static final String[] units = new String[]{"万股","百万","万元","千元","元","（元）","(t)","(m)"};
+	public static final String[] units = new String[]{"万股","百万","万元","千元","（元）","元","(t)","(m)"};
 	public static final int[] numUnits = new int[]{10000,1000000,10000,1000,1,1,1000,1000000};
 	public static final SimpleDateFormat sdf1 = new SimpleDateFormat("MM/dd/yyyy");
 	public static final SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd");

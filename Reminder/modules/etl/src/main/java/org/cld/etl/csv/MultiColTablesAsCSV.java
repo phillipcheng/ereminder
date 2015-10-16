@@ -1,8 +1,10 @@
 package org.cld.etl.csv;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,6 +40,12 @@ public class MultiColTablesAsCSV extends AbstractCrawlItemToCSV{
 		List<Integer> colnums = (List<Integer>) ci.getParam(FIELD_NAME_COLNUM);
 		List<String> colcsvs = (List<String>) ci.getParam(FIELD_NAME_COLCSV);
 		List<Integer> dateIdx = (List<Integer>) ci.getParam(FIELD_NAME_RowDateIdx);
+		List<String> keys = (List<String>)ci.getParam(FIELD_NAME_KEYS);
+		Set<String> keySet = new HashSet<String>();
+		for(String key:keys){
+			keySet.add(key);
+		}
+		List<String> keydata = (List<String>)ci.getParam(FIELD_NAME_KEYDATA);
 		List<String[]> csvs = new ArrayList<String[]>();
 		for (int i=0; i<colnums.size(); i++){
 			int colnum = colnums.get(i);
@@ -51,7 +59,7 @@ public class MultiColTablesAsCSV extends AbstractCrawlItemToCSV{
 			
 			List<String> strs = null;
 			if (ls!=null && ls.size()>=colnum){
-				strs = SpreadColTableAsCSV.colTableToCSV(ls, colnum, hasHeader, genHeader, dataTypes, dIdx, startDate, endDate, this);
+				strs = SpreadColTableAsCSV.colTableToCSV(ls, colnum, hasHeader, genHeader, dataTypes, dIdx, startDate, endDate, this, keySet, keydata);
 			}
 			if (strs!=null){
 				if (colcsvs!=null){

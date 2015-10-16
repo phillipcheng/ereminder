@@ -1,3 +1,42 @@
+set hive.exec.mode.local.auto=true;
+set hive.cli.print.header=true;
+set hive.cli.print.current.db=true;
+set hive.auto.convert.join=true;
+set hive.mapred.supports.subdirectories=true;
+set mapred.input.dir.recursive=true;
+
+--corp info
+drop table if exists SinaCorpInfo;
+create external table SinaCorpInfo(stockid String,name String,EnglishName String, IPOMarket String, IPODate Date, IPOPrice decimal(10,2), leadUnderwriter String, foundDate Date, RegisteredCapital String, InstitutionType String, OrgType String, BoardSecretary String, CompanyPhone String, BoardSecretaryPhone String, CompanyFax String, BoardSecretaryFax String, CompanyEmail String, BoardSecretaryEmail String, CompanyWebsite String, zipcode String, InfoDisclosureWebsite String, NameHistory String, RegisteredAddress String, OfficeAddress String, CompanyInfo String, BusinessScope String) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/sina-stock-corp-info';
+
+--ipo
+drop table if existes SinaCorpIPO;
+create external table SinaCorpIPO(compName String, shortName String, marketid String, stockid String, dt Date) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/sina-stock-ipo';
+
+--corp manager
+drop table if exists SinaCorpManager;
+create external table SinaCorpManager( stockid String, name String, title String, dt Date, endDate Date) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/sina-stock-corp-manager';
+
+--corp related securities
+drop table if exists SinaCorpRelatedSecurities;
+create external table SinaCorpRelatedSecurities( stockid String, securityId String, securityName String) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/sina-stock-corp-related/securities';
+
+--corp related indices
+drop table if exists SinaCorpRelatedIndices;
+create external table SinaCorpRelatedIndices( stockid String, indexId String, indexName String, startDate Date, endDate Date) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/sina-stock-corp-related/indices';
+
+--corp related xis
+drop table if exists SinaCorpRelatedXis;
+create external table SinaCorpRelatedXis( stockid String, xiName String, comment String) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/sina-stock-corp-related/xis';
+
+--corp related other industries
+drop table if exists SinaCorpRelatedIndustries;
+create external table SinaCorpRelatedIndustries( stockid String, industryName String, comment String) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/sina-stock-corp-related-other/industries';
+
+--corp related other concepts
+drop table if exists SinaCorpRelatedConcepts;
+create external table SinaCorpRelatedConcepts( stockid String, conceptName String, comment String) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/sina-stock-corp-related-other/concepts';
+
 --fr achievenotice
 drop table if exists SinaFrAchieveNotice;
 create external table SinaFrAchieveNotice(stockid String, dt Date, reportPeriod Date, aType String, summary String, content String, earningSamePeriodlastYear decimal(10,4)) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/sina-stock-fr-achievenotice';
@@ -48,7 +87,55 @@ create external table SinaFrCashFlow(stockid String, dt Date, NetReduceOfLoansAn
 
 --fr profit-statement 47 fields
 drop table if exists SinaFrProfitStatement;
-create external table SinaFrProfitStatement(stockid String,dt Date,BusinessIncome decimal(20,2),InterestRevenue decimal(20,2),InterestIncome decimal(20,2),InterestExpense decimal(20,2),FeesAndCommissionRevenue decimal(20,2),FeesAndCommissionIncome decimal(20,2),FeesAndCommissionExpense decimal(20,2),IntermediaryBusinessRevenue decimal(20,2),IntermediaryBusinessIncome decimal(20,2),IntermediaryBusinessExpense decimal(20,2),TradingRevenue decimal(20,2),DerivativeTradingRevenue decimal(20,2),ExchangeRevenue decimal(20,2),InvestmentRevenue decimal(20,2),AssociatedCompanyInvestmentRevenue decimal(20,2),FairValueGainLoss decimal(20,2),OtherBusinessIncome decimal(20,2),Opex decimal(20,2),BusinessTaxAndSurcharge decimal(20,2),OperationAdminExpense decimal(20,2),AssetImpairment decimal(20,2),Depreciation decimal(20,2),BadDebitReserve decimal(20,2),OtherExpense decimal(20,2),OperatingRevenue decimal(20,2),NoneOperatingRevenue decimal(20,2),NoneOperatingExpense decimal(20,2),TotalRevenue decimal(20,2),Tax decimal(20,2),MinorityShareholdersEquity decimal(20,2),RevenueToParentCompany decimal(20,2),PeriodBeginUndistributedProfit decimal(20,2),DistributableProfit decimal(20,2),StatutorySurplusReserve decimal(20,2),StatutoryPublicWelfareFund decimal(20,2),GeneralReserve decimal(20,2),TrustCompensationReserve decimal(20,2),DistributableProfitToShareholders decimal(20,2),PreferredDividendsPayable decimal(20,2),SurplusReserve decimal(20,2),CommonStockDividendPayable decimal(20,2),CommonStockDividendPayableTransferredToCapital decimal(20,2),UndistributedProfit decimal(20,2),BasicEPS decimal(20,2),DilutedEPS decimal(20,2)) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-fr-quarter-ProfitStatement';
+--create external table SinaFrProfitStatement(stockid String,dt Date,BusinessIncome decimal(20,2),InterestRevenue decimal(20,2),InterestIncome decimal(20,2),InterestExpense decimal(20,2),FeesAndCommissionRevenue decimal(20,2),FeesAndCommissionIncome decimal(20,2),FeesAndCommissionExpense decimal(20,2),IntermediaryBusinessRevenue decimal(20,2),IntermediaryBusinessIncome decimal(20,2),IntermediaryBusinessExpense decimal(20,2),TradingRevenue decimal(20,2),DerivativeTradingRevenue decimal(20,2),ExchangeRevenue decimal(20,2),InvestmentRevenue decimal(20,2),AssociatedCompanyInvestmentRevenue decimal(20,2),FairValueGainLoss decimal(20,2),OtherBusinessIncome decimal(20,2),Opex decimal(20,2),BusinessTaxAndSurcharge decimal(20,2),OperationAdminExpense decimal(20,2),AssetImpairment decimal(20,2),Depreciation decimal(20,2),BadDebitReserve decimal(20,2),OtherExpense decimal(20,2),OperatingRevenue decimal(20,2),NoneOperatingRevenue decimal(20,2),NoneOperatingExpense decimal(20,2),TotalRevenue decimal(20,2),Tax decimal(20,2),MinorityShareholdersEquity decimal(20,2),RevenueToParentCompany decimal(20,2),PeriodBeginUndistributedProfit decimal(20,2),DistributableProfit decimal(20,2),StatutorySurplusReserve decimal(20,2),StatutoryPublicWelfareFund decimal(20,2),GeneralReserve decimal(20,2),TrustCompensationReserve decimal(20,2),DistributableProfitToShareholders decimal(20,2),PreferredDividendsPayable decimal(20,2),SurplusReserve decimal(20,2),CommonStockDividendPayable decimal(20,2),CommonStockDividendPayableTransferredToCapital decimal(20,2),UndistributedProfit decimal(20,2),BasicEPS decimal(20,2),DilutedEPS decimal(20,2)) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-fr-quarter-ProfitStatement';
+create external table SinaFrProfitStatement(stockid String, dt Date, BusinessIncome decimal(20,2), BusinessProfit decimal(20,2), TotalProfit decimal(20,2), BasicEPS decimal(20,2),DilutedEPS decimal(20,2)) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-fr-quarter-ProfitStatement';
 
 
+--
+drop table if exists SinaShareBonusDividend;
+create external table SinaShareBonusDividend(stockid String, dt Date, SongGu decimal(10,2), ZhuanZeng decimal(10,2), Devidend decimal(10,2), progress String, ExDate Date, RegDate Date, XStockPublicDate Date, comment String) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-issue-sharebonus/dividend';
+
+--
+drop table if exists SinaShareBonusAlloted;
+create external table SinaShareBonusAlloted(stockid String, dt Date, AllotNumberEveryTen decimal(10,2), price decimal(10,4), base decimal(20,2), ExDate Date, RegDate Date, PayStartDate Timestamp, PayEndDate Date, XStockPublicDate Date, TotalAmount decimal(20,2), comment String) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-issue-sharebonus/allotted';
+
+--market dzjy
+drop table if exists SinaMarketDZJY;
+create external table SinaMarketDZJY(dt Date, stockid String, stockname String, price decimal(10,4), volume decimal(20,2), amount decimal(20,2), buyerAgent String, sellerAgent String, stockType String) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-market-dzjy';
+
+--market fu quan
+drop table if exists SinaMarketFQ;
+create external table SinaMarketFQ(stockid String, dt Date, open decimal(10,4), high decimal(10,4), close decimal(10,4), low decimal(10,4), volume decimal(20,2), amount decimal(20,2), fqIdx decimal(10,4)) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-market-fq';
+
+--market history
+drop table if exists SinaMarketDaily;
+create external table SinaMarketDaily(stockid String, dt Date, open decimal(10,4), high decimal(10,4), close decimal(10,4), low decimal(10,4), volume decimal(20,2), amount decimal(20,2)) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-market-history';
+
+--market rzrq - summary
+drop table if exists SinaMarketRZRQSummary;
+create external table SinaMarketRZRQSummary(dt Date, market String, MarginTradingBalance decimal(20,2), MarginTradingBuy decimal(20,2), MarginTradingReturn decimal(20,2), ShortSellBalance decimal(20,2)) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-market-rzrq/summary';
+
+--market rzrq - detail
+drop table if exists SinaMarketRZRQDetail;
+create external table SinaMarketRZRQDetail(dt Date, idx decimal(10,2), stockid String, stockname String, MarginTradingBalance decimal(20,2), MarginTradingBuy decimal(20,2), MarginTradingReturn decimal(20,2), ShortSellBalance decimal(20,2), ShortSellBalanceStock decimal(20,2), ShortSellSellVolume decimal(20,2), ShortSellReturnVolume decimal(20,2), ShortSellLeftBalance decimal(20,2)) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-market-rzrq/detail';
+
+--market trade-detail
+drop table if exists SinaMarketTradeDetail;
+create external table SinaMarketTradeDetail(stockid String, dt Timestamp, price decimal(10,2), delta decimal(6,2), volume decimal(20,2), amount decimal(20,2), isSell int) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/sina-stock-market-tradedetail/';
+
+--
+drop table if exists SinaStockTopHolderSummary;
+create external table SinaStockTopHolderSummary(stockid String, dt Date, publishDate Date, desc String, stockHolderNumber decimal(10,2), avgStockHolder decimal(20,2)) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-stock-holder/Summary';
+
+drop table if exists SinaStockTopHolder;
+create external table SinaStockTopHolder(stockid String, dt Date, rank decimal(10,2), holderName String, volume decimal(20,2), percentage decimal(8,4), stockType String) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-stock-holder/TopStockHolder';
+
+drop table if exists SinaStockTopHolderCirculate;
+create external table SinaStockTopHolderCirculate(stockid String, dt Date, publishDate Date, rank decimal(10,2), holderName String, volume decimal(20,2), percentage decimal(8,4), stockType String) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-stock-holder-circulate/TopCirculateStockHolder';
+
+drop table if exists SinaStockFundHolder;
+create external table SinaStockFundHolder(stockid String, dt Date, fundName String, fundId String, volume decimal(20,2), circulatePercentage decimal(8,4), amount decimal(20,2), valuePercentage decimal(8,4)) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-stock-holder-fund/FundStockHolder';
+
+drop table if exists SinaStockStructure;
+create external table SinaStockStructure(stockid String, dt Date, pubDate Date, pic String, reason String, total decimal(20,4), circulate decimal(20,4), circulateA decimal(20,4), managerShare decimal(20,4), limitA decimal(20,4), circulateB decimal(20,4), limitB decimal(20,4), circulateH decimal(20,4), stateShare decimal(20,4), stateLegalPersonShare decimal(20,4), nationalLegalPersonShare decimal(20,4), nationalFounderShare decimal(20,4), MJLegalShare decimal(20,4), generalLegalShare decimal(20,4), strategyInvestShare decimal(20,4), fundShare decimal(20,4), xdShare decimal(20,4), staffShare decimal(20,4), priorityShare decimal(20,4)) row format delimited fields terminated by ',' stored as textfile location '/reminder/items/merge/sina-stock-stock-structure';
 

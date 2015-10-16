@@ -14,6 +14,7 @@ import org.cld.stock.nasdaq.NasdaqStockBase;
 import org.cld.stock.nasdaq.NasdaqStockConfig;
 import org.cld.stock.nasdaq.NasdaqTestStockConfig;
 import org.cld.stock.strategy.CompareSelectSuite;
+import org.cld.stock.strategy.SelectStrategy;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
 import org.junit.Before;
@@ -49,7 +50,7 @@ public class TestNasdaqStock {
 	@Before
 	public void setUp()throws Exception{
 		nsb = new NasdaqStockBase(propFile, marketId, startDate, endDate);
-		nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
+		//nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
 	}
 	
 	@Test
@@ -154,8 +155,9 @@ public class TestNasdaqStock {
 	}
 	@Test
 	public void testCompareSelectSuite(){
-		CompareSelectSuite.selectNasdaqAllTimeLow("2015-10-09", nsb.getCconf(), "C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
-		CompareSelectSuite.selectNasdaqBreakIPO("2015-10-09", nsb.getCconf(), "C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
+		//CompareSelectSuite.selectNasdaqAllTimeLow("2015-10-09", nsb.getCconf(), "C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
+		SelectStrategy ss = CompareSelectSuite.getNasdaqBreakIssue("C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
+		ss.select(nsb.getCconf(), ss, "2015-10-09");
 	}
 	
 	@Test

@@ -34,4 +34,10 @@ public class VolumeJDBCMapper implements JDBCMapper{
     	return v;
 	}
 
+	@Override
+	public String getTableName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

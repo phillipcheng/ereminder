@@ -15,6 +15,7 @@ import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.sina.task.TradeDetailPostProcessTask;
 import org.cld.util.ListUtil;
+import org.cld.util.jdbc.JDBCMapper;
 
 public class SinaStockConfig extends StockConfig {
 	protected static Logger logger =  LogManager.getLogger(SinaStockBase.class);
@@ -550,5 +551,15 @@ public class SinaStockConfig extends StockConfig {
 		Map<LaunchableTask, String[]> map = new HashMap<LaunchableTask, String[]>();
 		map.put(TradeDetailPostProcessTask.getLaunchInstance(), new String[]{SINA_STOCK_TRADE_DETAIL});
 		return map;
+	}
+
+	@Override
+	public JDBCMapper getDailyQuoteTableMapper() {
+		return SinaDailyQuoteCQJDBCMapper.getInstance();
+	}
+
+	@Override
+	public JDBCMapper getFQDailyQuoteTableMapper() {
+		return SinaFQDailyQuoteCQJDBCMapper.getInstance();
 	}
 }

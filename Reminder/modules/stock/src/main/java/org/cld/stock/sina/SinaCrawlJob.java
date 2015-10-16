@@ -21,7 +21,10 @@ public class SinaCrawlJob implements Job {
 		String propFile = "cld-stock-cluster.properties";
 		String marketId = SinaStockConfig.MarketId_HS_A;
 		Date d = DateTimeUtil.tomorrow(new Date());
+		//convert to specific market timezone string representation, then to server timezone date
 		StockBase nsb = new SinaStockBase(propFile, marketId, null, d);
+		d = DateTimeUtil.convertDateToServerTZFromTZ(d, nsb.getStockConfig().getTimeZone());
+		nsb.setEndDate(d);
 		try{
 			logger.info("start to run ..." + nsb);
 			nsb.updateAll(null);

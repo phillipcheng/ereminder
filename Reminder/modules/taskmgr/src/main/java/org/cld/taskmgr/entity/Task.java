@@ -8,15 +8,8 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
-import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
-import javax.persistence.Table;
-
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.MapContext;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
@@ -37,13 +30,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
-@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(
-    name="ttype",
-    discriminatorType=DiscriminatorType.STRING
-)
-@DiscriminatorValue("task")
-@Table(name="TASK")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Task implements Comparable<Task>, Serializable{
 	
@@ -137,6 +123,9 @@ public class Task implements Comparable<Task>, Serializable{
 		}
 	}
 	
+	public boolean hasOutput(){
+		return false;
+	}
 	
 	//serialize the paramMap to json param data, only selected types (now:string,int) will be stored
 	public void toParamData(){
@@ -189,7 +178,7 @@ public class Task implements Comparable<Task>, Serializable{
 		return null;
 	}
 	
-	public void runMyselfAndOutput(Map<String, Object> params, boolean addToDB, BrowseTaskType btt, 
+	public void runMyselfAndOutput(Map<String, Object> params,
 			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
 		logger.info("super runMyselfAndOutput do nothing.");
 	}

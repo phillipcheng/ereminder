@@ -6,14 +6,20 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.sql.Types;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
+import org.cld.stock.CandleQuote;
 import org.cld.stock.StockConfig;
+import org.cld.stock.sina.SinaDailyQuoteCQJDBCMapper;
+import org.cld.util.jdbc.SqlUtil;
 
 /**
  * Notes:
@@ -23,6 +29,97 @@ import org.cld.stock.StockConfig;
  */
 public class StockPersistMgr {
 	private static Logger logger =  LogManager.getLogger(StockPersistMgr.class);
+	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	
+	public static Map<String, List<CandleQuote>> getFQDailyQuote(StockConfig sc, CrawlConf cconf, List<String> stockidList, Date sd, Date ed){
+		try{
+			Class.forName(cconf.getResultDmDriver());
+		}catch (Exception e){
+			logger.error("", e);
+		}
+		Connection con = null;
+		
+		String sql = String.format("select * from %s where stockid in %s and dt>'%s' and dt <='%s' order by stockid, dt", 
+				sc.getFQDailyQuoteTableMapper().getTableName(), SqlUtil.generateInParameterValues(stockidList), sdf.format(sd), sdf.format(ed));
+		try{
+			con = DriverManager.getConnection(cconf.getResultDmUrl(), cconf.getResultDmUser(), cconf.getResultDmPass());		
+			List<CandleQuote> lo = (List<CandleQuote>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
+					con, -1, -1, "", 
+					SinaDailyQuoteCQJDBCMapper.getInstance());
+			Map<String, List<CandleQuote>> map = new HashMap<String, List<CandleQuote>>();
+			if (lo.size()>1){
+				String stid = lo.get(0).getStockid();
+				List<CandleQuote> cql = new ArrayList<CandleQuote>();
+				for (CandleQuote cq:lo){
+					if (!cq.getStockid().equals(stid)){
+						map.put(stid, cql);
+						cql = new ArrayList<CandleQuote>();
+						cql.add(cq);
+						stid = cq.getStockid();
+					}else{
+						cql.add(cq);
+					}
+				}
+				map.put(stid, cql); //the last stid
+			}
+			return map;
+		}catch(Exception e){
+			logger.error(String.format("exceptin while execute %s", sql), e);
+			return null;
+		}finally{
+			if (con!=null){
+				try{
+					con.close();
+				}catch(Exception e){
+					logger.error("", e);
+				}
+			}
+		}
+	}
+	
+	public static Map<String, List<CandleQuote>> getDailyQuote(StockConfig sc, CrawlConf cconf, List<String> stockidList, Date sd, Date ed){
+		try{
+			Class.forName(cconf.getResultDmDriver());
+		}catch (Exception e){
+			logger.error("", e);
+		}
+		Connection con = null;
+		
+		String sql = String.format("select * from %s where stockid in %s and dt>'%s' and dt <='%s' order by stockid, dt", 
+				sc.getDailyQuoteTableMapper().getTableName(), SqlUtil.generateInParameters(stockidList), sdf.format(sd), sdf.format(ed));
+		try{
+			con = DriverManager.getConnection(cconf.getResultDmUrl(), cconf.getResultDmUser(), cconf.getResultDmPass());		
+			List<CandleQuote> lo = (List<CandleQuote>) SqlUtil.getObjectsByParam(sql, new Object[]{stockidList}, 
+					con, -1, -1, "", SinaDailyQuoteCQJDBCMapper.getInstance());
+			String stid = "";
+			Map<String, List<CandleQuote>> map = new HashMap<String, List<CandleQuote>>();
+			List<CandleQuote> cql = null;
+			for (CandleQuote cq:lo){
+				if (!cq.getStockid().equals(stid)){
+					if (cql!=null){
+						map.put(stid, cql);
+					}
+					cql = new ArrayList<CandleQuote>();
+					cql.add(cq);
+					stid = cq.getStockid();
+				}else{
+					cql.add(cq);
+				}
+			}
+			return map;
+		}catch(Exception e){
+			logger.error(String.format("exceptin while execute %s", sql), e);
+			return null;
+		}finally{
+			if (con!=null){
+				try{
+					con.close();
+				}catch(Exception e){
+					logger.error("", e);
+				}
+			}
+		}
+	}
 	
 	public static Map<String, Date> getStockIPOData(StockConfig sc, CrawlConf cconf){
 		Map<String, Date> ipoDateMap = new HashMap<String, Date>();

@@ -17,6 +17,7 @@ import org.cld.stock.sina.SinaStockConfig;
 import org.cld.stock.sina.task.TradeDetailCheckDownload;
 import org.cld.stock.sina.task.TradeDetailPostProcessTask;
 import org.cld.stock.strategy.CompareSelectSuite;
+import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.task.MergeTask;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
@@ -54,7 +55,7 @@ public class TestSinaStock {
 	public void setUp() throws Exception{
 		ssb = new SinaStockBase(propFile, marketId, startDate, endDate);
 		ssb.getCconf().getTaskMgr().getHadoopCrawledItemFolder();
-		ssb.getDsm().addUpdateCrawledItem(ssb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
+		//ssb.getDsm().addUpdateCrawledItem(ssb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
 	}
 	//
 	@Test
@@ -193,9 +194,9 @@ public class TestSinaStock {
 	//fr-quarter
 	@Test
 	public void run_browse_fr_quarter() throws Exception {
-		ssb.runCmd(SinaStockConfig.SINA_STOCK_FR_QUARTER_BALANCE_SHEET, SinaStockConfig.MarketId_HS_Test, null, "2015-09-25");
+		//ssb.runCmd(SinaStockConfig.SINA_STOCK_FR_QUARTER_BALANCE_SHEET, SinaStockConfig.MarketId_HS_Test, null, "2015-09-25");
 		ssb.runCmd(SinaStockConfig.SINA_STOCK_FR_QUARTER_CASHFLOW, SinaStockConfig.MarketId_HS_Test, null, "2015-09-25");
-		ssb.runCmd(SinaStockConfig.SINA_STOCK_FR_QUARTER_PROFIT_STATEMENT, SinaStockConfig.MarketId_HS_Test, null, "2015-09-25");
+		//ssb.runCmd(SinaStockConfig.SINA_STOCK_FR_QUARTER_PROFIT_STATEMENT, SinaStockConfig.MarketId_HS_Test, "2006-01-01", "2006-12-25");
 	}
 	@Test
 	public void run_browse_fr_footnote(){
@@ -219,8 +220,15 @@ public class TestSinaStock {
 	
 	@Test
 	public void testCompareSelectSuite(){
-		CompareSelectSuite.selectHSAAllTimeLow("2015-10-09", ssb.getCconf(), "C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
-		CompareSelectSuite.selectHSABreakIPO("2015-10-09", ssb.getCconf(), "C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
+		//CompareSelectSuite.selectHSAAllTimeLow("2015-10-09", ssb.getCconf(), "C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
+		//CompareSelectSuite.selectHSABreakIPO("2015-10-09", ssb.getCconf(), "C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
+		SelectStrategy ss = CompareSelectSuite.getHSARallyRatio("C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
+		ss.select(ssb.getCconf(), ss, "2015-10-12");
+	}
+	
+	@Test
+	public void testTradeStrategy1(){
+		
 	}
 	
 	//test crawl

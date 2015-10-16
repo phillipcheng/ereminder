@@ -30,6 +30,8 @@ public abstract class AbstractCrawlItemToCSV {
 	public static final String FIELD_NAME_ROWCSV="RowCsvName";//name of row csv file
 	public static final String FIELD_NAME_RowDateIdx="RowDateIdx";//the idx of the date field of the row table
 	public static final String FIELD_NAME_STATIC = "static";
+	public static final String FIELD_NAME_KEYS="keys"; //defined the list of keys we need to extract in order
+	public static final String FIELD_NAME_KEYDATA="keyData";//the runtime list of key data to filter
 	
 	public static final String KEY_GENHEADER="GenHeader";
 	public static final String KEY_HASHEADER="HasHeader"; //default to true

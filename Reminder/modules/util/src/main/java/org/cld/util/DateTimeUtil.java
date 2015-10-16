@@ -195,12 +195,27 @@ public class DateTimeUtil {
 		return c.getTime();
 	}
 	
-	//data originTimeZone is treated as utc while loading, and converted to fetchTimeZone(defaultTimeZone) while fetching, I need to convert it back to origin
-	public static Date getCorrectedDateFromUTC(Date d, TimeZone originTimeZone){
-		long fetchFromUTC = TimeZone.getDefault().getOffset(d.getTime());
+	//orgFromUTC - serverFromUTC = org.date - server.date
+	public static Date convertToServerTZFromTZ(Date d, TimeZone originTimeZone){
+		long serverFromUTC = TimeZone.getDefault().getOffset(d.getTime());
 		long orgFromUTC = originTimeZone.getOffset(d.getTime());
-		Date d1 = new Date(d.getTime() - fetchFromUTC + orgFromUTC);
+		Date d1 = new Date(d.getTime() + serverFromUTC - orgFromUTC);
 		return d1;
+	}
+	
+	//need to remove hours, minutes, etc
+	public static Date convertDateToServerTZFromTZ(Date d, TimeZone originTimeZone){
+		Date outd = null;
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		sdf.setTimeZone(originTimeZone);
+		String date = sdf.format(d);
+		sdf.setTimeZone(TimeZone.getDefault());
+		try {
+			outd = sdf.parse(date);
+		} catch (ParseException e) {
+			logger.error("", e);
+		}
+		return outd;
 	}
 
 }

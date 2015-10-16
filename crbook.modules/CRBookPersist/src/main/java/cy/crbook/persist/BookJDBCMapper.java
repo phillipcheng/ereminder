@@ -35,4 +35,10 @@ public class BookJDBCMapper implements JDBCMapper{
     	}
 	}
 
+	@Override
+	public String getTableName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }
