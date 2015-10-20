@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections.map.MultiKeyMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
@@ -30,7 +31,37 @@ import org.cld.util.jdbc.SqlUtil;
 public class StockPersistMgr {
 	private static Logger logger =  LogManager.getLogger(StockPersistMgr.class);
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	public static MultiKeyMap fqDQMap = new MultiKeyMap();
 	
+	public static void setupCache(StockConfig sc, CrawlConf cconf, Date sd, Date ed){
+		try{
+			Class.forName(cconf.getResultDmDriver());
+		}catch (Exception e){
+			logger.error("", e);
+		}
+		Connection con = null;
+		
+		String sql = String.format("select * from %s dt>'%s' and dt <='%s'", 
+				sc.getFQDailyQuoteTableMapper().getTableName(), sdf.format(sd), sdf.format(ed));
+		try{
+			con = DriverManager.getConnection(cconf.getResultDmUrl(), cconf.getResultDmUser(), cconf.getResultDmPass());		
+			List<CandleQuote> lo = (List<CandleQuote>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
+					con, -1, -1, "", 
+					SinaDailyQuoteCQJDBCMapper.getInstance());
+			
+		}catch(Exception e){
+			logger.error(String.format("exceptin while execute %s", sql), e);
+		}finally{
+			if (con!=null){
+				try{
+					con.close();
+				}catch(Exception e){
+					logger.error("", e);
+				}
+			}
+		}
+	}
+
 	public static Map<String, List<CandleQuote>> getFQDailyQuote(StockConfig sc, CrawlConf cconf, List<String> stockidList, Date sd, Date ed){
 		try{
 			Class.forName(cconf.getResultDmDriver());

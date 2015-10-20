@@ -18,7 +18,7 @@ public class TestHbase {
 	
 	@Test
 	public void test0(){
-		HbaseUtil.copyRow("sina-stock-ipo", "sina-stock-ipo|hs_a", "sina-stock-ipo|hs_a_test");
+		HbaseUtil.copyRow("nasdaq-ids", "nasdaq-ids|ALL", "nasdaq-ids|ALL_2015-10-17");
 	}
 	
 

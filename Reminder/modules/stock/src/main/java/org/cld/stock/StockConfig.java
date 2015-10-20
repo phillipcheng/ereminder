@@ -47,6 +47,7 @@ public abstract class StockConfig {
 	public abstract TimeZone getTimeZone();
 	public abstract Date getLatestOpenMarketDate(Date d);
 	public abstract Set<Date> getHolidays();
+	public abstract float getDailyLimit();//>0 means has price limit n% up and down, if<=0 no limit
 	
 	//db
 	public abstract String[] getTablesByCmd(String cmd);

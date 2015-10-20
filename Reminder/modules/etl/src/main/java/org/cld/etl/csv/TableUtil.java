@@ -18,9 +18,12 @@ public class TableUtil {
 	
 	public static final String[] units = new String[]{"万股","百万","万元","千元","（元）","元","(t)","(m)"};
 	public static final int[] numUnits = new int[]{10000,1000000,10000,1000,1,1,1000,1000000};
-	public static final SimpleDateFormat sdf1 = new SimpleDateFormat("MM/dd/yyyy");
-	public static final SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd");
-
+	public static final SimpleDateFormat[] sdfs = new SimpleDateFormat[]{
+			new SimpleDateFormat("MM/dd/yyyy"),
+			new SimpleDateFormat("yyyy-MM-dd"), 
+			new SimpleDateFormat("yyyy")};
+	public static final String NO_DATE = "n/a";
+	
 	public static final SimpleDateFormat outsdf = new SimpleDateFormat("yyyy-MM-dd");
 	
 	static {
@@ -70,20 +73,23 @@ public class TableUtil {
 			ret = TableUtil.getFRNumber(v);
 		}else if (AbstractCrawlItemToCSV.DATA_TYPE_TEXT.equals(dataType)){
 			//replace comma and new line for string
-			ret = v.replace(",", "\\,").replaceAll("\\r\\n|\\r|\\n", " ").replace("\u0020", " ").replace("\u00a0"," ");
+			ret = v.replace(",", ";").replaceAll("\\r\\n|\\r|\\n", " ").replace("\u0020", " ").replace("\u00a0"," ");
 		}else if (AbstractCrawlItemToCSV.DATA_TYPE_DATE.equals(dataType)){
-			Date d = null;
-			try{
-				d = sdf1.parse(v);
-			}catch(Exception e){
-				try{
-					d = sdf2.parse(v);
-				}catch(Exception e1){
-					logger.error("we can't parse date type string:" + v);
+			if (v.equals(NO_DATE)){
+				ret = "";
+			}else{
+				Date d = null;
+				for (SimpleDateFormat sdf:sdfs){
+					try{
+						d = sdf.parse(v);
+						break;
+					}catch(Exception e){
+						continue;
+					}
 				}
-			}
-			if (d!=null){
-				ret = outsdf.format(d);
+				if (d!=null){
+					ret = outsdf.format(d);
+				}
 			}
 		}else{
 			logger.error(String.format("str type not supported. %s", dataType));

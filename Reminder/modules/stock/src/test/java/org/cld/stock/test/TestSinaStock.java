@@ -55,7 +55,7 @@ public class TestSinaStock {
 	public void setUp() throws Exception{
 		ssb = new SinaStockBase(propFile, marketId, startDate, endDate);
 		ssb.getCconf().getTaskMgr().getHadoopCrawledItemFolder();
-		//ssb.getDsm().addUpdateCrawledItem(ssb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
+		ssb.getDsm().addUpdateCrawledItem(ssb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
 	}
 	//
 	@Test
@@ -191,7 +191,6 @@ public class TestSinaStock {
 	/****
 	 * 财务数据
 	 */
-	//fr-quarter
 	@Test
 	public void run_browse_fr_quarter() throws Exception {
 		//ssb.runCmd(SinaStockConfig.SINA_STOCK_FR_QUARTER_BALANCE_SHEET, SinaStockConfig.MarketId_HS_Test, null, "2015-09-25");
@@ -202,33 +201,17 @@ public class TestSinaStock {
 	public void run_browse_fr_footnote(){
 		ssb.runCmd(SinaStockConfig.SINA_STOCK_FR_FOOTNOTE, SinaStockConfig.MarketId_HS_Test, null, "2015-09-25");
 	}
-	//Achievement Notice
 	@Test
 	public void run_fr_achievenotice(){
 		ssb.runCmd(SinaStockConfig.SINA_STOCK_FR_AchieveNotice, SinaStockConfig.MarketId_HS_Test, null, "2015-09-25");
 	}
-	//Finance Guideline
 	@Test
 	public void run_fr_finance_guideline(){//600028,600026 ipo date is error
 		ssb.runCmd(SinaStockConfig.SINA_STOCK_FR_GUIDELINE_YEAR, SinaStockConfig.MarketId_HS_Test, null, START_DATE);
 	}
-	//Asset Devalue
 	@Test
 	public void run_fr_assetdevalue(){
 		ssb.runCmd(SinaStockConfig.SINA_STOCK_FR_ASSETDEVALUE_YEAR, SinaStockConfig.MarketId_HS_Test, "2015-08-29", "2015-09-22");
-	}
-	
-	@Test
-	public void testCompareSelectSuite(){
-		//CompareSelectSuite.selectHSAAllTimeLow("2015-10-09", ssb.getCconf(), "C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
-		//CompareSelectSuite.selectHSABreakIPO("2015-10-09", ssb.getCconf(), "C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
-		SelectStrategy ss = CompareSelectSuite.getHSARallyRatio("C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
-		ss.select(ssb.getCconf(), ss, "2015-10-12");
-	}
-	
-	@Test
-	public void testTradeStrategy1(){
-		
 	}
 	
 	//test crawl

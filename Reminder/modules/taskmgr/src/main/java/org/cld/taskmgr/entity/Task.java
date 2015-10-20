@@ -127,6 +127,10 @@ public class Task implements Comparable<Task>, Serializable{
 		return false;
 	}
 	
+	public boolean hasMultipleOutput(){
+		return false;
+	}
+	
 	//serialize the paramMap to json param data, only selected types (now:string,int) will be stored
 	public void toParamData(){
 		paramData = JsonUtil.toJsonStringFromMap(paramMap);

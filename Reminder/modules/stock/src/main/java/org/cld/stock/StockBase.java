@@ -1,6 +1,5 @@
 package org.cld.stock;
 
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -9,8 +8,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobClient;
@@ -25,6 +22,7 @@ import org.cld.taskmgr.entity.CmdStatus;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.CompareUtil;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
+import org.cld.stock.strategy.CountWaveTask;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.strategy.SellStrategy;
 import org.cld.stock.strategy.StrategyValidationTask;
@@ -38,9 +36,10 @@ public abstract class StockBase extends TestBase{
 	protected static Logger logger =  LogManager.getLogger(StockBase.class);
 	
 	public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	private static SimpleDateFormat mdssdf = new SimpleDateFormat("MMddhhmmss");
+	private static SimpleDateFormat mdssdf = new SimpleDateFormat("MMddHHmmss");
 	public static final String AllCmdRun_STATUS="AllCmdRun";
 	public static final String KEY_IDS = "ids";
+	
 	public static final String idKeySep = "_";
 	
 	protected String marketId;
@@ -484,34 +483,45 @@ public abstract class StockBase extends TestBase{
 		return MergeTask.launch(getStockConfig(), this.propFile, cconf, datePart, param, true);
 	}
 	
+	private static String KEY_INPUTHDFS="input.hdfs.defaultname";
 	private static String KEY_OUTPUTDIR="output.dir";
-	private static String KEY_SELLS_DURATION="sls.duration";
-	private static String KEY_SELLS_LIMIT_PERCENTAGE="sls.limitPercentage";
-	private static String KEY_SELLS_TRAIL_PERCENTAGE="sls.stopTrailingPercentage";
-	private static String KEY_SELECTS_TYPE="scs.type";
-	private static String KEY_SELECTS_NAME="scs.name";
 	
 	//param the strategy configure file
 	public String[] validateStrategy(String param){
 		try{
 			PropertiesConfiguration props = new PropertiesConfiguration(param);
-			
 	        String outputDirPrefix = props.getString(KEY_OUTPUTDIR);
 	        String time = mdssdf.format(new Date());
 			String outputDir = String.format("%s_%s", outputDirPrefix, time);
-	        int duration = props.getInt(KEY_SELLS_DURATION);
-	        float limitPercentage = props.getFloat(KEY_SELLS_LIMIT_PERCENTAGE);
-	        float stopTrailingPercentage = props.getFloat(KEY_SELLS_TRAIL_PERCENTAGE);
-	        String scsType = props.getString(KEY_SELECTS_TYPE);
-	        String scsName = props.getString(KEY_SELECTS_NAME);
-	        Class selectSuite = Class.forName(scsType);
-	        Method getSelectMethod = selectSuite.getMethod("get"+scsName, String.class);
-	        SelectStrategy scs = (SelectStrategy) getSelectMethod.invoke(null, outputDir);
+	        int duration = props.getInt(SellStrategy.KEY_SELLS_DURATION);
+	        float limitPercentage = props.getFloat(SellStrategy.KEY_SELLS_LIMIT_PERCENTAGE);
+	        float stopTrailingPercentage = props.getFloat(SellStrategy.KEY_SELLS_TRAIL_PERCENTAGE);
+	        String scsType = props.getString(SelectStrategy.KEY_SELECTS_TYPE);
+	        SelectStrategy scs = (SelectStrategy) Class.forName(scsType).newInstance();
+	        scs.init(props);
+	        scs.setOutputDir(outputDir);
 	        SellStrategy sls = new SellStrategy();
 	        sls.setHoldDuration(duration);
 	        sls.setLimitPercentage(limitPercentage);
 	        sls.setStopTrailingPercentage(stopTrailingPercentage);
-	        return StrategyValidationTask.launch(this.propFile, cconf, marketBaseId, scs, sls, startDate, endDate, outputDir);
+	        return StrategyValidationTask.launch(this.propFile, cconf, marketBaseId, scs, sls, startDate, endDate);
+		}catch(Exception e){
+			logger.error("", e);
+		}
+		return null;
+	}
+	
+	private static String KEY_WAVEHEIGHT="wave.height";
+	
+	public String[] countWave(String param){
+		try{
+			PropertiesConfiguration props = new PropertiesConfiguration(param);
+	        String outputDirPrefix = props.getString(KEY_OUTPUTDIR);
+	        String time = mdssdf.format(new Date());
+	        String inputHdfs = props.getString(KEY_INPUTHDFS);
+			String outputDir = String.format("%s_%s", outputDirPrefix, time);
+	        float waveHeight = props.getFloat(KEY_WAVEHEIGHT);
+	        return CountWaveTask.launch(this.propFile, cconf, marketBaseId, marketId, startDate, endDate, inputHdfs, outputDir, waveHeight);
 		}catch(Exception e){
 			logger.error("", e);
 		}

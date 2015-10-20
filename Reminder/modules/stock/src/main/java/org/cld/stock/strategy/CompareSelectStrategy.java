@@ -4,16 +4,20 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.hadooputil.HdfsDownloadUtil;
+import org.cld.stock.StockConfig;
+import org.cld.stock.StockUtil;
 import org.cld.util.jdbc.GeneralJDBCMapper;
 import org.cld.util.jdbc.SqlUtil;
 import org.xml.mytaskdef.ScriptEngineUtil;
@@ -21,31 +25,76 @@ import org.xml.taskdef.VarType;
 
 public class CompareSelectStrategy extends SelectStrategy{
 	
-	public CompareSelectStrategy(){
-		super();
-	}
-	
-	public CompareSelectStrategy(String name, String outputDir, Object[] scripts) {
-		super(name, outputDir, scripts);
-	}
-	
 	public static Logger logger = LogManager.getLogger(CompareSelectStrategy.class);
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	public static SimpleDateFormat detailSdf = new SimpleDateFormat("yyyyMMddhhmmss");
 	public static String ASC = "asc";
 	public static String DESC = "desc";
+
+	private String[] sqls;
+	private String[] exps;
+	private String filter;
+	private String orderBy;
+	private String orderDirection;
+	private String[] params;
 	
-	private String[] toStringArray(Object candidate){
-		String[] sqls = null;
-		if (candidate instanceof List){
-			List<String> l = (List<String>)candidate;
-			sqls = new String[l.size()];
-			sqls = l.toArray(sqls);
-		}else{
-			sqls = (String[]) scripts[0];
-		}
-		return sqls;
+	public CompareSelectStrategy(){
+		super();
 	}
+	
+	public static final String KEY_SQL="scs.sql";
+	public static final String KEY_EXP="scs.exp";
+	public static final String KEY_PARAM="scs.param";
+	public static final String KEY_FILTER="scs.filter";
+	public static final String KEY_ORDERBY="scs.orderBy";
+	public static final String KEY_ORDERDIR="scs.orderDirection";
+	
+	@Override
+	public void init(PropertiesConfiguration props){
+		super.init(props);
+		//sqls
+		List<String> sqlList = new ArrayList<String>();
+		for (char k='a';k<'z';k++){
+			String sqlName = KEY_SQL+"."+k;
+			if (props.containsKey(sqlName)){
+				sqlList.add(props.getString(sqlName));
+			}else{
+				break;
+			}
+		}
+		sqls = new String[sqlList.size()];
+		sqls = sqlList.toArray(sqls);
+		//exps
+		List<String> expList = new ArrayList<String>();
+		for (char k='a';k<'z';k++){
+			String expName = KEY_EXP+".z"+k;
+			if (props.containsKey(expName)){
+				expList.add(props.getString(expName));
+			}else{
+				break;
+			}
+		}
+		exps = new String[expList.size()];
+		exps = expList.toArray(exps);
+		//params
+		List<String> paramList = new ArrayList<String>();
+		for (int k=1;k<10;k++){
+			String paramName = KEY_PARAM+"."+k;
+			if (props.containsKey(paramName)){
+				paramList.add(props.getString(paramName));
+			}else{
+				break;
+			}
+		}
+		params = new String[paramList.size()];
+		params = paramList.toArray(params);
+		
+		filter = props.getString(KEY_FILTER);
+		orderBy = props.getString(KEY_ORDERBY);
+		orderDirection = props.getString(KEY_ORDERDIR);
+	}
+	
+
 	/**
 	 * 
 	 * @param thisDay
@@ -56,15 +105,22 @@ public class CompareSelectStrategy extends SelectStrategy{
 	 * @param refBSQL: has param thisDay
 	 * @param filterExp:  we can have a>b, a>(0.9*b)
 	 */
+	public static final String SQL_KEY_TODAY="%date";
+	public static final String SQL_KEY_THIS_TDATE="%tdate";
+	public static final String SQL_KEY_LAST_TDATE="%lasttdate";
 	@Override
-	public List<String> select(CrawlConf cconf, SelectStrategy ss, Object param){
-		String outputFileDir = ss.getOutputDir();
-		Object[] scripts = ss.getScripts();
-		String[] sqls = toStringArray(scripts[0]);
-		String[] resultExps = toStringArray(scripts[1]);
-		String filterExp = (String) scripts[2];
-		String orderBy = (String) scripts[3];
-		String orderDirection = (String) scripts[4];
+	public List<String> select(CrawlConf cconf, Date dt, StockConfig sc){
+		Date today = dt;
+		Date thisTradingDay;
+		Date lastTradingDay;
+		if (this.getDayType()==byDayType.byTradingDay){
+			thisTradingDay = dt;
+			lastTradingDay = StockUtil.getLastOpenDay(dt, sc.getHolidays());
+		}else{//calendayDay
+			thisTradingDay = StockUtil.getNextOpenDay(dt, sc.getHolidays());
+			lastTradingDay = StockUtil.getLastOpenDay(dt, sc.getHolidays());
+		}
+		String outputFileDir = getOutputDir();
 		boolean isAsc = false;
 		if (ASC.equals(orderDirection)){
 			isAsc=true;
@@ -81,12 +137,26 @@ public class CompareSelectStrategy extends SelectStrategy{
 		try{
 			con = DriverManager.getConnection(cconf.getResultDmUrl(), cconf.getResultDmUser(), cconf.getResultDmPass());
 			List<Map<String, Object>> priceMapArray = new ArrayList<Map<String, Object>>();
+			/*
+			 * replace %date with today
+			 * replace %tdate with thisTradingDay
+			 * replace %lasttdate with lastTradingDay
+			 */
 			for (int j=0; j<sqls.length; j++){
 				String sql = sqls[j];
-				if (sql.contains("%s")){
-					sql = String.format(sql, param);
+				sql = sql.replace(SQL_KEY_TODAY, sdf.format(today));
+				sql = sql.replace(SQL_KEY_THIS_TDATE, sdf.format(thisTradingDay));
+				sql = sql.replace(SQL_KEY_LAST_TDATE, sdf.format(lastTradingDay));
+				for (int k=1; k<=params.length;k++){
+					if (sql.contains("%"+k)){
+						sql = sql.replace("%"+k, params[k-1]);
+					}
 				}
 				List<? extends Object> lo = SqlUtil.getObjectsByParam(sql, new Object[]{}, con, -1, -1, "", GeneralJDBCMapper.getInstance());
+				if (j==0 && lo.size()==0){
+					//master sql no result
+					return new ArrayList<String>();
+				}
 				Map<String, Object> aPriceMap = new HashMap<String, Object>();
 				for (int i=0; i<lo.size(); i++){
 					List<Object> vl = (List<Object>)lo.get(i);
@@ -103,7 +173,7 @@ public class CompareSelectStrategy extends SelectStrategy{
 				priceMapArray.add(aPriceMap);
 			}
 			int lineno=0;
-			TreeMap<Object, String> orderOutput = new TreeMap<Object, String>();
+			TreeMap<Object, String> orderOutput = new TreeMap<Object, String>();//aMap is the lead
 			Map<String, Object> aPriceMap = priceMapArray.get(0);
 			String title = "";
 			for (String stockid:aPriceMap.keySet()){
@@ -122,15 +192,15 @@ public class CompareSelectStrategy extends SelectStrategy{
 					}
 				}
 				if (eval){
-					for (int k=0; k<resultExps.length; k++){
-						String resultExp = resultExps[k];
+					for (int k=0; k<exps.length; k++){
+						String resultExp = exps[k];
 						Object result = ScriptEngineUtil.eval(resultExp, VarType.OBJECT, variables);
 						char varSuffix = (char) ('a' + k);
 						String varName = "z" + varSuffix;
 						variables.put(varName, result);
 					}
 					
-					boolean ret = (boolean) ScriptEngineUtil.eval(filterExp, VarType.BOOLEAN, variables);
+					boolean ret = (boolean) ScriptEngineUtil.eval(filter, VarType.BOOLEAN, variables);
 					if (ret){
 						if (lineno==0){
 							title +="stockid,";
@@ -181,17 +251,18 @@ public class CompareSelectStrategy extends SelectStrategy{
 				String line = orderOutput.get(key);
 				String stockid = line.substring(0, line.indexOf(","));
 				retList.add(stockid);
-				sa[i]=line;
+				sa[i]=sdf.format(dt) + ',' + line;
 				i++;
 			}
-			String strParam = "";
+			String allStrParam = "";
 			java.util.Date d = new java.util.Date();
-			if (param instanceof java.util.Date){
-				strParam = sdf.format((java.util.Date)param);
-			}else{
-				strParam = param.toString();
+			for (i=0; i<params.length;i++){
+				if (i>0){
+					allStrParam+="_";
+				}
+				allStrParam+=params[i];
 			}
-			String fileName = String.format("%s_%s_%s.csv", ss.getName(), strParam, detailSdf.format(d));
+			String fileName = String.format("%s_%s_%s.csv", getName(), allStrParam, detailSdf.format(d));
 			HdfsDownloadUtil.outputToHdfs(sa, outputFileDir+"/"+fileName, cconf.getTaskMgr().getHdfsDefaultName());
 		}catch(Exception e){
 			logger.error("", e);
@@ -205,5 +276,42 @@ public class CompareSelectStrategy extends SelectStrategy{
 			}
 		}
 		return retList;
+	}
+	
+	public String[] getSqls() {
+		return sqls;
+	}
+	public void setSqls(String[] sqls) {
+		this.sqls = sqls;
+	}
+	public String[] getExps() {
+		return exps;
+	}
+	public void setExps(String[] exps) {
+		this.exps = exps;
+	}
+	public String getFilter() {
+		return filter;
+	}
+	public void setFilter(String filter) {
+		this.filter = filter;
+	}
+	public String getOrderBy() {
+		return orderBy;
+	}
+	public void setOrderBy(String orderBy) {
+		this.orderBy = orderBy;
+	}
+	public String getOrderDirection() {
+		return orderDirection;
+	}
+	public void setOrderDirection(String orderDirection) {
+		this.orderDirection = orderDirection;
+	}
+	public String[] getParams() {
+		return params;
+	}
+	public void setParams(String[] params) {
+		this.params = params;
 	}
 }

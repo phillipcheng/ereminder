@@ -56,9 +56,9 @@ function merge(arr){
     arr = arr.slice(1,arr.length)
     return arr.join(',')
 }
-
-arr[1] = getQuarterEndDateFromMonth(arr[1])
-merge(arr)</expression>
+rarr = arr.split(',')
+rarr[1] = getQuarterEndDateFromMonth(rarr[1])
+merge(rarr)</expression>
 				</ops>
 			</csvtransform>
 			<filter>function getDate(q) {

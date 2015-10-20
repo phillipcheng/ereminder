@@ -166,8 +166,8 @@ public class ProductAnalyze{
 				for (TransformOp top: csvTransform.getOps()){
 					for (int i=0; i<csv.length; i++){
 						Map<String, Object> attributes = new HashMap<String, Object>();
-						String[] varr = csv[i][1].split(",");//split value
-						attributes.put(VAR_CSV_NAME, varr);
+						//String[] varr = csv[i][1].split(",");//split value
+						attributes.put(VAR_CSV_NAME, csv[i][1]);//pass the unsplit string
 						String svarr = (String) ScriptEngineUtil.eval(top.getExpression(), VarType.STRING, attributes);//return a joined string
 						csv[i][1] = svarr;
 					}
@@ -267,12 +267,13 @@ public class ProductAnalyze{
 			product.setGoNext(goNext);
 			if (!goNext){//only transform for final task
 				if (csvTransform!=null && csvTransform.getTransformClass()!=null){
-					//do the transform and set to crawledItem.csv
+					//do the transform and write out the csv and write to hbase if dsm set to hbase
 					try {
 						postCrawlProcess(bdt.getBaseBrowseTask(), product);
 						//write the output
 						if (csvtrans!=null)
 							writeCsvOut(csvtrans, hdfsByIdOutputMap, context, mos, product, cconf, task);
+						logger.info(String.format("in add product, dsm is %s, add to DB is %b", bdt.getBaseBrowseTask().getDsm(), addToDB));
 						if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm()) && addToDB){
 							dsManager.addUpdateCrawledItem(product, lastProduct);
 						}
@@ -285,8 +286,9 @@ public class ProductAnalyze{
 						product.setCsvValue(HdfsDataStoreManagerImpl.getCSV(product, bdt.getBaseBrowseTask()));
 					}
 				}
-				if (dsManager!=null && addToDB)
+				if (dsManager!=null && addToDB){
 					dsManager.addUpdateCrawledItem(product, lastProduct);	
+				}
 			}
 		}else{
 			product.setCompleted(false);

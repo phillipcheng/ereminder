@@ -562,4 +562,9 @@ public class SinaStockConfig extends StockConfig {
 	public JDBCMapper getFQDailyQuoteTableMapper() {
 		return SinaFQDailyQuoteCQJDBCMapper.getInstance();
 	}
+
+	@Override
+	public float getDailyLimit() {
+		return 10;
+	}
 }

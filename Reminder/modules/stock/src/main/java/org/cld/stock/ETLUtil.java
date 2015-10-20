@@ -124,12 +124,15 @@ public class ETLUtil {
 		return sb.toString();
 	}
 	
+	/**
+	 * @param: cmd used to decide whether returned trimmed id or not, default no trimmed, can be null
+	 */
 	public static String[] getStockIdByMarketId(StockConfig sc, String marketId, CrawlConf cconf, String cmd){
 		if (stockidsCache == null){
 			CrawledItem ci = cconf.getDsm("hbase").getCrawledItem(marketId, sc.getStockIdsCmd(), null);
 			List<String> ids = (List<String>) ci.getParam(StockBase.KEY_IDS);
 			String[] idarray = new String[ids.size()];
-			if (Arrays.asList(sc.getUntrimmedStockIdCmds()).contains(cmd)){
+			if (cmd!=null && Arrays.asList(sc.getUntrimmedStockIdCmds()).contains(cmd)){
 				return ids.toArray(idarray);
 			}else{
 				for (int i=0; i<ids.size(); i++){

@@ -15,6 +15,7 @@ import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.stock.StockBase;
 import org.cld.stock.StockUtil;
 import org.cld.stock.nasdaq.NasdaqStockBase;
+import org.cld.stock.nasdaq.NasdaqTestStockConfig;
 import org.cld.stock.persistence.StockPersistMgr;
 import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.SinaStockConfig;
@@ -83,28 +84,26 @@ public class TestStock {
 		dl = StockUtil.getOpenDayList(fd, td, SinaStockConfig.CNHolidays);
 		logger.info(String.format("dl is %s", dl));
 	}
-
+	
 	@Test
-	public void testStrategyValidation() throws Exception{
-		String time = mdssdf.format(new Date());
-		String outputDir = String.format("/reminder/sresult/test_%s", time);
-		SelectStrategy scs = CompareSelectSuite.getHSAAllTimeLow(outputDir);
-		SellStrategy sls = new SellStrategy(3, 5, 2);
-		Date startDate = sdf.parse("2015-09-02");
-		Date endDate = sdf.parse("2015-09-10");
+	public void testStrategyValidationRally() throws Exception{
 		String pFile = "client1-v2.properties";
-		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
-		String marketBaseId ="sina";
-		StrategyValidationTask.launch(pFile, cconf, marketBaseId, scs, sls, startDate, endDate, outputDir);
+		String marketId = "hs_a"; //not used
+		Date sd = sdf.parse("2015-10-15");
+		Date ed = sdf.parse("2015-10-21");
+		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
+		sb.validateStrategy("strategy.rally1.properties");
 	}
 	
 	@Test
-	public void testStrategyValidationFromFile() throws Exception{
+	public void testCountWave() throws Exception{
 		String pFile = "client1-v2.properties";
-		String marketId = "hs_a"; //not used
-		Date sd = sdf.parse("2015-09-02");
-		Date ed = sdf.parse("2015-09-10");
-		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
-		sb.validateStrategy("strategy1.properties");
+		String marketBaseId = "nasdaq";
+		String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test; //not used
+		Date sd = sdf.parse("2015-10-12");
+		Date ed = sdf.parse("2015-10-15");
+		StockBase nsb = new NasdaqStockBase(pFile, marketId, sd, ed);
+		nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(marketId, ed), null);//init stockid
+		nsb.countWave("wavecount1.properties");
 	}
 }

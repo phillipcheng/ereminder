@@ -39,7 +39,7 @@ create external table SinaCorpRelatedConcepts( stockid String, conceptName Strin
 
 --fr achievenotice
 drop table if exists SinaFrAchieveNotice;
-create external table SinaFrAchieveNotice(stockid String, dt Date, reportPeriod Date, aType String, summary String, content String, earningSamePeriodlastYear decimal(10,4)) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/sina-stock-fr-achievenotice';
+create external table SinaFrAchieveNotice(stockid String, dt Date, reportPeriod Date, aType String, summary String, content String, earningSamePeriodlastYear decimal(10,4), cp decimal(5,2)) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/sina-stock-fr-achievenotice';
 
 --fr asset-devalue
 drop table if exists SinaFrAssetDevalue;

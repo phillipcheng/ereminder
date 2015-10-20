@@ -1,5 +1,6 @@
 package org.cld.stock.test;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -25,7 +26,7 @@ public class TestNasdaqStock {
 	
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private static String START_DATE = "2014-11-01";
-	private static String END_DATE = "2014-11-10";
+	private static String END_DATE = "2015-10-17";
 	private static Date startDate=null;
 	private static Date endDate = null;
 	static{
@@ -38,7 +39,8 @@ public class TestNasdaqStock {
 		}
 	}
 	
-	private String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test;
+	private String marketId = NasdaqStockConfig.MarketId_AMEX;
+	//private String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test;
 	private String propFile = "client1-v2.properties";
 	
 	private NasdaqStockBase nsb;
@@ -57,7 +59,10 @@ public class TestNasdaqStock {
 	public void testInitTestMarket() throws Exception{
 		nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
 	}
-	
+	@Test
+	public void testIdsCmd() throws Exception{
+		nsb.runCmd(NasdaqStockConfig.STOCK_IDS, marketId, null, "2015-10-17");
+	}
 	@Test
 	public void testRunAllCmd1() throws Exception{
 		nsb.runAllCmd(null, sdf.parse("2015-09-25"));
@@ -152,12 +157,6 @@ public class TestNasdaqStock {
 	@Test
 	public void testCmd_HolderInsidersDateRange(){
 		nsb.runCmd(NasdaqStockConfig.HOLDING_INSIDERS, marketId, "2015-02-01", sdf.format(nsb.getStockConfig().getLatestOpenMarketDate(new Date())));
-	}
-	@Test
-	public void testCompareSelectSuite(){
-		//CompareSelectSuite.selectNasdaqAllTimeLow("2015-10-09", nsb.getCconf(), "C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
-		SelectStrategy ss = CompareSelectSuite.getNasdaqBreakIssue("C:/mydoc/myprojects/ereminder/Reminder/modules/stock/output");
-		ss.select(nsb.getCconf(), ss, "2015-10-09");
 	}
 	
 	@Test

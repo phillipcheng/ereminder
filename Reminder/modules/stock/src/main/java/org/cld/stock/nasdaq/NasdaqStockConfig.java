@@ -254,4 +254,8 @@ public class NasdaqStockConfig extends StockConfig{
 	public JDBCMapper getFQDailyQuoteTableMapper() {
 		return NasdaqFQDailyQuoteCQJDBCMapper.getInstance();
 	}
+	@Override
+	public float getDailyLimit() {
+		return 0;
+	}
 }

@@ -1,7 +1,10 @@
 package org.cld.taskmgr.hadoop;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +45,7 @@ public class HadoopTaskLauncher {
 	
 	public static boolean hasMultipleOutput(Task t){
 		if (t.getParsedTaskDef()==null){//not a browse task
-			return false;
+			return t.hasMultipleOutput();
 		}
 		BrowseTaskType btt = t.getBrowseTask(t.getName());
 		if (btt!=null){
@@ -156,9 +159,10 @@ public class HadoopTaskLauncher {
 				taskFileName = taskMgr.getHdfsTaskFolder() + "/" + escapedName;
 				logger.info(String.format("task file: %s with length %d generated.", taskFileName, fileContent.length()));
 				Path fileNamePath = new Path(taskFileName);
-				FSDataOutputStream fin = fs.create(fileNamePath);
-				fin.writeBytes(fileContent.toString());
-				fin.close();
+				OutputStream fin = fs.create(fileNamePath);
+				BufferedWriter br = new BufferedWriter(new OutputStreamWriter(fin, "UTF-8" ));
+				br.write(fileContent.toString());
+				br.close();
 				logger.info("before update hadoop params:" + hadoopParams);
 				Task t = taskList.get(0);
 				updateHadoopParams(t, hadoopParams);

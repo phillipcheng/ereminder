@@ -37,8 +37,8 @@ public class NasdaqTestStockConfig {
 	//public static final String[] Test_D1_Stocks = new String[]{"baba", "goog"};
 	//public static final String[] Test_D3_Stocks = new String[]{"baba", "goog", "bidu"};
 
-	public static final String[] Test_D1_Stocks = new String[]{"BKMU"};
-	public static final String[] Test_D3_Stocks = new String[]{"BKMU"};
+	public static final String[] Test_D1_Stocks = new String[]{"JD","BABA"};
+	public static final String[] Test_D3_Stocks = Test_D1_Stocks;
 
 	public static String[] testAllConf = (String[]) ArrayUtils.addAll(NasdaqStockConfig.quoteConfs, NasdaqStockConfig.INCOME_STATEMENT);
 }

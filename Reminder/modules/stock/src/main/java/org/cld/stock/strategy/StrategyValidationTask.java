@@ -19,10 +19,12 @@ import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.hadoop.CrawlTaskMapper;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
+import org.cld.stock.strategy.SelectStrategy.byDayType;
 import org.cld.stock.trade.StockOrder;
 import org.cld.stock.trade.StockOrder.*;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
+import org.cld.util.DateTimeUtil;
 import org.cld.stock.trade.TradeSimulator;
 
 public class StrategyValidationTask extends Task implements Serializable{
@@ -30,23 +32,21 @@ public class StrategyValidationTask extends Task implements Serializable{
 	private static Logger logger =  LogManager.getLogger(StrategyValidationTask.class);
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	public static SimpleDateFormat detailSdf = new SimpleDateFormat("yyyyMMddhhmmss");
-	private static int validateTopN=10;
 	
 	private SelectStrategy scs;
 	private SellStrategy sls;
 	private Date startDate;
-	private String outputDir;
 	private String marketBaseId;
 	
 	public StrategyValidationTask(){
 	}
 	
-	public StrategyValidationTask(SelectStrategy scs, SellStrategy sls, Date startDate, String outputDir, String marketBaseId){
+	public StrategyValidationTask(SelectStrategy scs, SellStrategy sls, Date startDate, String marketBaseId){
 		this.scs = scs;
 		this.sls = sls;
 		this.startDate = startDate;
-		this.outputDir = outputDir;
-		this.marketBaseId = marketBaseId;genId();
+		this.marketBaseId = marketBaseId;
+		genId();
 	}
 	
 	@Override
@@ -55,37 +55,6 @@ public class StrategyValidationTask extends Task implements Serializable{
 		this.setId(id);
 		return this.getId();
 	}
-	
-	public SelectStrategy getScs() {
-		return scs;
-	}
-	public void setScs(SelectStrategy scs) {
-		this.scs = scs;
-	}
-	public SellStrategy getSls() {
-		return sls;
-	}
-	public void setSls(SellStrategy sls) {
-		this.sls = sls;
-	}
-	public Date getStartDate() {
-		return startDate;
-	}
-	public void setStartDate(Date startDate) {
-		this.startDate = startDate;
-	}
-	public String getOutputDir() {
-		return outputDir;
-	}
-	public void setOutputDir(String outputDir) {
-		this.outputDir = outputDir;
-	}
-	public String getMarketBaseId() {
-		return marketBaseId;
-	}
-	public void setMarketBaseId(String marketBaseId) {
-		this.marketBaseId = marketBaseId;
-	}
 
 	@Override
 	public boolean hasOutput(){
@@ -93,8 +62,13 @@ public class StrategyValidationTask extends Task implements Serializable{
 	}
 	
 	@Override
+	public boolean hasMultipleOutput(){
+		return true;
+	}
+	
+	@Override
 	public String getOutputDir(Map<String, Object> paramMap){
-		return String.format("%s/reduce/", this.outputDir);
+		return String.format("%s/reduce/", scs.getOutputDir());
 	}
 	
 	@Override
@@ -105,9 +79,13 @@ public class StrategyValidationTask extends Task implements Serializable{
 			Date sd = startDate;
 			StockConfig sc = StockUtil.getStockConfig(marketBaseId);
 			//valid one round
-			List<String> stockidList = scs.select(cconf, scs, sdf.format(sd));//using data before and including sd
+			List<String> stockidList = scs.select(cconf, sd, sc);//using data before and including sd
 			Map<String, List<StockOrder>> map = new HashMap<String, List<StockOrder>>();
-			int stockNum = stockidList.size()>validateTopN ? validateTopN:stockidList.size();
+			int stockNum = stockidList.size()>scs.getLimit() ? scs.getLimit():stockidList.size();
+			Date submitDt = sd;
+			if (scs.getDayType()==byDayType.byCalendarDay){
+				submitDt = StockUtil.getNextOpenDay(DateTimeUtil.yesterday(sd), sc.getHolidays());
+			}
 			for (int i=0; i<stockNum; i++){
 				String stockid = stockidList.get(i);
 				List<StockOrder> sol = new ArrayList<StockOrder>();
@@ -115,22 +93,26 @@ public class StrategyValidationTask extends Task implements Serializable{
 				StockOrder marketBuyOrder = new StockOrder();
 				marketBuyOrder.setAction(ActionType.buy);
 				marketBuyOrder.setOrderType(OrderType.market);
-				marketBuyOrder.setSubmitTime(sd);
+				marketBuyOrder.setSubmitTime(submitDt);
 				marketBuyOrder.setDuration(sls.getHoldDuration());//TODO
 				sol.add(marketBuyOrder);
 				
-				StockOrder limitSellOrder = new StockOrder();
-				limitSellOrder.setAction(ActionType.sell);
-				limitSellOrder.setOrderType(OrderType.limit);
-				limitSellOrder.setLimitPercentage(sls.getLimitPercentage());
-				limitSellOrder.setPairOrderId(marketBuyOrder.getOrderId());
-				sol.add(limitSellOrder);
+				if (sls.getLimitPercentage()!=0){
+					StockOrder limitSellOrder = new StockOrder();
+					limitSellOrder.setAction(ActionType.sell);
+					limitSellOrder.setOrderType(OrderType.limit);
+					limitSellOrder.setLimitPercentage(sls.getLimitPercentage());
+					limitSellOrder.setPairOrderId(marketBuyOrder.getOrderId());
+					sol.add(limitSellOrder);
+				}
 				
-				StockOrder limitTrailSellOrder = new StockOrder();
-				limitTrailSellOrder.setAction(ActionType.sell);
-				limitTrailSellOrder.setOrderType(OrderType.stoptrailingpercentage);
-				limitTrailSellOrder.setIncrementPercent(sls.getStopTrailingPercentage());
-				sol.add(limitTrailSellOrder);
+				if (sls.getStopTrailingPercentage()!=0){
+					StockOrder limitTrailSellOrder = new StockOrder();
+					limitTrailSellOrder.setAction(ActionType.sell);
+					limitTrailSellOrder.setOrderType(OrderType.stoptrailingpercentage);
+					limitTrailSellOrder.setIncrementPercent(sls.getStopTrailingPercentage());
+					sol.add(limitTrailSellOrder);
+				}
 				
 				StockOrder forceCleanSellOrder = new StockOrder();
 				forceCleanSellOrder.setAction(ActionType.sell);
@@ -199,20 +181,56 @@ public class StrategyValidationTask extends Task implements Serializable{
 	}
 	
 	public static String[] launch(String propfile, CrawlConf cconf, String marketBaseId, SelectStrategy scs, SellStrategy sls, 
-			Date startDate, Date endDate, String outputDir) {
+			Date startDate, Date endDate) {
 		StockConfig sc = StockUtil.getStockConfig(marketBaseId);
 		Date sd = startDate;
 		List<Task> tl = new ArrayList<Task>();
-		if (!StockUtil.isOpenDay(startDate, sc.getHolidays())){
-			sd = StockUtil.getNextOpenDay(startDate, sc.getHolidays());
+		if (scs.getDayType()==byDayType.byTradingDay){
+			if (!StockUtil.isOpenDay(startDate, sc.getHolidays())){
+				sd = StockUtil.getNextOpenDay(startDate, sc.getHolidays());
+			}
+		}else if (scs.getDayType()==byDayType.byCalendarDay){
+			sd = startDate;
+		}else{
+			logger.error("unsupported byDayType: " + scs.getDayType());
 		}
+		
 		while(sd.before(endDate)){
-			Task t = new StrategyValidationTask(scs, sls, sd, outputDir, marketBaseId);
+			Task t = new StrategyValidationTask(scs, sls, sd, marketBaseId);
 			tl.add(t);
-			sd = StockUtil.getNextOpenDay(sd, sc.getHolidays());
+			if (scs.getDayType()==byDayType.byTradingDay){
+				sd = StockUtil.getNextOpenDay(sd, sc.getHolidays());
+			}else if (scs.getDayType()==byDayType.byCalendarDay){
+				sd = DateTimeUtil.tomorrow(sd);
+			}
 		}
 		String taskName = String.format("%s_%s", StrategyValidationTask.class.getSimpleName(), sdf.format(startDate));
 		String jobId = submitTasks(taskName, propfile, tl, cconf);
 		return new String[]{jobId};
+	}
+	
+	public SelectStrategy getScs() {
+		return scs;
+	}
+	public void setScs(SelectStrategy scs) {
+		this.scs = scs;
+	}
+	public SellStrategy getSls() {
+		return sls;
+	}
+	public void setSls(SellStrategy sls) {
+		this.sls = sls;
+	}
+	public Date getStartDate() {
+		return startDate;
+	}
+	public void setStartDate(Date startDate) {
+		this.startDate = startDate;
+	}
+	public String getMarketBaseId() {
+		return marketBaseId;
+	}
+	public void setMarketBaseId(String marketBaseId) {
+		this.marketBaseId = marketBaseId;
 	}
 }

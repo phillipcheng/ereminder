@@ -24,7 +24,26 @@
 			<csvtransform transformClass="org.cld.etl.csv.SpreadColTableAsCSV" outputType="byId">
 				<ops>
 					<expression>
-						[^%]+[^0-9]+([0-9]+)%[^0-9]+([0-9]+)%.*|[^%]+[^0-9]+([0-9]+)%.*
+						function getPercentage(str) {
+							regexp = /[^%0-9]+([0-9\.]+)%/;
+							match = regexp.exec(str);
+							var total = 0;
+							var count = 0;
+							while (match !== null) {
+								count++;
+								var m = match[1].toString();
+								total += parseFloat(m);
+								str = str.substring (str.indexOf(m) + m.length + 1, str.length);
+								match = regexp.exec(str);
+							}
+							if (count>0){
+								return total/count;
+							}else{
+								return 0;
+							}
+						}
+						rarr = arr.split(',');
+						rarr.join(',') + ',' + getPercentage(rarr[3].toString()).toString()
 					</expression>
 				</ops>
 			</csvtransform>

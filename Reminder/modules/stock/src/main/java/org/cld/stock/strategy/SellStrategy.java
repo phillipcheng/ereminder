@@ -2,9 +2,13 @@ package org.cld.stock.strategy;
 
 //for abstract class json mapping
 public class SellStrategy {
-	int holdDuration;
-	float limitPercentage;//% unit
-	float stopTrailingPercentage;//% unit
+	public static String KEY_SELLS_DURATION="sls.duration";
+	public static String KEY_SELLS_LIMIT_PERCENTAGE="sls.limitPercentage";
+	public static String KEY_SELLS_TRAIL_PERCENTAGE="sls.stopTrailingPercentage";
+
+	private int holdDuration=0;
+	private float limitPercentage=0;//% unit
+	private float stopTrailingPercentage=0;//% unit
 	
 	public SellStrategy(){
 	}

@@ -248,7 +248,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 				boolean needCrawl = true;
 				Product lastProduct = null;
 				String prdId = ProductListAnalyzeUtil.getInternalId(startUrl, task, pbpTemplate);
-				if (CrawlConf.crawlDsManager_Value_Hbase.equals(getDsm(bdt, cconf))){
+				if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm())){
 					//check any update
 					if (prdId!=null && !"".equals(prdId)){			
 						if (dsManager!=null){
