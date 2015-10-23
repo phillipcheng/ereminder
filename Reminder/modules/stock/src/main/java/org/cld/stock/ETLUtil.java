@@ -1,6 +1,5 @@
 package org.cld.stock;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -10,7 +9,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -87,7 +85,8 @@ public class ETLUtil {
 		}
 	}
 	
-	public static boolean needOverwrite(CrawlConf cconf, String cmdName){//for dynamic and no update-date field data
+	public static boolean needOverwrite(CrawlConf cconf, String cmdName){
+		//for dynamic cmd, which can generate duplicated contents, for example daily run but generate monthly data
 		List<Task> tl = cconf.setUpSite(cmdName+".xml", null);
 		if (tl.size()==1 && (tl.get(0) instanceof CrawlTaskConf)){
 			CrawlTaskConf ct = (CrawlTaskConf)tl.get(0);
@@ -148,7 +147,7 @@ public class ETLUtil {
 	public static Date getIPODateByStockId(StockConfig sc, String marketId, String stockId, CrawlConf cconf, String cmd){
 		//get the IPODate
 		if (ipoCache.size()==0){
-			ipoCache = StockPersistMgr.getStockIPOData(sc, cconf);
+			ipoCache = StockPersistMgr.getStockIPOData(sc, cconf.getBigdbconf());
 		}
 		//we need trimmed stockid for ipoCache
 		if (Arrays.asList(sc.getUntrimmedStockIdCmds()).contains(cmd)){
@@ -337,7 +336,7 @@ public class ETLUtil {
 	private static String[] runTaskByDate(StockConfig sc, Date startDate, Date endDate, CrawlConf cconf, String propfile, Task t, 
 			Map<String, Object> params, String cmd, boolean sync, String mapperClassName, String reducerClassName){
 		logger.info("into runTaskByDate");
-		Date luDate = StockPersistMgr.getMarketLUDateByCmd(sc, cmd, cconf);
+		Date luDate = StockPersistMgr.getMarketLUDateByCmd(sc, cmd, cconf.getBigdbconf());
 		Date sd = null;
 		if (luDate!=null){
 			sd = DateTimeUtil.tomorrow(luDate);
@@ -382,7 +381,7 @@ public class ETLUtil {
 		String[] ids = getStockIdByMarketId(sc, marketId, cconf, cmd);
 		Map<String, Date> stockLUMap = new HashMap<String, Date>();
 		if (needCheckDB(sc, cconf, cmd)){
-			stockLUMap = StockPersistMgr.getStockLUDateByCmd(sc, cmd, cconf);
+			stockLUMap = StockPersistMgr.getStockLUDateByCmd(sc, cmd, cconf.getBigdbconf());
 		}
 		
 		List<Task> tlist = new ArrayList<Task>();
@@ -468,7 +467,7 @@ public class ETLUtil {
 		logger.info("into runTaskByStock");
 		Map<String, Date> stockLUMap = new HashMap<String, Date>();
 		if (needCheckDB(sc, cconf, cmd)){
-			stockLUMap = StockPersistMgr.getStockLUDateByCmd(sc, cmd, cconf);
+			stockLUMap = StockPersistMgr.getStockLUDateByCmd(sc, cmd, cconf.getBigdbconf());
 		}
 		List<Task> tlist = new ArrayList<Task>();
 		List<String> allIds = Arrays.asList(getStockIdByMarketId(sc, marketId, cconf, cmd));
@@ -541,7 +540,7 @@ public class ETLUtil {
 		List<Task> tlist = new ArrayList<Task>();
 		Map<String, Date> stockLUMap = new HashMap<String, Date>();
 		if (needCheckDB(sc, cconf, cmd)){
-			stockLUMap = StockPersistMgr.getStockLUDateByCmd(sc, cmd, cconf);
+			stockLUMap = StockPersistMgr.getStockLUDateByCmd(sc, cmd, cconf.getBigdbconf());
 		}
 		int[] eyq = DateTimeUtil.getYearQuarter(endDate);
 		int endYear = eyq[0];
@@ -580,7 +579,7 @@ public class ETLUtil {
 			int[] yq = DateTimeUtil.getYearQuarter(sd);
 			int startYear = yq[0];
 			int startQuarter = yq[1];
-		
+			String strSd = sc.getSdf().format(sd);
 			if (startYear<endYear||
 					(startYear==endYear&&startQuarter<=endQuarter)){//we have quarter need to work on
 				if (out==OpenUrlType.byYearAndQuarter){
@@ -610,6 +609,7 @@ public class ETLUtil {
 							t1.putParam("year", year);
 							t1.putParam("quarter", quarter);
 							t1.putAllParams(params);
+							t1.putParam(AbstractCrawlItemToCSV.FIELD_NAME_STARTDATE, strSd);//overwrite startDate
 							updateMarketIdParam(t1);
 							tlist.add(t1);
 						}
@@ -626,6 +626,7 @@ public class ETLUtil {
 							t1.putParam("quarter", 0);//any quarter
 						}
 						t1.putAllParams(params);
+						t1.putParam(AbstractCrawlItemToCSV.FIELD_NAME_STARTDATE, strSd);//overwrite startDate
 						updateMarketIdParam(t1);
 						tlist.add(t1);
 						
@@ -636,6 +637,7 @@ public class ETLUtil {
 					t1.putParam("year", startYear);
 					t1.putParam("quarter", startQuarter);
 					t1.putAllParams(params);
+					t1.putParam(AbstractCrawlItemToCSV.FIELD_NAME_STARTDATE, strSd);//overwrite startDate
 					updateMarketIdParam(t1);
 					tlist.add(t1);
 				}

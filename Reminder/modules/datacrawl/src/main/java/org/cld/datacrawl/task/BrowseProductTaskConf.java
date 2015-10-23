@@ -370,6 +370,8 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 				this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
 				browseProduct(this, cconf, getStoreId(), this.catId, getName(), getParamMap(), true, getStartDate(), true, 
 						btt, hdfsByIdOutputMap, context, mos);
+			}catch(Throwable t){
+				logger.error("", t);
 			}finally{
 				for (BufferedWriter br: hdfsByIdOutputMap.values()){
 					try{
@@ -398,9 +400,16 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 			if (csvtrans!=null){//using the default
 				//raw/[marketId]_[endDate]/storeid/[year]_[quarter]
 				StringBuffer od = new StringBuffer("raw/");
-				od.append(paramMap.get(AbstractCrawlItemToCSV.FN_MARKETID));
+				String marketId = (String) paramMap.get(AbstractCrawlItemToCSV.FN_MARKETID);
+				String endDate = (String) paramMap.get(AbstractCrawlItemToCSV.FIELD_NAME_ENDDATE);
+				//remove the ending endDate_delta
+				String deltaSuffix = "_" + endDate + "_delta";
+				if (marketId.endsWith(deltaSuffix)){
+					marketId = marketId.substring(0, marketId.indexOf(deltaSuffix));
+				}
+				od.append(marketId);
 				od.append("_");
-				od.append(paramMap.get(AbstractCrawlItemToCSV.FIELD_NAME_ENDDATE));
+				od.append(endDate);
 				od.append("/");
 				od.append(this.getStoreId());
 				od.append("/");

@@ -33,7 +33,7 @@ public class StockCrawlScheduler {
 	        JobDetail sinaStockCrawl = JobBuilder.newJob(SinaCrawlJob.class).withIdentity(SinaCrawlJob.class.getSimpleName(), "group2").build();
 	        Trigger sinaStockTrigger = TriggerBuilder.newTrigger().
 	        		withIdentity("trigger2", "group2").
-	        		withSchedule(CronScheduleBuilder.cronSchedule("0 10 15 ? * 2-6").inTimeZone(TimeZone.getTimeZone("CTT"))).
+	        		withSchedule(CronScheduleBuilder.cronSchedule("0 10 20 ? * 2-6").inTimeZone(TimeZone.getTimeZone("CTT"))).
 	        		build();
 	        scheduler.scheduleJob(sinaStockCrawl, sinaStockTrigger);
 	        

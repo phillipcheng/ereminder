@@ -9,7 +9,7 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlConf;
+import org.cld.datastore.DBConnConf;
 import org.cld.stock.CandleQuote;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
@@ -141,7 +141,7 @@ public class TradeSimulator {
 	 * @param cconf
 	 * @return
 	 */
-	public static void submitDailyOrder(Map<String, List<StockOrder>> soMap, CrawlConf cconf, StockConfig sc){
+	public static void submitDailyOrder(Map<String, List<StockOrder>> soMap, DBConnConf dbconf, StockConfig sc){
 		int i=0;
 		StockOrder soSample = null;
 		List<String> sidlist = new ArrayList<String>();
@@ -156,7 +156,7 @@ public class TradeSimulator {
 			Date submitTime = soSample.getSubmitTime();//submit at open of the trading day
 			Date oneDayBeforeSubmitTime = DateTimeUtil.yesterday(submitTime);
 			Date ed = StockUtil.getNextOpenDay(submitTime, sc.getHolidays(), soSample.getDuration());
-			Map<String, List<CandleQuote>> cqMap = StockPersistMgr.getFQDailyQuote(sc, cconf, sidlist, oneDayBeforeSubmitTime, ed);
+			Map<String, List<CandleQuote>> cqMap = StockPersistMgr.getFQDailyQuote(sc, dbconf, sidlist, oneDayBeforeSubmitTime, ed);
 			Map<String, StockOrder> executedOrder = new HashMap<String, StockOrder>(); //
 			List<String> removeStockIds = new ArrayList<String>();
 			for (String stockid:soMap.keySet()){

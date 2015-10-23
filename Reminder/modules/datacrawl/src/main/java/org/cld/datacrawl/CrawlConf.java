@@ -22,6 +22,7 @@ import org.cld.datacrawl.mgr.ListAnalyze;
 import org.cld.datacrawl.mgr.ProductAnalyze;
 import org.cld.datacrawl.mgr.ProductListAnalyze;
 import org.cld.datastore.DBConf;
+import org.cld.datastore.DBConnConf;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.Product;
 import org.cld.datastore.entity.SiteConf;
@@ -62,11 +63,14 @@ public class CrawlConf implements AppConf {
 		public static final String crawlDsManager_Value_Hbase = "hbase";
 		public static final String crawlDsManager_Value_Hdfs = "hdfs";
 	public static final String crawlDBConnectionUrl_Key = "crawl.db.connection.url";
-	//result data manager
-	public static final String resultDmDriver_Key="result.dm.driver";
-	public static final String resultDmUrl_Key="result.dm.url";
-	public static final String resultDmUser_Key="result.dm.user";
-	public static final String resultDmPass_Key="result.dm.pass";
+	
+	public static final String dsDriver_Key="driver";
+	public static final String dsUrl_Key="url";
+	public static final String dsUser_Key="user";
+	public static final String dsPass_Key="pass";
+	
+	public static final String DS_BIG="big.dm.";
+	public static final String DS_SMALL="small.dm.";
 	
 	public static final String systemProductClassName="org.cld.datastore.entity.Product";
 	public static final String systemProductName="product";
@@ -96,10 +100,8 @@ public class CrawlConf implements AppConf {
 	//type to dsm instance, //TODO, name to dsm instance, same type can be multiple different dsm
 	private Map<String, DataStoreManager> dsmMap = new HashMap<String, DataStoreManager>();
 
-	private String resultDmDriver;
-	private String resultDmUrl;
-	private String resultDmUser;
-	private String resultDmPass;
+	private DBConnConf bigdbconf = new DBConnConf();
+	private DBConnConf smalldbconf = new DBConnConf();
 	
 	private Map<String, String> params = new HashMap<String, String>();//store all the parameters in name-value pair for toString
 	
@@ -325,14 +327,22 @@ public class CrawlConf implements AppConf {
 					}
 				}else if (crawlDBConnectionUrl_Key.equals(key)){
 					crawlDBConnectionUrl = strVal;
-				}else if (resultDmDriver_Key.equals(key)){
-					resultDmDriver = strVal;
-				}else if (resultDmUrl_Key.equals(key)){
-					resultDmUrl = strVal;
-				}else if (resultDmUser_Key.equals(key)){
-					resultDmUser = strVal;
-				}else if (resultDmPass_Key.equals(key)){
-					resultDmPass = strVal;
+				}else if ( (DS_BIG + dsDriver_Key).equals(key)){
+					bigdbconf.setDriver(strVal);
+				}else if ((DS_BIG + dsUrl_Key).equals(key)){
+					bigdbconf.setUrl(strVal);
+				}else if ((DS_BIG + dsUser_Key).equals(key)){
+					bigdbconf.setUser(strVal);
+				}else if ((DS_BIG + dsPass_Key).equals(key)){
+					bigdbconf.setPass(strVal);
+				}else if ( (DS_SMALL + dsDriver_Key).equals(key)){
+					smalldbconf.setDriver(strVal);
+				}else if ((DS_SMALL + dsUrl_Key).equals(key)){
+					smalldbconf.setUrl(strVal);
+				}else if ((DS_SMALL + dsUser_Key).equals(key)){
+					smalldbconf.setUser(strVal);
+				}else if ((DS_SMALL + dsPass_Key).equals(key)){
+					smalldbconf.setPass(strVal);
 				}else if (productType_Key.equals(key)){
 					List<Object> listVal = properties.getList(key);
 					for (int i=0;  i<listVal.size(); i++){
@@ -568,37 +578,6 @@ public class CrawlConf implements AppConf {
 	public void setWaitTime(int waitTime) {
 		this.waitTime = waitTime;
 	}
-	public String getResultDmDriver() {
-		return resultDmDriver;
-	}
-
-	public void setResultDmDriver(String resultDmDriver) {
-		this.resultDmDriver = resultDmDriver;
-	}
-
-	public String getResultDmUrl() {
-		return resultDmUrl;
-	}
-
-	public void setResultDmUrl(String resultDmUrl) {
-		this.resultDmUrl = resultDmUrl;
-	}
-
-	public String getResultDmUser() {
-		return resultDmUser;
-	}
-
-	public void setResultDmUser(String resultDmUser) {
-		this.resultDmUser = resultDmUser;
-	}
-
-	public String getResultDmPass() {
-		return resultDmPass;
-	}
-
-	public void setResultDmPass(String resultDmPass) {
-		this.resultDmPass = resultDmPass;
-	}
 	
 	public List<String> getCrawlDsManagerValue() {
 		return crawlDsManagerValue;
@@ -606,5 +585,21 @@ public class CrawlConf implements AppConf {
 
 	public void setCrawlDsManagerValue(List<String> crawlDsManagerValue) {
 		this.crawlDsManagerValue = crawlDsManagerValue;
+	}
+
+	public DBConnConf getBigdbconf() {
+		return bigdbconf;
+	}
+
+	public void setBigdbconf(DBConnConf bigdbconf) {
+		this.bigdbconf = bigdbconf;
+	}
+
+	public DBConnConf getSmalldbconf() {
+		return smalldbconf;
+	}
+
+	public void setSmalldbconf(DBConnConf smalldbconf) {
+		this.smalldbconf = smalldbconf;
 	}
 }

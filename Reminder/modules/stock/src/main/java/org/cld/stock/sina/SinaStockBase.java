@@ -24,7 +24,7 @@ public class SinaStockBase extends StockBase{
 	}
 	
 	public SinaStockBase(String propFile, String marketId, Date sd, Date ed){
-		super(propFile, marketId, sd, ed, StockUtil.SINA_STOCK_BASE);
+		super(propFile, StockUtil.SINA_STOCK_BASE, marketId, sd, ed, StockUtil.SINA_STOCK_BASE);
 	}
 
 	public String[] run_tradedetail_checkdownload(){

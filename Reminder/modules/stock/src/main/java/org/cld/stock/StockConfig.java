@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,8 +50,8 @@ public abstract class StockConfig {
 	public abstract Set<Date> getHolidays();
 	public abstract float getDailyLimit();//>0 means has price limit n% up and down, if<=0 no limit
 	
-	//db
-	public abstract String[] getTablesByCmd(String cmd);
+	//return the tables this cmd generates, table to file-prefix
+	public abstract Map<String, String> getTablesByCmd(String cmd);
 	public abstract JDBCMapper getDailyQuoteTableMapper();
 	public abstract JDBCMapper getFQDailyQuoteTableMapper();
 	
@@ -61,22 +62,25 @@ public abstract class StockConfig {
 	
 	//last update date per stock by cmd
 	public String getStockLUDateByCmd(String cmd){
-		String[] tables = getTablesByCmd(cmd);
+		Set<String> tables = getTablesByCmd(cmd).keySet();
 		if (tables == null){
 			logger.error(String.format("tables for stock last update are not defined for cmd: %s", cmd));
 			return null;
 		}
 		String sql = null;
-		if (tables.length==1){
-			sql = String.format("select stockid, max(dt) from %s group by stockid", tables[0]);
+		if (tables.size()==1){
+			sql = String.format("select stockid, max(dt) from %s group by stockid", tables.iterator().next());
 		}else{
 			StringBuffer sb = new StringBuffer("select stockid, max(ludt) from (");
-			for (int i=0; i<tables.length; i++){
-				String table = tables[i];
+			int i=0;
+			Iterator<String> it = tables.iterator();
+			while (it.hasNext()){
+				String table = it.next();
 				if (i>0){
 					sb.append(" union ");
 				}
 				sb.append(String.format("select stockid, max(dt) as ludt from %s group by stockid", table));
+				i++;
 			}
 			sb.append(") as stocklu group by stockid");
 			sql = sb.toString();
@@ -87,22 +91,25 @@ public abstract class StockConfig {
 	
 	//last update date per stock by cmd
 	public String getMarketLUDateByCmd(String cmd){
-		String[] tables = getTablesByCmd(cmd);
+		Set<String> tables = getTablesByCmd(cmd).keySet();
 		if (tables == null){
 			logger.error(String.format("tables for market last update are not defined for cmd: %s", cmd));
 			return null;
 		}
 		String sql = null;
-		if (tables.length==1){
-			sql = String.format("select max(dt) from %s", tables[0]);
+		if (tables.size()==1){
+			sql = String.format("select max(dt) from %s", tables.iterator().next());
 		}else{
 			StringBuffer sb = new StringBuffer("select max(ludt) from (");
-			for (int i=0; i<tables.length; i++){
-				String table = tables[i];
+			int i=0;
+			Iterator<String> it = tables.iterator();
+			while (it.hasNext()){
+				String table = it.next();
 				if (i>0){
 					sb.append(" union ");
 				}
 				sb.append(String.format("select max(dt) as ludt from %s", table));
+				i++;
 			}
 			sb.append(") as marketlu");
 			sql = sb.toString();

@@ -87,27 +87,67 @@ public class NasdaqStockConfig extends StockConfig{
 	public static final String MERGE_ROOT="/reminder/items/merge";
 	public static final String CHECK_ROOT="/reminder/items/check";
 	
-	public static final Map<String, String[]> cmdTableMap = new HashMap<String, String[]>();
+	public static final Map<String, Map<String,String>> cmdTableMap = new HashMap<String, Map<String,String>>();
 	static{
 		//corp
-		cmdTableMap.put(STOCK_IPO, new String[]{"NasdaqIPO"});
+		Map<String, String> m = new HashMap<String,String>();
+		m.put("NasdaqIPO","part");
+		cmdTableMap.put(STOCK_IPO, m);
+		
 		//fr
-		cmdTableMap.put(BALANCE_SHEET, new String[]{"NasdaqFrQuarterBalanceSheet"});
-		cmdTableMap.put(INCOME_STATEMENT, new String[]{"NasdaqFrQuarterIncomeStatement"});
-		cmdTableMap.put(CASH_FLOW, new String[]{"NasdaqFrQuarterCashFlow"});
-		cmdTableMap.put(REVENUE, new String[]{"NasdaqFrQuarterRevenue"});
+		m = new HashMap<String,String>();
+		m.put("NasdaqFrQuarterBalanceSheet","part");
+		cmdTableMap.put(BALANCE_SHEET, m);
+		
+		m = new HashMap<String,String>();
+		m.put("NasdaqFrQuarterIncomeStatement","part");
+		cmdTableMap.put(INCOME_STATEMENT, m);
+		
+		m = new HashMap<String,String>();
+		m.put("NasdaqFrQuarterCashFlow","part");
+		cmdTableMap.put(CASH_FLOW, m);
+		
+		m = new HashMap<String,String>();
+		m.put("NasdaqFrQuarterRevenue","part");
+		cmdTableMap.put(REVENUE,m);
+		
 		//market(quote)
-		cmdTableMap.put(QUOTE_HISTORY, new String[]{"NasdaqQuoteHistory"});
-		cmdTableMap.put(QUOTE_PREMARKET, new String[]{"NasdaqPremarket"});
-		cmdTableMap.put(QUOTE_AFTERHOURS, new String[]{"NasdaqAfterhours"});
-		cmdTableMap.put(QUOTE_TICK, new String[]{"NasdaqTick"});
-		cmdTableMap.put(QUOTE_SHORT_INTEREST, new String[]{"NasdaqShortInterest"});
-		cmdTableMap.put(QUOTE_FQ_HISTORY, new String[]{"NasdaqFqHistory"});
+		m = new HashMap<String,String>();
+		m.put("NasdaqQuoteHistory","part");
+		cmdTableMap.put(QUOTE_HISTORY,m);
+		
+		m = new HashMap<String,String>();
+		m.put("NasdaqPremarket","part");
+		cmdTableMap.put(QUOTE_PREMARKET,m);
+		
+		m = new HashMap<String,String>();
+		m.put("NasdaqAfterhours","part");
+		cmdTableMap.put(QUOTE_AFTERHOURS,m);
+		
+		m = new HashMap<String,String>();
+		m.put("NasdaqTick","part");
+		cmdTableMap.put(QUOTE_TICK,m);
+		
+		m = new HashMap<String,String>();
+		m.put("NasdaqShortInterest","part");
+		cmdTableMap.put(QUOTE_SHORT_INTEREST,m);
+		
+		m = new HashMap<String,String>();
+		m.put("NasdaqFqHistory","part");
+		cmdTableMap.put(QUOTE_FQ_HISTORY, m);
+		
 		//stock holder
-		cmdTableMap.put(HOLDING_INSTITUTIONAL, new String[]{"NasdaqHoldingInstitutional"});
-		cmdTableMap.put(HOLDING_INSIDERS, new String[]{"NasdaqHoldingInsiders"});
+		m = new HashMap<String,String>();
+		m.put("NasdaqHoldingInstitutional","part");
+		cmdTableMap.put(HOLDING_INSTITUTIONAL, m);
+		m = new HashMap<String,String>();
+		m.put("NasdaqHoldingInsiders","part");
+		cmdTableMap.put(HOLDING_INSIDERS, m);
+		
 		//issue
-		cmdTableMap.put(DIVIDEND_HISTORY, new String[]{"NasdaqDividendHistory"});
+		m = new HashMap<String,String>();
+		m.put("NasdaqDividendHistory","part");
+		cmdTableMap.put(DIVIDEND_HISTORY, m);
 	}
 	
 	public static String[] corpConfs = new String[]{
@@ -196,7 +236,7 @@ public class NasdaqStockConfig extends StockConfig{
 	}
 	@Override
 	public String[] getSlowCmds() {
-		return null;
+		return new String[]{QUOTE_TICK, QUOTE_PREMARKET, QUOTE_AFTERHOURS};
 	}
 	@Override
 	public Map<String, String> getPairedMarket() {//no pair market
@@ -216,7 +256,7 @@ public class NasdaqStockConfig extends StockConfig{
 		return new String[]{QUOTE_TICK, QUOTE_PREMARKET, QUOTE_AFTERHOURS, HOLDING_SUMMARY, HOLDING_TOP5};
 	}
 	@Override
-	public String[] getTablesByCmd(String cmd) {
+	public Map<String, String> getTablesByCmd(String cmd) {
 		return cmdTableMap.get(cmd);
 	}
 	@Override

@@ -17,12 +17,12 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.hadoop.CrawlTaskMapper;
+import org.cld.datastore.DBConnConf;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.strategy.SelectStrategy.byDayType;
 import org.cld.stock.trade.StockOrder;
 import org.cld.stock.trade.StockOrder.*;
-import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.DateTimeUtil;
 import org.cld.stock.trade.TradeSimulator;
@@ -37,15 +37,17 @@ public class StrategyValidationTask extends Task implements Serializable{
 	private SellStrategy sls;
 	private Date startDate;
 	private String marketBaseId;
+	private DBConnConf dbconf;
 	
 	public StrategyValidationTask(){
 	}
 	
-	public StrategyValidationTask(SelectStrategy scs, SellStrategy sls, Date startDate, String marketBaseId){
+	public StrategyValidationTask(SelectStrategy scs, SellStrategy sls, Date startDate, String marketBaseId, DBConnConf dbconf){
 		this.scs = scs;
 		this.sls = sls;
 		this.startDate = startDate;
 		this.marketBaseId = marketBaseId;
+		this.setDbconf(dbconf);
 		genId();
 	}
 	
@@ -75,11 +77,10 @@ public class StrategyValidationTask extends Task implements Serializable{
 	public void runMyselfAndOutput(Map<String, Object> params, 
 			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
 		try{
-			CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
 			Date sd = startDate;
 			StockConfig sc = StockUtil.getStockConfig(marketBaseId);
 			//valid one round
-			List<String> stockidList = scs.select(cconf, sd, sc);//using data before and including sd
+			List<String> stockidList = scs.select(dbconf, sd, sc);//using data before and including sd
 			Map<String, List<StockOrder>> map = new HashMap<String, List<StockOrder>>();
 			int stockNum = stockidList.size()>scs.getLimit() ? scs.getLimit():stockidList.size();
 			Date submitDt = sd;
@@ -91,6 +92,7 @@ public class StrategyValidationTask extends Task implements Serializable{
 				List<StockOrder> sol = new ArrayList<StockOrder>();
 				
 				StockOrder marketBuyOrder = new StockOrder();
+				marketBuyOrder.setOrderId(stockid);
 				marketBuyOrder.setAction(ActionType.buy);
 				marketBuyOrder.setOrderType(OrderType.market);
 				marketBuyOrder.setSubmitTime(submitDt);
@@ -99,6 +101,7 @@ public class StrategyValidationTask extends Task implements Serializable{
 				
 				if (sls.getLimitPercentage()!=0){
 					StockOrder limitSellOrder = new StockOrder();
+					limitSellOrder.setStockid(stockid);
 					limitSellOrder.setAction(ActionType.sell);
 					limitSellOrder.setOrderType(OrderType.limit);
 					limitSellOrder.setLimitPercentage(sls.getLimitPercentage());
@@ -108,6 +111,7 @@ public class StrategyValidationTask extends Task implements Serializable{
 				
 				if (sls.getStopTrailingPercentage()!=0){
 					StockOrder limitTrailSellOrder = new StockOrder();
+					limitTrailSellOrder.setStockid(stockid);
 					limitTrailSellOrder.setAction(ActionType.sell);
 					limitTrailSellOrder.setOrderType(OrderType.stoptrailingpercentage);
 					limitTrailSellOrder.setIncrementPercent(sls.getStopTrailingPercentage());
@@ -115,13 +119,14 @@ public class StrategyValidationTask extends Task implements Serializable{
 				}
 				
 				StockOrder forceCleanSellOrder = new StockOrder();
+				forceCleanSellOrder.setStockid(stockid);
 				forceCleanSellOrder.setAction(ActionType.sell);
 				forceCleanSellOrder.setOrderType(OrderType.forceclean);
 				sol.add(forceCleanSellOrder);
 				
 				map.put(stockid, sol);
 			}
-			TradeSimulator.submitDailyOrder(map, cconf, sc);
+			TradeSimulator.submitDailyOrder(map, dbconf, sc);
 			for (String stockid:map.keySet()){
 				List<StockOrder> solist = map.get(stockid);
 				List<StockOrder> buySOs = new ArrayList<StockOrder>();
@@ -181,7 +186,7 @@ public class StrategyValidationTask extends Task implements Serializable{
 	}
 	
 	public static String[] launch(String propfile, CrawlConf cconf, String marketBaseId, SelectStrategy scs, SellStrategy sls, 
-			Date startDate, Date endDate) {
+			Date startDate, Date endDate, DBConnConf dbconf) {
 		StockConfig sc = StockUtil.getStockConfig(marketBaseId);
 		Date sd = startDate;
 		List<Task> tl = new ArrayList<Task>();
@@ -196,7 +201,7 @@ public class StrategyValidationTask extends Task implements Serializable{
 		}
 		
 		while(sd.before(endDate)){
-			Task t = new StrategyValidationTask(scs, sls, sd, marketBaseId);
+			Task t = new StrategyValidationTask(scs, sls, sd, marketBaseId, dbconf);
 			tl.add(t);
 			if (scs.getDayType()==byDayType.byTradingDay){
 				sd = StockUtil.getNextOpenDay(sd, sc.getHolidays());
@@ -232,5 +237,13 @@ public class StrategyValidationTask extends Task implements Serializable{
 	}
 	public void setMarketBaseId(String marketBaseId) {
 		this.marketBaseId = marketBaseId;
+	}
+
+	public DBConnConf getDbconf() {
+		return dbconf;
+	}
+
+	public void setDbconf(DBConnConf dbconf) {
+		this.dbconf = dbconf;
 	}
 }

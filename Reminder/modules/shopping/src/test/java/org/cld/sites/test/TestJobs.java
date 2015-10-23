@@ -6,7 +6,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
 import org.cld.datacrawl.test.TestBase;
-import org.cld.etl.fci.HBaseToCSVMapperLauncher;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 
 public class TestJobs extends TestBase{

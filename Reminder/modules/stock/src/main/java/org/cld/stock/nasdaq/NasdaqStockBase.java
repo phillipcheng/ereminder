@@ -15,6 +15,6 @@ public class NasdaqStockBase extends StockBase{
 	}
 	
 	public NasdaqStockBase(String propFile, String marketId, Date sd, Date ed){
-		super(propFile, marketId, sd, ed, StockUtil.NASDAQ_STOCK_BASE);
+		super(propFile, StockUtil.NASDAQ_STOCK_BASE, marketId, sd, ed, StockUtil.NASDAQ_STOCK_BASE);
 	}
 }

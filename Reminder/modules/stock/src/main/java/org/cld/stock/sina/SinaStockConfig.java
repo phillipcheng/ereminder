@@ -342,53 +342,110 @@ public class SinaStockConfig extends StockConfig {
 	public static final int FOUND_DATE_IDX=13;
 	public static final int NAME_CHANGE_HISTORY=41;
 
-	public static final Map<String, String[]> cmdTableMap = new HashMap<String, String[]>();
+	public static final Map<String, Map<String,String>> cmdTableMap = new HashMap<String, Map<String,String>>();
 	static{
 		//corp
-		cmdTableMap.put(SINA_STOCK_CORP_INFO, new String[]{"sinacorpinfo"});
-		cmdTableMap.put(SINA_STOCK_IPO, new String[]{"SinaCorpIPO"});
-		cmdTableMap.put(SINA_STOCK_CORP_MANAGER, new String[]{"sinacorpmanager"});
-		cmdTableMap.put(SINA_STOCK_CORP_RELATED, new String[]{
-				"sinacorprelatedindices", 
-				"sinacorprelatedsecurities", 
-				"sinacorprelatedxis"});
-		cmdTableMap.put(SINA_STOCK_CORP_RELATED_OTHER, new String[]{
-				"sinacorprelatedconcepts",
-				"sinacorprelatedindustries"});
+		Map<String, String> m = new HashMap<String,String>();
+		m.put("SinaCorpInfo","part");
+		cmdTableMap.put(SINA_STOCK_CORP_INFO, m);
+		
+		m = new HashMap<String,String>();
+		m.put("SinaCorpIPO","part");
+		cmdTableMap.put(SINA_STOCK_IPO, m);
+		
+		m = new HashMap<String,String>();
+		m.put("SinaCorpManager","part");
+		cmdTableMap.put(SINA_STOCK_CORP_MANAGER, m);
+		
+		m = new HashMap<String,String>();
+		m.put("SinaCorpRelatedIndices","indices");
+		m.put("SinaCorpRelatedSecurities","securities");
+		m.put("SinaCorpRelatedXis","xis");
+		cmdTableMap.put(SINA_STOCK_CORP_RELATED, m);
+		
+		m = new HashMap<String,String>();
+		m.put("SinaCorpRelatedConcepts","concepts");
+		m.put("SinaCorpRelatedIndustries","industries");
+		cmdTableMap.put(SINA_STOCK_CORP_RELATED_OTHER, m);
 		//fr
-		cmdTableMap.put(SINA_STOCK_FR_QUARTER_BALANCE_SHEET, new String[]{"sinafrbalancesheet"}); //quarterly update
-		cmdTableMap.put(SINA_STOCK_FR_QUARTER_PROFIT_STATEMENT, new String[]{"sinafrprofitstatement"});//quarterly update
-		cmdTableMap.put(SINA_STOCK_FR_QUARTER_CASHFLOW, new String[]{"sinafrcashflow"});//quarterly update
-		cmdTableMap.put(SINA_STOCK_FR_FOOTNOTE, new String[]{//quarterly update
-				"sinafrfootnoteaccount",
-				"sinafrfootnoteinventory",
-				"sinafrfootnoterecievableaging",
-				"sinafrfootnotetax", 
-				"sinafrfootnoteincomeindustry",
-				"sinafrfootnoteincomeproduct",
-				"sinafrfootnoteincomeregion"});
-		cmdTableMap.put(SINA_STOCK_FR_AchieveNotice, new String[]{"sinafrachievenotice"});//daily update
-		cmdTableMap.put(SINA_STOCK_FR_GUIDELINE_YEAR, new String[]{"sinafrguideline"});//quarterly update
-		cmdTableMap.put(SINA_STOCK_FR_ASSETDEVALUE_YEAR, new String[]{"sinafrassetdevalue"});//quarterly update
+		m = new HashMap<String,String>();
+		m.put("SinaFrBalanceSheet","part");
+		cmdTableMap.put(SINA_STOCK_FR_QUARTER_BALANCE_SHEET, m); //quarterly update
+		
+		m = new HashMap<String,String>();
+		m.put("SinaFrProfitStatement","part");
+		cmdTableMap.put(SINA_STOCK_FR_QUARTER_PROFIT_STATEMENT, m);//quarterly update
+		
+		m = new HashMap<String,String>();
+		m.put("SinaFrCashFlow","part");
+		cmdTableMap.put(SINA_STOCK_FR_QUARTER_CASHFLOW, m);//quarterly update
+		
+		m = new HashMap<String,String>();
+		m.put("SinaFrFootNoteAccount","account");
+		m.put("SinaFrFootNoteInventory","inventory");
+		m.put("SinaFrFootNoteRecievableAging","recievableAging");
+		m.put("SinaFrFootNoteTax","tax");
+		m.put("SinaFrFootNoteIncomeIndustry","incomeStructureByIndustry");
+		m.put("SinaFrFootNoteIncomeProduct","incomeStructureByProduct");
+		m.put("SinaFrFootNoteIncomeRegion","incomeStructureByRegion");
+		cmdTableMap.put(SINA_STOCK_FR_FOOTNOTE, m);
+		
+		m = new HashMap<String,String>();
+		m.put("SinaFrAchieveNotice","part");
+		cmdTableMap.put(SINA_STOCK_FR_AchieveNotice, m);//daily update
+		
+		m = new HashMap<String,String>();
+		m.put("SinaFrGuideline","part");
+		cmdTableMap.put(SINA_STOCK_FR_GUIDELINE_YEAR, m);//quarterly update
+		
+		m = new HashMap<String,String>();
+		m.put("SinaFrAssetDevalue","part");
+		cmdTableMap.put(SINA_STOCK_FR_ASSETDEVALUE_YEAR, m);//quarterly update
+		
 		//market-daily update
-		cmdTableMap.put(SINA_STOCK_MARKET_HISTORY, new String[]{"sinamarketdaily"});
-		cmdTableMap.put(SINA_STOCK_TRADE_DETAIL, new String[]{"sinamarkettradedetail"});
-		cmdTableMap.put(SINA_STOCK_MARKET_RZRQ, new String[]{
-				"sinamarketrzrqdetail",
-				"sinamarketrzrqsummary"});
-		cmdTableMap.put(SINA_STOCK_MARKET_DZJY, new String[]{"sinamarketdzjy"});
-		cmdTableMap.put(SINA_STOCK_MARKET_FQ, new String[]{"sinamarketfq"});
+		m = new HashMap<String,String>();
+		m.put("SinaMarketDaily","part");
+		cmdTableMap.put(SINA_STOCK_MARKET_HISTORY, m);
+		
+		m = new HashMap<String,String>();
+		m.put("SinaMarketTradeDetail","part");
+		cmdTableMap.put(SINA_STOCK_TRADE_DETAIL, m);
+		
+		m = new HashMap<String,String>();
+		m.put("SinaMarketRZRQDetail","detail");
+		m.put("SinaMarketRZRQSummary","summary");
+		cmdTableMap.put(SINA_STOCK_MARKET_RZRQ, m);
+		
+		m = new HashMap<String,String>();
+		m.put("SinaMarketDZJY","part");
+		cmdTableMap.put(SINA_STOCK_MARKET_DZJY, m);
+		
+		m = new HashMap<String,String>();
+		m.put("SinaMarketFQ","part");
+		cmdTableMap.put(SINA_STOCK_MARKET_FQ, m);
+		
 		//stock holder
-		cmdTableMap.put(SINA_STOCK_STOCK_HOLDER_FUND, new String[]{"sinastockfundholder"});
-		cmdTableMap.put(SINA_STOCK_STOCK_STRUCTURE, new String[]{"sinastockstructure"});
-		cmdTableMap.put(SINA_STOCK_STOCK_HOLDER, new String[]{
-				"sinastocktopholder", 
-				"sinastocktopholdersummary"});
-		cmdTableMap.put(SINA_STOCK_STOCK_HOLDER_CIRCULATE, new String[]{"sinastocktopholdercirculate"});
+		m = new HashMap<String,String>();
+		m.put("SinaStockFundHolder","part");
+		cmdTableMap.put(SINA_STOCK_STOCK_HOLDER_FUND, m);
+		
+		m = new HashMap<String,String>();
+		m.put("SinaStockStructure","part");
+		cmdTableMap.put(SINA_STOCK_STOCK_STRUCTURE, m);
+		
+		m = new HashMap<String,String>();
+		m.put("SinaStockTopHolder","TopStockHolder");
+		m.put("SinaStockTopHolderSummary","Summary");
+		cmdTableMap.put(SINA_STOCK_STOCK_HOLDER, m);
+		
+		m = new HashMap<String,String>();
+		m.put("SinaStockTopHolderCirculate","part");
+		cmdTableMap.put(SINA_STOCK_STOCK_HOLDER_CIRCULATE, m);
 		//issue
-		cmdTableMap.put(SINA_STOCK_ISSUE_SHAREBONUS, new String[]{
-				"sinasharebonusalloted", 
-				"sinasharebonusdividend"});
+		m = new HashMap<String,String>();
+		m.put("SinaShareBonusAlloted","allotted");
+		m.put("SinaShareBonusDividend","dividend");
+		cmdTableMap.put(SINA_STOCK_ISSUE_SHAREBONUS, m);
 	}
 	
 	public static String[] corpConfs = new String[]{//not related with time
@@ -519,7 +576,7 @@ public class SinaStockConfig extends StockConfig {
 	}
 
 	@Override
-	public String[] getTablesByCmd(String cmd) {
+	public Map<String, String> getTablesByCmd(String cmd) {
 		return cmdTableMap.get(cmd);
 	}
 

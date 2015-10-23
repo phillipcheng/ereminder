@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.test.CrawlTestUtil;
+import org.cld.stock.LoadDBData;
 import org.cld.stock.StockBase;
 import org.cld.stock.StockUtil;
 import org.cld.stock.nasdaq.NasdaqStockBase;
@@ -33,7 +34,7 @@ public class TestStock {
 	@Test
 	public void testDateInHbase() throws Exception{
 		NasdaqStockBase nsb = new NasdaqStockBase("cld-stock-cluster.properties", "ALL", null, sdf.parse("2015-10-11"));
-		Map<String, Date> stockLUMap = StockPersistMgr.getStockLUDateByCmd(nsb.getStockConfig(), "nasdaq-quote-fq-historical", nsb.getCconf());
+		Map<String, Date> stockLUMap = StockPersistMgr.getStockLUDateByCmd(nsb.getStockConfig(), "nasdaq-quote-fq-historical", nsb.getCconf().getBigdbconf());
 		String stockid="BABA";
 		Date sd = null;
 		if (stockLUMap.containsKey(stockid)){
@@ -89,21 +90,38 @@ public class TestStock {
 	public void testStrategyValidationRally() throws Exception{
 		String pFile = "client1-v2.properties";
 		String marketId = "hs_a"; //not used
-		Date sd = sdf.parse("2015-10-15");
-		Date ed = sdf.parse("2015-10-21");
+		Date sd = sdf.parse("2015-10-14");
+		Date ed = sdf.parse("2015-10-15");
 		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
 		sb.validateStrategy("strategy.rally1.properties");
 	}
 	
 	@Test
+	public void testSVEarnForcast() throws Exception{
+		String pFile = "client1-v2.properties";
+		String marketId = "hs_a"; //not used
+		Date sd = sdf.parse("2015-10-10");
+		Date ed = sdf.parse("2015-10-20");
+		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
+		sb.validateStrategy("strategy.earnforecast.2_10_3_5_2.properties");
+	}
+	
+	@Test
 	public void testCountWave() throws Exception{
 		String pFile = "client1-v2.properties";
-		String marketBaseId = "nasdaq";
 		String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test; //not used
 		Date sd = sdf.parse("2015-10-12");
 		Date ed = sdf.parse("2015-10-15");
 		StockBase nsb = new NasdaqStockBase(pFile, marketId, sd, ed);
 		nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(marketId, ed), null);//init stockid
 		nsb.countWave("wavecount1.properties");
+	}
+	
+	@Test
+	public void testLoadDB() throws Exception{
+		String pFile = "client1-v2.properties";
+		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
+		LoadDBData.launch("sina", "hs_a", cconf.getSmalldbconf(), 5, "C:\\mydoc\\mydata\\stock\\merge\\sina-stock-stock-structure", 
+				new String[]{}, new String[]{});
 	}
 }

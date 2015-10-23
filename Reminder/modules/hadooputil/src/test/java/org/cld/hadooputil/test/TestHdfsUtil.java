@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.hadooputil.DumpHdfsFile;
 
 public class TestHdfsUtil {
 
@@ -28,8 +29,20 @@ public class TestHdfsUtil {
 		Path p = new Path("/reminder/items/raw/2004-10-01_2015-10-03");
 		ContentSummary cs = fs.getContentSummary(p);
 		logger.info(String.format("du for dir %s is %s", p, cs.toString()));
+	}
+	
+	@Test
+	public void testDump() throws Exception{
+		DumpHdfsFile.main(new String[]{"10", "hdfs://192.85.247.104:19000","/reminder/items/merge/sina-stock-market-fq",
+				"C:\\mydoc\\mydata\\stock\\merge\\sina-stock-market-fq","hs_a_2015-10-03"});
 		
-		
+		//20 hdfs://192.85.247.104:19000 /reminder/items/merge /data/cydata/merge nasdaq-quote-afterhours,nasdaq-quote-tick,nasdaq-quote-premarket,sina-stock-market-tradedetail -
+	}
+	
+	@Test
+	public void testDump2() throws Exception{
+		DumpHdfsFile.main(new String[]{"10", "hdfs://192.85.247.104:19000","/reminder/items/merge",
+				"C:\\mydoc\\mydata\\stock\\merge","nasdaq-quote-afterhours,nasdaq-quote-tick,nasdaq-quote-premarket,sina-stock-market-tradedetail","-"});
 	}
 
 }

@@ -124,6 +124,9 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 		init(ci, paramMap);
 		List<String> ls = (List<String>)ci.getParam(FIELD_NAME_DATA);
 		int colnum = (int) ci.getParam(FIELD_NAME_COLNUM);
+		if (colnum==0){
+			return new String[0][];
+		}
 		List<String> dataTypes = null;
 		Object dtSet = ci.getParam(DATA_TYPE_KEY);
 		int fieldnum = ls.size()/colnum;

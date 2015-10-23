@@ -15,6 +15,7 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
+import org.cld.datastore.DBConnConf;
 import org.cld.hadooputil.HdfsDownloadUtil;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
@@ -109,7 +110,7 @@ public class CompareSelectStrategy extends SelectStrategy{
 	public static final String SQL_KEY_THIS_TDATE="%tdate";
 	public static final String SQL_KEY_LAST_TDATE="%lasttdate";
 	@Override
-	public List<String> select(CrawlConf cconf, Date dt, StockConfig sc){
+	public List<String> select(DBConnConf dbconf, Date dt, StockConfig sc){
 		Date today = dt;
 		Date thisTradingDay;
 		Date lastTradingDay;
@@ -129,13 +130,13 @@ public class CompareSelectStrategy extends SelectStrategy{
 		}
 		List<String> retList = new ArrayList<String>();
 		try{
-			Class.forName(cconf.getResultDmDriver());
+			Class.forName(dbconf.getDriver());
 		}catch (Exception e){
 			logger.error("", e);
 		}
 		Connection con = null;
 		try{
-			con = DriverManager.getConnection(cconf.getResultDmUrl(), cconf.getResultDmUser(), cconf.getResultDmPass());
+			con = DriverManager.getConnection(dbconf.getUrl(), dbconf.getUser(), dbconf.getPass());
 			List<Map<String, Object>> priceMapArray = new ArrayList<Map<String, Object>>();
 			/*
 			 * replace %date with today
@@ -263,7 +264,7 @@ public class CompareSelectStrategy extends SelectStrategy{
 				allStrParam+=params[i];
 			}
 			String fileName = String.format("%s_%s_%s.csv", getName(), allStrParam, detailSdf.format(d));
-			HdfsDownloadUtil.outputToHdfs(sa, outputFileDir+"/"+fileName, cconf.getTaskMgr().getHdfsDefaultName());
+			HdfsDownloadUtil.outputToHdfs(sa, outputFileDir+"/"+fileName, this.getFsDefaultName());
 		}catch(Exception e){
 			logger.error("", e);
 		}finally{

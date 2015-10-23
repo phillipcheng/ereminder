@@ -29,6 +29,9 @@ public class StringUtil {
 
 	public static Map<String, String> parseMapParams(String params){
 		Map<String, String> paramsMap = new HashMap<String, String>();
+		if (params==null){
+			return paramsMap;
+		}
 		String[] strParams = params.split(",");
 		for (String strParam:strParams){
 			String[] kv = strParam.split(":");

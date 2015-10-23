@@ -9,19 +9,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.datastore.DBConnConf;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.CrawledItemId;
 import org.cld.taskmgr.entity.CmdStatus;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.CompareUtil;
+import org.cld.util.StringUtil;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
+import org.cld.hadooputil.DumpHdfsFile;
 import org.cld.stock.strategy.CountWaveTask;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.strategy.SellStrategy;
@@ -41,7 +45,9 @@ public abstract class StockBase extends TestBase{
 	public static final String KEY_IDS = "ids";
 	
 	public static final String idKeySep = "_";
+	public static final String DELTA_NAME="delta";
 	
+	private String baseMarketId;
 	protected String marketId;
 	protected String propFile;
 	protected Date endDate; //of server timezone, since the static holidays, the dynamic date from hbase are all in server timezone
@@ -59,8 +65,9 @@ public abstract class StockBase extends TestBase{
 		return dsm;
 	}
 	
-	public StockBase(String propFile, String marketId, Date sd, Date ed, String marketBaseId){
+	public StockBase(String propFile, String baseMarketId, String marketId, Date sd, Date ed, String marketBaseId){
 		super();
+		this.setBaseMarketId(baseMarketId);
 		this.marketBaseId = marketBaseId;
 		this.marketId = marketId;
 		super.setProp(propFile);
@@ -307,6 +314,7 @@ public abstract class StockBase extends TestBase{
 		
 		if (mcs!=null){
 			String prevMarketId = marketId + idKeySep + sdf.format(mcs.getId().getCreateTime());
+			logger.info(String.format("prevMarketId is %s", prevMarketId));
 			if (mcs.getId().getCreateTime().equals(endDate)){//crawl again at the same day, no need to crawl market
 				ciIds = dsm.getCrawledItem(prevMarketId, sc.getStockIdsCmd(), CrawledItem.class);
 				curIds = (List<String>) ciIds.getParam(KEY_IDS);
@@ -346,7 +354,7 @@ public abstract class StockBase extends TestBase{
 					//has new delta market, let's create another 2 markets
 					dsm.addUpdateCrawledItem(ciIds, null);////hbase persistence for curMarket
 					hdfsDsm.addUpdateCrawledItem(ciIds, null);//hdfs persistence for curMarket
-					String deltaMarketId = marketId + idKeySep + strEndDate + "_delta"; //delta market
+					String deltaMarketId = marketId + idKeySep + strEndDate + idKeySep + DELTA_NAME; //delta market
 					CrawledItem ciDelta = new CrawledItem(CrawledItem.CRAWLITEM_TYPE, "default", 
 							new CrawledItemId(deltaMarketId, sc.getStockIdsCmd(), endDate));
 					ciDelta.addParam(KEY_IDS, deltaIds);
@@ -373,10 +381,10 @@ public abstract class StockBase extends TestBase{
 					logger.info(String.format("rerun all cmd for pre-market %s from %s to %s", prevMarketId, startDate, lastRunDate));
 					cmdStatusList.addAll(runAllCmd(curMarketId, startDate, lastRunDate, CMDTYPE_ALL));
 				}*/
-				if (CompareUtil.ObjectDiffers(lastRunDate, endDate)){//do the [lastRunDate,endDate) for the cur market
+				//if (CompareUtil.ObjectDiffers(lastRunDate, endDate)){//do the [lastRunDate,endDate) for the cur market
 					logger.info(String.format("run dynamic cmd for market %s from %s to %s", prevMarketId, lastRunDate, endDate));
 					cmdStatusList.addAll(runAllCmd(curMarketId, lastRunDate, endDate, CMDTYPE_DYNAMIC)); //dynamic part
-				}
+				//}
 			}
 		}else{
 			ciIds = run_browse_idlist(marketId, endDate);
@@ -431,21 +439,19 @@ public abstract class StockBase extends TestBase{
 					try{
 						RunningJob rjob = jobClient.getJob(jobId);
 						int orgStatus = jobStatusMap.get(jid);
-						if (orgStatus!=2){
-							int newStatus = orgStatus;
-							if (rjob!=null){
-								newStatus = rjob.getJobStatus().getState().getValue();
-								logger.debug(String.format("job %s got status %d", jid, newStatus));
-							}else{
-								logger.info(String.format("job %s not found in jobClient.", jid));
-								//try history server ?
-							}
-							if (newStatus!=orgStatus){
-								newStatusMap.put(jid, newStatus);
-							}
-							if (newStatus!=2 && newStatus!=3){//2 finished, 3 failed
-								finished=false;
-							}
+						int newStatus = orgStatus;
+						if (rjob!=null){
+							newStatus = rjob.getJobStatus().getState().getValue();
+							logger.debug(String.format("job %s got status %d", jid, newStatus));
+						}else{
+							logger.info(String.format("job %s not found in jobClient.", jid));
+							//try history server ?
+						}
+						if (newStatus!=orgStatus){
+							newStatusMap.put(jid, newStatus);
+						}
+						if (newStatus==1 || newStatus==4){//1 preparation, 4 running
+							finished=false;
 						}
 					}catch(Exception e){
 						logger.error("error get job status", e.getMessage());
@@ -483,14 +489,16 @@ public abstract class StockBase extends TestBase{
 		return MergeTask.launch(getStockConfig(), this.propFile, cconf, datePart, param, true);
 	}
 	
-	private static String KEY_INPUTHDFS="input.hdfs.defaultname";
+	private static String KEY_HDFS_DEFAULTNAME="hdfs.defaultname";
 	private static String KEY_OUTPUTDIR="output.dir";
 	
 	//param the strategy configure file
 	public String[] validateStrategy(String param){
 		try{
 			PropertiesConfiguration props = new PropertiesConfiguration(param);
+			DBConnConf dbconf = cconf.getSmalldbconf();
 	        String outputDirPrefix = props.getString(KEY_OUTPUTDIR);
+	        String fsDefaultName = props.getString(KEY_HDFS_DEFAULTNAME);
 	        String time = mdssdf.format(new Date());
 			String outputDir = String.format("%s_%s", outputDirPrefix, time);
 	        int duration = props.getInt(SellStrategy.KEY_SELLS_DURATION);
@@ -500,11 +508,16 @@ public abstract class StockBase extends TestBase{
 	        SelectStrategy scs = (SelectStrategy) Class.forName(scsType).newInstance();
 	        scs.init(props);
 	        scs.setOutputDir(outputDir);
+	        if (fsDefaultName!=null){
+	        	scs.setFsDefaultName(fsDefaultName);
+	        }else{
+	        	scs.setFsDefaultName(cconf.getTaskMgr().getHdfsDefaultName());
+	        }
 	        SellStrategy sls = new SellStrategy();
 	        sls.setHoldDuration(duration);
 	        sls.setLimitPercentage(limitPercentage);
 	        sls.setStopTrailingPercentage(stopTrailingPercentage);
-	        return StrategyValidationTask.launch(this.propFile, cconf, marketBaseId, scs, sls, startDate, endDate);
+	        return StrategyValidationTask.launch(this.propFile, cconf, marketBaseId, scs, sls, startDate, endDate, dbconf);
 		}catch(Exception e){
 			logger.error("", e);
 		}
@@ -518,7 +531,7 @@ public abstract class StockBase extends TestBase{
 			PropertiesConfiguration props = new PropertiesConfiguration(param);
 	        String outputDirPrefix = props.getString(KEY_OUTPUTDIR);
 	        String time = mdssdf.format(new Date());
-	        String inputHdfs = props.getString(KEY_INPUTHDFS);
+	        String inputHdfs = props.getString(KEY_HDFS_DEFAULTNAME);
 			String outputDir = String.format("%s_%s", outputDirPrefix, time);
 	        float waveHeight = props.getFloat(KEY_WAVEHEIGHT);
 	        return CountWaveTask.launch(this.propFile, cconf, marketBaseId, marketId, startDate, endDate, inputHdfs, outputDir, waveHeight);
@@ -579,7 +592,6 @@ public abstract class StockBase extends TestBase{
 			}
 			step++;
 		}
-		
 		if (step==2){
 			CmdStatus cs = this.runSpecial("postprocess", null);
 			if (cs!=null){
@@ -592,7 +604,6 @@ public abstract class StockBase extends TestBase{
 			}
 			step++;
 		}
-		
 		if (step==3){
 			CmdStatus cs = this.runSpecial("run_merge", null);
 			if (cs!=null){
@@ -605,8 +616,51 @@ public abstract class StockBase extends TestBase{
 			}
 			step++;
 		}
+		String strEndDate = sdf.format(endDate);
+		String localDirRoot = "/data/cydata/stock/merge/"+strEndDate;
+		if (step==4){
+			DumpHdfsFile.launch(20, cconf.getTaskMgr().getHdfsDefaultName(), "/reminder/items/merge",
+					localDirRoot, new String[]{strEndDate}, this.getStockConfig().getSlowCmds());
+			step++;
+		}
+		if (step==5){
+			LoadDBData.launch(baseMarketId, strEndDate, cconf.getSmalldbconf(), 20, 
+					localDirRoot, new String[]{this.baseMarketId}, new String[]{});
+			step++;
+		}
 	}
 
+	public void loadDataFiles(String param){
+		Map<String,String> paramMap = StringUtil.parseMapParams(param);
+		int threadNum=10;
+		String localDataDir="";
+		String include="-";
+		String exclude="-";
+		if (paramMap.containsKey(LoadDBData.KEY_THREAD_NUM)){
+			threadNum = Integer.parseInt(paramMap.get(LoadDBData.KEY_THREAD_NUM));
+		}
+		if (paramMap.containsKey(LoadDBData.KEY_ROOT_DIR)){
+			localDataDir = paramMap.get(LoadDBData.KEY_ROOT_DIR);
+		}else{
+			logger.error("must has " + LoadDBData.KEY_ROOT_DIR);
+			return;
+		}
+		if (paramMap.containsKey(LoadDBData.KEY_INCLUDE)){
+			include = paramMap.get(LoadDBData.KEY_INCLUDE);
+		}
+		if (paramMap.containsKey(LoadDBData.KEY_EXCLUDE)){
+			exclude = paramMap.get(LoadDBData.KEY_EXCLUDE);
+		}
+		String[] includeArry = new String[]{};
+		String[] excludeArr = new String[]{};
+		if (!include.equals("") && !include.equals("-")){
+			includeArry = include.split(",");
+		}
+		if (!exclude.equals("") && !exclude.equals("-")){
+			excludeArr = exclude.split(",");
+		}
+		LoadDBData.launch(marketBaseId, marketId, cconf.getSmalldbconf(), threadNum, localDataDir, includeArry, excludeArr);
+	}
 	//getter, setter
 	public String getMarketId() {
 		return marketId;
@@ -631,5 +685,13 @@ public abstract class StockBase extends TestBase{
 	}
 	public void setStartDate(Date startDate) {
 		this.startDate = startDate;
+	}
+
+	public String getBaseMarketId() {
+		return baseMarketId;
+	}
+
+	public void setBaseMarketId(String baseMarketId) {
+		this.baseMarketId = baseMarketId;
 	}
 }

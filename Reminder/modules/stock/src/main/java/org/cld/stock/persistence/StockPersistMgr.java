@@ -13,10 +13,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.collections.map.MultiKeyMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
+import org.cld.datastore.DBConnConf;
 import org.cld.stock.CandleQuote;
 import org.cld.stock.StockConfig;
 import org.cld.stock.sina.SinaDailyQuoteCQJDBCMapper;
@@ -31,40 +31,31 @@ import org.cld.util.jdbc.SqlUtil;
 public class StockPersistMgr {
 	private static Logger logger =  LogManager.getLogger(StockPersistMgr.class);
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	public static MultiKeyMap fqDQMap = new MultiKeyMap();
 	
-	public static void setupCache(StockConfig sc, CrawlConf cconf, Date sd, Date ed){
+	public static void loadData(DBConnConf dbconf, String fileName, String tableName){
+		Connection con = null;
+		Statement stmt = null;
 		try{
-			Class.forName(cconf.getResultDmDriver());
+			Class.forName(dbconf.getDriver());
+			con = DriverManager.getConnection(dbconf.getUrl(), dbconf.getUser(), dbconf.getPass());
+			stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+	        String query = String.format(
+	        		"LOAD DATA LOCAL INFILE '%s' INTO TABLE %s CHARACTER SET UTF8 COLUMNS TERMINATED BY ',' LINES TERMINATED BY '\n'", 
+	        		fileName, tableName);
+	        query = query.replace("\\", "\\\\");
+	        logger.info(String.format("start execute update query:%s", query));
+	        stmt.executeUpdate(query);
+	        logger.info(String.format("finish execute update query:%s", query));
 		}catch (Exception e){
 			logger.error("", e);
-		}
-		Connection con = null;
-		
-		String sql = String.format("select * from %s dt>'%s' and dt <='%s'", 
-				sc.getFQDailyQuoteTableMapper().getTableName(), sdf.format(sd), sdf.format(ed));
-		try{
-			con = DriverManager.getConnection(cconf.getResultDmUrl(), cconf.getResultDmUser(), cconf.getResultDmPass());		
-			List<CandleQuote> lo = (List<CandleQuote>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
-					con, -1, -1, "", 
-					SinaDailyQuoteCQJDBCMapper.getInstance());
-			
-		}catch(Exception e){
-			logger.error(String.format("exceptin while execute %s", sql), e);
 		}finally{
-			if (con!=null){
-				try{
-					con.close();
-				}catch(Exception e){
-					logger.error("", e);
-				}
-			}
+			SqlUtil.closeResources(con, stmt);
 		}
+		
 	}
-
-	public static Map<String, List<CandleQuote>> getFQDailyQuote(StockConfig sc, CrawlConf cconf, List<String> stockidList, Date sd, Date ed){
+	public static Map<String, List<CandleQuote>> getFQDailyQuote(StockConfig sc, DBConnConf dbconf, List<String> stockidList, Date sd, Date ed){
 		try{
-			Class.forName(cconf.getResultDmDriver());
+			Class.forName(dbconf.getDriver());
 		}catch (Exception e){
 			logger.error("", e);
 		}
@@ -73,7 +64,7 @@ public class StockPersistMgr {
 		String sql = String.format("select * from %s where stockid in %s and dt>'%s' and dt <='%s' order by stockid, dt", 
 				sc.getFQDailyQuoteTableMapper().getTableName(), SqlUtil.generateInParameterValues(stockidList), sdf.format(sd), sdf.format(ed));
 		try{
-			con = DriverManager.getConnection(cconf.getResultDmUrl(), cconf.getResultDmUser(), cconf.getResultDmPass());		
+			con = DriverManager.getConnection(dbconf.getUrl(), dbconf.getUser(), dbconf.getPass());		
 			List<CandleQuote> lo = (List<CandleQuote>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
 					con, -1, -1, "", 
 					SinaDailyQuoteCQJDBCMapper.getInstance());
@@ -108,9 +99,9 @@ public class StockPersistMgr {
 		}
 	}
 	
-	public static Map<String, List<CandleQuote>> getDailyQuote(StockConfig sc, CrawlConf cconf, List<String> stockidList, Date sd, Date ed){
+	public static Map<String, List<CandleQuote>> getDailyQuote(StockConfig sc, DBConnConf dbconf, List<String> stockidList, Date sd, Date ed){
 		try{
-			Class.forName(cconf.getResultDmDriver());
+			Class.forName(dbconf.getDriver());
 		}catch (Exception e){
 			logger.error("", e);
 		}
@@ -119,7 +110,7 @@ public class StockPersistMgr {
 		String sql = String.format("select * from %s where stockid in %s and dt>'%s' and dt <='%s' order by stockid, dt", 
 				sc.getDailyQuoteTableMapper().getTableName(), SqlUtil.generateInParameters(stockidList), sdf.format(sd), sdf.format(ed));
 		try{
-			con = DriverManager.getConnection(cconf.getResultDmUrl(), cconf.getResultDmUser(), cconf.getResultDmPass());		
+			con = DriverManager.getConnection(dbconf.getUrl(), dbconf.getUser(), dbconf.getPass());		
 			List<CandleQuote> lo = (List<CandleQuote>) SqlUtil.getObjectsByParam(sql, new Object[]{stockidList}, 
 					con, -1, -1, "", SinaDailyQuoteCQJDBCMapper.getInstance());
 			String stid = "";
@@ -152,10 +143,10 @@ public class StockPersistMgr {
 		}
 	}
 	
-	public static Map<String, Date> getStockIPOData(StockConfig sc, CrawlConf cconf){
+	public static Map<String, Date> getStockIPOData(StockConfig sc, DBConnConf dbconf){
 		Map<String, Date> ipoDateMap = new HashMap<String, Date>();
 		try{
-			Class.forName(cconf.getResultDmDriver());
+			Class.forName(dbconf.getDriver());
 		}catch (Exception e){
 			logger.error("", e);
 		}
@@ -163,8 +154,8 @@ public class StockPersistMgr {
 		Statement stmt = null;
 		String query = "";
 		try{
-			con = DriverManager.getConnection(cconf.getResultDmUrl(), cconf.getResultDmUser(), cconf.getResultDmPass());			
-			String tableName = sc.getTablesByCmd(sc.getIPODateCmd())[0];
+			con = DriverManager.getConnection(dbconf.getUrl(), dbconf.getUser(), dbconf.getPass());			
+			String tableName = sc.getTablesByCmd(sc.getIPODateCmd()).keySet().iterator().next();
 			query = String.format("select stockid, dt from %s", tableName);
 			stmt = con.createStatement();
 			ResultSet res = stmt.executeQuery(query);
@@ -204,10 +195,10 @@ public class StockPersistMgr {
 		return ipoDateMap;
 	}
 	
-	public static Map<String, Date> getStockLUDateByCmd(StockConfig sc, String cmd, CrawlConf cconf){
+	public static Map<String, Date> getStockLUDateByCmd(StockConfig sc, String cmd, DBConnConf dbconf){
 		Map<String, Date> stockLUMap = new HashMap<String, Date>();
 		try{
-			Class.forName(cconf.getResultDmDriver());
+			Class.forName(dbconf.getDriver());
 		}catch (Exception e){
 			logger.error("", e);
 		}
@@ -215,7 +206,7 @@ public class StockPersistMgr {
 		Statement stmt = null;
 		String query = "";
 		try{
-			con = DriverManager.getConnection(cconf.getResultDmUrl(), cconf.getResultDmUser(), cconf.getResultDmPass());			
+			con = DriverManager.getConnection(dbconf.getUrl(), dbconf.getUser(), dbconf.getPass());			
 			query = sc.getStockLUDateByCmd(cmd);
 			if (query!=null){
 				stmt = con.createStatement();
@@ -261,9 +252,9 @@ public class StockPersistMgr {
 		return stockLUMap;
 	}
 	
-	public static Date getMarketLUDateByCmd(StockConfig sc, String cmd, CrawlConf cconf){
+	public static Date getMarketLUDateByCmd(StockConfig sc, String cmd, DBConnConf dbconf){
 		try{
-			Class.forName(cconf.getResultDmDriver());
+			Class.forName(dbconf.getDriver());
 		}catch (Exception e){
 			logger.error("", e);
 		}
@@ -272,7 +263,7 @@ public class StockPersistMgr {
 		String query = "";
 		Date d = null;
 		try{
-			con = DriverManager.getConnection(cconf.getResultDmUrl(), cconf.getResultDmUser(), cconf.getResultDmPass());			
+			con = DriverManager.getConnection(dbconf.getUrl(), dbconf.getUser(), dbconf.getPass());			
 			query = sc.getMarketLUDateByCmd(cmd);
 			if (query!=null){
 				stmt = con.createStatement();

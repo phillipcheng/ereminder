@@ -42,8 +42,10 @@ public class MultiColTablesAsCSV extends AbstractCrawlItemToCSV{
 		List<Integer> dateIdx = (List<Integer>) ci.getParam(FIELD_NAME_RowDateIdx);
 		List<String> keys = (List<String>)ci.getParam(FIELD_NAME_KEYS);
 		Set<String> keySet = new HashSet<String>();
-		for(String key:keys){
-			keySet.add(key);
+		if (keys!=null){
+			for(String key:keys){
+				keySet.add(key);
+			}
 		}
 		List<String> keydata = (List<String>)ci.getParam(FIELD_NAME_KEYDATA);
 		List<String[]> csvs = new ArrayList<String[]>();

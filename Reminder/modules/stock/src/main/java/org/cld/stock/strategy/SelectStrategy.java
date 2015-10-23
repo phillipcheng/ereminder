@@ -6,7 +6,7 @@ import java.util.List;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlConf;
+import org.cld.datastore.DBConnConf;
 import org.cld.stock.StockConfig;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -22,7 +22,6 @@ public abstract class SelectStrategy {
 	public static String VAL_ByCalendarDay="byCalendarDay";
 	public static String VAL_ByTradingDay="byTradingDay";
 	
-	
 	public enum byDayType{
 		byCalendarDay,
 		byTradingDay
@@ -30,6 +29,7 @@ public abstract class SelectStrategy {
 	
 	private String name;
 	private String outputDir;
+	private String fsDefaultName; //for hdfs
 	private byDayType dayType = byDayType.byTradingDay;
 	private int limit=10;//topN
 
@@ -51,7 +51,7 @@ public abstract class SelectStrategy {
         }
 	}
 	//select the top N stock from the market using the select strategy given the dynamic param (date, etc) and other static parameter (percentage)
-	public abstract List<String> select(CrawlConf cconf, Date dt, StockConfig sc);
+	public abstract List<String> select(DBConnConf cconf, Date dt, StockConfig sc);
 	
 	public String getName() {
 		return name;
@@ -79,5 +79,13 @@ public abstract class SelectStrategy {
 
 	public void setLimit(int limit) {
 		this.limit = limit;
+	}
+
+	public String getFsDefaultName() {
+		return fsDefaultName;
+	}
+
+	public void setFsDefaultName(String fsDefaultName) {
+		this.fsDefaultName = fsDefaultName;
 	}
 }

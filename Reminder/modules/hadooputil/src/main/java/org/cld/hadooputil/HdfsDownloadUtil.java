@@ -9,6 +9,7 @@ import java.net.Proxy;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -93,6 +94,7 @@ public class HdfsDownloadUtil {
 		}
 	}
 	
+	//hdfs://192.85.247.104:19000/reminder/sresult/earnforecast==>hdfs://192.85.247.104:19000 and /reminder/sresult/earnforecast
 	public static void outputToHdfs(String[] lines, String filePath, String fsDefaultName){
 		FSDataOutputStream fos = null;
 		FileSystem fs = null;
