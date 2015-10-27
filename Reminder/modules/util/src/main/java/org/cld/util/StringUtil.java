@@ -26,7 +26,29 @@ public class StringUtil {
 
 	public static Logger logger = LogManager.getLogger(StringUtil.class);
 	
-
+	public static String sepp = "-"; 
+	//parse a 1-4-1 into [1,2,3,4]
+	public static float[] parseSteps(String steps){
+		if (!steps.contains(sepp)){
+			return new float[]{Float.parseFloat(steps)};
+		}else{
+			String[] a = steps.split(sepp);
+			float start = Float.parseFloat(a[0]);
+			float step = Float.parseFloat(a[2]);
+			float end = Float.parseFloat(a[1]);
+			List<Float> fl = new ArrayList<Float>();
+			float v = start;
+			while(v<=end){
+				fl.add(v);
+				v += step;
+			}
+			float[] vf = new float[fl.size()];
+			for (int i=0; i<vf.length; i++){
+				vf[i] = fl.get(i);
+			}
+			return vf;
+		}
+	}
 	public static Map<String, String> parseMapParams(String params){
 		Map<String, String> paramsMap = new HashMap<String, String>();
 		if (params==null){

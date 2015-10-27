@@ -108,7 +108,10 @@ public class TestNasdaqStock {
 		nsb.runCmd(NasdaqStockConfig.HOLDING_SUMMARY, marketId, null, sdf.format(nsb.getStockConfig().getLatestOpenMarketDate(new Date())));
 		nsb.runCmd(NasdaqStockConfig.HOLDING_TOP5, marketId, null, sdf.format(nsb.getStockConfig().getLatestOpenMarketDate(new Date())));
 	}
-	//quarterly
+	@Test
+	public void testCmd_EarnAnnounce(){
+		nsb.runCmd(NasdaqStockConfig.EARN_ANNOUNCE, marketId, null, "2010-01-10");
+	}
 	@Test
 	public void testCmd_Fr_QuarterlyIncomeStatement(){
 		nsb.runCmd(NasdaqStockConfig.INCOME_STATEMENT, marketId, null, sdf.format(nsb.getStockConfig().getLatestOpenMarketDate(new Date())));
@@ -141,10 +144,6 @@ public class TestNasdaqStock {
 	@Test
 	public void testCmd_Issue_DividendHistory(){
 		nsb.runCmd(NasdaqStockConfig.DIVIDEND_HISTORY, marketId, "2015-08-01", sdf.format(nsb.getStockConfig().getLatestOpenMarketDate(new Date())));
-	}
-	@Test
-	public void testCmd_QuoteHistorical(){
-		nsb.runCmd(NasdaqStockConfig.QUOTE_HISTORY, marketId, "2015-08-01", sdf.format(nsb.getStockConfig().getLatestOpenMarketDate(new Date())));
 	}
 	@Test
 	public void testCmd_QuoteShortInterest(){

@@ -15,11 +15,11 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlConf;
-import org.cld.datastore.DBConnConf;
 import org.cld.stock.CandleQuote;
 import org.cld.stock.StockConfig;
 import org.cld.stock.sina.SinaDailyQuoteCQJDBCMapper;
+import org.cld.util.jdbc.DBConnConf;
+import org.cld.util.jdbc.GeneralJDBCMapper;
 import org.cld.util.jdbc.SqlUtil;
 
 /**
@@ -36,8 +36,7 @@ public class StockPersistMgr {
 		Connection con = null;
 		Statement stmt = null;
 		try{
-			Class.forName(dbconf.getDriver());
-			con = DriverManager.getConnection(dbconf.getUrl(), dbconf.getUser(), dbconf.getPass());
+			con = SqlUtil.getConnection(dbconf);
 			stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
 	        String query = String.format(
 	        		"LOAD DATA LOCAL INFILE '%s' INTO TABLE %s CHARACTER SET UTF8 COLUMNS TERMINATED BY ',' LINES TERMINATED BY '\n'", 
@@ -51,20 +50,58 @@ public class StockPersistMgr {
 		}finally{
 			SqlUtil.closeResources(con, stmt);
 		}
-		
 	}
-	public static Map<String, List<CandleQuote>> getFQDailyQuote(StockConfig sc, DBConnConf dbconf, List<String> stockidList, Date sd, Date ed){
-		try{
-			Class.forName(dbconf.getDriver());
-		}catch (Exception e){
-			logger.error("", e);
-		}
+	
+	//pivot at dt, get the latest profitstatment
+	public static List<List<Object>> getObservedEpsByDate(StockConfig sc, DBConnConf dbconf, Date dt){
 		Connection con = null;
-		
+		String sql = String.format("select one.stockid, one.dt, one.dilutedEPS from SinaFrProfitStatement as one, "
+				+ "(select stockid, max(dt) as mdt from SinaFrProfitStatement where pubDt<'%s' group by stockid) latest "
+				+ "where (one.stockid=latest.stockid and one.dt=latest.mdt)", sdf.format(dt));
+		logger.info("sql:" + sql);
+		try{
+			con = SqlUtil.getConnection(dbconf);
+			List<List<Object>> lo = (List<List<Object>>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
+					con, -1, -1, "", 
+					GeneralJDBCMapper.getInstance());
+			return lo;
+		}catch(Exception e){
+			logger.error(String.format("exceptin while execute %s", sql), e);
+			return null;
+		}finally{
+			SqlUtil.closeResources(con, null);
+		}
+	}
+	//pivot at dt, get the latest fqIdx
+	public static Map<String, Double> getFQIdx(StockConfig sc, DBConnConf dbconf, Date dt){
+		Connection con = null;
+		String sql = String.format("select one.stockid, one.fqIdx from SinaMarketFQ one, "
+				+ "(select stockid, max(dt) as mdt from SinaMarketFQ where dt<='%s' group by stockid) latest "
+				+ "where one.stockid=latest.stockid and one.dt=latest.mdt", sdf.format(dt));
+		try{
+			con = SqlUtil.getConnection(dbconf);
+			List<List<Object>> lol = (List<List<Object>>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
+					con, -1, -1, "", 
+					GeneralJDBCMapper.getInstance());
+			Map<String, Double> fqIdxMap = new HashMap<String, Double>();
+			for (List<Object> lo:lol){
+				fqIdxMap.put((String)lo.get(0), (Double)lo.get(1));
+			}
+			return fqIdxMap;
+		}catch(Exception e){
+			logger.error(String.format("exceptin while execute %s", sql), e);
+			return null;
+		}finally{
+			SqlUtil.closeResources(con, null);
+		}
+	}
+	
+	public static Map<String, List<CandleQuote>> getFQDailyQuote(StockConfig sc, DBConnConf dbconf, List<String> stockidList, Date sd, Date ed){
+		Connection con = null;
 		String sql = String.format("select * from %s where stockid in %s and dt>'%s' and dt <='%s' order by stockid, dt", 
 				sc.getFQDailyQuoteTableMapper().getTableName(), SqlUtil.generateInParameterValues(stockidList), sdf.format(sd), sdf.format(ed));
 		try{
-			con = DriverManager.getConnection(dbconf.getUrl(), dbconf.getUser(), dbconf.getPass());		
+			con = SqlUtil.getConnection(dbconf);
 			List<CandleQuote> lo = (List<CandleQuote>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
 					con, -1, -1, "", 
 					SinaDailyQuoteCQJDBCMapper.getInstance());
@@ -89,28 +126,16 @@ public class StockPersistMgr {
 			logger.error(String.format("exceptin while execute %s", sql), e);
 			return null;
 		}finally{
-			if (con!=null){
-				try{
-					con.close();
-				}catch(Exception e){
-					logger.error("", e);
-				}
-			}
+			SqlUtil.closeResources(con, null);
 		}
 	}
 	
 	public static Map<String, List<CandleQuote>> getDailyQuote(StockConfig sc, DBConnConf dbconf, List<String> stockidList, Date sd, Date ed){
-		try{
-			Class.forName(dbconf.getDriver());
-		}catch (Exception e){
-			logger.error("", e);
-		}
 		Connection con = null;
-		
 		String sql = String.format("select * from %s where stockid in %s and dt>'%s' and dt <='%s' order by stockid, dt", 
 				sc.getDailyQuoteTableMapper().getTableName(), SqlUtil.generateInParameters(stockidList), sdf.format(sd), sdf.format(ed));
 		try{
-			con = DriverManager.getConnection(dbconf.getUrl(), dbconf.getUser(), dbconf.getPass());		
+			con = SqlUtil.getConnection(dbconf);
 			List<CandleQuote> lo = (List<CandleQuote>) SqlUtil.getObjectsByParam(sql, new Object[]{stockidList}, 
 					con, -1, -1, "", SinaDailyQuoteCQJDBCMapper.getInstance());
 			String stid = "";
@@ -133,28 +158,17 @@ public class StockPersistMgr {
 			logger.error(String.format("exceptin while execute %s", sql), e);
 			return null;
 		}finally{
-			if (con!=null){
-				try{
-					con.close();
-				}catch(Exception e){
-					logger.error("", e);
-				}
-			}
+			SqlUtil.closeResources(con, null);
 		}
 	}
 	
 	public static Map<String, Date> getStockIPOData(StockConfig sc, DBConnConf dbconf){
 		Map<String, Date> ipoDateMap = new HashMap<String, Date>();
-		try{
-			Class.forName(dbconf.getDriver());
-		}catch (Exception e){
-			logger.error("", e);
-		}
 		Connection con = null;
 		Statement stmt = null;
 		String query = "";
 		try{
-			con = DriverManager.getConnection(dbconf.getUrl(), dbconf.getUser(), dbconf.getPass());			
+			con = SqlUtil.getConnection(dbconf);	
 			String tableName = sc.getTablesByCmd(sc.getIPODateCmd()).keySet().iterator().next();
 			query = String.format("select stockid, dt from %s", tableName);
 			stmt = con.createStatement();
@@ -177,36 +191,18 @@ public class StockPersistMgr {
 		}catch(Exception e){
 			logger.error(String.format("exceptin while execute %s", query), e);
 		}finally{
-			if (stmt!=null){
-				try{
-					stmt.close();
-				}catch(Exception e){
-					logger.error("", e);
-				}
-			}
-			if (con!=null){
-				try{
-					con.close();
-				}catch(Exception e){
-					logger.error("", e);
-				}
-			}
+			SqlUtil.closeResources(con, stmt);
 		}
 		return ipoDateMap;
 	}
 	
 	public static Map<String, Date> getStockLUDateByCmd(StockConfig sc, String cmd, DBConnConf dbconf){
 		Map<String, Date> stockLUMap = new HashMap<String, Date>();
-		try{
-			Class.forName(dbconf.getDriver());
-		}catch (Exception e){
-			logger.error("", e);
-		}
 		Connection con = null;
 		Statement stmt = null;
 		String query = "";
 		try{
-			con = DriverManager.getConnection(dbconf.getUrl(), dbconf.getUser(), dbconf.getPass());			
+			con = SqlUtil.getConnection(dbconf);
 			query = sc.getStockLUDateByCmd(cmd);
 			if (query!=null){
 				stmt = con.createStatement();
@@ -234,36 +230,18 @@ public class StockPersistMgr {
 		}catch(Exception e){
 			logger.error(String.format("exceptin while execute %s", query), e);
 		}finally{
-			if (stmt!=null){
-				try{
-					stmt.close();
-				}catch(Exception e){
-					logger.error("", e);
-				}
-			}
-			if (con!=null){
-				try{
-					con.close();
-				}catch(Exception e){
-					logger.error("", e);
-				}
-			}
+			SqlUtil.closeResources(con, stmt);
 		}
 		return stockLUMap;
 	}
 	
 	public static Date getMarketLUDateByCmd(StockConfig sc, String cmd, DBConnConf dbconf){
-		try{
-			Class.forName(dbconf.getDriver());
-		}catch (Exception e){
-			logger.error("", e);
-		}
 		Connection con = null;
 		Statement stmt = null;
 		String query = "";
 		Date d = null;
 		try{
-			con = DriverManager.getConnection(dbconf.getUrl(), dbconf.getUser(), dbconf.getPass());			
+			con = SqlUtil.getConnection(dbconf);		
 			query = sc.getMarketLUDateByCmd(cmd);
 			if (query!=null){
 				stmt = con.createStatement();
@@ -278,20 +256,7 @@ public class StockPersistMgr {
 		}catch(Exception e){
 			logger.error(String.format("exceptin while execute %s", query), e);
 		}finally{
-			if (stmt!=null){
-				try{
-					stmt.close();
-				}catch(Exception e){
-					logger.error("", e);
-				}
-			}
-			if (con!=null){
-				try{
-					con.close();
-				}catch(Exception e){
-					logger.error("", e);
-				}
-			}
+			SqlUtil.closeResources(con, stmt);
 		}
 		return d;
 	}

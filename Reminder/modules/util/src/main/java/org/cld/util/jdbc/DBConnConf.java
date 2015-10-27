@@ -1,4 +1,4 @@
-package org.cld.datastore;
+package org.cld.util.jdbc;
 
 public class DBConnConf {
 	private String driver;
@@ -16,6 +16,9 @@ public class DBConnConf {
 		this.pass = pass;
 	}
 	
+	public String toString(){
+		return String.format("%s,%s,%s,%s", driver, url, user, pass);
+	}
 	public String getDriver() {
 		return driver;
 	}

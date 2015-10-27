@@ -26,20 +26,22 @@ public abstract class StockConfig {
 	public abstract String getTestMarketId();
 	
 	public abstract String trimStockId(String stockid);
+
+	public abstract Date getMarketStartDate();
 	
 	public abstract String getStockIdsCmd();
 	public abstract String getIPODateCmd(); //null, then ipo date info is within StockIds
 	public abstract String[] getAllCmds(String marketId);
 	public abstract String[] getSyncCmds();
-	public abstract Date getMarketStartDate();
 	public abstract String[] getCurrentDayCmds();
 	public abstract String[] getUntrimmedStockIdCmds();
+	public abstract String[] getSlowCmds();
+	public abstract String[] getFirstStartTimeUseNullCmds();//if the cmd runs first time for a stock, use null as start time instead of ipodates
 	
 	public abstract String getTestMarketChangeDate();//date before this using test_stock_set1, date after this using test_stock_set2
 	public abstract String[] getTestStockSet1();
 	public abstract String[] getTestStockSet2();
 	public abstract String getTestShortStartDate();
-	public abstract String[] getSlowCmds();
 	public abstract Map<LaunchableTask, String[]> getPostProcessMap();
 	
 	public abstract Map<String, String> getPairedMarket(); //like MarketId_HS_A paired with MarketId_HS_A_ST

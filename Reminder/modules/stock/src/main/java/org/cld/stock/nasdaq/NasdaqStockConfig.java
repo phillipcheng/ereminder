@@ -15,6 +15,7 @@ import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.nasdaq.task.FQPostProcessTask;
 import org.cld.stock.nasdaq.task.QuotePostProcessTask;
+import org.cld.stock.sina.SinaStockConfig;
 import org.cld.util.ListUtil;
 import org.cld.util.jdbc.JDBCMapper;
 
@@ -26,6 +27,7 @@ public class NasdaqStockConfig extends StockConfig{
 	public static final String MarketId_AMEX="AMEX";
 	public static final String MarketId_ALL="ALL";
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	public static String NASDAQ_FIRST_DATE_EARN_ANNOUNCE= "2010-01-04";
 	//http://markets.on.nytimes.com/research/markets/holidays/holidays.asp?display=market&exchange=SHH
 	public static Set<Date> USHolidays = new HashSet<Date>();
 	static{
@@ -58,7 +60,7 @@ public class NasdaqStockConfig extends StockConfig{
 	public static final String STOCK_IDS ="nasdaq-ids";
 	public static final String STOCK_IPO = "nasdaq-ipo";
 	//market
-	public static final String QUOTE_HISTORY="nasdaq-quote-historical";//start-end
+	//public static final String QUOTE_HISTORY="nasdaq-quote-historical";//start-end, not needed since FQ contains all the info
 	public static final String QUOTE_PREMARKET="nasdaq-quote-premarket";//current day
 	public static final String QUOTE_AFTERHOURS="nasdaq-quote-afterhours";//current day
 	public static final String QUOTE_TICK="nasdaq-quote-tick";//current day
@@ -79,6 +81,7 @@ public class NasdaqStockConfig extends StockConfig{
 	public static final String INCOME_STATEMENT="nasdaq-fr-quarter-IncomeStatement";
 	public static final String CASH_FLOW="nasdaq-fr-quarter-CashFlow";
 	public static final String REVENUE="nasdaq-fr-quarter-revenue";
+	public static final String EARN_ANNOUNCE="nasdaq-earn-announce";
 	
 	public static final String STOCK_DATA="data";
 	
@@ -111,11 +114,11 @@ public class NasdaqStockConfig extends StockConfig{
 		m.put("NasdaqFrQuarterRevenue","part");
 		cmdTableMap.put(REVENUE,m);
 		
-		//market(quote)
 		m = new HashMap<String,String>();
-		m.put("NasdaqQuoteHistory","part");
-		cmdTableMap.put(QUOTE_HISTORY,m);
+		m.put("NasdaqEarnAnnounce","part");
+		cmdTableMap.put(EARN_ANNOUNCE,m);
 		
+		//market(quote)
 		m = new HashMap<String,String>();
 		m.put("NasdaqPremarket","part");
 		cmdTableMap.put(QUOTE_PREMARKET,m);
@@ -155,12 +158,11 @@ public class NasdaqStockConfig extends StockConfig{
 	};
 	
 	public static String[] quoteConfs = new String[]{
-		QUOTE_HISTORY, // daily
 		QUOTE_PREMARKET, // 8:00AM ET - 9:30AM ET, will be posted from 4:15 a.m. ET to 7:30 a.m. ET of the following day.
 		QUOTE_AFTERHOURS, //4:00PM ET - 8:00PM ET, will be posted 4:15 p.m. ET to 3:30 p.m. ET of the following day
 		QUOTE_TICK, // 9:30AM ET - 4:00PM ET
 		QUOTE_SHORT_INTEREST,
-		QUOTE_FQ_HISTORY,
+		QUOTE_FQ_HISTORY,//daily
 	};
 	public static String[] issueConfs = new String[]{
 		DIVIDEND_HISTORY, //
@@ -176,6 +178,7 @@ public class NasdaqStockConfig extends StockConfig{
 		INCOME_STATEMENT, //
 		CASH_FLOW, //
 		REVENUE,
+		EARN_ANNOUNCE,
 	};
 	
 	public static String[] syncConf = new String[]{STOCK_IPO}; //other cmd need this result
@@ -245,7 +248,11 @@ public class NasdaqStockConfig extends StockConfig{
 
 	@Override
 	public String getStartDate(String cmdName) {
-		return null;
+		String startDate = null;
+		if (NasdaqStockConfig.EARN_ANNOUNCE.equals(cmdName)){
+			startDate = NasdaqStockConfig.NASDAQ_FIRST_DATE_EARN_ANNOUNCE;
+		}
+		return startDate;
 	}
 	@Override
 	public String trimStockId(String stockid) {
@@ -297,5 +304,9 @@ public class NasdaqStockConfig extends StockConfig{
 	@Override
 	public float getDailyLimit() {
 		return 0;
+	}
+	@Override
+	public String[] getFirstStartTimeUseNullCmds() {
+		return new String[]{};
 	}
 }

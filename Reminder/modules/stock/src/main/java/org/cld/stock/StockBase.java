@@ -16,7 +16,6 @@ import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datastore.DBConnConf;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.CrawledItemId;
@@ -24,8 +23,10 @@ import org.cld.taskmgr.entity.CmdStatus;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.CompareUtil;
 import org.cld.util.StringUtil;
+import org.cld.util.jdbc.DBConnConf;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.cld.hadooputil.DumpHdfsFile;
+import org.cld.stock.sina.task.FillEpsTask;
 import org.cld.stock.strategy.CountWaveTask;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.strategy.SellStrategy;
@@ -495,15 +496,30 @@ public abstract class StockBase extends TestBase{
 	//param the strategy configure file
 	public String[] validateStrategy(String param){
 		try{
-			PropertiesConfiguration props = new PropertiesConfiguration(param);
+			String strategyName = param;
+			String params=null;
+			if (param.contains("__")){
+				String[] a = param.split("__");
+				strategyName = a[0];
+				params = a[1];
+			}
+			PropertiesConfiguration props = new PropertiesConfiguration(strategyName);
+			if (params!=null){
+				Map<String, String> paramMap = StringUtil.parseMapParams(params);
+				props.setAutoSave(false);
+				for (String key:paramMap.keySet()){
+					props.setProperty(key, paramMap.get(key));	
+				}
+			}
 			DBConnConf dbconf = cconf.getSmalldbconf();
 	        String outputDirPrefix = props.getString(KEY_OUTPUTDIR);
 	        String fsDefaultName = props.getString(KEY_HDFS_DEFAULTNAME);
 	        String time = mdssdf.format(new Date());
-			String outputDir = String.format("%s_%s", outputDirPrefix, time);
-	        int duration = props.getInt(SellStrategy.KEY_SELLS_DURATION);
-	        float limitPercentage = props.getFloat(SellStrategy.KEY_SELLS_LIMIT_PERCENTAGE);
-	        float stopTrailingPercentage = props.getFloat(SellStrategy.KEY_SELLS_TRAIL_PERCENTAGE);
+			String outputDir = String.format("%s/%s", outputDirPrefix, time);
+			if (params!=null){
+				String strParams = params.replace(".", "_").replace(":","_").replace(",", "_");
+				outputDir = String.format("%s/%s_%s", outputDirPrefix, strParams, time);
+			}
 	        String scsType = props.getString(SelectStrategy.KEY_SELECTS_TYPE);
 	        SelectStrategy scs = (SelectStrategy) Class.forName(scsType).newInstance();
 	        scs.init(props);
@@ -513,10 +529,9 @@ public abstract class StockBase extends TestBase{
 	        }else{
 	        	scs.setFsDefaultName(cconf.getTaskMgr().getHdfsDefaultName());
 	        }
-	        SellStrategy sls = new SellStrategy();
-	        sls.setHoldDuration(duration);
-	        sls.setLimitPercentage(limitPercentage);
-	        sls.setStopTrailingPercentage(stopTrailingPercentage);
+	        
+	        SellStrategy[] sls = SellStrategy.genSS(props);
+	        
 	        return StrategyValidationTask.launch(this.propFile, cconf, marketBaseId, scs, sls, startDate, endDate, dbconf);
 		}catch(Exception e){
 			logger.error("", e);
@@ -539,6 +554,10 @@ public abstract class StockBase extends TestBase{
 			logger.error("", e);
 		}
 		return null;
+	}
+	
+	public void genFillEpsSql(String param){
+		FillEpsTask.launch(propFile, cconf, marketBaseId, marketId, startDate, endDate, cconf.getSmalldbconf());
 	}
 	
 	public CmdStatus runSpecial(String method, String param){
@@ -575,7 +594,7 @@ public abstract class StockBase extends TestBase{
 		if (param!=null){
 			step = Integer.parseInt(param);
 		}
-		if (step==1){
+		if (step==1){//crawl
 			List<CmdStatus> csl = this.runAllCmd(startDate, endDate);
 			int allDone=0;
 			while(allDone<csl.size()){
@@ -592,7 +611,7 @@ public abstract class StockBase extends TestBase{
 			}
 			step++;
 		}
-		if (step==2){
+		if (step==2){//file postprocess
 			CmdStatus cs = this.runSpecial("postprocess", null);
 			if (cs!=null){
 				boolean done=false;
@@ -604,7 +623,7 @@ public abstract class StockBase extends TestBase{
 			}
 			step++;
 		}
-		if (step==3){
+		if (step==3){//merge
 			CmdStatus cs = this.runSpecial("run_merge", null);
 			if (cs!=null){
 				boolean done=false;
@@ -618,12 +637,12 @@ public abstract class StockBase extends TestBase{
 		}
 		String strEndDate = sdf.format(endDate);
 		String localDirRoot = "/data/cydata/stock/merge/"+strEndDate;
-		if (step==4){
+		if (step==4){//export file from hdfs
 			DumpHdfsFile.launch(20, cconf.getTaskMgr().getHdfsDefaultName(), "/reminder/items/merge",
 					localDirRoot, new String[]{strEndDate}, this.getStockConfig().getSlowCmds());
 			step++;
 		}
-		if (step==5){
+		if (step==5){//import file to dbms
 			LoadDBData.launch(baseMarketId, strEndDate, cconf.getSmalldbconf(), 20, 
 					localDirRoot, new String[]{this.baseMarketId}, new String[]{});
 			step++;
@@ -661,6 +680,8 @@ public abstract class StockBase extends TestBase{
 		}
 		LoadDBData.launch(marketBaseId, marketId, cconf.getSmalldbconf(), threadNum, localDataDir, includeArry, excludeArr);
 	}
+	
+
 	//getter, setter
 	public String getMarketId() {
 		return marketId;

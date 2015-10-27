@@ -18,6 +18,10 @@ create external table NasdaqFrQuarterIncomeStatement(stockid String, quarter Str
 drop table if exists NasdaqFrQuarterRevenue;
 create external table NasdaqFrQuarterRevenue(stockid String, dt Date, revenue decimal(20,2), eps decimal(10,3), dividends decimal(10,3)) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-fr-quarter-revenue';
 
+drop table if exists NasdaqEarnAnnounce;
+create external table NasdaqEarnAnnounce(stockid String, dt Date, revenue decimal(20,2), eps decimal(10,3), dividends decimal(10,3)) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-fr-quarter-revenue';
+
+
 --nasdaq-issue-dividend-history
 drop table if exists NasdaqDividendHistory;
 create external table NasdaqDividendHistory(stockid String, EffDate Date, Type String, CashAmount decimal(20,4), dt Date, RecordDate Date, PaymentDate Date) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-issue-dividend-history';
@@ -26,10 +30,6 @@ create external table NasdaqDividendHistory(stockid String, EffDate Date, Type S
 --nasdaq-quote-historical
 drop table if exists NasdaqFqHistory;
 create external table NasdaqFqHistory(stockid String, dt Date, Open decimal(20,2), high decimal(20,2), low decimal(20,2), close decimal(20,2), volume bigint, adjClose decimal(20,2)) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-quote-fq-historical';
-
---nasdaq-quote-historical
-drop table if exists NasdaqQuoteHistory;
-create external table NasdaqQuoteHistory(stockid String, dt Date, Open decimal(20,2), high decimal(20,2), low decimal(20,2), close decimal(20,2), volume bigint) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-quote-historical';
 
 --nasdaq-quote-short-interest
 drop table if exists NasdaqShortInterest;

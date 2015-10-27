@@ -461,7 +461,7 @@ public class ETLUtil {
 		String[] jobIds = new String[jobIdList.size()];
 		return jobIdList.toArray(jobIds);
 	}
-	//holding-insiders, dividend-history, quote-historical, short-interest, corp-info, nasdaq-fq
+	//holding-insiders, dividend-history, quote-historical, short-interest, corp-info, nasdaq-fq, sina-bulletin
 	private static String[] runTaskByStock(StockConfig sc, String marketId, CrawlConf cconf, String propfile, Task t, 
 			Map<String, Object> params, String cmd, boolean sync, String mapperClassName, String reducerClassName){
 		logger.info("into runTaskByStock");
@@ -479,19 +479,26 @@ public class ETLUtil {
 					sd = DateTimeUtil.tomorrow(sd);
 				}
 			}
-			if (sd==null){
-				//need to open url for each year and quarter, so we need to use ipo start date.
-				sd = getIPODateByStockId(sc, marketId, stockid, cconf, cmd);
+			if (!Arrays.asList(sc.getFirstStartTimeUseNullCmds()).contains(cmd)){
+				if (sd==null){
+					//need to open url for each year and quarter, so we need to use ipo start date.
+					sd = getIPODateByStockId(sc, marketId, stockid, cconf, cmd);
+				}
+				if (sd==null){
+					sd = sc.getMarketStartDate();
+				}
+			}else{
+				//keep sd null
 			}
-			if (sd==null){
-				sd = sc.getMarketStartDate();
-			}
-			String strSd = sc.getSdf().format(sd);
 			Task t1 = t.clone(ETLUtil.class.getClassLoader());
 			if (params!=null){
 				t1.putAllParams(params);
 				updateMarketIdParam(t1);
-				t1.putParam(AbstractCrawlItemToCSV.FIELD_NAME_STARTDATE, strSd);
+				if (sd!=null){
+					t1.putParam(AbstractCrawlItemToCSV.FIELD_NAME_STARTDATE, sc.getSdf().format(sd));
+				}else{//set sd null
+					t1.putParam(AbstractCrawlItemToCSV.FIELD_NAME_STARTDATE, null);
+				}
 			}
 			t1.putParam("stockid", stockid);
 			tlist.add(t1);

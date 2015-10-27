@@ -19,6 +19,7 @@ public class DateTimeUtil {
 	public static final String CH_MONTH="月";
 	public static final String CH_DAY="日";
 	
+	public static SimpleDateFormat dbSdf = new SimpleDateFormat("yyyy-MM-dd");
 	public static String dateformat="MM/dd/yyyy";
 	public static String sortableDateFormat="yyyy/MM/dd";
 	public static String fileNameDateFormat="yyyyMMdd";
@@ -71,6 +72,23 @@ public class DateTimeUtil {
 		int month = calInst.get(Calendar.MONTH);
 		int quarter = (month)/3+1; //map 1-12 to 1-4
 		return new int[]{year, quarter};
+	}
+	
+	public static int[] lastYearQuarter(int year, int quarter){
+		int y=year;
+		int q = quarter;
+		if (quarter==1){
+			q = 4;
+			y--;
+		}else{
+			q = quarter-1;
+		}
+		return new int[]{y,q};
+	}
+	
+	public static String lastDayOfYearQuarter(int year, int quarter){
+		String[] days = new String[]{"03-31","06-30", "09-30", "12-31"};
+		return String.format("%d-%s", year, days[quarter-1]);
 	}
 	
 	public static Date getDate(String value){
@@ -217,5 +235,6 @@ public class DateTimeUtil {
 		}
 		return outd;
 	}
+	
 
 }

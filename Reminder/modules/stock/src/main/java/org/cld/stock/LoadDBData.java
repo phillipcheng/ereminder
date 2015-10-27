@@ -13,8 +13,8 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datastore.DBConnConf;
 import org.cld.stock.persistence.StockPersistMgr;
+import org.cld.util.jdbc.DBConnConf;
 
 class MyPathFilter implements IOFileFilter {
 	private static Logger logger =  LogManager.getLogger(MyPathFilter.class);

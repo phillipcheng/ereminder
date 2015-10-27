@@ -26,10 +26,6 @@ create table NasdaqDividendHistory(stockid varchar(150), EffDate Date, Type varc
 drop table if exists NasdaqFqHistory;
 create table NasdaqFqHistory(stockid varchar(150), dt Date, open decimal(20,2), high decimal(20,2), low decimal(20,2), close decimal(20,2), volume bigint, adjClose decimal(20,2));
 
-#nasdaq-quote-historical
-drop table if exists NasdaqQuoteHistory;
-create table NasdaqQuoteHistory(stockid varchar(150), dt Date, open decimal(20,2), high decimal(20,2), low decimal(20,2), close decimal(20,2), volume bigint);
-
 #nasdaq-quote-short-interest
 drop table if exists NasdaqShortInterest;
 create table NasdaqShortInterest(stockid varchar(150), dt Date, ShortInterest bigint, AvgDailyShareVolume bigint, daysToCover decimal(20,10));

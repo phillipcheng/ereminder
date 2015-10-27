@@ -17,7 +17,6 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.hadoop.CrawlTaskMapper;
-import org.cld.datastore.DBConnConf;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.strategy.SelectStrategy.byDayType;
@@ -25,6 +24,7 @@ import org.cld.stock.trade.StockOrder;
 import org.cld.stock.trade.StockOrder.*;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.DateTimeUtil;
+import org.cld.util.jdbc.DBConnConf;
 import org.cld.stock.trade.TradeSimulator;
 
 public class StrategyValidationTask extends Task implements Serializable{
@@ -34,7 +34,7 @@ public class StrategyValidationTask extends Task implements Serializable{
 	public static SimpleDateFormat detailSdf = new SimpleDateFormat("yyyyMMddhhmmss");
 	
 	private SelectStrategy scs;
-	private SellStrategy sls;
+	private SellStrategy[] sls;
 	private Date startDate;
 	private String marketBaseId;
 	private DBConnConf dbconf;
@@ -42,7 +42,7 @@ public class StrategyValidationTask extends Task implements Serializable{
 	public StrategyValidationTask(){
 	}
 	
-	public StrategyValidationTask(SelectStrategy scs, SellStrategy sls, Date startDate, String marketBaseId, DBConnConf dbconf){
+	public StrategyValidationTask(SelectStrategy scs, SellStrategy[] sls, Date startDate, String marketBaseId, DBConnConf dbconf){
 		this.scs = scs;
 		this.sls = sls;
 		this.startDate = startDate;
@@ -81,92 +81,106 @@ public class StrategyValidationTask extends Task implements Serializable{
 			StockConfig sc = StockUtil.getStockConfig(marketBaseId);
 			//valid one round
 			List<String> stockidList = scs.select(dbconf, sd, sc);//using data before and including sd
-			Map<String, List<StockOrder>> map = new HashMap<String, List<StockOrder>>();
-			int stockNum = stockidList.size()>scs.getLimit() ? scs.getLimit():stockidList.size();
-			Date submitDt = sd;
-			if (scs.getDayType()==byDayType.byCalendarDay){
-				submitDt = StockUtil.getNextOpenDay(DateTimeUtil.yesterday(sd), sc.getHolidays());
-			}
-			for (int i=0; i<stockNum; i++){
-				String stockid = stockidList.get(i);
-				List<StockOrder> sol = new ArrayList<StockOrder>();
-				
-				StockOrder marketBuyOrder = new StockOrder();
-				marketBuyOrder.setOrderId(stockid);
-				marketBuyOrder.setAction(ActionType.buy);
-				marketBuyOrder.setOrderType(OrderType.market);
-				marketBuyOrder.setSubmitTime(submitDt);
-				marketBuyOrder.setDuration(sls.getHoldDuration());//TODO
-				sol.add(marketBuyOrder);
-				
-				if (sls.getLimitPercentage()!=0){
-					StockOrder limitSellOrder = new StockOrder();
-					limitSellOrder.setStockid(stockid);
-					limitSellOrder.setAction(ActionType.sell);
-					limitSellOrder.setOrderType(OrderType.limit);
-					limitSellOrder.setLimitPercentage(sls.getLimitPercentage());
-					limitSellOrder.setPairOrderId(marketBuyOrder.getOrderId());
-					sol.add(limitSellOrder);
+			if (stockidList.size()>0){
+				Map<String, Map<SellStrategy, ArrayList<StockOrder>>> map = new HashMap<String, Map<SellStrategy, ArrayList<StockOrder>>>();
+				int stockNum = stockidList.size()>scs.getLimit() ? scs.getLimit():stockidList.size();
+				Date submitDt = sd;
+				if (scs.getDayType()==byDayType.byCalendarDay){
+					submitDt = StockUtil.getNextOpenDay(DateTimeUtil.yesterday(sd), sc.getHolidays());
+				}
+				int maxDuration = 0;
+				for (int i=0; i<stockNum; i++){
+					String stockid = stockidList.get(i);
+					Map<SellStrategy, ArrayList<StockOrder>> solmap = new HashMap<SellStrategy, ArrayList<StockOrder>>();
+					for (SellStrategy ss:sls){
+						ArrayList<StockOrder> sol = new ArrayList<StockOrder>();
+						StockOrder marketBuyOrder = new StockOrder();
+						marketBuyOrder.setStockid(stockid);
+						marketBuyOrder.setAction(ActionType.buy);
+						marketBuyOrder.setOrderType(OrderType.market);
+						marketBuyOrder.setSubmitTime(submitDt);
+						marketBuyOrder.setDuration(ss.getHoldDuration());//TODO
+						sol.add(marketBuyOrder);
+						
+						if (ss.getLimitPercentage()!=0){
+							StockOrder limitSellOrder = new StockOrder();
+							limitSellOrder.setStockid(stockid);
+							limitSellOrder.setAction(ActionType.sell);
+							limitSellOrder.setOrderType(OrderType.limit);
+							limitSellOrder.setLimitPercentage(ss.getLimitPercentage());
+							limitSellOrder.setPairOrderId(marketBuyOrder.getOrderId());
+							sol.add(limitSellOrder);
+						}
+						
+						if (ss.getStopTrailingPercentage()!=0){
+							StockOrder limitTrailSellOrder = new StockOrder();
+							limitTrailSellOrder.setStockid(stockid);
+							limitTrailSellOrder.setAction(ActionType.sell);
+							limitTrailSellOrder.setOrderType(OrderType.stoptrailingpercentage);
+							limitTrailSellOrder.setIncrementPercent(ss.getStopTrailingPercentage());
+							sol.add(limitTrailSellOrder);
+						}
+						
+						StockOrder forceCleanSellOrder = new StockOrder();
+						forceCleanSellOrder.setStockid(stockid);
+						forceCleanSellOrder.setAction(ActionType.sell);
+						forceCleanSellOrder.setOrderType(OrderType.forceclean);
+						sol.add(forceCleanSellOrder);
+						solmap.put(ss, sol);
+						if (ss.getHoldDuration()>maxDuration){
+							maxDuration = ss.getHoldDuration();
+						}
+					}
+					map.put(stockid, solmap);
 				}
 				
-				if (sls.getStopTrailingPercentage()!=0){
-					StockOrder limitTrailSellOrder = new StockOrder();
-					limitTrailSellOrder.setStockid(stockid);
-					limitTrailSellOrder.setAction(ActionType.sell);
-					limitTrailSellOrder.setOrderType(OrderType.stoptrailingpercentage);
-					limitTrailSellOrder.setIncrementPercent(sls.getStopTrailingPercentage());
-					sol.add(limitTrailSellOrder);
-				}
-				
-				StockOrder forceCleanSellOrder = new StockOrder();
-				forceCleanSellOrder.setStockid(stockid);
-				forceCleanSellOrder.setAction(ActionType.sell);
-				forceCleanSellOrder.setOrderType(OrderType.forceclean);
-				sol.add(forceCleanSellOrder);
-				
-				map.put(stockid, sol);
-			}
-			TradeSimulator.submitDailyOrder(map, dbconf, sc);
-			for (String stockid:map.keySet()){
-				List<StockOrder> solist = map.get(stockid);
-				List<StockOrder> buySOs = new ArrayList<StockOrder>();
-				List<StockOrder> sellSOs = new ArrayList<StockOrder>();
-				for (StockOrder so:solist){
-					if (so.getAction()==ActionType.buy){
-						buySOs.add(so);
-					}else if (so.getAction() == ActionType.sell){
-						sellSOs.add(so);
+				TradeSimulator.submitDailyOrder(map, maxDuration, dbconf, sc);
+				for (String stockid:map.keySet()){
+					Map<SellStrategy, ArrayList<StockOrder>> solistMap = map.get(stockid);
+					for (SellStrategy ss: solistMap.keySet()){
+						ArrayList<StockOrder> solist = solistMap.get(ss);
+						List<StockOrder> buySOs = new ArrayList<StockOrder>();
+						List<StockOrder> sellSOs = new ArrayList<StockOrder>();
+						for (StockOrder so:solist){
+							if (so.getAction()==ActionType.buy){
+								buySOs.add(so);
+							}else if (so.getAction() == ActionType.sell){
+								sellSOs.add(so);
+							}
+						}
+						float buyPrice=0;
+						Date buyTime=null;
+						for (StockOrder so: buySOs){
+							if (so.getStatus()==StatusType.executed){
+								buyPrice = so.getExecutedPrice();
+								buyTime = so.getExecuteTime();
+								break;
+							}
+						}
+						float sellPrice=0;
+						Date sellTime=null;
+						OrderType sellOrderType = OrderType.market;
+						for (StockOrder so: sellSOs){
+							if (so.getStatus()==StatusType.executed){
+								sellPrice = so.getExecutedPrice();
+								sellTime = so.getExecuteTime();
+								sellOrderType = so.getOrderType();
+								break;
+							}
+						}
+						String output = null;
+						if (buyPrice !=0 && sellPrice !=0){
+							float percent = (sellPrice-buyPrice)/buyPrice;
+							output = String.format("%s, %s, %s, %s, %s, %s, %s, %s", sdf.format(sd), stockid, 
+									buyTime, buyPrice, sellTime, sellOrderType, sellPrice, percent);
+						}else{
+							output = String.format("%s, %s, %s, %s, %s, %s, %s, %s", sdf.format(sd), stockid, "-", "-", "-", "-", "-", "-");
+						}
+						context.write(new Text(ss.toString()), new Text(output));
 					}
 				}
-				float buyPrice=0;
-				Date buyTime=null;
-				for (StockOrder so: buySOs){
-					if (so.getStatus()==StatusType.executed){
-						buyPrice = so.getExecutedPrice();
-						buyTime = so.getExecuteTime();
-						break;
-					}
-				}
-				float sellPrice=0;
-				Date sellTime=null;
-				OrderType sellOrderType = OrderType.market;
-				for (StockOrder so: sellSOs){
-					if (so.getStatus()==StatusType.executed){
-						sellPrice = so.getExecutedPrice();
-						sellTime = so.getExecuteTime();
-						sellOrderType = so.getOrderType();
-						break;
-					}
-				}
-				String output = null;
-				if (buyPrice !=0 && sellPrice !=0){
-					float percent = (sellPrice-buyPrice)/buyPrice;
-					output = String.format("%s, %s, %s, %s, %s, %s, %s, %s", sdf.format(sd), stockid, 
-							buyTime, buyPrice, sellTime, sellOrderType, sellPrice, percent);
-				}else{
-					output = String.format("%s, %s, %s, %s, %s, %s, %s, %s", sdf.format(sd), stockid, "-", "-", "-", "-", "-", "-");
-				}
-				context.write(new Text(sdf.format(sd)), new Text(output));
+			}else{
+				logger.info(String.format("no stockid selected on %s", sdf.format(sd)));
 			}
 		}catch(Exception e){
 			logger.error("", e);
@@ -185,7 +199,7 @@ public class StrategyValidationTask extends Task implements Serializable{
 				CrawlTaskMapper.class.getName(), StrategyResultReducer.class.getName(), hadoopJobParams);
 	}
 	
-	public static String[] launch(String propfile, CrawlConf cconf, String marketBaseId, SelectStrategy scs, SellStrategy sls, 
+	public static String[] launch(String propfile, CrawlConf cconf, String marketBaseId, SelectStrategy scs, SellStrategy[] sls, 
 			Date startDate, Date endDate, DBConnConf dbconf) {
 		StockConfig sc = StockUtil.getStockConfig(marketBaseId);
 		Date sd = startDate;
@@ -220,10 +234,10 @@ public class StrategyValidationTask extends Task implements Serializable{
 	public void setScs(SelectStrategy scs) {
 		this.scs = scs;
 	}
-	public SellStrategy getSls() {
+	public SellStrategy[] getSls() {
 		return sls;
 	}
-	public void setSls(SellStrategy sls) {
+	public void setSls(SellStrategy[] sls) {
 		this.sls = sls;
 	}
 	public Date getStartDate() {

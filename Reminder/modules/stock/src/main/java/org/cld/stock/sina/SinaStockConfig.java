@@ -314,6 +314,7 @@ public class SinaStockConfig extends StockConfig {
 	public static final String SINA_STOCK_CORP_MANAGER="sina-stock-corp-manager";//
 	public static final String SINA_STOCK_CORP_RELATED="sina-stock-corp-related";
 	public static final String SINA_STOCK_CORP_RELATED_OTHER="sina-stock-corp-related-other";
+	public static final String SINA_STOCK_BULLETIN="sina-stock-bulletin";
 	//finance report
 	public static final String SINA_STOCK_FR_QUARTER_BALANCE_SHEET="sina-stock-fr-quarter-BalanceSheet";//quarterly update
 	public static final String SINA_STOCK_FR_QUARTER_PROFIT_STATEMENT="sina-stock-fr-quarter-ProfitStatement";//quarterly update
@@ -367,6 +368,11 @@ public class SinaStockConfig extends StockConfig {
 		m.put("SinaCorpRelatedConcepts","concepts");
 		m.put("SinaCorpRelatedIndustries","industries");
 		cmdTableMap.put(SINA_STOCK_CORP_RELATED_OTHER, m);
+		
+		m = new HashMap<String,String>();
+		m.put("SinaCorpBulletin","part");
+		cmdTableMap.put(SINA_STOCK_BULLETIN, m);
+		
 		//fr
 		m = new HashMap<String,String>();
 		m.put("SinaFrBalanceSheet","part");
@@ -453,7 +459,8 @@ public class SinaStockConfig extends StockConfig {
 		SINA_STOCK_CORP_INFO, //公司简介
 		SINA_STOCK_CORP_MANAGER, //公司高管
 		SINA_STOCK_CORP_RELATED, //相关证券 所属指数 所属系
-		SINA_STOCK_CORP_RELATED_OTHER //所属行业板块  所属概念板块
+		SINA_STOCK_CORP_RELATED_OTHER, //所属行业板块  所属概念板块
+		SINA_STOCK_BULLETIN
 	};
 	public static String[] tradeConfs = new String[]{
 		SINA_STOCK_TRADE_DETAIL, //成交明细
@@ -527,11 +534,11 @@ public class SinaStockConfig extends StockConfig {
 	@Override
 	public String getStartDate(String cmdName) {
 		String startDate = null;
-		if (cmdName.contains("rzrq")){
+		if (SinaStockConfig.SINA_STOCK_MARKET_RZRQ.contains(cmdName)){
 			startDate = SinaStockConfig.HS_A_FIRST_DATE_RZRQ;
-		}else if (cmdName.contains("dzjy")){
+		}else if (SinaStockConfig.SINA_STOCK_MARKET_DZJY.equals(cmdName)){
 			startDate = SinaStockConfig.HS_A_FIRST_DATE_DZJY;
-		}else if (cmdName.contains("tradedetail")){
+		}else if (SinaStockConfig.SINA_STOCK_TRADE_DETAIL.equals(cmdName)){
 			startDate = SinaStockConfig.HS_A_FIRST_DATE_DETAIL_TRADE;
 		}
 		return startDate;
@@ -623,5 +630,10 @@ public class SinaStockConfig extends StockConfig {
 	@Override
 	public float getDailyLimit() {
 		return 10;
+	}
+	
+	@Override
+	public String[] getFirstStartTimeUseNullCmds() {
+		return new String[]{SINA_STOCK_BULLETIN};
 	}
 }

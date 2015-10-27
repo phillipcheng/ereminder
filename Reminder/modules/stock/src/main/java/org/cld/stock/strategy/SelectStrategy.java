@@ -6,8 +6,8 @@ import java.util.List;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datastore.DBConnConf;
 import org.cld.stock.StockConfig;
+import org.cld.util.jdbc.DBConnConf;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 

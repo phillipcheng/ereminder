@@ -15,10 +15,11 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datastore.DBConnConf;
 import org.cld.hadooputil.HdfsDownloadUtil;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
+import org.cld.util.DateTimeUtil;
+import org.cld.util.jdbc.DBConnConf;
 import org.cld.util.jdbc.GeneralJDBCMapper;
 import org.cld.util.jdbc.SqlUtil;
 import org.xml.mytaskdef.ScriptEngineUtil;
@@ -34,7 +35,7 @@ public class CompareSelectStrategy extends SelectStrategy{
 
 	private String[] sqls;
 	private String[] exps;
-	private String filter;
+	private String filter = "true";
 	private String orderBy;
 	private String orderDirection;
 	private String[] params;
@@ -89,8 +90,9 @@ public class CompareSelectStrategy extends SelectStrategy{
 		}
 		params = new String[paramList.size()];
 		params = paramList.toArray(params);
-		
-		filter = props.getString(KEY_FILTER);
+		if (props.containsKey(KEY_FILTER)){
+			filter = props.getString(KEY_FILTER);
+		}
 		orderBy = props.getString(KEY_ORDERBY);
 		orderDirection = props.getString(KEY_ORDERDIR);
 	}
@@ -109,6 +111,10 @@ public class CompareSelectStrategy extends SelectStrategy{
 	public static final String SQL_KEY_TODAY="%date";
 	public static final String SQL_KEY_THIS_TDATE="%tdate";
 	public static final String SQL_KEY_LAST_TDATE="%lasttdate";
+	public static final String SQL_KEY_THIS_QUARTER="%quarter";//2015-12-31
+	public static final String SQL_KEY_LAST_QUARTER="%lastquarter";//2015-09-30
+	public static final String SQL_KEY_LAST_TWO_QUARTER="%lasttwoquarter";//2015-06-30
+	
 	@Override
 	public List<String> select(DBConnConf dbconf, Date dt, StockConfig sc){
 		Date today = dt;
@@ -128,16 +134,20 @@ public class CompareSelectStrategy extends SelectStrategy{
 		}else{
 			isAsc=false;
 		}
+		/*
+		int[] yq = DateTimeUtil.getYearQuarter(dt);
+		String lastDayThisQuarter = DateTimeUtil.lastDayOfYearQuarter(yq[0], yq[1]);
+		yq = DateTimeUtil.lastYearQuarter(yq[0], yq[1]);
+		String lastDayLastQuarter = DateTimeUtil.lastDayOfYearQuarter(yq[0], yq[1]);
+		yq = DateTimeUtil.lastYearQuarter(yq[0], yq[1]);
+		String lastDayLastTwoQuarter = DateTimeUtil.lastDayOfYearQuarter(yq[0], yq[1]);
+		*/
+		
 		List<String> retList = new ArrayList<String>();
-		try{
-			Class.forName(dbconf.getDriver());
-		}catch (Exception e){
-			logger.error("", e);
-		}
 		Connection con = null;
+		List<Map<String, Object>> priceMapArray = new ArrayList<Map<String, Object>>();
 		try{
-			con = DriverManager.getConnection(dbconf.getUrl(), dbconf.getUser(), dbconf.getPass());
-			List<Map<String, Object>> priceMapArray = new ArrayList<Map<String, Object>>();
+			con = SqlUtil.getConnection(dbconf);
 			/*
 			 * replace %date with today
 			 * replace %tdate with thisTradingDay
@@ -148,6 +158,8 @@ public class CompareSelectStrategy extends SelectStrategy{
 				sql = sql.replace(SQL_KEY_TODAY, sdf.format(today));
 				sql = sql.replace(SQL_KEY_THIS_TDATE, sdf.format(thisTradingDay));
 				sql = sql.replace(SQL_KEY_LAST_TDATE, sdf.format(lastTradingDay));
+				//sql = sql.replace(SQL_KEY_LAST_QUARTER, lastDayLastQuarter);
+				//sql = sql.replace(SQL_KEY_LAST_TWO_QUARTER, lastDayLastTwoQuarter);
 				for (int k=1; k<=params.length;k++){
 					if (sql.contains("%"+k)){
 						sql = sql.replace("%"+k, params[k-1]);
@@ -167,115 +179,112 @@ public class CompareSelectStrategy extends SelectStrategy{
 							vlist[k]=vl.get(k+1);
 						}
 						aPriceMap.put((String)vl.get(0), vlist);
-					}else{
+					}else if (vl.size()==2){
 						aPriceMap.put((String)vl.get(0), vl.get(1));
+					}else if (vl.size()==1){
+						aPriceMap.put((String)vl.get(0), vl.get(0));
 					}
 				}
 				priceMapArray.add(aPriceMap);
-			}
-			int lineno=0;
-			TreeMap<Object, String> orderOutput = new TreeMap<Object, String>();//aMap is the lead
-			Map<String, Object> aPriceMap = priceMapArray.get(0);
-			String title = "";
-			for (String stockid:aPriceMap.keySet()){
-				TreeMap<String, Object> variables = new TreeMap<String, Object>();
-				boolean eval=true;
-				for (int k=0; k<priceMapArray.size(); k++){
-					char varName = (char) ('a' + k);
-					Map<String, Object> map = priceMapArray.get(k);
-					Object v = map.get(stockid);
-					if (v!=null){
-						variables.put(varName+"", v);
-					}else{
-						logger.error(String.format("price for stock:%s on var:%c is null.", stockid, varName));
-						eval=false;
-						break;
-					}
-				}
-				if (eval){
-					for (int k=0; k<exps.length; k++){
-						String resultExp = exps[k];
-						Object result = ScriptEngineUtil.eval(resultExp, VarType.OBJECT, variables);
-						char varSuffix = (char) ('a' + k);
-						String varName = "z" + varSuffix;
-						variables.put(varName, result);
-					}
-					
-					boolean ret = (boolean) ScriptEngineUtil.eval(filter, VarType.BOOLEAN, variables);
-					if (ret){
-						if (lineno==0){
-							title +="stockid,";
-						}
-						StringBuffer sb = new StringBuffer(stockid + ",");
-						Object orderValue = null;
-						for (String key: variables.keySet()){
-							Object v = variables.get(key);
-							if (key.equals(orderBy)){
-								orderValue = variables.get(key);
-							}
-							if (v instanceof Object[]){
-								Object[] vl = (Object[])v;
-								for (int i=0; i<vl.length; i++){
-									if (lineno==0){
-										title+= key+"["+i+"],";
-									}
-									sb.append(vl[i]);
-									sb.append(",");
-								}
-							}else{
-								if (lineno==0){
-									title+= key+",";
-								}
-								sb.append(v.toString());
-								sb.append(",");
-							}
-						}
-						if (orderValue==null){
-							logger.error("orderby not specified");
-						}else{
-							orderOutput.put(orderValue, sb.toString());
-						}
-						lineno++;
-					}
-				}
-			}
-			String[] sa = new String[orderOutput.size()+1];
-			Set<Object> keySet = null;
-			if (isAsc){
-				keySet = orderOutput.keySet();
-			}else{
-				keySet = orderOutput.descendingKeySet();
-			}
-			sa[0]=title;
-			int i=1;
-			for (Object key:keySet){
-				String line = orderOutput.get(key);
-				String stockid = line.substring(0, line.indexOf(","));
-				retList.add(stockid);
-				sa[i]=sdf.format(dt) + ',' + line;
-				i++;
-			}
-			String allStrParam = "";
-			java.util.Date d = new java.util.Date();
-			for (i=0; i<params.length;i++){
-				if (i>0){
-					allStrParam+="_";
-				}
-				allStrParam+=params[i];
-			}
-			String fileName = String.format("%s_%s_%s.csv", getName(), allStrParam, detailSdf.format(d));
-			HdfsDownloadUtil.outputToHdfs(sa, outputFileDir+"/"+fileName, this.getFsDefaultName());
+			}		
 		}catch(Exception e){
 			logger.error("", e);
 		}finally{
-			if (con!=null){
-				try{
-					con.close();
-				}catch(Exception e){
-					logger.error("", e);
+			SqlUtil.closeResources(con, null);
+		}
+		
+		int lineno=0;
+		TreeMap<Object, String> orderOutput = new TreeMap<Object, String>();//aMap is the lead
+		Map<String, Object> aPriceMap = priceMapArray.get(0);
+		String title = "";
+		for (String stockid:aPriceMap.keySet()){
+			TreeMap<String, Object> variables = new TreeMap<String, Object>();
+			boolean eval=true;
+			for (int k=0; k<priceMapArray.size(); k++){
+				char varName = (char) ('a' + k);
+				Map<String, Object> map = priceMapArray.get(k);
+				Object v = map.get(stockid);
+				if (v!=null){
+					variables.put(varName+"", v);
+				}else{
+					logger.error(String.format("price for stock:%s on var:%c is null.", stockid, varName));
+					eval=false;
+					break;
+				}
+			}
+			if (eval){
+				for (int k=0; k<exps.length; k++){
+					String resultExp = exps[k];
+					Object result = ScriptEngineUtil.eval(resultExp, VarType.OBJECT, variables);
+					char varSuffix = (char) ('a' + k);
+					String varName = "z" + varSuffix;
+					variables.put(varName, result);
+				}
+				
+				boolean ret = (boolean) ScriptEngineUtil.eval(filter, VarType.BOOLEAN, variables);
+				if (ret){
+					if (lineno==0){
+						title +="stockid,";
+					}
+					StringBuffer sb = new StringBuffer(stockid + ",");
+					Object orderValue = null;
+					for (String key: variables.keySet()){
+						Object v = variables.get(key);
+						if (key.equals(orderBy)){
+							orderValue = variables.get(key);
+						}
+						if (v instanceof Object[]){
+							Object[] vl = (Object[])v;
+							for (int i=0; i<vl.length; i++){
+								if (lineno==0){
+									title+= key+"["+i+"],";
+								}
+								sb.append(vl[i]);
+								sb.append(",");
+							}
+						}else{
+							if (lineno==0){
+								title+= key+",";
+							}
+							sb.append(v.toString());
+							sb.append(",");
+						}
+					}
+					if (orderValue==null){//no order specified
+						orderOutput.put(sb.toString(), sb.toString());
+					}else{
+						orderOutput.put(orderValue, sb.toString());
+					}
+					lineno++;
 				}
 			}
 		}
+		String[] sa = new String[orderOutput.size()+1];
+		Set<Object> keySet = null;
+		if (isAsc){
+			keySet = orderOutput.keySet();
+		}else{
+			keySet = orderOutput.descendingKeySet();
+		}
+		sa[0]=title;
+		int i=1;
+		for (Object key:keySet){
+			String line = orderOutput.get(key);
+			String stockid = line.substring(0, line.indexOf(","));
+			retList.add(stockid);
+			sa[i]=sdf.format(dt) + ',' + line;
+			i++;
+		}
+		String allStrParam = "";
+		java.util.Date d = new java.util.Date();
+		for (i=0; i<params.length;i++){
+			if (i>0){
+				allStrParam+="_";
+			}
+			allStrParam+=params[i];
+		}
+		String fileName = String.format("%s_%s_%s_%s.csv", getName(), sdf.format(dt), allStrParam, detailSdf.format(d));
+		HdfsDownloadUtil.outputToHdfs(sa, outputFileDir+"/"+fileName, this.getFsDefaultName());
 		return retList;
 	}
 	

@@ -1,12 +1,14 @@
 package org.cld.util.jdbc;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import javax.sql.DataSource;
 
@@ -277,4 +279,32 @@ public class SqlUtil {
 			SqlUtil.closeResources(null, statement);
 		}
     }
+	
+	public static int tryTimes=25;
+	public static Connection getConnection(DBConnConf dbconf){
+		Connection con = null;
+		try {
+			Class.forName(dbconf.getDriver());
+		}catch(Exception e){
+			logger.error("", e);
+		}
+		boolean got=false;
+		int times=0;
+		Random r = new Random();
+		while(!got && times<tryTimes){
+			times++;
+			try {
+				con = DriverManager.getConnection(dbconf.getUrl(), dbconf.getUser(), dbconf.getPass());
+				got = true;
+			}catch(Exception e){
+				logger.warn(e.getMessage());
+				try {
+					int rt = r.nextInt(10);
+					Thread.sleep(rt*1000);
+				} catch (InterruptedException e1) {
+				}
+			}
+		}
+		return con;
+	}
 }

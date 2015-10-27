@@ -20,17 +20,11 @@ import org.cld.stock.nasdaq.NasdaqTestStockConfig;
 import org.cld.stock.persistence.StockPersistMgr;
 import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.SinaStockConfig;
-import org.cld.stock.strategy.CompareSelectSuite;
-import org.cld.stock.strategy.SelectStrategy;
-import org.cld.stock.strategy.SellStrategy;
-import org.cld.stock.strategy.StrategyValidationTask;
 import org.junit.Test;
 
 public class TestStock {
 	private static Logger logger =  LogManager.getLogger(TestStock.class);
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	private static SimpleDateFormat mdssdf = new SimpleDateFormat("MMddhhmmss");
-	
 	@Test
 	public void testDateInHbase() throws Exception{
 		NasdaqStockBase nsb = new NasdaqStockBase("cld-stock-cluster.properties", "ALL", null, sdf.parse("2015-10-11"));
@@ -87,13 +81,32 @@ public class TestStock {
 	}
 	
 	@Test
-	public void testStrategyValidationRally() throws Exception{
+	public void testSVRandom() throws Exception{
+		String pFile = "client1-v2.properties";
+		String marketId = "hs_a"; //not used
+		Date sd = sdf.parse("2015-10-10");
+		Date ed = sdf.parse("2015-10-20");
+		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
+		sb.validateStrategy("strategy.random.properties");
+	}
+	@Test
+	public void testSVRally() throws Exception{
 		String pFile = "client1-v2.properties";
 		String marketId = "hs_a"; //not used
 		Date sd = sdf.parse("2015-10-14");
 		Date ed = sdf.parse("2015-10-15");
 		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
-		sb.validateStrategy("strategy.rally1.properties");
+		sb.validateStrategy("strategy.rally.properties");
+	}
+	
+	@Test
+	public void testSVEarn() throws Exception{
+		String pFile = "client1-v2.properties";
+		String marketId = "hs_a"; //not used
+		Date sd = sdf.parse("2015-10-14");
+		Date ed = sdf.parse("2015-10-15");
+		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
+		sb.validateStrategy("strategy.earn.properties");
 	}
 	
 	@Test
@@ -103,9 +116,11 @@ public class TestStock {
 		Date sd = sdf.parse("2015-10-10");
 		Date ed = sdf.parse("2015-10-20");
 		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
-		sb.validateStrategy("strategy.earnforecast.2_10_3_5_2.properties");
+		sb.validateStrategy("strategy.earnforecast.properties" + 
+		"__" + 
+		"scs.limit:3,scs.param.1:15,sls.duration:2-4-1,sls.limitPercentage:5-8-1,sls.stopTrailingPercentage:2-3-1");
 	}
-	
+
 	@Test
 	public void testCountWave() throws Exception{
 		String pFile = "client1-v2.properties";
@@ -115,6 +130,17 @@ public class TestStock {
 		StockBase nsb = new NasdaqStockBase(pFile, marketId, sd, ed);
 		nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(marketId, ed), null);//init stockid
 		nsb.countWave("wavecount1.properties");
+	}
+	
+	@Test
+	public void testGenFillEpsSql() throws Exception{
+		String pFile = "client1-v2.properties";
+		String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test; //not used
+		Date sd = sdf.parse("2015-10-23");
+		Date ed = sdf.parse("2015-10-25");
+		StockBase nsb = new SinaStockBase(pFile, marketId, sd, ed);
+		//nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(marketId, ed), null);//init stockid
+		nsb.genFillEpsSql(null);
 	}
 	
 	@Test

@@ -9,13 +9,14 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datastore.DBConnConf;
 import org.cld.stock.CandleQuote;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.persistence.StockPersistMgr;
+import org.cld.stock.strategy.SellStrategy;
 import org.cld.stock.trade.StockOrder.*;
 import org.cld.util.DateTimeUtil;
+import org.cld.util.jdbc.DBConnConf;
 
 
 public class TradeSimulator {
@@ -141,39 +142,46 @@ public class TradeSimulator {
 	 * @param cconf
 	 * @return
 	 */
-	public static void submitDailyOrder(Map<String, List<StockOrder>> soMap, DBConnConf dbconf, StockConfig sc){
+	public static void submitDailyOrder(Map<String, Map<SellStrategy, ArrayList<StockOrder>>> soMap, int maxDuration, DBConnConf dbconf, StockConfig sc){
 		int i=0;
 		StockOrder soSample = null;
 		List<String> sidlist = new ArrayList<String>();
 		for (String stockid: soMap.keySet()){
 			sidlist.add(stockid);
 			if (i==0){
-				soSample = soMap.get(stockid).get(0);
+				soSample = soMap.get(stockid).values().iterator().next().get(0);
 			}
 			i++;
 		}
 		if (soSample!=null){
 			Date submitTime = soSample.getSubmitTime();//submit at open of the trading day
 			Date oneDayBeforeSubmitTime = DateTimeUtil.yesterday(submitTime);
-			Date ed = StockUtil.getNextOpenDay(submitTime, sc.getHolidays(), soSample.getDuration());
+			Date ed = StockUtil.getNextOpenDay(submitTime, sc.getHolidays(), maxDuration);
 			Map<String, List<CandleQuote>> cqMap = StockPersistMgr.getFQDailyQuote(sc, dbconf, sidlist, oneDayBeforeSubmitTime, ed);
 			Map<String, StockOrder> executedOrder = new HashMap<String, StockOrder>(); //
 			List<String> removeStockIds = new ArrayList<String>();
 			for (String stockid:soMap.keySet()){
-				List<StockOrder> sol = soMap.get(stockid);
+				Map<SellStrategy,ArrayList<StockOrder>> solmap = soMap.get(stockid);
 				List<CandleQuote> quotes = cqMap.get(stockid);
 				if (quotes!=null){
-					List<StockOrder> buySOs = new ArrayList<StockOrder>();
-					List<StockOrder> sellSOs = new ArrayList<StockOrder>();
-					for (StockOrder so:sol){
-						if (so.getAction()==ActionType.buy){
-							buySOs.add(so);
-						}else if (so.getAction() == ActionType.sell){
-							sellSOs.add(so);
+					for (SellStrategy ss: solmap.keySet()){
+						List<CandleQuote> cqs = quotes;
+						if (quotes.size()>ss.getHoldDuration()){
+							cqs = quotes.subList(0, ss.getHoldDuration());
 						}
+						List<StockOrder> sol = solmap.get(ss);
+						List<StockOrder> buySOs = new ArrayList<StockOrder>();
+						List<StockOrder> sellSOs = new ArrayList<StockOrder>();
+						for (StockOrder so:sol){
+							if (so.getAction()==ActionType.buy){
+								buySOs.add(so);
+							}else if (so.getAction() == ActionType.sell){
+								sellSOs.add(so);
+							}
+						}
+						List<CandleQuote> afterBuyCQI = tryExecuteOrder(buySOs, cqs, executedOrder, sc);
+						tryExecuteOrder(sellSOs, afterBuyCQI, executedOrder, sc);
 					}
-					List<CandleQuote> afterBuyCQI = tryExecuteOrder(buySOs, quotes, executedOrder, sc);
-					tryExecuteOrder(sellSOs, afterBuyCQI, executedOrder, sc);
 				}else{
 					logger.info(String.format("no quotes found for stock:%s, remove it.", stockid));
 					removeStockIds.add(stockid);

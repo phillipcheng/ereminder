@@ -106,6 +106,10 @@ public class TestSinaStock {
 		Date ed = sdf.parse("2015-08-02");
 		ssb.run_browse_idlist(SinaStockConfig.MarketId_HS_A, ed);
 	}
+	@Test
+	public void testBulletin() throws ParseException{
+		ssb.runCmd(SinaStockConfig.SINA_STOCK_BULLETIN, SinaStockConfig.MarketId_HS_Test, null, sdf.format(new Date()));
+	}
 	/*****
 	 * Market history 行情走势
 	 **/
