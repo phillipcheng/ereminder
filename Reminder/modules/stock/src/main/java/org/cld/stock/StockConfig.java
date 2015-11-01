@@ -20,7 +20,8 @@ public abstract class StockConfig {
 	public static final String RAW_ROOT="/reminder/items/raw";
 	public static final String MERGE_ROOT="/reminder/items/merge";
 	public static final String CHECK_ROOT="/reminder/items/check";
-
+	public static final String STRATEGY_ROOT="/reminder/sresult";
+	
 	protected SimpleDateFormat sdf = null;
 	
 	public abstract String getTestMarketId();
@@ -30,7 +31,7 @@ public abstract class StockConfig {
 	public abstract Date getMarketStartDate();
 	
 	public abstract String getStockIdsCmd();
-	public abstract String getIPODateCmd(); //null, then ipo date info is within StockIds
+	public abstract String getIPODateCmd();//this is a sync, hbase stored cmd
 	public abstract String[] getAllCmds(String marketId);
 	public abstract String[] getSyncCmds();
 	public abstract String[] getCurrentDayCmds();
@@ -56,6 +57,16 @@ public abstract class StockConfig {
 	public abstract Map<String, String> getTablesByCmd(String cmd);
 	public abstract JDBCMapper getDailyQuoteTableMapper();
 	public abstract JDBCMapper getFQDailyQuoteTableMapper();
+	
+	//strategy
+	public static final String STR_RANDOM="random";
+	public static final String STR_BREAKLVL1="breaklvl1";
+	public static final String STR_DIVIDEND="dividend";
+	public static final String STR_EARNFORECAST="earnforecast";
+	public static final String STR_PE="pe";
+	public static final String STR_RALLY="rally";
+	
+	public abstract String[] getAllStrategy();
 	
 	public StockConfig() {
 		sdf = new SimpleDateFormat("yyyy-MM-dd");

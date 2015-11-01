@@ -33,7 +33,7 @@ public class TableUtil {
 	}
 	
 	public static Pattern negP = Pattern.compile("\\((.*)\\)");
-	public static Pattern endingP = Pattern.compile("([\\-\\.0-9]+)\\((.*)\\)");
+	public static Pattern endingP = Pattern.compile("(.*)\\((.*)\\)");
 	
 	public static String getFRNumber(String instr){
 		String str = instr;
@@ -53,6 +53,11 @@ public class TableUtil {
 		str = str.replace("$", "");
 		str = str.replace("\u00a0","");//remove &nbsp;
 		str = str.replace("\u0020", "");
+		//remove the ending parenthesis
+		m = endingP.matcher(str);
+		if (m.matches()){
+			str = m.group(1);
+		}
 		//multiple scale
 		for (int i=0;i<units.length;i++){
 			int idx = str.lastIndexOf(units[i]);

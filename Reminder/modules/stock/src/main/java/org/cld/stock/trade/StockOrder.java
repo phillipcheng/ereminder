@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class StockOrder {
+	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	public enum ActionType{
 		buy,
 		sell,
@@ -48,6 +49,16 @@ public class StockOrder {
 	
 	private static Integer idroot=0;
 	public static SimpleDateFormat detailSdf = new SimpleDateFormat("yyyyMMddhhmmssSSS");
+	
+	public String toString(){
+		String strExeTime = null;
+		if (executeTime==null){
+			strExeTime = "";
+		}else{
+			strExeTime = sdf.format(executeTime);
+		}
+		return String.format("stockid:%s, exePrice:%.2f, exeTime:%s", stockid, executedPrice, strExeTime);
+	}
 	public StockOrder(){
 		String sd = detailSdf.format(new Date());
 		synchronized(idroot){

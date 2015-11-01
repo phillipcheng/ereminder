@@ -11,6 +11,8 @@ import org.cld.stock.StockBase;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.sina.SinaStockConfig;
+import org.cld.stock.sina.jobs.SplitByStockMapper;
+import org.cld.stock.sina.jobs.SplitByStockReducer;
 import org.cld.stock.sina.task.TradeDetailCheckDownload;
 import org.cld.stock.task.GenNdLable;
 
@@ -46,8 +48,8 @@ public class SinaStockBase extends StockBase{
 				HadoopTaskLauncher.executeTasks(getCconf().getNodeConf(), hadoopParams, 
 						new String[]{"/reminder/items/merge/"+this.specialParam}, 
 						true, "/reminder/items/mlinput/"+this.specialParam, false, 
-						"org.cld.stock.sina.jobs.SplitByStockMapper", 
-						"org.cld.stock.sina.jobs.SplitByStockReducer", false)};
+						SplitByStockMapper.class, 
+						SplitByStockReducer.class, false)};
 	}
 	
 	public String[] genNdLable(){

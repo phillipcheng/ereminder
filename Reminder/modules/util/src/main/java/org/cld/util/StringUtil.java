@@ -28,9 +28,9 @@ public class StringUtil {
 	
 	public static String sepp = "-"; 
 	//parse a 1-4-1 into [1,2,3,4]
-	public static float[] parseSteps(String steps){
+	public static Float[] parseSteps(String steps){
 		if (!steps.contains(sepp)){
-			return new float[]{Float.parseFloat(steps)};
+			return new Float[]{Float.parseFloat(steps)};
 		}else{
 			String[] a = steps.split(sepp);
 			float start = Float.parseFloat(a[0]);
@@ -42,7 +42,7 @@ public class StringUtil {
 				fl.add(v);
 				v += step;
 			}
-			float[] vf = new float[fl.size()];
+			Float[] vf = new Float[fl.size()];
 			for (int i=0; i<vf.length; i++){
 				vf[i] = fl.get(i);
 			}

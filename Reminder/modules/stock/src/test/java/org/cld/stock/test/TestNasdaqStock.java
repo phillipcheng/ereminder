@@ -14,7 +14,6 @@ import org.cld.datastore.entity.CrawledItem;
 import org.cld.stock.nasdaq.NasdaqStockBase;
 import org.cld.stock.nasdaq.NasdaqStockConfig;
 import org.cld.stock.nasdaq.NasdaqTestStockConfig;
-import org.cld.stock.strategy.CompareSelectSuite;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
@@ -65,7 +64,7 @@ public class TestNasdaqStock {
 	}
 	@Test
 	public void testRunAllCmd1() throws Exception{
-		nsb.runAllCmd(null, sdf.parse("2015-09-25"));
+		nsb.runAllCmd();
 	}
 	
 	@Test

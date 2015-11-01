@@ -12,7 +12,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.test.CrawlTestUtil;
-import org.cld.stock.LoadDBData;
 import org.cld.stock.StockBase;
 import org.cld.stock.StockUtil;
 import org.cld.stock.nasdaq.NasdaqStockBase;
@@ -20,6 +19,7 @@ import org.cld.stock.nasdaq.NasdaqTestStockConfig;
 import org.cld.stock.persistence.StockPersistMgr;
 import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.SinaStockConfig;
+import org.cld.stock.task.LoadDBDataTask;
 import org.junit.Test;
 
 public class TestStock {
@@ -79,47 +79,6 @@ public class TestStock {
 		dl = StockUtil.getOpenDayList(fd, td, SinaStockConfig.CNHolidays);
 		logger.info(String.format("dl is %s", dl));
 	}
-	
-	@Test
-	public void testSVRandom() throws Exception{
-		String pFile = "client1-v2.properties";
-		String marketId = "hs_a"; //not used
-		Date sd = sdf.parse("2015-10-10");
-		Date ed = sdf.parse("2015-10-20");
-		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
-		sb.validateStrategy("strategy.random.properties");
-	}
-	@Test
-	public void testSVRally() throws Exception{
-		String pFile = "client1-v2.properties";
-		String marketId = "hs_a"; //not used
-		Date sd = sdf.parse("2015-10-14");
-		Date ed = sdf.parse("2015-10-15");
-		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
-		sb.validateStrategy("strategy.rally.properties");
-	}
-	
-	@Test
-	public void testSVEarn() throws Exception{
-		String pFile = "client1-v2.properties";
-		String marketId = "hs_a"; //not used
-		Date sd = sdf.parse("2015-10-14");
-		Date ed = sdf.parse("2015-10-15");
-		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
-		sb.validateStrategy("strategy.earn.properties");
-	}
-	
-	@Test
-	public void testSVEarnForcast() throws Exception{
-		String pFile = "client1-v2.properties";
-		String marketId = "hs_a"; //not used
-		Date sd = sdf.parse("2015-10-10");
-		Date ed = sdf.parse("2015-10-20");
-		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
-		sb.validateStrategy("strategy.earnforecast.properties" + 
-		"__" + 
-		"scs.limit:3,scs.param.1:15,sls.duration:2-4-1,sls.limitPercentage:5-8-1,sls.stopTrailingPercentage:2-3-1");
-	}
 
 	@Test
 	public void testCountWave() throws Exception{
@@ -135,11 +94,10 @@ public class TestStock {
 	@Test
 	public void testGenFillEpsSql() throws Exception{
 		String pFile = "client1-v2.properties";
-		String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test; //not used
-		Date sd = sdf.parse("2015-10-23");
-		Date ed = sdf.parse("2015-10-25");
+		String marketId = SinaStockConfig.MarketId_HS_A; //not used
+		Date sd = null;
+		Date ed = sdf.parse("2015-10-29");
 		StockBase nsb = new SinaStockBase(pFile, marketId, sd, ed);
-		//nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(marketId, ed), null);//init stockid
 		nsb.genFillEpsSql(null);
 	}
 	
@@ -147,7 +105,83 @@ public class TestStock {
 	public void testLoadDB() throws Exception{
 		String pFile = "client1-v2.properties";
 		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
-		LoadDBData.launch("sina", "hs_a", cconf.getSmalldbconf(), 5, "C:\\mydoc\\mydata\\stock\\merge\\sina-stock-stock-structure", 
+		LoadDBDataTask.launch("sina", "hs_a", cconf.getSmalldbconf(), 5, "C:\\mydoc\\mydata\\stock\\merge\\sina-stock-stock-structure", 
 				new String[]{}, new String[]{});
+	}
+	
+	//strategy
+	@Test
+	public void testRandom() throws Exception{
+		String pFile = "client1-v2.properties";
+		String marketId = "hs_a"; //not used
+		Date sd = sdf.parse("2015-10-13");
+		Date ed = sdf.parse("2015-10-15");
+		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
+		sb.validateStrategy("strategy.random.properties");
+	}
+	@Test
+	public void testRally() throws Exception{
+		String pFile = "client1-v2.properties";
+		String marketId = "hs_a"; //not used
+		Date sd = sdf.parse("2015-10-14");
+		Date ed = sdf.parse("2015-10-15");
+		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
+		sb.validateStrategy("strategy.rally.properties");
+	}
+	
+	@Test
+	public void testPE() throws Exception{
+		String pFile = "client1-v2.properties";
+		String marketId = "hs_a"; //not used
+		Date sd = sdf.parse("2015-10-14");
+		Date ed = sdf.parse("2015-10-15");
+		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
+		sb.validateStrategy("strategy.pe.properties");
+	}
+	
+	@Test
+	public void testEarnForcast() throws Exception{
+		String pFile = "client1-v2.properties";
+		String marketId = "hs_a"; //not used
+		Date sd = sdf.parse("2015-10-10");
+		Date ed = sdf.parse("2015-10-20");
+		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
+		sb.validateStrategy("strategy.earnforecast.properties" + 
+		"__" + 
+		"scs.param.1:10-20-5,sls.selectnumber:3-5-1,sls.duration:2-4-1,sls.limitPercentage:5-8-1,sls.stopTrailingPercentage:2-3-1");
+	}
+	
+	@Test
+	public void testBreakLvl1() throws Exception{
+		String pFile = "client1-v2.properties";
+		String marketId = "hs_a"; //not used
+		Date sd = sdf.parse("2015-04-17");
+		Date ed = sdf.parse("2015-04-18");
+		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
+		sb.validateStrategy("strategy.breaklvl1.properties" +
+		"__" +
+		"scs.param.1:0.9,sls.selectnumber:2-3-1,sls.duration:3,sls.limitPercentage:4-6-1,sls.stopTrailingPercentage:2");
+	}
+	
+	@Test
+	public void testDividend() throws Exception{
+		String pFile = "client1-v2.properties";
+		String marketId = "hs_a"; //not used
+		Date sd = sdf.parse("2015-10-13");
+		Date ed = sdf.parse("2015-10-15");
+		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
+		sb.validateStrategy("strategy.dividend.properties" +
+		"__" +
+		"scs.param.1:0.02-0.05-0.01,sls.selectnumber:2,sls.duration:3-5-1,sls.limitPercentage:4-9-1,sls.stopTrailingPercentage:2-4-1");
+	}
+	
+	@Test
+	public void testAllStrategy() throws Exception{
+		String pFile = "client1-v2.properties";
+		String marketId = "hs_a"; //not used
+		Date sd = sdf.parse("2015-10-13");
+		Date ed = sdf.parse("2015-10-15");
+		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
+		sb.validateAllStrategy(null);
 	}
 }

@@ -41,6 +41,7 @@ public class MultiColTablesAsCSV extends AbstractCrawlItemToCSV{
 		List<String> colcsvs = (List<String>) ci.getParam(FIELD_NAME_COLCSV);
 		List<Integer> dateIdx = (List<Integer>) ci.getParam(FIELD_NAME_RowDateIdx);
 		List<String> keys = (List<String>)ci.getParam(FIELD_NAME_KEYS);
+		//key matching
 		Set<String> keySet = new HashSet<String>();
 		if (keys!=null){
 			for(String key:keys){
@@ -48,6 +49,11 @@ public class MultiColTablesAsCSV extends AbstractCrawlItemToCSV{
 			}
 		}
 		List<String> keydata = (List<String>)ci.getParam(FIELD_NAME_KEYDATA);
+		boolean keyPartialMatch = true;
+		if (ci.getParam(FIELD_NAME_KEYPARTIALMATCH)!=null){
+			keyPartialMatch = (boolean) ci.getParam(FIELD_NAME_KEYPARTIALMATCH);
+		}
+		
 		List<String[]> csvs = new ArrayList<String[]>();
 		for (int i=0; i<colnums.size(); i++){
 			int colnum = colnums.get(i);
@@ -61,7 +67,8 @@ public class MultiColTablesAsCSV extends AbstractCrawlItemToCSV{
 			
 			List<String> strs = null;
 			if (ls!=null && ls.size()>=colnum){
-				strs = SpreadColTableAsCSV.colTableToCSV(ls, colnum, hasHeader, genHeader, dataTypes, dIdx, startDate, endDate, this, keySet, keydata);
+				strs = SpreadColTableAsCSV.colTableToCSV(ls, colnum, hasHeader, genHeader, dataTypes, dIdx, startDate, endDate, this, 
+						keySet, keydata, keyPartialMatch);
 			}
 			if (strs!=null){
 				if (colcsvs!=null){

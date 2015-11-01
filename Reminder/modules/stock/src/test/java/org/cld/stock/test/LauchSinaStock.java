@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.test.TestBase;
 import org.cld.stock.sina.SinaStockBase;
+import org.cld.stock.sina.jobs.SplitByStockMapper;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,7 +36,7 @@ public class LauchSinaStock {
 		HadoopTaskLauncher.executeTasks(ssb.getCconf().getNodeConf(), hadoopParams, 
 				new String[]{"/reminder/items/merge/sina-stock-market-fq"}, true, 
 				"/reminder/items/mlinput/sina-stock-market-fq", 
-				false, "org.cld.stock.sina.jobs.SplitByStockMapper", null, false);
+				false, SplitByStockMapper.class, null, false);
 	}
 	
 	@Test

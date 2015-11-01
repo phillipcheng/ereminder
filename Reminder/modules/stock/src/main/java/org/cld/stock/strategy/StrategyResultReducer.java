@@ -25,15 +25,17 @@ public class StrategyResultReducer extends Reducer<Text, Text, Text, Text>{
 	
 	@Override
 	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-		//input:key: THE_KEY value: startDate, stockid, buyTime, buyPrice, sellTime, sellOrderType, sellPrice, percent
-		//output:key: transaction number, average percent for the whole period
+		//input:key: select + sell,  value: strategyname, startDate, stockid, buyTime, buyPrice, sellTime, sellOrderType, sellPrice, percent
+		//output:key: select + sell,  value: transaction number, average percent for the whole period
 		int count=0;
 		float totalPercentage=0;
+		String strategyName="";
 		for (Text v:values){
 			mos.write(HadoopTaskLauncher.NAMED_OUTPUT_TXT, key, v, "details");
 			String[] vs = v.toString().split(",");
-			if (vs.length==8){
-				String strPer = vs[7].trim();
+			if (vs.length==9){
+				String strPer = vs[8].trim();
+				strategyName=vs[0];
 				if (!"-".equals(strPer)){
 					totalPercentage +=Float.parseFloat(strPer);
 					count++;
@@ -43,7 +45,7 @@ public class StrategyResultReducer extends Reducer<Text, Text, Text, Text>{
 			}
 		}
 		float avgPercentage = totalPercentage/count;
-		String summaryPerKey = String.format("%d, %.5f", count, avgPercentage);
+		String summaryPerKey = String.format("%s,%.5f,%d", strategyName, avgPercentage, count);
 		mos.write(HadoopTaskLauncher.NAMED_OUTPUT_TXT, key, new Text(summaryPerKey), "summary");
 	}
 }

@@ -32,6 +32,7 @@ public abstract class AbstractCrawlItemToCSV {
 	public static final String FIELD_NAME_STATIC = "static";
 	public static final String FIELD_NAME_KEYS="keys"; //defined the list of keys we need to extract in order
 	public static final String FIELD_NAME_KEYDATA="keyData";//the runtime list of key data to filter
+	public static final String FIELD_NAME_KEYPARTIALMATCH="keyPartialMatch";//
 	
 	public static final String KEY_GENHEADER="GenHeader";
 	public static final String KEY_HASHEADER="HasHeader"; //default to true

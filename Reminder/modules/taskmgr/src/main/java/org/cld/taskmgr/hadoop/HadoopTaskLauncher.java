@@ -10,15 +10,12 @@ import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -27,6 +24,7 @@ import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.hadooputil.RegexFilter;
 import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskUtil;
@@ -34,7 +32,6 @@ import org.cld.taskmgr.entity.Task;
 import org.cld.util.StringUtil;
 import org.xml.taskdef.BrowseTaskType;
 import org.xml.taskdef.CsvOutputType;
-import org.xml.taskdef.CsvTransformType;
 
 public class HadoopTaskLauncher {
 
@@ -140,7 +137,7 @@ public class HadoopTaskLauncher {
 	}
 	
 	public static String executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> hadoopParams, 
-			String sourceName, boolean sync, String mapperClass, String reducerClass){
+			String sourceName, boolean sync, Class mapperClass, Class reducerClass){
 		if (taskList.size()>0){
 			TaskMgr taskMgr = nc.getTaskMgr();
 			Configuration conf = getHadoopConf(nc);
@@ -178,7 +175,7 @@ public class HadoopTaskLauncher {
 	}
 	
 	public static String executeTasksByFile(NodeConf nc, Map<String, String> hadoopParams, 
-			String[] sourceName, Map<String, Object> cconfMap, String mapperClass, String reducerClass){
+			String[] sourceName, Map<String, Object> cconfMap, Class mapperClass, Class reducerClass){
 		TaskMgr taskMgr = nc.getTaskMgr();
 		Configuration conf = getHadoopConf(nc);
 		//generate task list file
@@ -223,9 +220,10 @@ public class HadoopTaskLauncher {
 	 * ...
 	 * @return jobId
 	 */
+	public static final String FILTER_REGEXP_KEY="file.pattern";
 	public static String executeTasks(NodeConf nc, Map<String, String> hadoopParams, 
 			String[] inputPaths, boolean multipleOutput, String outputDir, 
-			boolean sync, String mapperClass, String reducerClass, boolean uselinesPerMap){
+			boolean sync, Class mapperClass, Class reducerClass, boolean uselinesPerMap){
 		try{
 			TaskMgr taskMgr = nc.getTaskMgr();
 			Configuration conf = getHadoopConf(nc);
@@ -251,26 +249,30 @@ public class HadoopTaskLauncher {
 					}
 				}
 			}
-			Class<? extends Mapper> mapperClazz = (Class<? extends Mapper>) Class.forName(mapperClass);
 
-			job.setJarByClass(mapperClazz);
-			job.setMapperClass(mapperClazz);
+			job.setJarByClass(mapperClass);
+			job.setMapperClass(mapperClass);
 			if (reducerClass==null)
 				job.setNumReduceTasks(0);//no reducer
 			else{
-				Class<? extends Reducer> reducerClazz = (Class<? extends Reducer>) Class.forName(reducerClass);
-				job.setReducerClass(reducerClazz);
+				job.setReducerClass(reducerClass);
 				job.setNumReduceTasks(1);
 			}
 			job.setOutputKeyClass(Text.class);
 			job.setOutputValueClass(Text.class);
 			if (multipleOutput)
 				MultipleOutputs.addNamedOutput(job, NAMED_OUTPUT_TXT, TextOutputFormat.class, Text.class, Text.class);
+			
 			FileInputFormat.setInputDirRecursive(job, true);
+
+			if (hadoopParams.containsKey(FILTER_REGEXP_KEY)){
+				FileInputFormat.setInputPathFilter(job, RegexFilter.class);
+			}
 			for (String tfn:inputPaths){
 				Path in = new Path(tfn);
 				FileInputFormat.addInputPath(job, in);
 			}
+			
 			if (outputDir!=null && !"".equals(outputDir)){
 				logger.info(String.format("going to be deleted!!! output dir is %s", outputDir));
 				Path out = null;

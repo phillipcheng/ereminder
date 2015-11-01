@@ -1,7 +1,6 @@
 package org.cld.stock.persistence;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
@@ -17,9 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.CandleQuote;
 import org.cld.stock.StockConfig;
-import org.cld.stock.sina.SinaDailyQuoteCQJDBCMapper;
 import org.cld.util.jdbc.DBConnConf;
-import org.cld.util.jdbc.GeneralJDBCMapper;
 import org.cld.util.jdbc.SqlUtil;
 
 /**
@@ -52,50 +49,6 @@ public class StockPersistMgr {
 		}
 	}
 	
-	//pivot at dt, get the latest profitstatment
-	public static List<List<Object>> getObservedEpsByDate(StockConfig sc, DBConnConf dbconf, Date dt){
-		Connection con = null;
-		String sql = String.format("select one.stockid, one.dt, one.dilutedEPS from SinaFrProfitStatement as one, "
-				+ "(select stockid, max(dt) as mdt from SinaFrProfitStatement where pubDt<'%s' group by stockid) latest "
-				+ "where (one.stockid=latest.stockid and one.dt=latest.mdt)", sdf.format(dt));
-		logger.info("sql:" + sql);
-		try{
-			con = SqlUtil.getConnection(dbconf);
-			List<List<Object>> lo = (List<List<Object>>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
-					con, -1, -1, "", 
-					GeneralJDBCMapper.getInstance());
-			return lo;
-		}catch(Exception e){
-			logger.error(String.format("exceptin while execute %s", sql), e);
-			return null;
-		}finally{
-			SqlUtil.closeResources(con, null);
-		}
-	}
-	//pivot at dt, get the latest fqIdx
-	public static Map<String, Double> getFQIdx(StockConfig sc, DBConnConf dbconf, Date dt){
-		Connection con = null;
-		String sql = String.format("select one.stockid, one.fqIdx from SinaMarketFQ one, "
-				+ "(select stockid, max(dt) as mdt from SinaMarketFQ where dt<='%s' group by stockid) latest "
-				+ "where one.stockid=latest.stockid and one.dt=latest.mdt", sdf.format(dt));
-		try{
-			con = SqlUtil.getConnection(dbconf);
-			List<List<Object>> lol = (List<List<Object>>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
-					con, -1, -1, "", 
-					GeneralJDBCMapper.getInstance());
-			Map<String, Double> fqIdxMap = new HashMap<String, Double>();
-			for (List<Object> lo:lol){
-				fqIdxMap.put((String)lo.get(0), (Double)lo.get(1));
-			}
-			return fqIdxMap;
-		}catch(Exception e){
-			logger.error(String.format("exceptin while execute %s", sql), e);
-			return null;
-		}finally{
-			SqlUtil.closeResources(con, null);
-		}
-	}
-	
 	public static Map<String, List<CandleQuote>> getFQDailyQuote(StockConfig sc, DBConnConf dbconf, List<String> stockidList, Date sd, Date ed){
 		Connection con = null;
 		String sql = String.format("select * from %s where stockid in %s and dt>'%s' and dt <='%s' order by stockid, dt", 
@@ -104,7 +57,7 @@ public class StockPersistMgr {
 			con = SqlUtil.getConnection(dbconf);
 			List<CandleQuote> lo = (List<CandleQuote>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
 					con, -1, -1, "", 
-					SinaDailyQuoteCQJDBCMapper.getInstance());
+					sc.getFQDailyQuoteTableMapper());
 			Map<String, List<CandleQuote>> map = new HashMap<String, List<CandleQuote>>();
 			if (lo.size()>1){
 				String stid = lo.get(0).getStockid();
@@ -120,38 +73,6 @@ public class StockPersistMgr {
 					}
 				}
 				map.put(stid, cql); //the last stid
-			}
-			return map;
-		}catch(Exception e){
-			logger.error(String.format("exceptin while execute %s", sql), e);
-			return null;
-		}finally{
-			SqlUtil.closeResources(con, null);
-		}
-	}
-	
-	public static Map<String, List<CandleQuote>> getDailyQuote(StockConfig sc, DBConnConf dbconf, List<String> stockidList, Date sd, Date ed){
-		Connection con = null;
-		String sql = String.format("select * from %s where stockid in %s and dt>'%s' and dt <='%s' order by stockid, dt", 
-				sc.getDailyQuoteTableMapper().getTableName(), SqlUtil.generateInParameters(stockidList), sdf.format(sd), sdf.format(ed));
-		try{
-			con = SqlUtil.getConnection(dbconf);
-			List<CandleQuote> lo = (List<CandleQuote>) SqlUtil.getObjectsByParam(sql, new Object[]{stockidList}, 
-					con, -1, -1, "", SinaDailyQuoteCQJDBCMapper.getInstance());
-			String stid = "";
-			Map<String, List<CandleQuote>> map = new HashMap<String, List<CandleQuote>>();
-			List<CandleQuote> cql = null;
-			for (CandleQuote cq:lo){
-				if (!cq.getStockid().equals(stid)){
-					if (cql!=null){
-						map.put(stid, cql);
-					}
-					cql = new ArrayList<CandleQuote>();
-					cql.add(cq);
-					stid = cq.getStockid();
-				}else{
-					cql.add(cq);
-				}
 			}
 			return map;
 		}catch(Exception e){

@@ -37,16 +37,21 @@ public class StrategyValidationTask extends Task implements Serializable{
 	private SellStrategy[] sls;
 	private Date startDate;
 	private String marketBaseId;
+	private String marketId;
 	private DBConnConf dbconf;
+	private String outputDir;
 	
 	public StrategyValidationTask(){
 	}
 	
-	public StrategyValidationTask(SelectStrategy scs, SellStrategy[] sls, Date startDate, String marketBaseId, DBConnConf dbconf){
+	public StrategyValidationTask(SelectStrategy scs, SellStrategy[] sls, Date startDate, 
+			String marketBaseId, String marketId, String outputDir, DBConnConf dbconf){
 		this.scs = scs;
 		this.sls = sls;
 		this.startDate = startDate;
 		this.marketBaseId = marketBaseId;
+		this.setMarketId(marketId);
+		this.setOutputDir(outputDir);
 		this.setDbconf(dbconf);
 		genId();
 	}
@@ -70,7 +75,7 @@ public class StrategyValidationTask extends Task implements Serializable{
 	
 	@Override
 	public String getOutputDir(Map<String, Object> paramMap){
-		return String.format("%s/reduce/", scs.getOutputDir());
+		return this.getOutputDir();
 	}
 	
 	@Override
@@ -82,17 +87,17 @@ public class StrategyValidationTask extends Task implements Serializable{
 			//valid one round
 			List<String> stockidList = scs.select(dbconf, sd, sc);//using data before and including sd
 			if (stockidList.size()>0){
-				Map<String, Map<SellStrategy, ArrayList<StockOrder>>> map = new HashMap<String, Map<SellStrategy, ArrayList<StockOrder>>>();
-				int stockNum = stockidList.size()>scs.getLimit() ? scs.getLimit():stockidList.size();
 				Date submitDt = sd;
 				if (scs.getDayType()==byDayType.byCalendarDay){
 					submitDt = StockUtil.getNextOpenDay(DateTimeUtil.yesterday(sd), sc.getHolidays());
 				}
 				int maxDuration = 0;
-				for (int i=0; i<stockNum; i++){
-					String stockid = stockidList.get(i);
-					Map<SellStrategy, ArrayList<StockOrder>> solmap = new HashMap<SellStrategy, ArrayList<StockOrder>>();
-					for (SellStrategy ss:sls){
+				Map<String, Map<SellStrategy, ArrayList<StockOrder>>> map = new HashMap<String, Map<SellStrategy, ArrayList<StockOrder>>>();
+				for (SellStrategy ss:sls){
+					int stockNum = stockidList.size()>ss.getSelectNumber() ? ss.getSelectNumber():stockidList.size();
+					for (int i=0; i<stockNum; i++){
+						String stockid = stockidList.get(i);
+						
 						ArrayList<StockOrder> sol = new ArrayList<StockOrder>();
 						StockOrder marketBuyOrder = new StockOrder();
 						marketBuyOrder.setStockid(stockid);
@@ -126,15 +131,23 @@ public class StrategyValidationTask extends Task implements Serializable{
 						forceCleanSellOrder.setAction(ActionType.sell);
 						forceCleanSellOrder.setOrderType(OrderType.forceclean);
 						sol.add(forceCleanSellOrder);
+
+						Map<SellStrategy, ArrayList<StockOrder>> solmap = null;
+						if (map.containsKey(stockid)){
+							solmap = map.get(stockid);
+						}else{
+							solmap = new HashMap<SellStrategy, ArrayList<StockOrder>>();
+						}
 						solmap.put(ss, sol);
 						if (ss.getHoldDuration()>maxDuration){
 							maxDuration = ss.getHoldDuration();
 						}
+						map.put(stockid, solmap);
 					}
-					map.put(stockid, solmap);
 				}
 				
 				TradeSimulator.submitDailyOrder(map, maxDuration, dbconf, sc);
+				
 				for (String stockid:map.keySet()){
 					Map<SellStrategy, ArrayList<StockOrder>> solistMap = map.get(stockid);
 					for (SellStrategy ss: solistMap.keySet()){
@@ -171,12 +184,13 @@ public class StrategyValidationTask extends Task implements Serializable{
 						String output = null;
 						if (buyPrice !=0 && sellPrice !=0){
 							float percent = (sellPrice-buyPrice)/buyPrice;
-							output = String.format("%s, %s, %s, %s, %s, %s, %s, %s", sdf.format(sd), stockid, 
+							output = String.format("%s, %s, %s, %s, %s, %s, %s, %s, %s", scs.getName(), sdf.format(sd), stockid, 
 									buyTime, buyPrice, sellTime, sellOrderType, sellPrice, percent);
 						}else{
-							output = String.format("%s, %s, %s, %s, %s, %s, %s, %s", sdf.format(sd), stockid, "-", "-", "-", "-", "-", "-");
+							output = String.format("%s, %s, %s, %s, %s, %s, %s, %s, %s", scs.getName(), sdf.format(sd), stockid, 
+									"-", "-", "-", "-", "-", "-");
 						}
-						context.write(new Text(ss.toString()), new Text(output));
+						context.write(new Text(scs.paramsToString() + ss.toString()), new Text(output));
 					}
 				}
 			}else{
@@ -187,8 +201,7 @@ public class StrategyValidationTask extends Task implements Serializable{
 		}
 	}
 	
-	private static String submitTasks(String taskName, String propfile, List<Task> tl, CrawlConf cconf){
-		int mbMem = 512;
+	private static String submitTasks(String taskName, String propfile, List<Task> tl, CrawlConf cconf, int mbMem){
 		String optValue = "-Xmx" + mbMem + "M";
 		Map<String, String> hadoopJobParams = new HashMap<String, String>();
 		hadoopJobParams.put("mapreduce.map.speculative", "false");
@@ -196,35 +209,38 @@ public class StrategyValidationTask extends Task implements Serializable{
 		hadoopJobParams.put("mapreduce.map.java.opts", optValue);
 		hadoopJobParams.put(NLineInputFormat.LINES_PER_MAP, "1");
 		return CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tl, taskName, false, 
-				CrawlTaskMapper.class.getName(), StrategyResultReducer.class.getName(), hadoopJobParams);
+				CrawlTaskMapper.class, StrategyResultReducer.class, hadoopJobParams);
 	}
 	
-	public static String[] launch(String propfile, CrawlConf cconf, String marketBaseId, SelectStrategy scs, SellStrategy[] sls, 
-			Date startDate, Date endDate, DBConnConf dbconf) {
+	public static String[] launch(String propfile, CrawlConf cconf, String marketBaseId, String marketId, String outputDir, 
+			List<SelectStrategy> scsl, SellStrategy[] sls, Date startDate, Date endDate, DBConnConf dbconf) {
 		StockConfig sc = StockUtil.getStockConfig(marketBaseId);
-		Date sd = startDate;
 		List<Task> tl = new ArrayList<Task>();
-		if (scs.getDayType()==byDayType.byTradingDay){
-			if (!StockUtil.isOpenDay(startDate, sc.getHolidays())){
-				sd = StockUtil.getNextOpenDay(startDate, sc.getHolidays());
-			}
-		}else if (scs.getDayType()==byDayType.byCalendarDay){
-			sd = startDate;
-		}else{
-			logger.error("unsupported byDayType: " + scs.getDayType());
-		}
-		
-		while(sd.before(endDate)){
-			Task t = new StrategyValidationTask(scs, sls, sd, marketBaseId, dbconf);
-			tl.add(t);
+		for (SelectStrategy scs:scsl){
+			Date sd = startDate;
 			if (scs.getDayType()==byDayType.byTradingDay){
-				sd = StockUtil.getNextOpenDay(sd, sc.getHolidays());
+				if (!StockUtil.isOpenDay(startDate, sc.getHolidays())){
+					sd = StockUtil.getNextOpenDay(startDate, sc.getHolidays());
+				}
 			}else if (scs.getDayType()==byDayType.byCalendarDay){
-				sd = DateTimeUtil.tomorrow(sd);
+				sd = startDate;
+			}else{
+				logger.error("unsupported byDayType: " + scs.getDayType());
+			}
+			
+			while(sd.before(endDate)){
+				Task t = new StrategyValidationTask(scs, sls, sd, marketBaseId, marketId, outputDir, dbconf);
+				tl.add(t);
+				if (scs.getDayType()==byDayType.byTradingDay){
+					sd = StockUtil.getNextOpenDay(sd, sc.getHolidays());
+				}else if (scs.getDayType()==byDayType.byCalendarDay){
+					sd = DateTimeUtil.tomorrow(sd);
+				}
 			}
 		}
-		String taskName = String.format("%s_%s", StrategyValidationTask.class.getSimpleName(), sdf.format(startDate));
-		String jobId = submitTasks(taskName, propfile, tl, cconf);
+		String taskName = String.format("%s_%s_%s_%s", StrategyValidationTask.class.getSimpleName(), sdf.format(startDate), 
+				sdf.format(endDate), scsl.get(0).getName());
+		String jobId = submitTasks(taskName, propfile, tl, cconf, scsl.get(0).getMbMemory());
 		return new String[]{jobId};
 	}
 	
@@ -259,5 +275,21 @@ public class StrategyValidationTask extends Task implements Serializable{
 
 	public void setDbconf(DBConnConf dbconf) {
 		this.dbconf = dbconf;
+	}
+
+	public String getMarketId() {
+		return marketId;
+	}
+
+	public void setMarketId(String marketId) {
+		this.marketId = marketId;
+	}
+
+	public String getOutputDir() {
+		return outputDir;
+	}
+
+	public void setOutputDir(String outputDir) {
+		this.outputDir = outputDir;
 	}
 }

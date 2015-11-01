@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -94,29 +95,31 @@ public class SqlUtil {
 	
 	public static void bindParameters(PreparedStatement statement, Object[]param){
 		try{
-			for (int i=0; i<param.length;){
-				if (param[i] instanceof String){
-					statement.setString(i+1, (String)param[i]);
-					i++;
-				}else if (param[i] instanceof Integer){
-					statement.setInt(i+1, ((Integer)param[i]).intValue());
-					i++;
-				}else if (param[i] instanceof Timestamp){
-					statement.setTimestamp(i+1, (Timestamp) param[i]);
-					i++;
-				}else if (param[i] instanceof List){
-					List l = (List)param[i];
-					for (int j=0; j<l.size(); j++){
-						if (l.get(j) instanceof String){
-							statement.setString(i+j+1, (String)(l.get(j)));
-						}else{
-							logger.error("unsupported type:" + l.get(j));
+			if (param!=null){
+				for (int i=0; i<param.length;){
+					if (param[i] instanceof String){
+						statement.setString(i+1, (String)param[i]);
+						i++;
+					}else if (param[i] instanceof Integer){
+						statement.setInt(i+1, ((Integer)param[i]).intValue());
+						i++;
+					}else if (param[i] instanceof Timestamp){
+						statement.setTimestamp(i+1, (Timestamp) param[i]);
+						i++;
+					}else if (param[i] instanceof List){
+						List l = (List)param[i];
+						for (int j=0; j<l.size(); j++){
+							if (l.get(j) instanceof String){
+								statement.setString(i+j+1, (String)(l.get(j)));
+							}else{
+								logger.error("unsupported type:" + l.get(j));
+							}
 						}
+						i=i+l.size();
+					}else{
+						logger.error("unsupported type:"+param[i]);
+						i++;
 					}
-					i=i+l.size();
-				}else{
-					logger.error("unsupported type:"+param[i]);
-					i++;
 				}
 			}
 		}catch(Exception e){
@@ -150,6 +153,20 @@ public class SqlUtil {
 		}catch(Exception e){
 			logger.error("",e);
 			return -1;
+		}
+	}
+	
+	public static Date getSingleDateResultSQL(String sql, Object[] param, Connection con){
+		PreparedStatement statement=null;
+		try{
+			statement = con.prepareStatement(sql);
+			bindParameters(statement, param);
+			ResultSet rs= statement.executeQuery();
+			rs.next();
+			return rs.getDate(1);
+		}catch(Exception e){
+			logger.error("",e);
+			return null;
 		}
 	}
 	
@@ -280,7 +297,7 @@ public class SqlUtil {
 		}
     }
 	
-	public static int tryTimes=25;
+	public static int tryTimes=10;
 	public static Connection getConnection(DBConnConf dbconf){
 		Connection con = null;
 		try {
@@ -297,7 +314,7 @@ public class SqlUtil {
 				con = DriverManager.getConnection(dbconf.getUrl(), dbconf.getUser(), dbconf.getPass());
 				got = true;
 			}catch(Exception e){
-				logger.warn(e.getMessage());
+				logger.warn("while use:" + dbconf, e);
 				try {
 					int rt = r.nextInt(10);
 					Thread.sleep(rt*1000);

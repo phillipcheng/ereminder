@@ -47,7 +47,7 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 	 */
 	public static List<String> colTableToCSV(List<String> vl, int colnum, boolean hasHeader, 
 			boolean genHeader, List<String> dataTypes, int colDateIdx, Date startDate, Date endDate, AbstractCrawlItemToCSV aci, 
-			Set<String> keySet, List<String> keydata){
+			Set<String> keySet, List<String> keydata, boolean keyPartialMatch){
 		List<String> retList = new ArrayList<String>();
 		if (vl!=null){
 			for (int i=0; i<colnum; i++){
@@ -57,23 +57,22 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 				if (hasHeader && i==0 && !genHeader){
 					continue;
 				}
-				
+				int selectedRowIdx=0;//the selected row index
 				while (j<vl.size()){
 					String str = vl.get(j);
-					String dataType = AbstractCrawlItemToCSV.DATA_TYPE_NUMBER;
-					if (dataTypes!=null && dataTypes.size()>row){
-						dataType = dataTypes.get(row);
-					}
-					str = TableUtil.getValue(str, dataType);
 					boolean need=false;
 					if (keydata!=null){//do key filtering
 						String key = keydata.get(row);
 						if(!keySet.contains(key)){
-							for (String ke:keySet){
-								if (key.contains(ke)){
-									need=true;
-									break;
+							if (keyPartialMatch){
+								for (String ke:keySet){
+									if (key.contains(ke)){
+										need=true;
+										break;
+									}
 								}
+							}else{
+								need=false;
 							}
 						}else{
 							need=true;
@@ -82,6 +81,12 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 						need=true;
 					}
 					if (need){
+						String dataType = AbstractCrawlItemToCSV.DATA_TYPE_NUMBER;
+						if (dataTypes!=null && dataTypes.size()>selectedRowIdx){
+							dataType = dataTypes.get(selectedRowIdx);
+						}
+						str = TableUtil.getValue(str, dataType);
+						selectedRowIdx++;
 						if (hasHeader && i==0 && genHeader){
 							//header
 						}else{
@@ -91,7 +96,7 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 								break;
 							}
 						}
-						if (j>i){
+						if (selectedRowIdx>1){
 							sb.append(",");
 						}
 						sb.append(str);
@@ -144,6 +149,7 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 		if (ci.getParam(FIELD_NAME_ColDateIdx)!=null){
 			colDateIdx = (int) ci.getParam(FIELD_NAME_ColDateIdx);
 		}
+		//key matching
 		List<String> keys = (List<String>)ci.getParam(FIELD_NAME_KEYS);
 		Set<String> keySet = new HashSet<String>();
 		if (keys!=null){
@@ -152,6 +158,10 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 			}
 		}
 		List<String> keydata = (List<String>)ci.getParam(FIELD_NAME_KEYDATA);
+		boolean keyPartialMatch = true;
+		if (ci.getParam(FIELD_NAME_KEYPARTIALMATCH)!=null){
+			keyPartialMatch = (boolean) ci.getParam(FIELD_NAME_KEYPARTIALMATCH);
+		}
 		List<String> csvs = new ArrayList<String>();
 		List<String> oneTableValues;
 		if (ls!=null && ls.size()>0){
@@ -165,7 +175,8 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 				oneTableValues = ls.subList(startIdx, endIdx);
 				startIdx +=valueFullTable;
 				endIdx +=valueFullTable;
-				csvs.addAll(colTableToCSV(oneTableValues, colnum, hasHeader, genHeader, dataTypes, colDateIdx, startDate, endDate, this, keySet, keydata));
+				csvs.addAll(colTableToCSV(oneTableValues, colnum, hasHeader, genHeader, dataTypes, colDateIdx, startDate, endDate, this, 
+						keySet, keydata, keyPartialMatch));
 			}
 			oneTableValues = ls.subList(startIdx, ls.size());
 			int leftItems = ls.size()-startIdx;
@@ -173,7 +184,8 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 			if (rownum!=-1){
 				leftCol = leftItems/rownum;
 			}
-			csvs.addAll(colTableToCSV(oneTableValues, leftCol, hasHeader, genHeader, dataTypes, colDateIdx, startDate, endDate, this, keySet, keydata));
+			csvs.addAll(colTableToCSV(oneTableValues, leftCol, hasHeader, genHeader, dataTypes, colDateIdx, startDate, endDate, 
+					this, keySet, keydata, keyPartialMatch));
 		}
 		
 		String[][] retlist = new String[csvs.size()][];

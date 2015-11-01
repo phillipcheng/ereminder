@@ -144,17 +144,17 @@ public class CrawlUtil {
 	public static String hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, 
 			String sourceName, boolean sync){
 		return hadoopExecuteCrawlTasksWithReducer(crawlPropertyFile, cconf, tlist, sourceName, sync, 
-				CrawlTaskMapper.class.getName(), null, null);
+				CrawlTaskMapper.class, null, null);
 	}
 	
 	public static String hadoopExecuteCrawlTasks(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, 
 			String sourceName, boolean sync, Map<String, String> hadoopJobParams){
 		return hadoopExecuteCrawlTasksWithReducer(crawlPropertyFile, cconf, tlist, sourceName, sync, 
-				CrawlTaskMapper.class.getName(), null, hadoopJobParams);
+				CrawlTaskMapper.class, null, hadoopJobParams);
 	}
 	
 	public static String hadoopExecuteCrawlTasksWithReducer(String crawlPropertyFile, CrawlConf cconf, List<Task> tlist, 
-			String sourceName, boolean sync, String mapperClass, String reducerClass, Map<String, String> hadoopJobParams){
+			String sourceName, boolean sync, Class mapperClass, Class reducerClass, Map<String, String> hadoopJobParams){
 		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();
 		hadoopCrawlTaskParams.put(CRAWL_PROPERTIES, crawlPropertyFile);
 		if (hadoopJobParams!=null){
@@ -177,7 +177,7 @@ public class CrawlUtil {
 		Map<String, Object> cconfParams = new HashMap<String, Object>();
 		cconfParams.put(TaskMgr.TASK_RUN_PARAM_CCONF, cconf);
 		return HadoopTaskLauncher.executeTasksByFile(cconf.getNodeConf(), hadoopCrawlTaskParams, 
-				sourceName, cconfParams, CrawlTaskMapper.class.getName(), null);
+				sourceName, cconfParams, CrawlTaskMapper.class, null);
 	}
 	
 	public static void downloadPage(CrawlConf cconf, String url, String fileName){

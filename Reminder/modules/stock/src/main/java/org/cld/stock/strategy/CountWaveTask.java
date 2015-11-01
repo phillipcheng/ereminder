@@ -140,7 +140,7 @@ public class CountWaveTask extends Task implements Serializable{
 		hadoopJobParams.put(HCK_STOREID, "nasdaq-ids");
 		
 		return CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tl, taskName, false, 
-				CrawlTaskMapper.class.getName(), CountWaveReducer.class.getName(), hadoopJobParams);
+				CrawlTaskMapper.class, CountWaveReducer.class, hadoopJobParams);
 	}
 	
 	public static String[] launch(String propfile, CrawlConf cconf, String marketBaseId, String marketId, 

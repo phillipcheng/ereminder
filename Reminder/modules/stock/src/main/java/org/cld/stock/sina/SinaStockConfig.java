@@ -331,6 +331,7 @@ public class SinaStockConfig extends StockConfig {
 	public static final String SINA_STOCK_MARKET_FQ="sina-stock-market-fq"; //复权
 	//issue daily update
 	public static final String SINA_STOCK_ISSUE_SHAREBONUS="sina-stock-issue-sharebonus";
+	public static final String SINA_STOCK_ISSUE_ADDSTOCK="sina-stock-issue-addstock";
 	//stock holder daily update
 	public static final String SINA_STOCK_STOCK_STRUCTURE="sina-stock-stock-structure";
 	public static final String SINA_STOCK_STOCK_HOLDER="sina-stock-stock-holder";
@@ -452,6 +453,10 @@ public class SinaStockConfig extends StockConfig {
 		m.put("SinaShareBonusAlloted","allotted");
 		m.put("SinaShareBonusDividend","dividend");
 		cmdTableMap.put(SINA_STOCK_ISSUE_SHAREBONUS, m);
+		
+		m = new HashMap<String,String>();
+		m.put("SinaAddStock","part");
+		cmdTableMap.put(SINA_STOCK_ISSUE_ADDSTOCK, m);
 	}
 	
 	public static String[] corpConfs = new String[]{//not related with time
@@ -471,6 +476,7 @@ public class SinaStockConfig extends StockConfig {
 	};
 	public static String[] issueConfs = new String[]{
 		SINA_STOCK_ISSUE_SHAREBONUS, //分红送配
+		SINA_STOCK_ISSUE_ADDSTOCK,
 	};
 	public static String[] holderConfs = new String[]{
 		SINA_STOCK_STOCK_STRUCTURE, //股本结构
@@ -635,5 +641,13 @@ public class SinaStockConfig extends StockConfig {
 	@Override
 	public String[] getFirstStartTimeUseNullCmds() {
 		return new String[]{SINA_STOCK_BULLETIN};
+	}
+	
+
+	@Override
+	public String[] getAllStrategy() {
+		return new String[]{
+				StockConfig.STR_BREAKLVL1, StockConfig.STR_DIVIDEND, StockConfig.STR_EARNFORECAST, 
+				StockConfig.STR_PE, StockConfig.STR_RALLY, StockConfig.STR_RANDOM};
 	}
 }

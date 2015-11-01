@@ -1,5 +1,6 @@
 package org.cld.stock;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -18,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
+import org.cld.datacrawl.hadoop.CrawlTaskMapper;
 import org.cld.datacrawl.task.CrawlTaskConf;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
@@ -42,13 +44,13 @@ public class ETLUtil {
 	public static final int maxBatchSize=1000000;
 	//parameter keys define in the browseTask
 	
-	public static final String DEFAULT_MAPPER="org.cld.datacrawl.hadoop.CrawlTaskMapper";
+	public static final Class DEFAULT_MAPPER=CrawlTaskMapper.class;
 	private static String[] stockidsCache = null;
-	private static Map<String, Date> ipoCache = new HashMap<String, Date>();//stockid to ipodate string cache
+	private static Map<String, Date> ipoCache = null;//stockid to ipodate string cache
 	
 	public static void cleanCaches(){
 		stockidsCache=null;
-		ipoCache.clear();
+		ipoCache=null;
 	}
 	
 	public static String getStartUrl(Task t){
@@ -86,14 +88,6 @@ public class ETLUtil {
 	}
 	
 	public static boolean needOverwrite(CrawlConf cconf, String cmdName){
-		//for dynamic cmd, which can generate duplicated contents, for example daily run but generate monthly data
-		List<Task> tl = cconf.setUpSite(cmdName+".xml", null);
-		if (tl.size()==1 && (tl.get(0) instanceof CrawlTaskConf)){
-			CrawlTaskConf ct = (CrawlTaskConf)tl.get(0);
-			return isStatic(ct);
-		}else{
-			logger.error(String.format("needOverwrite cmd %s does not contain 1 crawlTask.", cmdName));	
-		}
 		return false;
 	}
 	
@@ -146,7 +140,7 @@ public class ETLUtil {
 	
 	public static Date getIPODateByStockId(StockConfig sc, String marketId, String stockId, CrawlConf cconf, String cmd){
 		//get the IPODate
-		if (ipoCache.size()==0){
+		if (ipoCache==null){
 			ipoCache = StockPersistMgr.getStockIPOData(sc, cconf.getBigdbconf());
 		}
 		//we need trimmed stockid for ipoCache
@@ -206,14 +200,18 @@ public class ETLUtil {
 		for (Task t: tl){
 			//get the bpt definition out of the t
 			t.initParsedTaskDef();
-			String mapperClassName = DEFAULT_MAPPER;
-			String reducerClassName = null;
+			Class mapperClass = DEFAULT_MAPPER;
+			Class reducerClass = null;
 			ParsedBrowsePrd btt = t.getBrowseDetailTask(t.getName());
-			if (btt.getParamMap().containsKey(PK_MAPPER)){
-				mapperClassName = btt.getParamMap().get(PK_MAPPER).getValue();
-			}
-			if (btt.getParamMap().containsKey(PK_REDUCER)){
-				reducerClassName = btt.getParamMap().get(PK_REDUCER).getValue();
+			try{
+				if (btt.getParamMap().containsKey(PK_MAPPER)){
+					mapperClass = Class.forName(btt.getParamMap().get(PK_MAPPER).getValue());
+				}
+				if (btt.getParamMap().containsKey(PK_REDUCER)){
+					reducerClass = Class.forName(btt.getParamMap().get(PK_REDUCER).getValue());
+				}
+			}catch(Exception e){
+				logger.error("", e);
 			}
 			if (btt.getParamMap().containsKey(AbstractCrawlItemToCSV.FN_MARKETID)){
 				params.put(AbstractCrawlItemToCSV.FN_MARKETID, marketId);
@@ -221,19 +219,19 @@ public class ETLUtil {
 				Date ed = getDate(sc, AbstractCrawlItemToCSV.FIELD_NAME_ENDDATE, params);
 				if (btt.getParamMap().containsKey(PK_STOCKID)){
 					if (btt.getParamMap().containsKey(AbstractCrawlItemToCSV.FN_YEAR) && btt.getParamMap().containsKey(AbstractCrawlItemToCSV.FN_QUARTER)){
-						jobIds = runTaskByStockYearQuarter(sc, marketId, cconf, propfile, t, sd, ed, cmdName, params, sync, mapperClassName, reducerClassName);
+						jobIds = runTaskByStockYearQuarter(sc, marketId, cconf, propfile, t, sd, ed, cmdName, params, sync, mapperClass, reducerClass);
 					}else if (btt.getParamMap().containsKey(PK_DATE)){
-						jobIds = runTaskByStockDate(sc, marketId, sd, ed, cconf, propfile, t, params, cmdName, sync, mapperClassName, reducerClassName);
+						jobIds = runTaskByStockDate(sc, marketId, sd, ed, cconf, propfile, t, params, cmdName, sync, mapperClass, reducerClass);
 					}else{
-						jobIds = runTaskByStock(sc, marketId, cconf, propfile, t, params, cmdName, sync, mapperClassName, reducerClassName);
+						jobIds = runTaskByStock(sc, marketId, cconf, propfile, t, params, cmdName, sync, mapperClass, reducerClass);
 					}
 				}else{
 					if (btt.getParamMap().containsKey(AbstractCrawlItemToCSV.FN_YEAR) && btt.getParamMap().containsKey(AbstractCrawlItemToCSV.FN_MONTH)){
-						jobIds = runTaskByMarketYearMonth(sc, cconf, propfile, t, cmdName, params, sync, mapperClassName, reducerClassName);
+						jobIds = runTaskByMarketYearMonth(sc, cconf, propfile, t, cmdName, params, sync, mapperClass, reducerClass);
 					}else if (btt.getParamMap().containsKey(PK_DATE)){
-						jobIds = runTaskByDate(sc, sd, ed, cconf, propfile, t, params, cmdName, sync, mapperClassName, reducerClassName);
+						jobIds = runTaskByDate(sc, sd, ed, cconf, propfile, t, params, cmdName, sync, mapperClass, reducerClass);
 					} else{
-						jobIds = runTaskByMarket(sc, cconf, propfile, t, cmdName, params, sync, mapperClassName, reducerClassName);
+						jobIds = runTaskByMarket(sc, cconf, propfile, t, cmdName, params, sync, mapperClass, reducerClass);
 					}
 				}
 			}else{
@@ -268,7 +266,7 @@ public class ETLUtil {
 	
 	//sina-ipo, nasdaq-ipo
 	private static String[] runTaskByMarketYearMonth(StockConfig sc, CrawlConf cconf, String propfile, Task t, String cmd, 
-			Map<String, Object> params, boolean sync, String mapperClassName, String reducerClassName){
+			Map<String, Object> params, boolean sync, Class mapperClass, Class reducerClass){
 		logger.info("into runTaskByMarketYearMonth");
 		List<Task> tlist = new ArrayList<Task>();
 		Date sd = getDate(sc, AbstractCrawlItemToCSV.FIELD_NAME_STARTDATE, params);
@@ -313,19 +311,19 @@ public class ETLUtil {
 		hadoopJobParams.put(AbstractCrawlItemToCSV.FN_MARKETID, (String) params.get(AbstractCrawlItemToCSV.FN_MARKETID));
 		hadoopJobParams.put(AbstractCrawlItemToCSV.FIELD_NAME_ENDDATE, sc.getSdf().format(ed));
 		String jobId = CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tlist, taskName, sync,
-				mapperClassName, reducerClassName, hadoopJobParams);
+				mapperClass, reducerClass, hadoopJobParams);
 		return new String[]{jobId};
 	}
 	//stock-ids
 	private static String[] runTaskByMarket(StockConfig sc, CrawlConf cconf, String propfile, Task t, String cmd, 
-			Map<String, Object> params, boolean sync, String mapperClassName, String reducerClassName){
+			Map<String, Object> params, boolean sync, Class mapperClass, Class reducerClass){
 		logger.info("into runTaskByMarket");
 		List<Task> tlist = new ArrayList<Task>();
 		t.putAllParams(params);
 		updateMarketIdParam(t);
 		tlist.add(t);
 		String taskName = ETLUtil.getTaskName(sc, cmd, t.getParamMap());
-		String jobId = CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tlist, taskName, sync, mapperClassName, reducerClassName, null);
+		String jobId = CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tlist, taskName, sync, mapperClass, reducerClass, null);
 		if (jobId!=null){
 			return new String[]{jobId};
 		}else{
@@ -334,7 +332,7 @@ public class ETLUtil {
 	}
 	//sina-stock-market-dzjy, rzrq 
 	private static String[] runTaskByDate(StockConfig sc, Date startDate, Date endDate, CrawlConf cconf, String propfile, Task t, 
-			Map<String, Object> params, String cmd, boolean sync, String mapperClassName, String reducerClassName){
+			Map<String, Object> params, String cmd, boolean sync, Class mapperClass, Class reducerClass){
 		logger.info("into runTaskByDate");
 		Date luDate = StockPersistMgr.getMarketLUDateByCmd(sc, cmd, cconf.getBigdbconf());
 		Date sd = null;
@@ -343,7 +341,16 @@ public class ETLUtil {
 		}else if (startDate!=null){
 			sd = startDate;
 		}else{
-			sd = sc.getMarketStartDate();
+			String strSd = sc.getStartDate(cmd);
+			if (strSd!=null){
+				try {
+					sd = sc.getSdf().parse(strSd);
+				} catch (ParseException e) {
+					logger.error("", e);
+				}
+			}else{
+				sd = sc.getMarketStartDate();
+			}
 		}
 		LinkedList<Date> dll = StockUtil.getOpenDayList(sd, endDate, sc.getHolidays());
 		List<Task> tlist = new ArrayList<Task>();
@@ -365,7 +372,7 @@ public class ETLUtil {
 			taskParams.putAll(params);
 		String taskName = ETLUtil.getTaskName(sc, cmd, taskParams);
 		logger.info("sending out:" + tlist.size() + " tasks.");
-		String jobId = CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tlist, taskName, sync, mapperClassName, reducerClassName, null);
+		String jobId = CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tlist, taskName, sync, mapperClass, reducerClass, null);
 		if (jobId!=null){
 			return new String[]{jobId};
 		}else{
@@ -376,7 +383,7 @@ public class ETLUtil {
 	//sina-stock-market-tradedetail
 	private static String[] runTaskByStockDate(StockConfig sc, String marketId, Date startDate, Date endDate, 
 			CrawlConf cconf, String propfile, Task t, Map<String, Object> params, String cmd, 
-			boolean sync, String mapperClassName, String reducerClassName){
+			boolean sync, Class mapperClass, Class reducerClass){
 		logger.info(String.format("into runTaskByStockDate with marketId:%s", marketId));
 		String[] ids = getStockIdByMarketId(sc, marketId, cconf, cmd);
 		Map<String, Date> stockLUMap = new HashMap<String, Date>();
@@ -457,13 +464,13 @@ public class ETLUtil {
 		taskParams.put(BatchId_Key, batchId);
 		String taskName = ETLUtil.getTaskName(sc, cmd, taskParams);
 		logger.info(String.format("sending out:%d tasks for hadoop task %s.", tlist.size(), taskName));
-		jobIdList.add(CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tlist, taskName, sync, mapperClassName, reducerClassName, null));
+		jobIdList.add(CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tlist, taskName, sync, mapperClass, reducerClass, null));
 		String[] jobIds = new String[jobIdList.size()];
 		return jobIdList.toArray(jobIds);
 	}
 	//holding-insiders, dividend-history, quote-historical, short-interest, corp-info, nasdaq-fq, sina-bulletin
 	private static String[] runTaskByStock(StockConfig sc, String marketId, CrawlConf cconf, String propfile, Task t, 
-			Map<String, Object> params, String cmd, boolean sync, String mapperClassName, String reducerClassName){
+			Map<String, Object> params, String cmd, boolean sync, Class mapperClass, Class reducerClass){
 		logger.info("into runTaskByStock");
 		Map<String, Date> stockLUMap = new HashMap<String, Date>();
 		if (needCheckDB(sc, cconf, cmd)){
@@ -508,7 +515,7 @@ public class ETLUtil {
 		if (params!=null)
 			taskParams.putAll(params);
 		String taskName = ETLUtil.getTaskName(sc, cmd, taskParams);
-		String jobId = CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tlist, taskName, sync, mapperClassName, reducerClassName, null);
+		String jobId = CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tlist, taskName, sync, mapperClass, reducerClass, null);
 		if (jobId!=null){
 			return new String[]{jobId};
 		}else{
@@ -542,7 +549,7 @@ public class ETLUtil {
 	//if startDate is null, means no filter, otherwise set year and quarter parameter as filter
 	private static String[] runTaskByStockYearQuarter(StockConfig sc, String marketId, CrawlConf cconf, String propfile, Task t, 
 			Date startDate, Date endDate, String cmd, Map<String, Object> params, 
-			boolean sync, String mapperClassName, String reducerClassName) {
+			boolean sync, Class mapperClass, Class reducerClass) {
 		List<String> jobIds = new ArrayList<String>();
 		List<Task> tlist = new ArrayList<Task>();
 		Map<String, Date> stockLUMap = new HashMap<String, Date>();
@@ -654,7 +661,7 @@ public class ETLUtil {
 		taskParams.put(AbstractCrawlItemToCSV.FN_MARKETID, marketId);
 		String taskName = ETLUtil.getTaskName(sc, cmd, taskParams);
 		logger.info(String.format("sending out:%d tasks for hadoop task %s.", tlist.size(), taskName));
-		jobIds.add(CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tlist, taskName, sync, mapperClassName, reducerClassName, null));
+		jobIds.add(CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tlist, taskName, sync, mapperClass, reducerClass, null));
 	
 		String[] strArray = new String[jobIds.size()];
 		strArray = jobIds.toArray(strArray);

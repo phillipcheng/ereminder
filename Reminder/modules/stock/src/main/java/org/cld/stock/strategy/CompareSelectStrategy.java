@@ -1,11 +1,10 @@
 package org.cld.stock.strategy;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,11 +13,10 @@ import java.util.TreeMap;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlConf;
-import org.cld.hadooputil.HdfsDownloadUtil;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
-import org.cld.util.DateTimeUtil;
+import org.cld.util.CombPermUtil;
+import org.cld.util.StringUtil;
 import org.cld.util.jdbc.DBConnConf;
 import org.cld.util.jdbc.GeneralJDBCMapper;
 import org.cld.util.jdbc.SqlUtil;
@@ -38,12 +36,13 @@ public class CompareSelectStrategy extends SelectStrategy{
 	private String filter = "true";
 	private String orderBy;
 	private String orderDirection;
-	private String[] params;
+	private Boolean[] acceptNull;
 	
 	public CompareSelectStrategy(){
 		super();
 	}
 	
+	public static String KEY_SELECTS_ACCEPTNULL=".acceptnull";//per sql
 	public static final String KEY_SQL="scs.sql";
 	public static final String KEY_EXP="scs.exp";
 	public static final String KEY_PARAM="scs.param";
@@ -56,16 +55,21 @@ public class CompareSelectStrategy extends SelectStrategy{
 		super.init(props);
 		//sqls
 		List<String> sqlList = new ArrayList<String>();
+		List<Boolean> acceptNullList = new ArrayList<Boolean>();
 		for (char k='a';k<'z';k++){
 			String sqlName = KEY_SQL+"."+k;
 			if (props.containsKey(sqlName)){
 				sqlList.add(props.getString(sqlName));
+				acceptNullList.add(props.getBoolean(sqlName+KEY_SELECTS_ACCEPTNULL, false));
 			}else{
 				break;
 			}
 		}
 		sqls = new String[sqlList.size()];
 		sqls = sqlList.toArray(sqls);
+		//
+		acceptNull = new Boolean[sqlList.size()];
+		acceptNull = acceptNullList.toArray(acceptNull);
 		//exps
 		List<String> expList = new ArrayList<String>();
 		for (char k='a';k<'z';k++){
@@ -78,18 +82,7 @@ public class CompareSelectStrategy extends SelectStrategy{
 		}
 		exps = new String[expList.size()];
 		exps = expList.toArray(exps);
-		//params
-		List<String> paramList = new ArrayList<String>();
-		for (int k=1;k<10;k++){
-			String paramName = KEY_PARAM+"."+k;
-			if (props.containsKey(paramName)){
-				paramList.add(props.getString(paramName));
-			}else{
-				break;
-			}
-		}
-		params = new String[paramList.size()];
-		params = paramList.toArray(params);
+		
 		if (props.containsKey(KEY_FILTER)){
 			filter = props.getString(KEY_FILTER);
 		}
@@ -97,6 +90,54 @@ public class CompareSelectStrategy extends SelectStrategy{
 		orderDirection = props.getString(KEY_ORDERDIR);
 	}
 	
+	public void evalExp(){
+		for (int i=0; i<exps.length; i++){
+			String exp = exps[i];
+			for (int j=1; j<=params.length;j++){
+				if (exp.contains("%"+j)){
+					exp = exp.replace("%"+j, params[j-1].toString());
+				}
+			}
+			exps[i] = exp;
+		}
+		for (int j=1; j<=params.length;j++){
+			if (filter.contains("%"+j)){
+				filter = filter.replace("%"+j, params[j-1].toString());
+			}
+		}
+	}
+	
+	public List<SelectStrategy> gen(PropertiesConfiguration props, String simpleStrategyName){
+		List<SelectStrategy> lss =new ArrayList<SelectStrategy>();
+		List<Object[]> paramList = new ArrayList<Object[]>();
+		for (int k=1;k<10;k++){
+			String paramName = KEY_PARAM+"."+k;
+			if (props.containsKey(paramName)){
+				paramList.add(StringUtil.parseSteps(props.getString(paramName)));
+			}else{
+				break;
+			}
+		}
+		List<List<Object>> paramsList = CombPermUtil.eachOne(paramList);
+		if (paramsList.size()>0){
+			for (List<Object> pl:paramsList){
+				CompareSelectStrategy css = new CompareSelectStrategy();
+				css.init(props);
+				Object[] params = new Object[pl.size()];
+				params =  pl.toArray(params);
+				css.setParams(params);
+				css.evalExp();
+				css.setName(simpleStrategyName);
+				lss.add(css);
+			}
+		}else{
+			CompareSelectStrategy css = new CompareSelectStrategy();
+			css.setName(simpleStrategyName);
+			css.init(props);
+			lss.add(css);
+		}
+		return lss;
+	}
 
 	/**
 	 * 
@@ -127,7 +168,6 @@ public class CompareSelectStrategy extends SelectStrategy{
 			thisTradingDay = StockUtil.getNextOpenDay(dt, sc.getHolidays());
 			lastTradingDay = StockUtil.getLastOpenDay(dt, sc.getHolidays());
 		}
-		String outputFileDir = getOutputDir();
 		boolean isAsc = false;
 		if (ASC.equals(orderDirection)){
 			isAsc=true;
@@ -162,7 +202,7 @@ public class CompareSelectStrategy extends SelectStrategy{
 				//sql = sql.replace(SQL_KEY_LAST_TWO_QUARTER, lastDayLastTwoQuarter);
 				for (int k=1; k<=params.length;k++){
 					if (sql.contains("%"+k)){
-						sql = sql.replace("%"+k, params[k-1]);
+						sql = sql.replace("%"+k, params[k-1].toString());
 					}
 				}
 				List<? extends Object> lo = SqlUtil.getObjectsByParam(sql, new Object[]{}, con, -1, -1, "", GeneralJDBCMapper.getInstance());
@@ -170,7 +210,7 @@ public class CompareSelectStrategy extends SelectStrategy{
 					//master sql no result
 					return new ArrayList<String>();
 				}
-				Map<String, Object> aPriceMap = new HashMap<String, Object>();
+				Map<String, Object> aPriceMap = new LinkedHashMap<String, Object>();//preserve insertion order
 				for (int i=0; i<lo.size(); i++){
 					List<Object> vl = (List<Object>)lo.get(i);
 					if (vl.size()>2){
@@ -207,9 +247,13 @@ public class CompareSelectStrategy extends SelectStrategy{
 				if (v!=null){
 					variables.put(varName+"", v);
 				}else{
-					logger.error(String.format("price for stock:%s on var:%c is null.", stockid, varName));
-					eval=false;
-					break;
+					if (this.acceptNull[k]){
+						variables.put(varName+"", null);
+					}else{
+						logger.info(String.format("price for stock:%s on var:%c is null.", stockid, varName));
+						eval=false;
+						break;
+					}
 				}
 			}
 			if (eval){
@@ -246,12 +290,16 @@ public class CompareSelectStrategy extends SelectStrategy{
 							if (lineno==0){
 								title+= key+",";
 							}
-							sb.append(v.toString());
+							if (v!=null){
+								sb.append(v.toString());
+							}else{
+								sb.append("null");
+							}
 							sb.append(",");
 						}
 					}
 					if (orderValue==null){//no order specified
-						orderOutput.put(sb.toString(), sb.toString());
+						orderOutput.put(lineno, sb.toString());
 					}else{
 						orderOutput.put(orderValue, sb.toString());
 					}
@@ -261,10 +309,14 @@ public class CompareSelectStrategy extends SelectStrategy{
 		}
 		String[] sa = new String[orderOutput.size()+1];
 		Set<Object> keySet = null;
-		if (isAsc){
+		if (orderBy==null){
 			keySet = orderOutput.keySet();
 		}else{
-			keySet = orderOutput.descendingKeySet();
+			if (isAsc){
+				keySet = orderOutput.keySet();
+			}else{
+				keySet = orderOutput.descendingKeySet();
+			}
 		}
 		sa[0]=title;
 		int i=1;
@@ -283,8 +335,8 @@ public class CompareSelectStrategy extends SelectStrategy{
 			}
 			allStrParam+=params[i];
 		}
-		String fileName = String.format("%s_%s_%s_%s.csv", getName(), sdf.format(dt), allStrParam, detailSdf.format(d));
-		HdfsDownloadUtil.outputToHdfs(sa, outputFileDir+"/"+fileName, this.getFsDefaultName());
+		//String fileName = String.format("%s_%s_%s_%s.csv", getName(), sdf.format(dt), allStrParam, detailSdf.format(d));
+		//HdfsDownloadUtil.outputToHdfs(sa, outputFileDir+"/"+fileName, this.getFsDefaultName());
 		return retList;
 	}
 	
@@ -318,10 +370,12 @@ public class CompareSelectStrategy extends SelectStrategy{
 	public void setOrderDirection(String orderDirection) {
 		this.orderDirection = orderDirection;
 	}
-	public String[] getParams() {
-		return params;
+
+	public Boolean[] getAcceptNull() {
+		return acceptNull;
 	}
-	public void setParams(String[] params) {
-		this.params = params;
+
+	public void setAcceptNull(Boolean[] acceptNull) {
+		this.acceptNull = acceptNull;
 	}
 }

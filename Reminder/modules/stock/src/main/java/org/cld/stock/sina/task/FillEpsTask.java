@@ -22,7 +22,9 @@ import org.cld.hadooputil.NullKeyCopyTextReducer;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.persistence.StockPersistMgr;
+import org.cld.stock.sina.SinaStockPersistMgr;
 import org.cld.taskmgr.entity.Task;
+import org.cld.util.DateTimeUtil;
 import org.cld.util.jdbc.DBConnConf;
 
 public class FillEpsTask extends Task implements Serializable{
@@ -36,16 +38,18 @@ public class FillEpsTask extends Task implements Serializable{
 	private Date dt;
 	private String marketBaseId;
 	private DBConnConf dbconf;
+	private String outputDir;
 	
 	public FillEpsTask(){
 	}
 	
-	public FillEpsTask(Date dt, String marketBaseId, DBConnConf dbconf, Date startDt, Date endDt){
+	public FillEpsTask(Date dt, String marketBaseId, DBConnConf dbconf, Date startDt, Date endDt, String outputDir){
 		this.dt = dt;
 		this.marketBaseId = marketBaseId;
 		this.setDbconf(dbconf);
 		this.startDt = startDt;
 		this.endDt = endDt;
+		this.outputDir = outputDir;
 		genId();
 	}
 	
@@ -68,7 +72,7 @@ public class FillEpsTask extends Task implements Serializable{
 	
 	@Override
 	public String getOutputDir(Map<String, Object> paramMap){
-		return String.format("/reminder/sql/%s/%s", FillEpsTask.class.getSimpleName(), sdf.format(startDt)+"_" + sdf.format(endDt));
+		return outputDir;
 	}
 	
 	@Override
@@ -76,7 +80,7 @@ public class FillEpsTask extends Task implements Serializable{
 			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
 		try{
 			StockConfig sc = StockUtil.getStockConfig(this.marketBaseId);
-			List<List<Object>> lol = StockPersistMgr.getObservedEpsByDate(sc, dbconf, dt);
+			List<List<Object>> lol = SinaStockPersistMgr.getObservedEpsByDate(sc, dbconf, dt);
 			logger.info(String.format("get %d observed eps by %s with dbconf:%s", lol.size(), sdf.format(dt), dbconf.toString()));
 			Map<String, Float> annualEpsMap = new HashMap<String, Float>();
 			Map<Date, List<String>> endDtStockListMap = new HashMap<Date, List<String>>();
@@ -102,11 +106,11 @@ public class FillEpsTask extends Task implements Serializable{
 					logger.error(String.format("quarter is not positive for stock:%s, quarterEndDt:%s", stockId, sdf.format(quarterEndDt)));
 				}
 			}
-			Map<String, Double> todayFqIdxMap = StockPersistMgr.getFQIdx(sc, dbconf, dt);
+			Map<String, Double> todayFqIdxMap = SinaStockPersistMgr.getFQIdx(sc, dbconf, dt);
 			Map<String, Double> thatdayFqIdxMap = new HashMap<String, Double>();
 			for (Date ed:endDtStockListMap.keySet()){
 				List<String> sl = endDtStockListMap.get(ed);
-				Map<String, Double> thatdayPartialFqIdxMap = StockPersistMgr.getFQIdx(sc, dbconf, ed);
+				Map<String, Double> thatdayPartialFqIdxMap = SinaStockPersistMgr.getFQIdx(sc, dbconf, ed);
 				thatdayPartialFqIdxMap.keySet().retainAll(sl);
 				thatdayFqIdxMap.putAll(thatdayPartialFqIdxMap);
 			}
@@ -132,24 +136,28 @@ public class FillEpsTask extends Task implements Serializable{
 		hadoopJobParams.put("mapreduce.map.java.opts", optValue);
 		hadoopJobParams.put(NLineInputFormat.LINES_PER_MAP, "1");
 		return CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tl, taskName, false, 
-				CrawlTaskMapper.class.getName(), NullKeyCopyTextReducer.class.getName(), hadoopJobParams);
+				CrawlTaskMapper.class, NullKeyCopyTextReducer.class, hadoopJobParams);
 	}
 	
 	public static String[] launch(String propfile, CrawlConf cconf, String marketBaseId,  
-			String marketId, Date startDate, Date endDate, DBConnConf dbconf) {
+			String marketId, Date startDate, Date endDate, DBConnConf dbconf, String outputDir) {
 		StockConfig sc = StockUtil.getStockConfig(marketBaseId);
 		Date dt = startDate;
+		if (dt==null){
+			dt = SinaStockPersistMgr.getLatestFilledEps(sc, dbconf);
+			dt = DateTimeUtil.tomorrow(dt);
+		}
 		if (!StockUtil.isOpenDay(dt, sc.getHolidays())){
 			dt = StockUtil.getNextOpenDay(dt, sc.getHolidays());
 		}
 		List<Task> tl = new ArrayList<Task>();
 		while (dt.before(endDate)){
-			FillEpsTask t = new FillEpsTask(dt, marketBaseId, dbconf, startDate, endDate);
+			FillEpsTask t = new FillEpsTask(dt, marketBaseId, dbconf, startDate, endDate, outputDir);
 			tl.add(t);
 			dt = StockUtil.getNextOpenDay(dt, sc.getHolidays());
 		}
 		
-		String taskName = String.format("%s_%s", FillEpsTask.class.getSimpleName(), sdf.format(startDate));
+		String taskName = String.format("%s_%s", FillEpsTask.class.getSimpleName(), sdf.format(dt));
 		String jobId = submitTasks(taskName, propfile, tl, cconf);
 		return new String[]{jobId};
 	}

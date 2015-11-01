@@ -58,6 +58,7 @@ public class NasdaqStockConfig extends StockConfig{
 	}
 	//file name of the xml conf and the store id as well
 	public static final String STOCK_IDS ="nasdaq-ids";
+	//
 	public static final String STOCK_IPO = "nasdaq-ipo";
 	//market
 	//public static final String QUOTE_HISTORY="nasdaq-quote-historical";//start-end, not needed since FQ contains all the info
@@ -308,5 +309,10 @@ public class NasdaqStockConfig extends StockConfig{
 	@Override
 	public String[] getFirstStartTimeUseNullCmds() {
 		return new String[]{};
+	}
+	@Override
+	public String[] getAllStrategy() {
+		return new String[]{
+				StockConfig.STR_RALLY, StockConfig.STR_RANDOM};
 	}
 }

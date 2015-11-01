@@ -15,8 +15,6 @@ public class DefaultCopyTextReducer extends Reducer<Text,Text,Text,Text>{
 	
 	@Override
 	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-		logger.info(String.format("in reducer, key:%s, values:%s", key, values));
-		//start the script configured passing the parameters
 		try{
 			for (Text value: values){
 				context.write(key, value);

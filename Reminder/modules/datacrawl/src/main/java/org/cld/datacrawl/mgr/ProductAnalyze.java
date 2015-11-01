@@ -11,6 +11,7 @@ import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.MapContext;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
@@ -93,7 +94,11 @@ public class ProductAnalyze{
 							String csvkey = v[0];
 							String csvvalue = v[1];
 							if (cot != CsvOutputType.BY_ID){
-								context.write(new Text(csvkey), new Text(csvvalue));
+								if (AbstractCrawlItemToCSV.KEY_VALUE_UNDEFINED.equals(csvkey)){
+									context.write(new Text(csvvalue), new Text(""));
+								}else{
+									context.write(new Text(csvkey), new Text(csvvalue));
+								}
 							}else{
 								//
 								String outputFile = outputDirPrefix;

@@ -24,7 +24,11 @@ public class RunStock {
 	//x.properties sina hs_a run_special 2015-08-29 2015-09-22 run_merge
 	//x.properties sina hs_a run_special 2015-08-29 2015-09-22 
 	public static String getDefaultCmdLine(){
-		return "propFile stock_base marketId cmd startDate endDate method params";
+		StringBuffer sb = new StringBuffer("for updateAll:\n");
+		for (int i=0; i<StockBase.cmds.length; i++){
+			sb.append(i).append(":").append(StockBase.cmds[i]).append("\n");
+		}
+		return "propFile stock_base marketId cmd startDate endDate method params" + sb.toString();
 	}
 	
 	public static void main(String[] args) {
@@ -34,7 +38,6 @@ public class RunStock {
 		String cmd="";
 		String strStartDate = null;
 		String strEndDate = null;
-		sdf.setTimeZone(TimeZone.getTimeZone("PST"));//I am running from Santa Clara CA.
 		if (args.length>=6){
 			propFile = args[0]; //
 			stockBase = args[1]; //
@@ -86,7 +89,7 @@ public class RunStock {
 				}
 			}else if ("run_all_cmd".equals(cmd)){
 				try {
-					sb.runAllCmd(startDate, endDate);
+					sb.runAllCmd();
 				} catch (InterruptedException e) {
 					logger.error("", e);
 				}
@@ -108,13 +111,13 @@ public class RunStock {
 					}
 					sb.runSpecial(method, specialParam);
 				}else{
-					System.out.println(getDefaultCmdLine() + " methodName");
+					System.out.println(getDefaultCmdLine());
 				}
 			}else{
-				logger.error("unknown command.");
+				logger.error("unknown command." + getDefaultCmdLine());
 			}
 		}else{
-			System.out.println("at least: propFile marketId allHistory cmd");
+			System.out.println(getDefaultCmdLine());
 		}
 	}
 }

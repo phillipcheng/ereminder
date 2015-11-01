@@ -1,4 +1,4 @@
-package org.cld.stock;
+package org.cld.stock.task;
 
 import java.io.File;
 import java.util.Collection;
@@ -12,7 +12,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlConf;
+import org.cld.stock.StockConfig;
+import org.cld.stock.StockUtil;
 import org.cld.stock.persistence.StockPersistMgr;
 import org.cld.util.jdbc.DBConnConf;
 
@@ -128,8 +129,8 @@ class LoadTask implements Runnable {
 	}
 }
 
-public class LoadDBData {
-	private static Logger logger =  LogManager.getLogger(LoadDBData.class);
+public class LoadDBDataTask {
+	private static Logger logger =  LogManager.getLogger(LoadDBDataTask.class);
 	
 	public static final String KEY_THREAD_NUM="thread";
 	public static final String KEY_ROOT_DIR="dir";

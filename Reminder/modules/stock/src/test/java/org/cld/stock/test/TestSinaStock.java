@@ -16,7 +16,6 @@ import org.cld.stock.sina.SinaTestStockConfig;
 import org.cld.stock.sina.SinaStockConfig;
 import org.cld.stock.sina.task.TradeDetailCheckDownload;
 import org.cld.stock.sina.task.TradeDetailPostProcessTask;
-import org.cld.stock.strategy.CompareSelectSuite;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.task.MergeTask;
 import org.cld.taskmgr.TaskMgr;
@@ -63,13 +62,13 @@ public class TestSinaStock {
 		ssb.getDsm().addUpdateCrawledItem(ssb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
 	}
 	@Test
-	public void testInitIPODate() throws Exception{
-		ssb.runCmd(SinaStockConfig.SINA_STOCK_IPO, SinaStockConfig.MarketId_HS_A, null, sdf.format(new Date()));
+	public void testIPO() throws Exception{
+		ssb.runCmd(SinaStockConfig.SINA_STOCK_IPO, SinaStockConfig.MarketId_HS_Test, null, sdf.format(new Date()));
 	}
 	
 	@Test
 	public void testRunAllCmd1() throws Exception{
-		ssb.runAllCmd(SinaTestStockConfig.date_Test_D1, SinaTestStockConfig.date_Test_D2);
+		ssb.runAllCmd();
 	}
 	@Test
 	public void testPostProcess() throws Exception{
@@ -162,12 +161,13 @@ public class TestSinaStock {
 		ssb.runCmd(SinaStockConfig.SINA_STOCK_CORP_RELATED_OTHER, SinaStockConfig.MarketId_HS_Test, null, null);
 	}
 	
-	/***
-	 * 发行分配
-	 */
 	@Test
 	public void run_issue_sharebonus() throws ParseException{
 		ssb.runCmd(SinaStockConfig.SINA_STOCK_ISSUE_SHAREBONUS, SinaStockConfig.MarketId_HS_Test, null, START_DATE);
+	}
+	@Test
+	public void run_issue_addstock() throws ParseException{
+		ssb.runCmd(SinaStockConfig.SINA_STOCK_ISSUE_ADDSTOCK, SinaStockConfig.MarketId_HS_Test, null, START_DATE);
 	}
 	/***********
 	 * 股本股东

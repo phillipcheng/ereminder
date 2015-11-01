@@ -3,7 +3,7 @@ drop table if exists SinaCorpInfo;
 create table SinaCorpInfo(stockid varchar(150),name varchar(150),EnglishName varchar(150), IPOMarket varchar(150), IPODate Date, IPOPrice decimal(10,2), leadUnderwriter varchar(150), foundDate Date, RegisteredCapital varchar(150), InstitutionType varchar(150), OrgType varchar(150), BoardSecretary varchar(150), CompanyPhone varchar(150), BoardSecretaryPhone varchar(150), CompanyFax varchar(150), BoardSecretaryFax varchar(150), CompanyEmail varchar(150), BoardSecretaryEmail varchar(150), CompanyWebsite varchar(150), zipcode varchar(150), InfoDisclosureWebsite varchar(150), NameHistory varchar(150), RegisteredAddress varchar(150), OfficeAddress varchar(150), CompanyInfo varchar(150), BusinessScope varchar(150), primary key (stockid));
 
 drop table if exists SinaCorpIPO;
-create table SinaCorpIPO(compName varchar(150), shortName varchar(150), marketid varchar(150), stockid varchar(150), dt Date, primary key (stockid));
+create table SinaCorpIPO(stockid varchar(20), compName varchar(150), price decimal(10,2), totalRaise decimal(20,2), volume decimal(20,2), dt Date, underwriter varchar(100), pubDate Date);
 
 drop table if exists SinaCorpManager;
 create table SinaCorpManager(stockid varchar(150), name varchar(150), title varchar(150), dt Date, endDate Date);
@@ -76,6 +76,9 @@ create table SinaShareBonusDividend(stockid varchar(150), dt Date, SongGu decima
 drop table if exists SinaShareBonusAlloted;
 create table SinaShareBonusAlloted(stockid varchar(150), dt Date, AllotNumberEveryTen decimal(10,2), price decimal(10,4), base decimal(20,2), ExDate Date, RegDate Date, PayStartDate Timestamp, PayEndDate Date, XStockPublicDate Date, TotalAmount decimal(20,2), comment varchar(150), primary key (stockid, dt));
 
+drop table if exists SinaAddStock;
+create table SinaAddStock(stockid varchar(20), dt Date, addType varchar(40), price decimal(10,4), cost decimal(20,2), volume decimal(20,2), primary key (stockid, dt));
+
 #market dzjy
 drop table if exists SinaMarketDZJY;
 create table SinaMarketDZJY(dt Date, stockid varchar(150), stockname varchar(150), price decimal(10,4), volume decimal(20,2), amount decimal(20,2), buyerAgent varchar(150), sellerAgent varchar(150), stockType varchar(150), primary key (stockid, dt));
@@ -85,6 +88,7 @@ drop table if exists SinaMarketFQ;
 create table SinaMarketFQ(stockid varchar(150), dt Date, open decimal(10,4), high decimal(10,4), close decimal(10,4), low decimal(10,4), volume decimal(20,2), amount decimal(20,2), fqIdx decimal(10,4), primary key (stockid, dt));
 create index Idx_SinaMarketFQ_Date on SinaMarketFQ (dt);
 alter table SinaMarketFQ add column obsEps decimal(10,4);
+create index Idx_SinaMarketFQ_ObsEps on SinaMarketFQ (obsEps);
 
 #market history
 drop table if exists SinaMarketDaily;

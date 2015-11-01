@@ -106,7 +106,15 @@ public class TradeSimulator {
 								return qlist.subList(idx-1, qlist.size());
 							}
 						}else if (so.getOrderType() == OrderType.stoptrailingpercentage){
-							float lastPrice = cq.getOpen();
+							float lastPrice;//the reference price to set the stop price
+							if (idx==1){
+								lastPrice = cq.getOpen();
+							}else{
+								lastPrice = prevCq.getHigh();
+								if (cq.getOpen()>lastPrice){
+									lastPrice = cq.getOpen();
+								}
+							}
 							float stopPrice = lastPrice * (1-so.getIncrementPercent()/100);
 							//pick low as current price, since we are not using tick data, we are using candle data, can be 1,5,15,30 minute, etc.
 							if (cq.getLow()<stopPrice){
@@ -181,6 +189,9 @@ public class TradeSimulator {
 						}
 						List<CandleQuote> afterBuyCQI = tryExecuteOrder(buySOs, cqs, executedOrder, sc);
 						tryExecuteOrder(sellSOs, afterBuyCQI, executedOrder, sc);
+						logger.debug(buySOs);
+						logger.debug(sellSOs);
+						
 					}
 				}else{
 					logger.info(String.format("no quotes found for stock:%s, remove it.", stockid));

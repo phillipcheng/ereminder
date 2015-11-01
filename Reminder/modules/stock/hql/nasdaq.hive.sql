@@ -19,7 +19,7 @@ drop table if exists NasdaqFrQuarterRevenue;
 create external table NasdaqFrQuarterRevenue(stockid String, dt Date, revenue decimal(20,2), eps decimal(10,3), dividends decimal(10,3)) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-fr-quarter-revenue';
 
 drop table if exists NasdaqEarnAnnounce;
-create external table NasdaqEarnAnnounce(stockid String, dt Date, revenue decimal(20,2), eps decimal(10,3), dividends decimal(10,3)) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-fr-quarter-revenue';
+create external table NasdaqEarnAnnounce(annouceTime varchar(50), stockid varchar(50), dt Date, fiscalQuarter varchar(20), consensusEps decimal(10,4), numberEstimate decimal(10, 0), eps decimal(10,4), surprise decimal(10,2)) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-earn-announce';
 
 
 --nasdaq-issue-dividend-history
