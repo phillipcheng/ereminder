@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.stock.ETLUtil;
+import org.cld.stock.StockBase;
 import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.SinaTestStockConfig;
 import org.cld.stock.sina.SinaStockConfig;
@@ -234,5 +235,14 @@ public class TestSinaStock {
 		logger.info(cil.get(0));
 	}
 	
-
+	
+	//strategy
+	@Test
+	public void testAllStrategyByStock() throws Exception{
+		String pFile = "client1-v2.properties";
+		Date sd = sdf.parse("2005-01-01");
+		Date ed = sdf.parse("2015-10-15");
+		StockBase sb = new SinaStockBase(pFile, marketId, sd, ed);
+		sb.validateAllStrategyByStock("bs.random");
+	}
 }

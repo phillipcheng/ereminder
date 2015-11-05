@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -22,29 +23,42 @@ import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.entity.CrawledItem;
 import org.cld.datastore.entity.CrawledItemId;
+
 import org.cld.taskmgr.entity.CmdStatus;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
+
+import org.cld.util.JsonUtil;
 import org.cld.util.StringUtil;
 import org.cld.util.jdbc.DBConnConf;
 import org.cld.util.jdbc.ScriptRunner;
 import org.cld.util.jdbc.SqlUtil;
+
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.cld.hadooputil.DefaultCopyTextReducer;
 import org.cld.hadooputil.DumpHdfsFile;
-import org.cld.stock.sina.task.FillEpsTask;
-import org.cld.stock.strategy.CountWaveTask;
-import org.cld.stock.strategy.SelectStrategy;
-import org.cld.stock.strategy.SellStrategy;
-import org.cld.stock.strategy.SortMapper;
-import org.cld.stock.strategy.StrategyValidationTask;
-import org.cld.stock.task.LoadDBDataTask;
-import org.cld.stock.task.MergeTask;
+
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.test.TestBase;
+
+import org.cld.stock.sina.task.FillEpsTask;
+import org.cld.stock.strategy.SelectStrategy;
+import org.cld.stock.strategy.SelectStrategyByStockTask;
+import org.cld.stock.strategy.SelectStrategyMapperByStock;
+import org.cld.stock.strategy.SellStrategy;
+import org.cld.stock.strategy.SellStrategyByStockMapper;
+import org.cld.stock.strategy.SellStrategyByStockReducer;
+import org.cld.stock.strategy.SortMapper;
+import org.cld.stock.strategy.StrategyResultMapper;
+import org.cld.stock.strategy.StrategyResultReducer;
+import org.cld.stock.strategy.select.CountWaveTask;
+import org.cld.stock.task.LoadDBDataTask;
+import org.cld.stock.task.MergeTask;
+
 
 public abstract class StockBase extends TestBase{
 
@@ -58,13 +72,14 @@ public abstract class StockBase extends TestBase{
 	public static final String idKeySep = "_";
 	public static final String DELTA_NAME="delta";
 	
+	public static final String KEY_BASE_MARKET_ID="baseMarketId";
+	
 	private String baseMarketId;
 	protected String marketId;
 	protected String propFile;
 	protected Date endDate; //of server timezone, since the static holidays, the dynamic date from hbase are all in server timezone
 	protected Date startDate;
 	protected String specialParam = null;//for special cmd to use as parameter
-	private String marketBaseId;
 	
 	protected DataStoreManager dsm = null;
 	protected DataStoreManager hdfsDsm = null;
@@ -78,7 +93,6 @@ public abstract class StockBase extends TestBase{
 	public StockBase(String propFile, String baseMarketId, String marketId, Date sd, Date ed, String marketBaseId){
 		super();
 		this.setBaseMarketId(baseMarketId);
-		this.marketBaseId = marketBaseId;
 		this.marketId = marketId;
 		super.setProp(propFile);
 		this.propFile = propFile;
@@ -376,6 +390,35 @@ public abstract class StockBase extends TestBase{
 		return cmdStatusList;
 	}
 
+	public boolean cmdFinished(String jid){
+		Configuration hconf = HadoopTaskLauncher.getHadoopConf(this.cconf.getNodeConf());
+		JobClient jobClient=null;
+		try {
+			jobClient = new JobClient(hconf);
+		}catch(Exception e){
+			logger.error("", e);
+		}
+		boolean finished=true;
+		JobID jobId = JobID.forName(jid);
+		try{
+			RunningJob rjob = jobClient.getJob(jobId);
+			int newStatus=1;
+			if (rjob!=null){
+				newStatus = rjob.getJobStatus().getState().getValue();
+				logger.debug(String.format("job %s got status %d", jid, newStatus));
+			}else{
+				logger.info(String.format("job %s not found in jobClient.", jid));
+			}
+			if (newStatus==1 || newStatus==4){//1 preparation, 4 running
+				finished=false;
+			}
+		}catch(Exception e){
+			logger.error("", e);
+			finished=false;
+		}
+		return finished;
+	}
+	
 	public boolean cmdAllFinished(Map<String, Integer> jobStatusMap){
 		Configuration hconf = HadoopTaskLauncher.getHadoopConf(this.cconf.getNodeConf());
 		JobClient jobClient=null;
@@ -489,68 +532,70 @@ public abstract class StockBase extends TestBase{
 	
 	public static final String STRATEGY_PREFIX="strategy.";
 	public static final String STRATEGY_SUFFIX=".properties";
-	public void validateAllStrategy(String param){
+	
+	public void validateAllStrategyByStock(String param){
+		String folderName = null;
+		if (param!=null){
+			folderName = String.format("%s_%s_%s_%s", marketId, sdf.format(startDate), sdf.format(endDate), param);
+		}else{
+			folderName = String.format("%s_%s_%s", marketId, sdf.format(startDate), sdf.format(endDate));
+		}
+		
+		String outputDir1 = String.format("/reminder/sresult/%s/all1", folderName);
+		String outputDir2 = String.format("/reminder/sresult/%s/all2", folderName);
+		String outputDir3 = String.format("/reminder/sresult/%s/all3", folderName);
+		String outputDir4 = String.format("/reminder/sresult/%s/all4", folderName);
+		
 		try{
 			StockConfig sc = this.getStockConfig();
-			Map<String, Integer> jobsStatus = new HashMap<String, Integer>();
-			for (String simpleStrategyName:sc.getAllStrategy()){
-				String strategyName = STRATEGY_PREFIX+simpleStrategyName+STRATEGY_SUFFIX;
-				String[] jobIds = validateStrategy(strategyName);
-				for (String jobId: jobIds){
-					jobsStatus.put(jobId, 1);
+			Map<String, Object> sssMap = new HashMap<String, Object>();
+			List<SelectStrategyMapperByStock> allSelectStrategy = new ArrayList<SelectStrategyMapperByStock>();
+			if (param==null){
+				for (String simpleStrategyName:sc.getAllStrategyByStock()){
+					String strategyName = STRATEGY_PREFIX+simpleStrategyName+STRATEGY_SUFFIX;
+					PropertiesConfiguration props = new PropertiesConfiguration(strategyName);
+					List<SelectStrategy> scsl = SelectStrategy.gen(props, simpleStrategyName);
+					for (SelectStrategy scs: scsl){
+						((SelectStrategyMapperByStock)scs).setBaseMarketId(this.getBaseMarketId());
+						allSelectStrategy.add((SelectStrategyMapperByStock) scs);
+					}
+					SellStrategy[] slsl = SellStrategy.gen(props);
+					sssMap.put(simpleStrategyName, slsl);
 				}
+			}else{
+				String strategyName = STRATEGY_PREFIX+param+STRATEGY_SUFFIX;
+				PropertiesConfiguration props = new PropertiesConfiguration(strategyName);
+				List<SelectStrategy> scsl = SelectStrategy.gen(props, param);
+				for (SelectStrategy scs: scsl){
+					((SelectStrategyMapperByStock)scs).setBaseMarketId(this.getBaseMarketId());
+					allSelectStrategy.add((SelectStrategyMapperByStock) scs);
+				}
+				SellStrategy[] slsl = SellStrategy.gen(props);
+				sssMap.put(param, slsl);
 			}
-			Thread.sleep(10000);
-			while (!cmdAllFinished(jobsStatus)){
-				Thread.sleep(10000);
-			}
+			String sssString = JsonUtil.ObjToJson(sssMap);
+			SelectStrategyMapperByStock[] allSelectStrategyArray = new SelectStrategyMapperByStock[allSelectStrategy.size()];
+			//1
+			allSelectStrategyArray = allSelectStrategy.toArray(allSelectStrategyArray);
+			SelectStrategyByStockTask.launch(this.getPropFile(), cconf, baseMarketId, marketId, outputDir1, 
+					allSelectStrategyArray, startDate, endDate, cconf.getSmalldbconf());
 			
-			String[] inputPaths = new String[sc.getAllStrategy().length];
-			for (int i=0; i<inputPaths.length; i++){
-				String simpleStrategyName = sc.getAllStrategy()[i];
-				String outputDir = String.format("/reminder/sresult/%s_%s_%s/%s/", marketId, sdf.format(startDate), sdf.format(endDate), 
-						simpleStrategyName);
-				inputPaths[i] = outputDir;
-			}
-			String outputDir = String.format("/reminder/sresult/%s_%s_%s/all", marketId, sdf.format(startDate), sdf.format(endDate));
+			//2
 			Map<String, String> hadoopParams = new HashMap<String, String>();
-			hadoopParams.put(HadoopTaskLauncher.FILTER_REGEXP_KEY, ".*summary-.*");
-			HadoopTaskLauncher.executeTasks(this.getCconf().getNodeConf(), hadoopParams, inputPaths, false, outputDir, false, 
+			hadoopParams.put(SellStrategy.KEY_SELL_STRATEGYS, sssString);
+			hadoopParams.put(CrawlUtil.CRAWL_PROPERTIES, this.getPropFile());
+			hadoopParams.put(KEY_BASE_MARKET_ID, this.baseMarketId);
+			HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), hadoopParams, new String[]{outputDir1}, false, outputDir2, true, 
+					SellStrategyByStockMapper.class, SellStrategyByStockReducer.class, false);
+			//3
+			HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), null, new String[]{outputDir2}, false, outputDir3, true, 
+					StrategyResultMapper.class, StrategyResultReducer.class, false);
+			//4
+			HadoopTaskLauncher.executeTasks(this.getCconf().getNodeConf(), null, new String[]{outputDir3}, false, outputDir4, true, 
 					SortMapper.class, DefaultCopyTextReducer.class, false);
 		}catch(Exception e){
 			logger.error("", e);
 		}
-	}
-	//param the strategy configure file
-	public String[] validateStrategy(String param){
-		try{
-			String strategyName = param;
-			String params=null;
-			if (param.contains("__")){
-				String[] a = param.split("__");
-				strategyName = a[0];
-				params = a[1];
-			}
-			PropertiesConfiguration props = new PropertiesConfiguration(strategyName);
-			String simpleStrategyName = StringUtil.getStringBetweenFirstPreFirstPost(strategyName, STRATEGY_PREFIX, STRATEGY_SUFFIX);
-			if (params!=null){
-				Map<String, String> paramMap = StringUtil.parseMapParams(params);
-				props.setAutoSave(false);
-				for (String key:paramMap.keySet()){
-					props.setProperty(key, paramMap.get(key));	
-				}
-			}
-			DBConnConf dbconf = cconf.getSmalldbconf();
-	        String outputDir = String.format("/reminder/sresult/%s_%s_%s/%s", marketId, sdf.format(startDate), sdf.format(endDate), simpleStrategyName);
-	        String scsType = props.getString(SelectStrategy.KEY_SELECTS_TYPE);
-	        SelectStrategy scs = (SelectStrategy) Class.forName(scsType).newInstance();
-	        List<SelectStrategy> ssl = scs.gen(props, simpleStrategyName);
-	        SellStrategy[] sls = SellStrategy.genSS(props);
-	        return StrategyValidationTask.launch(this.propFile, cconf, marketBaseId, marketId, outputDir, ssl, sls, startDate, endDate, dbconf); 
-		}catch(Exception e){
-			logger.error("", e);
-		}
-		return null;
 	}
 	
 	private static String KEY_WAVEHEIGHT="wave.height";
@@ -565,7 +610,7 @@ public abstract class StockBase extends TestBase{
 	        String inputHdfs = props.getString(KEY_HDFS_DEFAULTNAME);
 			String outputDir = String.format("%s_%s", outputDirPrefix, time);
 	        float waveHeight = props.getFloat(KEY_WAVEHEIGHT);
-	        return CountWaveTask.launch(this.propFile, cconf, marketBaseId, marketId, startDate, endDate, inputHdfs, outputDir, waveHeight);
+	        return CountWaveTask.launch(this.propFile, cconf, baseMarketId, marketId, startDate, endDate, inputHdfs, outputDir, waveHeight);
 		}catch(Exception e){
 			logger.error("", e);
 		}
@@ -601,7 +646,7 @@ public abstract class StockBase extends TestBase{
 		if (!exclude.equals("") && !exclude.equals("-")){
 			excludeArr = exclude.split(",");
 		}
-		LoadDBDataTask.launch(marketBaseId, marketId, cconf.getSmalldbconf(), threadNum, localDataDir, includeArry, excludeArr);
+		LoadDBDataTask.launch(baseMarketId, marketId, cconf.getSmalldbconf(), threadNum, localDataDir, includeArry, excludeArr);
 	}
 	public String[] postprocess(String param){
 		List<String> jobIds = new ArrayList<String>();
@@ -635,30 +680,33 @@ public abstract class StockBase extends TestBase{
 		LoadDBDataTask.launch(baseMarketId, strEndDate, cconf.getSmalldbconf(), 20, 
 				localDirRoot, new String[]{this.baseMarketId}, new String[]{});
 	}
-	public void setPubDtSql(){
-		if (StockUtil.SINA_STOCK_BASE.equals(this.marketBaseId)){
-			try{
-				InputStreamReader br = new InputStreamReader(new FileInputStream(new File("/data/reminder/sql/postimport.sql")), "UTF-8");
+	public void postImport(){
+		String postImportFileName = getStockConfig().postImportSql();
+		try{
+			if (postImportFileName!=null){
+				InputStreamReader br = new InputStreamReader(new FileInputStream(new File(String.format("/data/reminder/sql/%s", postImportFileName))), "UTF-8");
 				Connection con = SqlUtil.getConnection(this.getCconf().getSmalldbconf());
 				ScriptRunner sr = new ScriptRunner(con, false, false);
 				sr.runScript(br);
 				SqlUtil.closeResources(con, null);
-			}catch(Exception e){
-				logger.error("", e);
-				return;
 			}
+		}catch(Exception e){
+			logger.error("", e);
+			return;
 		}
 	}
+	
 	public String[] genFillEpsSql(String param){
-		if (StockUtil.SINA_STOCK_BASE.equals(this.marketBaseId)){
+		if (StockUtil.SINA_STOCK_BASE.equals(baseMarketId)){
 			String outputDir = String.format("/reminder/items/sql/%s/%s", FillEpsTask.class.getSimpleName(), sdf.format(endDate));
-			return FillEpsTask.launch(propFile, cconf, marketBaseId, marketId, startDate, endDate, cconf.getSmalldbconf(), outputDir);
+			return FillEpsTask.launch(propFile, cconf, baseMarketId, marketId, startDate, endDate, cconf.getSmalldbconf(), outputDir);
 		}else{
 			return null;
 		}
 	}
+	
 	public void exeFillEpsSql(){
-		if (StockUtil.SINA_STOCK_BASE.equals(this.marketBaseId)){
+		if (StockUtil.SINA_STOCK_BASE.equals(baseMarketId)){
 			String outputDir = String.format("/reminder/items/sql/%s/%s", FillEpsTask.class.getSimpleName(), sdf.format(endDate));
 			String outputFile = outputDir + "/" + "part-r-00000";
 			Configuration conf = HadoopTaskLauncher.getHadoopConf(this.getCconf().getNodeConf());
@@ -735,7 +783,7 @@ public abstract class StockBase extends TestBase{
 	}
 	private static final int poll_interval=20000;
 	public static String[] cmds = new String[]{"runAllCmd", "postprocess", "run_merge", "dumpFiles", "loadDataFiles", 
-			"setPubDtSql", "genFillEpsSql", "exeFillEpsSql"};
+			"postImport"};
 	public void updateAll(String param) throws InterruptedException{
 		int step =0;
 		boolean oneStep = false;
@@ -797,11 +845,9 @@ public abstract class StockBase extends TestBase{
 	public void setStartDate(Date startDate) {
 		this.startDate = startDate;
 	}
-
 	public String getBaseMarketId() {
 		return baseMarketId;
 	}
-
 	public void setBaseMarketId(String baseMarketId) {
 		this.baseMarketId = baseMarketId;
 	}

@@ -1,13 +1,19 @@
 package org.cld.stock.strategy;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
+import org.cld.stock.trade.StockOrder;
+import org.cld.stock.trade.StockOrder.ActionType;
+import org.cld.stock.trade.StockOrder.OrderType;
 import org.cld.util.StringUtil;
 
 //for abstract class json mapping
 public class SellStrategy {
+	public static String KEY_SELL_STRATEGYS="sellstrategys";
+	
 	public static String KEY_SELECT_NUMBER="sls.selectnumber"; //the number of stock selected
 	public static String KEY_SELLS_DURATION="sls.duration";
 	public static String KEY_SELLS_LIMIT_PERCENTAGE="sls.limitPercentage";
@@ -54,7 +60,7 @@ public class SellStrategy {
 		return String.format("%d,%d,%.2f,%.2f", selectNumber, holdDuration, limitPercentage, stopTrailingPercentage);
 	}
 	
-	public static SellStrategy[] genSS(PropertiesConfiguration props){
+	public static SellStrategy[] gen(PropertiesConfiguration props){
 		Float[] selectNumbers = new Float[]{1f};
 		Float[] durations = new Float[]{0f};
 		Float[] limitPercentages = new Float[]{0f};
@@ -94,6 +100,49 @@ public class SellStrategy {
 		SellStrategy[] ssa = new SellStrategy[ssl.size()];
 		return ssl.toArray(ssa);
         
+	}
+	
+	public static List<StockOrder> makeStockOrders(String stockid, Date dt, float buyLimit, SellStrategy ss){
+		ArrayList<StockOrder> sol = new ArrayList<StockOrder>();
+		StockOrder buyOrder = new StockOrder();
+		buyOrder.setStockid(stockid);
+		buyOrder.setAction(ActionType.buy);
+		buyOrder.setSubmitTime(dt);
+		if (buyLimit>0){
+			buyOrder.setOrderType(OrderType.limit);
+			buyOrder.setLimitPrice(buyLimit);
+		}else{
+			buyOrder.setOrderType(OrderType.market);
+		}
+		buyOrder.setDuration(ss.getHoldDuration());//TODO
+		sol.add(buyOrder);
+		
+		if (ss.getLimitPercentage()!=0){
+			StockOrder limitSellOrder = new StockOrder();
+			limitSellOrder.setStockid(stockid);
+			limitSellOrder.setAction(ActionType.sell);
+			limitSellOrder.setOrderType(OrderType.limit);
+			limitSellOrder.setLimitPercentage(ss.getLimitPercentage());
+			limitSellOrder.setPairOrderId(buyOrder.getOrderId());
+			sol.add(limitSellOrder);
+		}
+		
+		if (ss.getStopTrailingPercentage()!=0){
+			StockOrder limitTrailSellOrder = new StockOrder();
+			limitTrailSellOrder.setStockid(stockid);
+			limitTrailSellOrder.setAction(ActionType.sell);
+			limitTrailSellOrder.setOrderType(OrderType.stoptrailingpercentage);
+			limitTrailSellOrder.setIncrementPercent(ss.getStopTrailingPercentage());
+			sol.add(limitTrailSellOrder);
+		}
+		
+		StockOrder forceCleanSellOrder = new StockOrder();
+		forceCleanSellOrder.setStockid(stockid);
+		forceCleanSellOrder.setAction(ActionType.sell);
+		forceCleanSellOrder.setOrderType(OrderType.forceclean);
+		sol.add(forceCleanSellOrder);
+		
+		return sol;
 	}
 	public int getHoldDuration() {
 		return holdDuration;

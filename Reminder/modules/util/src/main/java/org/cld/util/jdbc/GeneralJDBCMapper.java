@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 
 
-public class GeneralJDBCMapper implements JDBCMapper{
+public class GeneralJDBCMapper extends JDBCMapper{
 	public Logger logger = LogManager.getLogger(GeneralJDBCMapper.class);
 	private static GeneralJDBCMapper singleton = new GeneralJDBCMapper();
 	

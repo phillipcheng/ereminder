@@ -8,7 +8,7 @@ import org.cld.util.jdbc.JDBCMapper;
 
 import cy.common.entity.Book;
 
-public class BookJDBCMapper implements JDBCMapper{
+public class BookJDBCMapper extends JDBCMapper{
 	Logger logger = LogManager.getLogger(BookJDBCMapper.class);
 	
 	private BookJDBCMapper(){

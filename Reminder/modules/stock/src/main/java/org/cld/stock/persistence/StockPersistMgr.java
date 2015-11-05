@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import org.cld.stock.CandleQuote;
 import org.cld.stock.StockConfig;
 import org.cld.util.jdbc.DBConnConf;
+import org.cld.util.jdbc.JDBCMapper;
 import org.cld.util.jdbc.SqlUtil;
 
 /**
@@ -46,6 +47,49 @@ public class StockPersistMgr {
 			logger.error("", e);
 		}finally{
 			SqlUtil.closeResources(con, stmt);
+		}
+	}
+	
+	public static List<Object> getDataByStockDate(DBConnConf dbconf, JDBCMapper tableMapper, String stockId, Date sd, Date ed){
+		Connection con = null;
+		String sql = String.format("select * from %s where stockid='%s' and dt>='%s' and dt<'%s' order by dt asc", 
+				tableMapper.getTableName(), stockId, sdf.format(sd), sdf.format(ed));
+		try{
+			con = SqlUtil.getConnection(dbconf);
+			List<Object> lo = (List<Object>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
+					con, -1, -1, "", 
+					tableMapper);
+			return lo;
+		}catch(Exception e){
+			logger.error("", e);
+			return null;
+		}finally{
+			SqlUtil.closeResources(con, null);
+		}
+	}
+	
+	//return the (beforeDays + [pivotMin,pivotMax] + afterDays) number of data
+	public static List<Object> getDataPivotByStockDate(DBConnConf dbconf, JDBCMapper tableMapper, String stockId, 
+			Date pivotMin, Date pivotMax, int beforeDays, int afterDays){
+		Connection con = null;
+		String sql = String.format(
+				  "(select * from %s where stockid='%s' and dt<'%s' order by dt desc limit %d) union "
+				+ "(select * from %s where stockid='%s' and dt>='%s' and dt<='%s' order by dt asc) union " 
+				+ "(select * from %s where stockid='%s' and dt>'%s' order by dt asc limit %d)", 
+				tableMapper.getTableName(), stockId, sdf.format(pivotMin), beforeDays, 
+				tableMapper.getTableName(), stockId, sdf.format(pivotMin), sdf.format(pivotMax), 
+				tableMapper.getTableName(), stockId, sdf.format(pivotMax), afterDays);
+		try{
+			con = SqlUtil.getConnection(dbconf);
+			List<Object> lo = (List<Object>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
+					con, -1, -1, "", 
+					tableMapper);
+			return lo;
+		}catch(Exception e){
+			logger.error("", e);
+			return null;
+		}finally{
+			SqlUtil.closeResources(con, null);
 		}
 	}
 	

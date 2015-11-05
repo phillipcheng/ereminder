@@ -1,4 +1,4 @@
-package org.cld.stock.strategy;
+package org.cld.stock.strategy.select;
 
 import java.io.IOException;
 import java.util.HashMap;

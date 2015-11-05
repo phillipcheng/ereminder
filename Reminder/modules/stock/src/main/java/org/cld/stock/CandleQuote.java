@@ -5,6 +5,7 @@ import java.util.Date;
 public class CandleQuote {
 	String stockid;
 	Date startTime;
+	//all price are comparable across the dates
 	float open;
 	float high;
 	float close;

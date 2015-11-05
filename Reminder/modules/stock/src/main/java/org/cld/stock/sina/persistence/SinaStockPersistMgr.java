@@ -1,4 +1,4 @@
-package org.cld.stock.sina;
+package org.cld.stock.sina.persistence;
 
 import java.sql.Connection;
 import java.text.SimpleDateFormat;

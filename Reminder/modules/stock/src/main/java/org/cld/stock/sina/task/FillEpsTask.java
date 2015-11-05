@@ -22,7 +22,7 @@ import org.cld.hadooputil.NullKeyCopyTextReducer;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.persistence.StockPersistMgr;
-import org.cld.stock.sina.SinaStockPersistMgr;
+import org.cld.stock.sina.persistence.SinaStockPersistMgr;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.DateTimeUtil;
 import org.cld.util.jdbc.DBConnConf;

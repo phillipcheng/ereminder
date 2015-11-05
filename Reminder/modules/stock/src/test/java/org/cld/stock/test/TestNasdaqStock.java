@@ -11,9 +11,11 @@ import java.util.TimeZone;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.entity.CrawledItem;
+import org.cld.stock.StockBase;
 import org.cld.stock.nasdaq.NasdaqStockBase;
 import org.cld.stock.nasdaq.NasdaqStockConfig;
 import org.cld.stock.nasdaq.NasdaqTestStockConfig;
+import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
@@ -38,8 +40,8 @@ public class TestNasdaqStock {
 		}
 	}
 	
-	private String marketId = NasdaqStockConfig.MarketId_AMEX;
-	//private String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test;
+	//private String marketId = NasdaqStockConfig.MarketId_AMEX;
+	private String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test;
 	private String propFile = "client1-v2.properties";
 	
 	private NasdaqStockBase nsb;
@@ -51,7 +53,7 @@ public class TestNasdaqStock {
 	@Before
 	public void setUp()throws Exception{
 		nsb = new NasdaqStockBase(propFile, marketId, startDate, endDate);
-		//nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
+		nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
 	}
 	
 	@Test
@@ -109,7 +111,11 @@ public class TestNasdaqStock {
 	}
 	@Test
 	public void testCmd_EarnAnnounce(){
-		nsb.runCmd(NasdaqStockConfig.EARN_ANNOUNCE, marketId, null, "2010-01-10");
+		nsb.runCmd(NasdaqStockConfig.EARN_ANNOUNCE, marketId, "2015-11-01", "2015-11-03");
+	}
+	@Test
+	public void testCmd_EarnAnnounceTime(){
+		nsb.runCmd(NasdaqStockConfig.EARN_ANNOUNCE_TIME, marketId, "2015-11-01", "2015-11-03");
 	}
 	@Test
 	public void testCmd_Fr_QuarterlyIncomeStatement(){
@@ -211,5 +217,23 @@ public class TestNasdaqStock {
 			logger.info(ci);
 		}
 	}
-
+	
+	//strategy
+	@Test
+	public void testAllStrategy() throws Exception{
+		String pFile = "client1-v2.properties";
+		Date sd = sdf.parse("2014-10-01");
+		Date ed = sdf.parse("2015-10-15");
+		StockBase sb = new NasdaqStockBase(pFile, marketId, sd, ed);
+		sb.validateAllStrategyByStock(null);
+	}
+	
+	@Test
+	public void testEarnSS() throws Exception{
+		String pFile = "client1-v2.properties";
+		Date sd = sdf.parse("2014-01-01");
+		Date ed = sdf.parse("2015-10-15");
+		StockBase sb = new NasdaqStockBase(pFile, marketId, sd, ed);
+		sb.validateAllStrategyByStock("bs.earn");
+	}
 }

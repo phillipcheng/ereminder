@@ -57,6 +57,10 @@ public abstract class StockConfig {
 	public abstract Map<String, String> getTablesByCmd(String cmd);
 	public abstract JDBCMapper getDailyQuoteTableMapper();
 	public abstract JDBCMapper getFQDailyQuoteTableMapper();
+	public abstract JDBCMapper getDividendTableMapper();
+	public abstract JDBCMapper getEarnTableMapper();
+	
+	public abstract String postImportSql();
 	
 	//strategy
 	public static final String STR_RANDOM="random";
@@ -67,6 +71,7 @@ public abstract class StockConfig {
 	public static final String STR_RALLY="rally";
 	
 	public abstract String[] getAllStrategy();
+	public abstract String[] getAllStrategyByStock();
 	
 	public StockConfig() {
 		sdf = new SimpleDateFormat("yyyy-MM-dd");

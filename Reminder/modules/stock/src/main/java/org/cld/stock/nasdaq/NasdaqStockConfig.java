@@ -13,6 +13,10 @@ import org.apache.logging.log4j.Logger;
 import org.cld.stock.LaunchableTask;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
+import org.cld.stock.nasdaq.persistence.NasdaqDailyQuoteCQJDBCMapper;
+import org.cld.stock.nasdaq.persistence.NasdaqDividendJDBCMapper;
+import org.cld.stock.nasdaq.persistence.NasdaqEarnJDBCMapper;
+import org.cld.stock.nasdaq.persistence.NasdaqFQDailyQuoteCQJDBCMapper;
 import org.cld.stock.nasdaq.task.FQPostProcessTask;
 import org.cld.stock.nasdaq.task.QuotePostProcessTask;
 import org.cld.stock.sina.SinaStockConfig;
@@ -83,6 +87,7 @@ public class NasdaqStockConfig extends StockConfig{
 	public static final String CASH_FLOW="nasdaq-fr-quarter-CashFlow";
 	public static final String REVENUE="nasdaq-fr-quarter-revenue";
 	public static final String EARN_ANNOUNCE="nasdaq-earn-announce";
+	public static final String EARN_ANNOUNCE_TIME="nasdaq-earn-announce-time";
 	
 	public static final String STOCK_DATA="data";
 	
@@ -118,6 +123,10 @@ public class NasdaqStockConfig extends StockConfig{
 		m = new HashMap<String,String>();
 		m.put("NasdaqEarnAnnounce","part");
 		cmdTableMap.put(EARN_ANNOUNCE,m);
+		
+		m = new HashMap<String,String>();
+		m.put("NasdaqEarnAnnounceTime","part");
+		cmdTableMap.put(EARN_ANNOUNCE_TIME,m);
 		
 		//market(quote)
 		m = new HashMap<String,String>();
@@ -180,6 +189,7 @@ public class NasdaqStockConfig extends StockConfig{
 		CASH_FLOW, //
 		REVENUE,
 		EARN_ANNOUNCE,
+		EARN_ANNOUNCE_TIME,
 	};
 	
 	public static String[] syncConf = new String[]{STOCK_IPO}; //other cmd need this result
@@ -250,7 +260,7 @@ public class NasdaqStockConfig extends StockConfig{
 	@Override
 	public String getStartDate(String cmdName) {
 		String startDate = null;
-		if (NasdaqStockConfig.EARN_ANNOUNCE.equals(cmdName)){
+		if (NasdaqStockConfig.EARN_ANNOUNCE.equals(cmdName) || NasdaqStockConfig.EARN_ANNOUNCE_TIME.equals(cmdName)){
 			startDate = NasdaqStockConfig.NASDAQ_FIRST_DATE_EARN_ANNOUNCE;
 		}
 		return startDate;
@@ -314,5 +324,23 @@ public class NasdaqStockConfig extends StockConfig{
 	public String[] getAllStrategy() {
 		return new String[]{
 				StockConfig.STR_RALLY, StockConfig.STR_RANDOM};
+	}
+	@Override
+	public String[] getAllStrategyByStock() {
+		return new String[]{
+				"bs.dividend", "bs.rally", "bs.random"
+		};
+	}
+	@Override
+	public JDBCMapper getDividendTableMapper() {
+		return NasdaqDividendJDBCMapper.getInstance();
+	}
+	@Override
+	public String postImportSql() {
+		return "nasdaqpostimport.sql";
+	}
+	@Override
+	public JDBCMapper getEarnTableMapper() {
+		return NasdaqEarnJDBCMapper.getInstance();
 	}
 }

@@ -285,7 +285,7 @@ public class ProductAnalyzeUtil {
 					pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
 					externalistFinished = CrawlTaskEval.setUserAttributes(pageMap, bdt.getBaseBrowseTask().getUserAttribute(), 
 							product.getParamMap(), cconf, task.getParamMap(), tryPattern);
-					if (ProductAnalyze.postCrawlProcess(bdt.getBaseBrowseTask(), product)){//suppose the data are listed in the desc order
+					if (ProductAnalyze.postCrawlProcess(task, bdt.getBaseBrowseTask(), product)){//suppose the data are listed in the desc order
 						externalistFinished = true; //if there is any data filtered, we donot need go further
 						logger.info("filter condition meet do not crawl further.");
 					}

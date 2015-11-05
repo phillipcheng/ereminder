@@ -153,7 +153,7 @@ public class ProductAnalyze{
 	}
 
 	//return true for there are records filtered
-	public static boolean postCrawlProcess(BrowseTaskType btt, CrawledItem product){
+	public static boolean postCrawlProcess(Task taskInstance, BrowseTaskType btt, CrawledItem product){
 		CsvTransformType csvTransform = btt.getCsvtransform();
 		if (csvTransform!=null){
 			//transform from data to array
@@ -173,6 +173,8 @@ public class ProductAnalyze{
 						Map<String, Object> attributes = new HashMap<String, Object>();
 						//String[] varr = csv[i][1].split(",");//split value
 						attributes.put(VAR_CSV_NAME, csv[i][1]);//pass the unsplit string
+						attributes.putAll(product.getParamMap());
+						attributes.putAll(taskInstance.getParamMap());
 						String svarr = (String) ScriptEngineUtil.eval(top.getExpression(), VarType.STRING, attributes);//return a joined string
 						csv[i][1] = svarr;
 					}
@@ -274,7 +276,7 @@ public class ProductAnalyze{
 				if (csvTransform!=null && csvTransform.getTransformClass()!=null){
 					//do the transform and write out the csv and write to hbase if dsm set to hbase
 					try {
-						postCrawlProcess(bdt.getBaseBrowseTask(), product);
+						postCrawlProcess(task, bdt.getBaseBrowseTask(), product);
 						//write the output
 						if (csvtrans!=null)
 							writeCsvOut(csvtrans, hdfsByIdOutputMap, context, mos, product, cconf, task);

@@ -4,8 +4,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,15 +47,14 @@ public class TradeSimulator {
 							//all day is at the limit, can't buy
 						logger.info(String.format("can't buy stock:%s on day:%s because daily limit. prev close:%.2f, today price:%.2f", 
 								so.getStockid(), sdf.format(cq.getStartTime()), prevCq.getClose(), cq.getHigh()));
+						return null;//failed to buy
 					}else{
 						if (so.getOrderType() == OrderType.market){
-						
-								so.executedPrice = cq.getOpen();
-								so.status = StatusType.executed;
-								so.setExecuteTime(cq.getStartTime());
-								executedOrders.put(so.getOrderId(), so);
-								return qlist.subList(idx-1, qlist.size());
-							
+							so.executedPrice = cq.getOpen();
+							so.status = StatusType.executed;
+							so.setExecuteTime(cq.getStartTime());
+							executedOrders.put(so.getOrderId(), so);
+							return qlist.subList(idx-1, qlist.size());
 						}else if (so.getOrderType() == OrderType.limit){
 							if (cq.getLow()<=so.getLimitPrice()){
 								//executed
@@ -62,6 +63,8 @@ public class TradeSimulator {
 								so.setExecuteTime(cq.getStartTime());
 								executedOrders.put(so.getOrderId(), so);
 								return qlist.subList(idx-1, qlist.size());
+							}else{
+								return null;//failed to buy
 							}
 						}else{
 							logger.error(String.format("order type %s for action type %s not supported.", so.getOrderType(), so.getAction()));
@@ -145,61 +148,40 @@ public class TradeSimulator {
 		}
 		return qlist;
 	}
+	
 	/**
-	 * @param soMap
-	 * @param cconf
-	 * @return
+	 * 
+	 * @param dsoMap: for each day(submit day), given stockid, submit order to execute
+	 * @param cq
 	 */
-	public static void submitDailyOrder(Map<String, Map<SellStrategy, ArrayList<StockOrder>>> soMap, int maxDuration, DBConnConf dbconf, StockConfig sc){
-		int i=0;
-		StockOrder soSample = null;
-		List<String> sidlist = new ArrayList<String>();
-		for (String stockid: soMap.keySet()){
-			sidlist.add(stockid);
-			if (i==0){
-				soSample = soMap.get(stockid).values().iterator().next().get(0);
-			}
-			i++;
-		}
-		if (soSample!=null){
-			Date submitTime = soSample.getSubmitTime();//submit at open of the trading day
-			Date oneDayBeforeSubmitTime = DateTimeUtil.yesterday(submitTime);
-			Date ed = StockUtil.getNextOpenDay(submitTime, sc.getHolidays(), maxDuration);
-			Map<String, List<CandleQuote>> cqMap = StockPersistMgr.getFQDailyQuote(sc, dbconf, sidlist, oneDayBeforeSubmitTime, ed);
+	public static void submitDailyOrder(List<BuySellInfo> bsil, TreeMap<Date, CandleQuote> cq, StockConfig sc){
+		for (BuySellInfo bsi: bsil){
 			Map<String, StockOrder> executedOrder = new HashMap<String, StockOrder>(); //
-			List<String> removeStockIds = new ArrayList<String>();
-			for (String stockid:soMap.keySet()){
-				Map<SellStrategy,ArrayList<StockOrder>> solmap = soMap.get(stockid);
-				List<CandleQuote> quotes = cqMap.get(stockid);
-				if (quotes!=null){
-					for (SellStrategy ss: solmap.keySet()){
-						List<CandleQuote> cqs = quotes;
-						if (quotes.size()>ss.getHoldDuration()){
-							cqs = quotes.subList(0, ss.getHoldDuration());
-						}
-						List<StockOrder> sol = solmap.get(ss);
-						List<StockOrder> buySOs = new ArrayList<StockOrder>();
-						List<StockOrder> sellSOs = new ArrayList<StockOrder>();
-						for (StockOrder so:sol){
-							if (so.getAction()==ActionType.buy){
-								buySOs.add(so);
-							}else if (so.getAction() == ActionType.sell){
-								sellSOs.add(so);
-							}
-						}
-						List<CandleQuote> afterBuyCQI = tryExecuteOrder(buySOs, cqs, executedOrder, sc);
-						tryExecuteOrder(sellSOs, afterBuyCQI, executedOrder, sc);
-						logger.debug(buySOs);
-						logger.debug(sellSOs);
-						
-					}
-				}else{
-					logger.info(String.format("no quotes found for stock:%s, remove it.", stockid));
-					removeStockIds.add(stockid);
+			List<StockOrder> sol = bsi.getSos();
+			List<StockOrder> buySOs = new ArrayList<StockOrder>();
+			List<StockOrder> sellSOs = new ArrayList<StockOrder>();
+			for (StockOrder so:sol){
+				if (so.getAction()==ActionType.buy){
+					buySOs.add(so);
+				}else if (so.getAction() == ActionType.sell){
+					sellSOs.add(so);
 				}
 			}
-			for (String stockid:removeStockIds){
-				soMap.remove(stockid);
+			Date oneTDBefore = cq.floorKey(DateTimeUtil.yesterday(bsi.getSubmitD()));
+			if (oneTDBefore!=null){
+				Iterator<CandleQuote> cqi = cq.tailMap(oneTDBefore, true).values().iterator();
+				List<CandleQuote> cqs = new ArrayList<CandleQuote>();
+				for (int i=0; i<=bsi.getSs().getHoldDuration(); i++){
+					if (cqi.hasNext()){
+						cqs.add(cqi.next());
+					}
+				}
+				List<CandleQuote> afterBuyCQI = tryExecuteOrder(buySOs, cqs, executedOrder, sc);
+				if (afterBuyCQI!=null){
+					tryExecuteOrder(sellSOs, afterBuyCQI, executedOrder, sc);
+					logger.debug(buySOs);
+					logger.debug(sellSOs);
+				}
 			}
 		}
 	}

@@ -25,9 +25,9 @@ public class SqlUtil {
 		for (int i=0; i<params.size(); i++){
 			String paramValue = params.get(i);
 			if (i<params.size()-1){
-				ret = ret + paramValue + ",";
+				ret = ret + "'" + paramValue + "',";
 			}else{
-				ret = ret + paramValue;
+				ret = ret + "'" + paramValue + "'";
 			}
 		}
 		return ret+")";
@@ -283,7 +283,9 @@ public class SqlUtil {
 			while(rs.next()){				
 				Object c = mapper.getObject(rs);
 				logger.debug("got object: " + c);
-				objects.add(c);
+				if (c!=null){
+					objects.add(c);
+				}
 			}
 			if(rs != null){
 				rs.close();

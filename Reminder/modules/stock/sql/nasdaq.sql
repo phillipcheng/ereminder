@@ -3,7 +3,10 @@ drop table if exists NasdaqIPO;
 create table NasdaqIPO(name varchar(150), stockid varchar(150), marketid varchar(150), ipoprice decimal(10,2), shares decimal(20,2), offerAmount decimal(20, 2), dt Date, primary key (stockid));
 
 drop table if exists NasdaqEarnAnnounce;
-create table NasdaqEarnAnnounce(annouceTime varchar(50), stockid varchar(50), dt Date, fiscalQuarter varchar(20), consensusEps decimal(10,4), numberEstimate decimal(10, 0), eps decimal(10,4), primary key (stockid, dt));
+create table NasdaqEarnAnnounce(announceTime varchar(50), stockid varchar(50), dt Date, fiscalQuarter varchar(20), consensusEps decimal(10,4), numberEstimate decimal(10, 0), eps decimal(10,4), primary key (stockid, dt));
+
+drop table if exists NasdaqEarnAnnounceTime;
+create table NasdaqEarnAnnounceTime(dt Date, stockid varchar(50), announceTime varchar(50), primary key (stockid, dt));
 
 #NasdaqFrQuarterBalanceSheet
 drop table if exists NasdaqFrQuarterBalanceSheet;
@@ -28,6 +31,9 @@ create table NasdaqDividendHistory(stockid varchar(150), EffDate Date, Type varc
 #nasdaq-quote-historical
 drop table if exists NasdaqFqHistory;
 create table NasdaqFqHistory(stockid varchar(150), dt Date, open decimal(20,2), high decimal(20,2), low decimal(20,2), close decimal(20,2), volume bigint, adjClose decimal(20,2), primary key (stockid, dt));
+create index Idx_NasdaqFqHistory_Date on NasdaqFqHistory (dt);
+create index Idx_NasdaqFqHistory_stockid on NasdaqFqHistory (stockid);
+create index Idx_NasdaqFqHistory_adjClose on NasdaqFqHistory (adjClose);
 
 #nasdaq-quote-short-interest
 drop table if exists NasdaqShortInterest;

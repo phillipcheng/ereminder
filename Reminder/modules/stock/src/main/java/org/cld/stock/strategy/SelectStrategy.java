@@ -1,13 +1,13 @@
 package org.cld.stock.strategy;
 
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.stock.StockConfig;
-import org.cld.util.jdbc.DBConnConf;
+import org.cld.util.CombPermUtil;
+import org.cld.util.StringUtil;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -15,22 +15,26 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 public abstract class SelectStrategy {
 	public static Logger logger = LogManager.getLogger(SelectStrategy.class);
 	
-	public static String KEY_SELECTS_MEMORY="scs.memory";
-	public static String KEY_SELECTS_TYPE="scs.type";
-	public static String KEY_SELECTS_LIMIT="scs.limit";
-	public static String KEY_SELECTS_byDayType="scs.byDayType";
-	public static String VAL_ByCalendarDay="byCalendarDay";
-	public static String VAL_ByTradingDay="byTradingDay";
+	public static final String KEY_SELECTS_MEMORY="scs.memory";
+	public static final String KEY_SELECTS_TYPE="scs.type";
+	public static final String KEY_SELECTS_LIMIT="scs.limit";
+	public static final String KEY_ORDERDIR="scs.orderDirection";
+	public static String ASC = "asc";
+	public static String DESC = "desc";
 	
-	public enum byDayType{
-		byCalendarDay,
-		byTradingDay
-	}
+	public static final String KEY_PARAM="scs.param";
 	
 	private String name;
-	private byDayType dayType = byDayType.byTradingDay;
 	private int mbMemory=512;
+	private String orderDirection;
 	protected Object[] params = new Object[]{};
+	
+	public SelectStrategy(){
+	}
+	
+	public void init(PropertiesConfiguration props){
+		orderDirection = props.getString(KEY_ORDERDIR);
+	}
 	
 	public String paramsToString(){
 		StringBuffer sb = new StringBuffer();
@@ -40,39 +44,54 @@ public abstract class SelectStrategy {
 		return sb.toString();
 	}
 	
-	public SelectStrategy(){
-	}
+	public abstract void evalExp();
 	
-	public abstract List<SelectStrategy> gen(PropertiesConfiguration props, String simpleStrategyName);
-	public void init(PropertiesConfiguration props){
-		if (props.containsKey(SelectStrategy.KEY_SELECTS_MEMORY)){
-			this.mbMemory = props.getInt(SelectStrategy.KEY_SELECTS_MEMORY);
+	public static List<SelectStrategy> gen(PropertiesConfiguration props, String simpleStrategyName){
+		List<SelectStrategy> lss =new ArrayList<SelectStrategy>();
+		List<Object[]> paramList = new ArrayList<Object[]>();
+		for (int k=1;k<10;k++){
+			String paramName = KEY_PARAM+"."+k;
+			if (props.containsKey(paramName)){
+				paramList.add(StringUtil.parseSteps(props.getString(paramName)));
+			}else{
+				break;
+			}
 		}
-        if (props.containsKey(KEY_SELECTS_byDayType)){
-        	if (VAL_ByCalendarDay.equals(props.getProperty(KEY_SELECTS_byDayType))){
-        		this.setDayType(byDayType.byCalendarDay);
-        	}else if (VAL_ByTradingDay.equals(props.getProperty(KEY_SELECTS_byDayType))){
-        		this.setDayType(byDayType.byTradingDay);
-        	}else{
-        		logger.error("unsupported byDayType:" + props.getProperty(KEY_SELECTS_byDayType));
-        	}
-        }
+		try{
+			Class selectClass = Class.forName(props.getString(KEY_SELECTS_TYPE));
+			List<List<Object>> paramsList = CombPermUtil.eachOne(paramList);
+			if (paramsList.size()>0){
+				for (List<Object> pl:paramsList){
+					SelectStrategy css = (SelectStrategy) selectClass.newInstance();
+					css.init(props);
+					Object[] params = new Object[pl.size()];
+					params =  pl.toArray(params);
+					css.setParams(params);
+					css.evalExp();
+					css.setName(simpleStrategyName);
+					lss.add(css);
+				}
+			}else{
+				SelectStrategy css = (SelectStrategy) selectClass.newInstance();
+				css.setName(simpleStrategyName);
+				css.init(props);
+				lss.add(css);
+			}
+		}catch(Exception e){
+			logger.error("", e);
+			return null;
+		}
+		return lss;
 	}
-	//select the top N stock from the market using the select strategy given the dynamic param (date, etc) and other static parameter (percentage)
-	public abstract List<String> select(DBConnConf cconf, Date dt, StockConfig sc);
 	
+
+
+	//
 	public String getName() {
 		return name;
 	}
 	public void setName(String name) {
 		this.name = name;
-	}
-	
-	public byDayType getDayType() {
-		return dayType;
-	}
-	public void setDayType(byDayType dayType) {
-		this.dayType = dayType;
 	}
 
 	public int getMbMemory() {
@@ -89,5 +108,12 @@ public abstract class SelectStrategy {
 	
 	public void setParams(Object[] params) {
 		this.params = params;
+	}
+
+	public String getOrderDirection() {
+		return orderDirection;
+	}
+	public void setOrderDirection(String orderDirection) {
+		this.orderDirection = orderDirection;
 	}
 }

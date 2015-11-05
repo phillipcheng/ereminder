@@ -13,6 +13,10 @@ import org.apache.logging.log4j.Logger;
 import org.cld.stock.LaunchableTask;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
+import org.cld.stock.sina.persistence.SinaDailyQuoteCQJDBCMapper;
+import org.cld.stock.sina.persistence.SinaDividendJDBCMapper;
+import org.cld.stock.sina.persistence.SinaEarnJDBCMapper;
+import org.cld.stock.sina.persistence.SinaFQDailyQuoteCQJDBCMapper;
 import org.cld.stock.sina.task.TradeDetailPostProcessTask;
 import org.cld.util.ListUtil;
 import org.cld.util.jdbc.JDBCMapper;
@@ -643,11 +647,31 @@ public class SinaStockConfig extends StockConfig {
 		return new String[]{SINA_STOCK_BULLETIN};
 	}
 	
-
 	@Override
 	public String[] getAllStrategy() {
 		return new String[]{
 				StockConfig.STR_BREAKLVL1, StockConfig.STR_DIVIDEND, StockConfig.STR_EARNFORECAST, 
 				StockConfig.STR_PE, StockConfig.STR_RALLY, StockConfig.STR_RANDOM};
+	}
+
+	@Override
+	public String[] getAllStrategyByStock() {
+		return new String[]{
+				"bs.dividend", "bs.rally", "bs.random"
+		};
+	}
+
+	@Override
+	public JDBCMapper getDividendTableMapper() {
+		return SinaDividendJDBCMapper.getInstance();
+	}
+	@Override
+	public String postImportSql() {
+		return "sinapostimport.sql";
+	}
+
+	@Override
+	public JDBCMapper getEarnTableMapper() {
+		return SinaEarnJDBCMapper.getInstance();
 	}
 }

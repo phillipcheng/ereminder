@@ -17,6 +17,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+
 public class JsonUtil {
 	private static Logger logger =  LogManager.getLogger(JsonUtil.class);
 	
@@ -97,6 +102,7 @@ public class JsonUtil {
 	}
 	
 	public static Map<String, Object> fromJsonStringToMap(String jsonString){
+		
 		if (jsonString!=null){
 			try{
 				JSONObject jobj = new JSONObject(jsonString);
@@ -106,6 +112,31 @@ public class JsonUtil {
 			}
 		}
 		return null;
+	}
+	
+	public static String ObjToJson(Object t){
+		ObjectMapper om = new ObjectMapper();
+		om.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
+		ObjectWriter ow = om.writer().with(new MinimalPrettyPrinter());
+		try {
+			String json = ow.writeValueAsString(t);
+			return json;
+		} catch (JsonProcessingException e) {
+			logger.error("",e );
+			return null;
+		}
+	}
+	
+	public static Object objFromJson(String json, Class clazz){
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
+		try {
+			Object t = mapper.readValue(json, clazz);
+			return t;
+		} catch (Exception e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 	
 }

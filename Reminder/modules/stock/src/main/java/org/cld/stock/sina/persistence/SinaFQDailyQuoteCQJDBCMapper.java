@@ -1,4 +1,4 @@
-package org.cld.stock.sina;
+package org.cld.stock.sina.persistence;
 
 import java.sql.ResultSet;
 
@@ -7,7 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.cld.stock.CandleQuote;
 import org.cld.util.jdbc.JDBCMapper;
 
-public class SinaFQDailyQuoteCQJDBCMapper implements JDBCMapper{
+public class SinaFQDailyQuoteCQJDBCMapper extends JDBCMapper{
 	Logger logger = LogManager.getLogger(SinaFQDailyQuoteCQJDBCMapper.class);
 	
 	private SinaFQDailyQuoteCQJDBCMapper(){

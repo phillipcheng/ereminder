@@ -8,7 +8,7 @@ import org.cld.util.jdbc.JDBCMapper;
 
 import cy.common.entity.Volume;
 
-public class VolumeJDBCMapper implements JDBCMapper{
+public class VolumeJDBCMapper extends JDBCMapper{
 	Logger logger = LogManager.getLogger(VolumeJDBCMapper.class);
 	
 	private VolumeJDBCMapper(){

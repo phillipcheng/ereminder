@@ -15,13 +15,13 @@
 				<value value="'nasdaq-earn-announce_' + date" fromType="expression"/>
 			</userAttribute>
 			<userAttribute name="ColNum">
-				<value value="8" toType="list" toEntryType="int"/>
+				<value value="6" toType="list" toEntryType="int"/>
 			</userAttribute>
 			<userAttribute name="DataType1">
-				<value value="Text,Text,Date,Text,Number,Number,Text,Number" toType="list" toEntryType="string"/>
+				<value value="Text,Date,Text,Number,Number,Number" toType="list" toEntryType="string"/>
 			</userAttribute>
 			<userAttribute name="data1">
-				<value value="//div[@id='two_column_main_content_pnlInsider']/table/tbody/tr/td[position()&lt;9]|//div[@id='two_column_main_content_Pnunconfirm']/table/tbody/tr/td[position()&lt;9]" toType="list" toEntryType="string" optional="true"/>
+		<value value="//div[@id='two_column_main_content_pnlInsider']/table/tbody/tr/td[position()&lt;9 and position()>1 and not(@style='display:none')]|//div[@id='two_column_main_content_Pnunconfirm']/table/tbody/tr/td[position()&lt;8 and not(@style='display:none')]" toType="list" toEntryType="string" optional="true"/>
 			</userAttribute>
 			<pageVerify operator="!=">
 				<lhs value="//span[@id='two_column_main_content_lreportlink1']"/>
@@ -32,19 +32,11 @@
 					<expression>
 						<!-- match the last pair of paranthese -->
 						function getId(str) {
-							var rgx = /\(([^)]+)\)(?!\(([^)]+)\))/;
-							var match = str.match(rgx);
-							if (match)
-								return match[1];
-							else
-								return str;
-						}
-						function merge(arr){
-						    return rarr.join(',')
+							return str.match(/\([^()]*\)/g).pop().replace(/(\(|\))/g,"").replace(/(^\s+|\s+$)/g,"");
 						}
 						rarr = arr.split(',')
-						rarr[1] = getId(rarr[1])
-						merge(rarr)
+						rarr[0] = getId(rarr[0])
+						',' + rarr.join(',')
 					</expression>
 				</ops>
 			</csvtransform>

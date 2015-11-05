@@ -265,8 +265,10 @@ public class HadoopTaskLauncher {
 			
 			FileInputFormat.setInputDirRecursive(job, true);
 
-			if (hadoopParams.containsKey(FILTER_REGEXP_KEY)){
-				FileInputFormat.setInputPathFilter(job, RegexFilter.class);
+			if (hadoopParams!=null){
+				if (hadoopParams.containsKey(FILTER_REGEXP_KEY)){
+					FileInputFormat.setInputPathFilter(job, RegexFilter.class);
+				}
 			}
 			for (String tfn:inputPaths){
 				Path in = new Path(tfn);

@@ -1,4 +1,4 @@
-package org.cld.stock.nasdaq;
+package org.cld.stock.nasdaq.persistence;
 
 import java.sql.ResultSet;
 
@@ -7,7 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.cld.stock.CandleQuote;
 import org.cld.util.jdbc.JDBCMapper;
 
-public class NasdaqDailyQuoteCQJDBCMapper implements JDBCMapper{
+public class NasdaqDailyQuoteCQJDBCMapper extends JDBCMapper{
 	Logger logger = LogManager.getLogger(NasdaqDailyQuoteCQJDBCMapper.class);
 	
 	private NasdaqDailyQuoteCQJDBCMapper(){

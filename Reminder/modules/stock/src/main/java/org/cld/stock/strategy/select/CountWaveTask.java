@@ -1,4 +1,4 @@
-package org.cld.stock.strategy;
+package org.cld.stock.strategy.select;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -32,7 +32,7 @@ import org.cld.util.DateTimeUtil;
 
 public class CountWaveTask extends Task implements Serializable{
 	private static final long serialVersionUID = 1L;
-	private static Logger logger =  LogManager.getLogger(StrategyValidationTask.class);
+	private static Logger logger =  LogManager.getLogger(CountWaveTask.class);
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	public static SimpleDateFormat detailSdf = new SimpleDateFormat("yyyyMMddhhmmss");
 	public static SimpleDateFormat timeSdf = new SimpleDateFormat("hh:mm:ss");
@@ -159,7 +159,7 @@ public class CountWaveTask extends Task implements Serializable{
 				tl.add(t);
 			}
 		}
-		String taskName = String.format("%s_%s", StrategyValidationTask.class.getSimpleName(), sdf.format(startDate));
+		String taskName = String.format("%s_%s", CountWaveTask.class.getSimpleName(), sdf.format(startDate));
 		String jobId = submitTasks(taskName, propfile, tl, cconf, marketId);
 		return new String[]{jobId};
 	}
