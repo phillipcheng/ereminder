@@ -1,7 +1,7 @@
 package org.cld.stock.strategy;
 
 public class SelectCandidateResult {
-	
+	private String stockId;
 	private String dt;
 	private float value;
 	private float buyPrice;
@@ -15,6 +15,16 @@ public class SelectCandidateResult {
 		this.dt = dt;
 		this.value = value;
 		this.setBuyPrice(buyPrice);
+	}
+	
+	public SelectCandidateResult(String stockid, String dt, float value, float buyPrice){
+		this.setStockId(stockid);
+		this.dt = dt;
+		this.value = value;
+		this.setBuyPrice(buyPrice);
+	}
+	public String toString(){
+		return String.format("%s,%s,%.4f,%.3f", stockId, dt, value, buyPrice);
 	}
 	public String getDt() {
 		return dt;
@@ -33,6 +43,14 @@ public class SelectCandidateResult {
 	}
 	public void setBuyPrice(float buyPrice) {
 		this.buyPrice = buyPrice;
+	}
+
+	public String getStockId() {
+		return stockId;
+	}
+
+	public void setStockId(String stockId) {
+		this.stockId = stockId;
 	}
 
 }

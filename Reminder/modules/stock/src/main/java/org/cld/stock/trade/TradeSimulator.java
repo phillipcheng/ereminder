@@ -11,14 +11,14 @@ import java.util.TreeMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.datacrawl.CrawlConf;
 import org.cld.stock.CandleQuote;
 import org.cld.stock.StockConfig;
-import org.cld.stock.StockUtil;
 import org.cld.stock.persistence.StockPersistMgr;
+import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SellStrategy;
 import org.cld.stock.trade.StockOrder.*;
 import org.cld.util.DateTimeUtil;
-import org.cld.util.jdbc.DBConnConf;
 
 
 public class TradeSimulator {
@@ -33,11 +33,8 @@ public class TradeSimulator {
 			Map<String, StockOrder> executedOrders, StockConfig sc){
 		int idx=1;//leave 0 as the prevCq
 		while (idx<qlist.size()){
-			boolean lastCq = false;
 			CandleQuote cq = qlist.get(idx);
-			if (idx == (qlist.size()-1)){
-				lastCq = true;
-			}
+			//clock is cq's trading day
 			for (StockOrder so:sol){
 				CandleQuote prevCq = qlist.get(idx-1);
 				if (so.getAction() == ActionType.buy){
@@ -49,25 +46,35 @@ public class TradeSimulator {
 								so.getStockid(), sdf.format(cq.getStartTime()), prevCq.getClose(), cq.getHigh()));
 						return null;//failed to buy
 					}else{
-						if (so.getOrderType() == OrderType.market){
-							so.executedPrice = cq.getOpen();
-							so.status = StatusType.executed;
-							so.setExecuteTime(cq.getStartTime());
-							executedOrders.put(so.getOrderId(), so);
-							return qlist.subList(idx-1, qlist.size());
-						}else if (so.getOrderType() == OrderType.limit){
-							if (cq.getLow()<=so.getLimitPrice()){
-								//executed
-								so.executedPrice = so.getLimitPrice();
-								so.status = StatusType.executed;
+						if (so.getTif()==TimeInForceType.MarktOnClose){
+							if (so.getSubmitTime().equals(cq.getStartTime())){//
+								so.setExecutedPrice(cq.getClose());
+								so.setStatus(StatusType.executed);
+								so.setExecuteTime(cq.getStartTime());//TODO this should be the endTime
+								executedOrders.put(so.getOrderId(), so);
+								return qlist.subList(idx-1, qlist.size());
+							}
+						}else{
+							if (so.getOrderType() == OrderType.market){
+								so.setExecutedPrice(cq.getOpen());
+								so.setStatus(StatusType.executed);
 								so.setExecuteTime(cq.getStartTime());
 								executedOrders.put(so.getOrderId(), so);
 								return qlist.subList(idx-1, qlist.size());
+							}else if (so.getOrderType() == OrderType.limit){
+								if (cq.getLow()<=so.getLimitPrice()){
+									//executed
+									so.setExecutedPrice(so.getLimitPrice());
+									so.setStatus(StatusType.executed);
+									so.setExecuteTime(cq.getStartTime());//TODO
+									executedOrders.put(so.getOrderId(), so);
+									return qlist.subList(idx-1, qlist.size());
+								}else{
+									return null;//failed to buy
+								}
 							}else{
-								return null;//failed to buy
+								logger.error(String.format("order type %s for action type %s not supported.", so.getOrderType(), so.getAction()));
 							}
-						}else{
-							logger.error(String.format("order type %s for action type %s not supported.", so.getOrderType(), so.getAction()));
 						}
 					}
 				}else if (so.getAction() == ActionType.sell){
@@ -78,66 +85,68 @@ public class TradeSimulator {
 						logger.info(String.format("can't sell stock:%s on day:%s because daily limit. prev close:%.2f, today price:%.2f", 
 								so.getStockid(), sdf.format(cq.getStartTime()), prevCq.getClose(), cq.getLow()));
 					}else{
-						if (so.getOrderType() == OrderType.limit){
-							float limitPrice = 0;
-							if (so.getLimitPrice()==0){
-								//use limitPercentage
-								StockOrder pairedBuyOrder = executedOrders.get(so.getPairOrderId());
-								if (pairedBuyOrder!=null && pairedBuyOrder.executedPrice>0){
-									float ratio = 1+ so.getLimitPercentage()/100;
-									limitPrice = pairedBuyOrder.executedPrice * ratio;
+						if (so.getTif()==TimeInForceType.MarktOnClose){
+							if (idx==qlist.size()-1){//on the last day
+								so.setExecutedPrice(cq.getClose());
+								so.setStatus(StatusType.executed);
+								so.setExecuteTime(cq.getStartTime());//TODO this should be the endTime
+								executedOrders.put(so.getOrderId(), so);
+								return qlist.subList(idx-1, qlist.size());
+							}
+						}else{
+							if (so.getOrderType() == OrderType.limit){
+								float limitPrice = 0;
+								if (so.getLimitPrice()==0){
+									//use limitPercentage
+									StockOrder pairedBuyOrder = executedOrders.get(so.getPairOrderId());
+									if (pairedBuyOrder!=null && pairedBuyOrder.getExecutedPrice()>0){
+										float ratio = 1+ so.getLimitPercentage()/100;
+										limitPrice = pairedBuyOrder.getExecutedPrice() * ratio;
+									}else{
+										logger.error(String.format("paired buy order of sell order %s not found.", so.getOrderId()));
+									}
 								}else{
-									logger.error(String.format("paired buy order of sell order %s not found.", so.getOrderId()));
+									limitPrice = so.getLimitPrice();
 								}
-							}else{
-								limitPrice = so.getLimitPrice();
-							}
-							if (cq.getHigh()>=limitPrice){
-								//executed
-								so.executedPrice = limitPrice;
-								so.status = StatusType.executed;
-								so.setExecuteTime(cq.getStartTime());
-								executedOrders.put(so.getOrderId(), so);
-								return qlist.subList(idx-1, qlist.size());
-							}
-						}else if (so.getOrderType() == OrderType.stoplimit){//not used yet
-							if (cq.getLow()<=so.getStopPrice()){
-								so.executedPrice = so.getStopPrice();
-								so.status = StatusType.executed;
-								so.setExecuteTime(cq.getStartTime());
-								executedOrders.put(so.getOrderId(), so);
-								return qlist.subList(idx-1, qlist.size());
-							}
-						}else if (so.getOrderType() == OrderType.stoptrailingpercentage){
-							float lastPrice;//the reference price to set the stop price
-							if (idx==1){
-								lastPrice = cq.getOpen();
-							}else{
-								lastPrice = prevCq.getHigh();
-								if (cq.getOpen()>lastPrice){
+								if (cq.getHigh()>=limitPrice){
+									//executed
+									so.setExecutedPrice(limitPrice);
+									so.setStatus(StatusType.executed);
+									so.setExecuteTime(cq.getStartTime());
+									executedOrders.put(so.getOrderId(), so);
+									return qlist.subList(idx-1, qlist.size());
+								}
+							}else if (so.getOrderType() == OrderType.stoplimit){//not used yet
+								if (cq.getLow()<=so.getStopPrice()){
+									so.setExecutedPrice(so.getStopPrice());
+									so.setStatus(StatusType.executed);
+									so.setExecuteTime(cq.getStartTime());
+									executedOrders.put(so.getOrderId(), so);
+									return qlist.subList(idx-1, qlist.size());
+								}
+							}else if (so.getOrderType() == OrderType.stoptrailingpercentage){
+								float lastPrice;//the reference price to set the stop price
+								if (idx==1){
 									lastPrice = cq.getOpen();
+								}else{
+									lastPrice = prevCq.getHigh();
+									if (cq.getOpen()>lastPrice){
+										lastPrice = cq.getOpen();
+									}
+								}
+								float stopPrice = lastPrice * (1+so.getIncrementPercent()/100);
+								//pick low as current price, since we are not using tick data, we are using candle data, can be 1,5,15,30 minute, etc.
+								if (cq.getLow()<stopPrice){
+									so.setExecutedPrice(stopPrice);
+									so.setStatus(StatusType.executed);
+									so.setExecuteTime(cq.getStartTime());
+									executedOrders.put(so.getOrderId(), so);
+									return qlist.subList(idx-1, qlist.size());
 								}
 							}
-							float stopPrice = lastPrice * (1-so.getIncrementPercent()/100);
-							//pick low as current price, since we are not using tick data, we are using candle data, can be 1,5,15,30 minute, etc.
-							if (cq.getLow()<stopPrice){
-								so.executedPrice = stopPrice;
-								so.status = StatusType.executed;
-								so.setExecuteTime(cq.getStartTime());
-								executedOrders.put(so.getOrderId(), so);
-								return qlist.subList(idx-1, qlist.size());
+							else{
+								logger.error(String.format("order type %s for action type %s not supported.", so.getOrderType(), so.getAction()));
 							}
-						}else if (so.getOrderType() == OrderType.forceclean){
-							if (lastCq){
-								so.executedPrice = cq.getClose();
-								so.status = StatusType.executed;
-								so.setExecuteTime(cq.getStartTime());
-								executedOrders.put(so.getOrderId(), so);
-								return qlist.subList(idx-1, qlist.size());
-							}
-						}
-						else{
-							logger.error(String.format("order type %s for action type %s not supported.", so.getOrderType(), so.getAction()));
 						}
 					}
 				}else{
@@ -183,6 +192,79 @@ public class TradeSimulator {
 					logger.debug(sellSOs);
 				}
 			}
+		}
+	}
+	
+	public static BuySellResult calculateBuySellResult(BuySellInfo bsi, List<StockOrder> solist){
+		List<StockOrder> buySOs = new ArrayList<StockOrder>();
+		List<StockOrder> sellSOs = new ArrayList<StockOrder>();
+		for (StockOrder so:solist){
+			if (so.getAction()==ActionType.buy){
+				buySOs.add(so);
+			}else if (so.getAction() == ActionType.sell){
+				sellSOs.add(so);
+			}
+		}
+		float buyPrice=0;
+		Date buyTime=null;
+		String stockid=null;
+		for (StockOrder so: buySOs){
+			if (so.getStatus()==StatusType.executed){
+				buyPrice = so.getExecutedPrice();
+				buyTime = so.getExecuteTime();
+				stockid = so.getStockid();
+				break;
+			}
+		}
+		if (stockid!=null){
+			float sellPrice=0;
+			StockOrder exeSo=null;
+			for (StockOrder so: sellSOs){
+				if (so.getStatus()==StatusType.executed){
+					exeSo = so;
+					sellPrice = exeSo.getExecutedPrice();
+					break;
+				}
+			}
+			if (buyPrice !=0 && sellPrice !=0){
+				float percent = (sellPrice-buyPrice)/buyPrice;
+				String selltype = null;
+				if (exeSo.getOrderType()!=null){
+					selltype = exeSo.getOrderType().toString();
+				}else if (exeSo.getTif()!=null){
+					selltype = exeSo.getTif().toString();
+				}else{
+					logger.error(String.format("tif and ordertype all null? for so:%s", exeSo));
+				}
+				return new BuySellResult(bsi.getSubmitD(), stockid, buyTime, buyPrice, 
+						exeSo.getExecuteTime(), sellPrice, selltype, percent);
+			}
+		}
+		return null;
+	}
+	
+	//used by test
+	public static BuySellResult trade(SelectCandidateResult scr, SellStrategy ss, StockConfig sc, CrawlConf cconf){
+		try {
+			String stockid = scr.getStockId();
+			Date submitD = sdf.parse(scr.getDt());
+			List<StockOrder> sol = SellStrategy.makeStockOrders(scr, ss);
+			BuySellInfo bsi = new BuySellInfo("any", ss, sol, submitD);
+			
+			List<Object> lo = StockPersistMgr.getDataPivotByStockDate(cconf.getSmalldbconf(), sc.getFQDailyQuoteTableMapper(), stockid, 
+					submitD, submitD, 1, ss.getHoldDuration());
+			TreeMap<Date, CandleQuote> dcmap = new TreeMap<Date, CandleQuote>();
+			for (Object o:lo){
+				CandleQuote cq = (CandleQuote) o;
+				dcmap.put(cq.getStartTime(), cq);
+			}
+			List<BuySellInfo> bsil = new ArrayList<BuySellInfo>();
+			bsil.add(bsi);
+			TradeSimulator.submitDailyOrder(bsil, dcmap, sc);
+			return TradeSimulator.calculateBuySellResult(bsi, sol);
+		}catch(Exception e){
+			logger.error("", e);
+			return null;
 		}
 	}
 }

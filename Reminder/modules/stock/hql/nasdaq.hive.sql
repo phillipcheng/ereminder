@@ -26,9 +26,14 @@ create external table NasdaqEarnAnnounceTime(dt Date, stockid varchar(50), annou
 
 
 --nasdaq-issue-dividend-history
-drop table if exists NasdaqDividendHistory;
-create external table NasdaqDividendHistory(stockid String, EffDate Date, Type String, CashAmount decimal(20,4), dt Date, RecordDate Date, PaymentDate Date) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-issue-dividend-history';
+drop table if exists NasdaqDividend;
+create external table NasdaqDividend(stockid String, EffDate Date, Type String, CashAmount decimal(20,4), dt Date, RecordDate Date, PaymentDate Date) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-issue-dividend';
 
+drop table if exists NasdaqExDivSplit;
+create external table NasdaqExDivSplit(stockid String, dt Date, info String) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-issue-xds-history';
+
+drop table if exists NasdaqSplit;
+create external table NasdaqSplit(stockid String, ratio String, paydt Date, exdt Date, dt Date) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-issue-split';
 
 --nasdaq-quote-historical
 drop table if exists NasdaqFqHistory;

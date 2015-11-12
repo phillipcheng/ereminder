@@ -10,6 +10,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.entity.CrawledItem;
+import org.cld.etl.csv.TableUtil;
 
 public abstract class AbstractCrawlItemToCSV {
 	
@@ -46,7 +47,6 @@ public abstract class AbstractCrawlItemToCSV {
 	public static final String KEY_VALUE_UNDEFINED="unused";
 	
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	public static final SimpleDateFormat sdf2 = new SimpleDateFormat("MM/dd/yyyy");
 	
 	protected Date startDate = null;
 	protected Date endDate = null;
@@ -97,25 +97,32 @@ public abstract class AbstractCrawlItemToCSV {
 			if ("".equals(date)){//ignore empty compare date records
 				return false;
 			}else{
-				try {
-					d = sdf.parse(date);
-				}catch(ParseException pe){
-					d = sdf2.parse(date);
-				}
-				if (startDate!=null){
-					if (startDate.after(d)){
-						aci.setFiltered(true);
-						return false;
+				for (SimpleDateFormat sdf:TableUtil.sdfs){
+					try{
+						d = sdf.parse(date);
+						break;
+					}catch(Exception e){
+						continue;
 					}
 				}
-				if (endDate!=null){
-					if (!d.before(endDate)){
-						return false;
+				if (d!=null){
+					if (startDate!=null){
+						if (startDate.after(d)){
+							aci.setFiltered(true);
+							return false;
+						}
+					}
+					if (endDate!=null){
+						if (!d.before(endDate)){
+							return false;
+						}else{
+							return true; //startDate not after d and d before endDate
+						}
 					}else{
-						return true; //startDate not after d and d before endDate
+						//endDate is null
+						return false;
 					}
 				}else{
-					//endDate is null
 					return false;
 				}
 			}

@@ -145,10 +145,17 @@ public class TestNasdaqStock {
 	public void testCmd_HolderInstitutional(){
 		nsb.runCmd(NasdaqStockConfig.HOLDING_INSTITUTIONAL, marketId, null, "2015-10-06");
 	}
-	//date range
 	@Test
-	public void testCmd_Issue_DividendHistory(){
-		nsb.runCmd(NasdaqStockConfig.DIVIDEND_HISTORY, marketId, "2015-08-01", sdf.format(nsb.getStockConfig().getLatestOpenMarketDate(new Date())));
+	public void testCmd_Issue_Dividend(){
+		nsb.runCmd(NasdaqStockConfig.ISSUE_DIVIDEND, marketId, "2015-08-01", sdf.format(nsb.getStockConfig().getLatestOpenMarketDate(new Date())));
+	}
+	@Test
+	public void testCmd_Issue_ExDivSplit(){
+		nsb.runCmd(NasdaqStockConfig.ISSUE_XDIVSPLIT_HISTORY, marketId, "2011-08-01", sdf.format(nsb.getStockConfig().getLatestOpenMarketDate(new Date())));
+	}
+	@Test
+	public void testCmd_Issue_Split(){
+		nsb.runCmd(NasdaqStockConfig.ISSUE_SPLIT, marketId, "2011-08-01", sdf.format(nsb.getStockConfig().getLatestOpenMarketDate(new Date())));
 	}
 	@Test
 	public void testCmd_QuoteShortInterest(){
@@ -229,11 +236,20 @@ public class TestNasdaqStock {
 	}
 	
 	@Test
-	public void testEarnSS() throws Exception{
+	public void testRallySS() throws Exception{
 		String pFile = "client1-v2.properties";
-		Date sd = sdf.parse("2014-01-01");
-		Date ed = sdf.parse("2015-10-15");
+		Date sd = sdf.parse("2015-09-01");
+		Date ed = sdf.parse("2015-11-02");
 		StockBase sb = new NasdaqStockBase(pFile, marketId, sd, ed);
-		sb.validateAllStrategyByStock("bs.earn");
+		sb.validateAllStrategyByStock("bs.rally");
+	}
+	
+	@Test
+	public void testCloseDropSS() throws Exception{
+		String pFile = "client1-v2.properties";
+		Date sd = sdf.parse("2015-09-01");
+		Date ed = sdf.parse("2015-11-02");
+		StockBase sb = new NasdaqStockBase(pFile, marketId, sd, ed);
+		sb.validateAllStrategyByStock("closedropavgclose");
 	}
 }

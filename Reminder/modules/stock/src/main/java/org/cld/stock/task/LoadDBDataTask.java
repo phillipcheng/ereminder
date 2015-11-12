@@ -1,6 +1,7 @@
 package org.cld.stock.task;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -100,6 +101,12 @@ class LoadTask implements Runnable {
 				String tName=null;
 				Map<String, String> tableNames = sc.getTablesByCmd(belongCmd);
 				if (tableNames!=null){
+					if (Arrays.asList(sc.getUpdateAllCmds()).contains(belongCmd)){
+						//truncate these table before loading
+						for (String tn:tableNames.keySet()){
+							StockPersistMgr.truncateTable(dbconf, tn);
+						}
+					}
 					if (tableNames.size()>1){
 						for (String tableName:tableNames.keySet()){
 							String prefix = tableNames.get(tableName);

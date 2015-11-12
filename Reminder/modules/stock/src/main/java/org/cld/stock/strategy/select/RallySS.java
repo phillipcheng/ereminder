@@ -10,12 +10,12 @@ import org.cld.stock.CandleQuote;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.strategy.SelectCandidateResult;
-import org.cld.stock.strategy.SelectStrategyMapperByStock;
+import org.cld.stock.strategy.SelectStrategy;
 import org.cld.util.jdbc.JDBCMapper;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class RallySS extends SelectStrategyMapperByStock {
+public class RallySS extends SelectStrategy {
 
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private StockConfig sc;
@@ -91,9 +91,11 @@ public class RallySS extends SelectStrategyMapperByStock {
 				CandleQuote minCq = getMinCq(dailyFQMap);
 				CandleQuote nextCq = (CandleQuote) lo.get(idx);
 				CandleQuote firstCq = (CandleQuote) lo.get(idx-periodDays);
-				if (minCq.getStartTime().before(maxCq.getStartTime()) && maxCq.getClose()>minCq.getClose()){
-					float value = (currentCq.getClose()-minCq.getClose())/(maxCq.getClose()-minCq.getClose());
-					scrl.add(new SelectCandidateResult(sdf.format(nextCq.getStartTime()), value));
+				if (checkValid(currentCq)){
+					if (minCq.getStartTime().before(maxCq.getStartTime()) && maxCq.getClose()>minCq.getClose()){
+						float value = (currentCq.getClose()-minCq.getClose())/(maxCq.getClose()-minCq.getClose());
+						scrl.add(new SelectCandidateResult(sdf.format(nextCq.getStartTime()), value));
+					}
 				}
 				//
 				addCq(dailyFQMap, nextCq);

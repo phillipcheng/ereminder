@@ -1,3 +1,6 @@
+drop table if exists SinaStockIds;
+create table SinaStockIds(stockid varchar(150), primary key (stockid));
+
 #corp
 drop table if exists SinaCorpInfo;
 create table SinaCorpInfo(stockid varchar(150),name varchar(150),EnglishName varchar(150), IPOMarket varchar(150), IPODate Date, IPOPrice decimal(10,2), leadUnderwriter varchar(150), foundDate Date, RegisteredCapital varchar(150), InstitutionType varchar(150), OrgType varchar(150), BoardSecretary varchar(150), CompanyPhone varchar(150), BoardSecretaryPhone varchar(150), CompanyFax varchar(150), BoardSecretaryFax varchar(150), CompanyEmail varchar(150), BoardSecretaryEmail varchar(150), CompanyWebsite varchar(150), zipcode varchar(150), InfoDisclosureWebsite varchar(150), NameHistory varchar(150), RegisteredAddress varchar(150), OfficeAddress varchar(150), CompanyInfo varchar(150), BusinessScope varchar(150), primary key (stockid));

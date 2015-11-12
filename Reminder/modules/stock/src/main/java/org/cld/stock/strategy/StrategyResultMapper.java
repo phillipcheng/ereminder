@@ -19,7 +19,7 @@ public class StrategyResultMapper extends Mapper<Object, Text, Text, Text>{
 	@Override
 	public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 		//input:value: bs.name, bs.params, ss.params, startDate, stockid, buyTime, buyPrice, sellTime, sellOrderType, sellPrice, percent
-		//split at idx 3
+		//split at 1st date
 		//output key: bs.name, bs.params, ss.params, value: startDate, stockid, buyTime, buyPrice, sellTime, sellOrderType, sellPrice, percent
 		String[] vs = value.toString().split(",");
 		List<String> kl = new ArrayList<String>();

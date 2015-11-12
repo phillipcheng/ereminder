@@ -13,6 +13,8 @@ import java.util.TreeMap;
 
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Reducer.Context;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
@@ -24,10 +26,12 @@ import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.persistence.StockPersistMgr;
 import org.cld.stock.trade.BuySellInfo;
+import org.cld.stock.trade.BuySellResult;
 import org.cld.stock.trade.StockOrder;
 import org.cld.stock.trade.StockOrder.*;
 import org.cld.util.JsonUtil;
 import org.cld.stock.trade.TradeSimulator;
+import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 
 public class SellStrategyByStockReducer extends Reducer<Text, Text, Text, Text>{
 	private static Logger logger =  LogManager.getLogger(SellStrategyByStockReducer.class);
@@ -36,7 +40,7 @@ public class SellStrategyByStockReducer extends Reducer<Text, Text, Text, Text>{
 	private Map<String, Object> sssMap = null;
 	private CrawlConf cconf = null;
 	private String baseMarketId = null;
-	
+	private MultipleOutputs<Text, Text> mos;
 	@Override
 	public void setup(Context context) throws IOException, InterruptedException {
 		if (sssMap==null){
@@ -49,7 +53,13 @@ public class SellStrategyByStockReducer extends Reducer<Text, Text, Text, Text>{
 			cconf = CrawlTestUtil.getCConf(propFile);
 		}
 		baseMarketId = context.getConfiguration().get(StockBase.KEY_BASE_MARKET_ID);
+		mos = new MultipleOutputs<Text,Text>(context);
 	}
+	
+    @Override
+    protected void cleanup(Context context) throws IOException, InterruptedException {
+        mos.close();
+    }
 	
 	/**
 	 * input key: stockid
@@ -99,7 +109,8 @@ public class SellStrategyByStockReducer extends Reducer<Text, Text, Text, Text>{
 					if (ss.getSelectNumber()<rank){
 						continue;
 					}
-					List<StockOrder> sol = SellStrategy.makeStockOrders(stockid, dt, buyLimit, ss);
+					SelectCandidateResult scr = new SelectCandidateResult(stockid, sdf.format(dt), 0, buyLimit);
+					List<StockOrder> sol = SellStrategy.makeStockOrders(scr, ss);
 					BuySellInfo bsi = new BuySellInfo(String.format("%s,%s", bsName, bsParams), ss, sol, dt);
 					bsil.add(bsi);
 				}
@@ -116,41 +127,15 @@ public class SellStrategyByStockReducer extends Reducer<Text, Text, Text, Text>{
 			
 			for (BuySellInfo bsi: bsil){
 				List<StockOrder> solist = bsi.getSos();
-				List<StockOrder> buySOs = new ArrayList<StockOrder>();
-				List<StockOrder> sellSOs = new ArrayList<StockOrder>();
-				for (StockOrder so:solist){
-					if (so.getAction()==ActionType.buy){
-						buySOs.add(so);
-					}else if (so.getAction() == ActionType.sell){
-						sellSOs.add(so);
-					}
-				}
-				float buyPrice=0;
-				Date buyTime=null;
-				for (StockOrder so: buySOs){
-					if (so.getStatus()==StatusType.executed){
-						buyPrice = so.getExecutedPrice();
-						buyTime = so.getExecuteTime();
-						break;
-					}
-				}
-				float sellPrice=0;
-				Date sellTime=null;
-				OrderType sellOrderType = OrderType.market;
-				for (StockOrder so: sellSOs){
-					if (so.getStatus()==StatusType.executed){
-						sellPrice = so.getExecutedPrice();
-						sellTime = so.getExecuteTime();
-						sellOrderType = so.getOrderType();
-						break;
-					}
-				}
-				String output = null;
-				if (buyPrice !=0 && sellPrice !=0){
-					float percent = (sellPrice-buyPrice)/buyPrice;
-					output = String.format("%s, %s, %s, %s, %s, %s, %s, %s", sdf.format(bsi.getSubmitD()), stockid, 
-							buyTime, buyPrice, sellTime, sellOrderType, sellPrice, percent);
-					context.write(new Text(String.format("%s,%s", bsi.getBs(), bsi.getSs())), new Text(output));
+				BuySellResult bsr = TradeSimulator.calculateBuySellResult(bsi, solist);
+				if (bsr!=null){
+					String k = String.format("%s,%s", bsi.getBs(), bsi.getSs());
+					String v = bsr.toString();
+					String filepart = bsi.getBs()+","+bsi.getSs();
+					filepart = filepart.replaceAll(":", "-");
+					filepart = filepart.replaceAll("\\.", "_");
+					filepart = filepart.replaceAll(",", "_");
+					mos.write(HadoopTaskLauncher.NAMED_OUTPUT_TXT, k, v, filepart);
 				}
 			}
 		}catch(Exception e){

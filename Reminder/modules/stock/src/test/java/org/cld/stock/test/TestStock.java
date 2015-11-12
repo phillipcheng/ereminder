@@ -13,13 +13,21 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.stock.StockBase;
+import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.nasdaq.NasdaqStockBase;
+import org.cld.stock.nasdaq.NasdaqStockConfig;
 import org.cld.stock.nasdaq.NasdaqTestStockConfig;
 import org.cld.stock.persistence.StockPersistMgr;
 import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.SinaStockConfig;
+import org.cld.stock.strategy.SelectCandidateResult;
+import org.cld.stock.strategy.SelectStrategy;
+import org.cld.stock.strategy.SellStrategy;
+import org.cld.stock.strategy.prepare.GenCloseDropAvgForDayTask;
 import org.cld.stock.task.LoadDBDataTask;
+import org.cld.stock.trade.BuySellResult;
+import org.cld.stock.trade.TradeSimulator;
 import org.junit.Test;
 
 public class TestStock {
@@ -107,5 +115,65 @@ public class TestStock {
 		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
 		LoadDBDataTask.launch("sina", "hs_a", cconf.getSmalldbconf(), 5, "C:\\mydoc\\mydata\\stock\\merge\\sina-stock-stock-structure", 
 				new String[]{}, new String[]{});
+	}
+	
+	@Test
+	public void testTradeSimulator(){
+		String pFile = "client1-v2.properties";
+		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
+		String marketId = NasdaqStockConfig.MarketId_ALL; //not used
+		StockBase nsb = new NasdaqStockBase(pFile, marketId, null, null);
+		String[] stockids=new String[]{"AIF","GOOG","AAPL"};
+		SellStrategy ss = new SellStrategy(1, 5, 2.5f, 1.5f);
+		for (String stockid:stockids){
+			SelectCandidateResult scr = new SelectCandidateResult(stockid, "2015-10-29", 0, 0);
+			BuySellResult bsr = TradeSimulator.trade(scr, ss, nsb.getStockConfig(), cconf);
+			logger.info(bsr);
+		}
+		//3 scenarios
+		//2015-10-29, AIF, 2015-10-29, 14.67, 2015-11-04, MarktOnClose, 14.78, 0.007498272
+		//2015-10-29, GOOG, 2015-10-29, 710.5, 2015-11-02, stoptrailingpercentage, 707.23, -0.00460242
+		//2015-10-29, AAPL, 2015-10-29, 118.7, 2015-11-03, limit, 121.667496, 0.024999991
+	}
+	
+	@Test
+	public void testGenCloseDropAvgForDay(){
+		String pFile = "client1-v2.properties";
+		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
+		String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test; //not used
+		StockBase nsb = new NasdaqStockBase(pFile, marketId, null, null);
+		nsb.runSpecial("genCloseDropAvg", "2015-11-05");
+		//expectd output
+		//AAPL,2015-11-05,122.570,2
+		//GOOG,2015-11-05,731.250,0
+	}
+	
+	@Test
+	public void testCloseDropAvgWithParams() throws Exception {
+		String pFile = "client1-v2.properties";
+		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
+		String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test; //not used
+		StockBase nsb = new NasdaqStockBase(pFile, marketId, sdf.parse("2015-01-01"), sdf.parse("2015-11-07"));
+		nsb.runSpecial("validateAllStrategyByStock", "closedropavg");
+	}
+	
+	@Test
+	public void testGenCloseDropAvgSelect() throws Exception {
+		String pFile = "cld-stock-cluster.properties";
+		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
+		String baseMarketId="nasdaq";
+		StockConfig sc = StockUtil.getStockConfig(baseMarketId);
+		String marketId="ALL";
+		SelectStrategy bs = new SelectStrategy();
+		bs.setOrderDirection(SelectStrategy.DESC);
+		bs.setParams(new Object[]{7f,0f});
+		Date startDay= sdf.parse("2015-10-03");
+		Date endDay = sdf.parse("2015-11-07");
+		Date day = startDay;
+		while (day.before(endDay)){
+			List<SelectCandidateResult> sl = GenCloseDropAvgForDayTask.select(cconf, baseMarketId, marketId, day, 10, bs, null);
+			logger.info(String.format("%s,%s", sdf.format(day), sl));
+			day = StockUtil.getNextOpenDay(day, sc.getHolidays());
+		}
 	}
 }

@@ -4,7 +4,7 @@ import java.sql.ResultSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.stock.Dividend;
+import org.cld.stock.DivSplit;
 import org.cld.util.jdbc.JDBCMapper;
 
 public class NasdaqDividendJDBCMapper extends JDBCMapper{
@@ -28,8 +28,8 @@ public class NasdaqDividendJDBCMapper extends JDBCMapper{
 	@Override
 	public Object getObject(ResultSet cursor) {
     	try{
-    		Dividend b= new Dividend(
-	    			cursor.getString(1), cursor.getDate(2), cursor.getFloat(4));
+    		DivSplit b= new DivSplit(
+	    			cursor.getString(1), cursor.getDate(5), cursor.getDate(2), cursor.getFloat(4));
 	    	return b;
     	}catch(Exception e){
     		logger.error("", e);
@@ -39,7 +39,7 @@ public class NasdaqDividendJDBCMapper extends JDBCMapper{
 
 	@Override
 	public String getTableName() {
-		return "NasdaqDividendHistory";
+		return "NasdaqDividend";
 	}
 
 }

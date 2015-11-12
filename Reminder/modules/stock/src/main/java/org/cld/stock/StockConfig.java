@@ -38,6 +38,7 @@ public abstract class StockConfig {
 	public abstract String[] getUntrimmedStockIdCmds();
 	public abstract String[] getSlowCmds();
 	public abstract String[] getFirstStartTimeUseNullCmds();//if the cmd runs first time for a stock, use null as start time instead of ipodates
+	public abstract String[] getUpdateAllCmds();//like backward ex-div price quotes
 	
 	public abstract String getTestMarketChangeDate();//date before this using test_stock_set1, date after this using test_stock_set2
 	public abstract String[] getTestStockSet1();
@@ -57,21 +58,16 @@ public abstract class StockConfig {
 	public abstract Map<String, String> getTablesByCmd(String cmd);
 	public abstract JDBCMapper getDailyQuoteTableMapper();
 	public abstract JDBCMapper getFQDailyQuoteTableMapper();
-	public abstract JDBCMapper getDividendTableMapper();
+	public abstract JDBCMapper getSplitTableMapper();//future
+	public abstract JDBCMapper getDividendTableMapper();//future
+	public abstract JDBCMapper getExDivSplitHistoryTableMapper();//history
 	public abstract JDBCMapper getEarnTableMapper();
 	
 	public abstract String postImportSql();
 	
-	//strategy
-	public static final String STR_RANDOM="random";
-	public static final String STR_BREAKLVL1="breaklvl1";
-	public static final String STR_DIVIDEND="dividend";
-	public static final String STR_EARNFORECAST="earnforecast";
-	public static final String STR_PE="pe";
-	public static final String STR_RALLY="rally";
-	
-	public abstract String[] getAllStrategy();
-	public abstract String[] getAllStrategyByStock();
+	public String[] getAllStrategy(){
+		return new String[]{"random", "rally", "dividend", "closedrop", "closedropavg", "closedropavgclose"};
+	}
 	
 	public StockConfig() {
 		sdf = new SimpleDateFormat("yyyy-MM-dd");

@@ -8,12 +8,16 @@ import java.util.TreeMap;
 
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Mapper.Context;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.datacrawl.CrawlUtil;
+import org.cld.datacrawl.test.CrawlTestUtil;
 
 public class SelectStrategyByStockReducer extends Reducer<Text, Text, Text, Text>{
 	private static Logger logger =  LogManager.getLogger(SelectStrategyByStockReducer.class);
-	
+    
     /**
      * input key: bs.name, dt, bs.orderDirection, bs.params
      * input values: stockId, value, buyPrice

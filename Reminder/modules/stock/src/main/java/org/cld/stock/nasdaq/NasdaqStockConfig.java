@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.LaunchableTask;
@@ -16,7 +17,9 @@ import org.cld.stock.StockUtil;
 import org.cld.stock.nasdaq.persistence.NasdaqDailyQuoteCQJDBCMapper;
 import org.cld.stock.nasdaq.persistence.NasdaqDividendJDBCMapper;
 import org.cld.stock.nasdaq.persistence.NasdaqEarnJDBCMapper;
+import org.cld.stock.nasdaq.persistence.NasdaqExDivSplitMapper;
 import org.cld.stock.nasdaq.persistence.NasdaqFQDailyQuoteCQJDBCMapper;
+import org.cld.stock.nasdaq.persistence.NasdaqSplitJDBCMapper;
 import org.cld.stock.nasdaq.task.FQPostProcessTask;
 import org.cld.stock.nasdaq.task.QuotePostProcessTask;
 import org.cld.stock.sina.SinaStockConfig;
@@ -70,10 +73,12 @@ public class NasdaqStockConfig extends StockConfig{
 	public static final String QUOTE_AFTERHOURS="nasdaq-quote-afterhours";//current day
 	public static final String QUOTE_TICK="nasdaq-quote-tick";//current day
 	public static final String QUOTE_SHORT_INTEREST="nasdaq-quote-short-interest";
-	public static final String QUOTE_FQ_HISTORY="nasdaq-quote-fq-historical";//start-end
+	public static final String QUOTE_FQ_HISTORY="nasdaq-quote-fq-historical";//from yahoo finance
 	
 	//issue
-	public static final String DIVIDEND_HISTORY="nasdaq-issue-dividend-history";
+	public static final String ISSUE_SPLIT="nasdaq-issue-split";//upcoming split
+	public static final String ISSUE_XDIVSPLIT_HISTORY="nasdaq-issue-xds-history";
+	public static final String ISSUE_DIVIDEND="nasdaq-issue-dividend";
 	
 	//holdings
 	public static final String HOLDING_SUMMARY="nasdaq-holding-summary";
@@ -98,8 +103,13 @@ public class NasdaqStockConfig extends StockConfig{
 	
 	public static final Map<String, Map<String,String>> cmdTableMap = new HashMap<String, Map<String,String>>();
 	static{
-		//corp
+		//ids
 		Map<String, String> m = new HashMap<String,String>();
+		m.put("NasdaqIds","part");
+		cmdTableMap.put(STOCK_IDS, m);
+		
+		//corp
+		m = new HashMap<String,String>();
 		m.put("NasdaqIPO","part");
 		cmdTableMap.put(STOCK_IPO, m);
 		
@@ -159,8 +169,16 @@ public class NasdaqStockConfig extends StockConfig{
 		
 		//issue
 		m = new HashMap<String,String>();
-		m.put("NasdaqDividendHistory","part");
-		cmdTableMap.put(DIVIDEND_HISTORY, m);
+		m.put("NasdaqExDivSplit","part");
+		cmdTableMap.put(ISSUE_XDIVSPLIT_HISTORY, m);
+		
+		m = new HashMap<String,String>();
+		m.put("NasdaqDividend","part");
+		cmdTableMap.put(ISSUE_DIVIDEND, m);
+		
+		m = new HashMap<String,String>();
+		m.put("NasdaqSplit","part");
+		cmdTableMap.put(ISSUE_SPLIT, m);
 	}
 	
 	public static String[] corpConfs = new String[]{
@@ -175,7 +193,9 @@ public class NasdaqStockConfig extends StockConfig{
 		QUOTE_FQ_HISTORY,//daily
 	};
 	public static String[] issueConfs = new String[]{
-		DIVIDEND_HISTORY, //
+		ISSUE_XDIVSPLIT_HISTORY, //
+		ISSUE_DIVIDEND,
+		ISSUE_SPLIT,
 	};
 	public static String[] holderConfs = new String[]{
 		HOLDING_INSTITUTIONAL,
@@ -193,9 +213,10 @@ public class NasdaqStockConfig extends StockConfig{
 	};
 	
 	public static String[] syncConf = new String[]{STOCK_IPO}; //other cmd need this result
-	public static String[] allConf = (String[]) ListUtil.concatAll(corpConfs, quoteConfs, issueConfs, holderConfs, frConfs);
+	public static String[] allConf = (String[]) ListUtil.concatAll(new String[]{STOCK_IDS}, 
+			corpConfs, quoteConfs, issueConfs, holderConfs, frConfs);
 	
-	public static final String START_MARKET="1989-01-01";
+	public static final String START_MARKET="1999-01-01";
 	public static Date date_START_MARKET=null;
 	static{
 		try{
@@ -271,7 +292,7 @@ public class NasdaqStockConfig extends StockConfig{
 	}
 	@Override
 	public String[] getCurrentDayCmds() {
-		return new String[]{QUOTE_TICK, QUOTE_PREMARKET, QUOTE_AFTERHOURS, HOLDING_SUMMARY, HOLDING_TOP5};
+		return new String[]{QUOTE_TICK, QUOTE_PREMARKET, QUOTE_AFTERHOURS, HOLDING_SUMMARY, HOLDING_TOP5, ISSUE_SPLIT};
 	}
 	@Override
 	public Map<String, String> getTablesByCmd(String cmd) {
@@ -322,18 +343,20 @@ public class NasdaqStockConfig extends StockConfig{
 	}
 	@Override
 	public String[] getAllStrategy() {
-		return new String[]{
-				StockConfig.STR_RALLY, StockConfig.STR_RANDOM};
-	}
-	@Override
-	public String[] getAllStrategyByStock() {
-		return new String[]{
-				"bs.dividend", "bs.rally", "bs.random"
-		};
+		String[] my = new String[]{};
+		return ArrayUtils.addAll(my, super.getAllStrategy());
 	}
 	@Override
 	public JDBCMapper getDividendTableMapper() {
 		return NasdaqDividendJDBCMapper.getInstance();
+	}
+	@Override
+	public JDBCMapper getExDivSplitHistoryTableMapper() {
+		return NasdaqExDivSplitMapper.getInstance();
+	}
+	@Override
+	public JDBCMapper getSplitTableMapper() {
+		return NasdaqSplitJDBCMapper.getInstance();
 	}
 	@Override
 	public String postImportSql() {
@@ -342,5 +365,9 @@ public class NasdaqStockConfig extends StockConfig{
 	@Override
 	public JDBCMapper getEarnTableMapper() {
 		return NasdaqEarnJDBCMapper.getInstance();
+	}
+	@Override
+	public String[] getUpdateAllCmds() {
+		return new String[]{QUOTE_FQ_HISTORY};
 	}
 }

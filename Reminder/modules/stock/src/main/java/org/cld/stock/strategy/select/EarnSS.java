@@ -13,14 +13,14 @@ import org.cld.stock.QEarnEvent;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.strategy.SelectCandidateResult;
-import org.cld.stock.strategy.SelectStrategyMapperByStock;
+import org.cld.stock.strategy.SelectStrategy;
 import org.cld.util.DateTimeUtil;
 import org.cld.util.jdbc.JDBCMapper;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 //TODO
-public class EarnSS extends SelectStrategyMapperByStock {
+public class EarnSS extends SelectStrategy {
 
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private StockConfig sc;

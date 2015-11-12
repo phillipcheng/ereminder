@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.LaunchableTask;
@@ -350,8 +351,13 @@ public class SinaStockConfig extends StockConfig {
 
 	public static final Map<String, Map<String,String>> cmdTableMap = new HashMap<String, Map<String,String>>();
 	static{
-		//corp
+		//id
 		Map<String, String> m = new HashMap<String,String>();
+		m.put("SinaStockIds","part");
+		cmdTableMap.put(SINA_STOCK_IDS, m);
+		
+		//corp
+		m = new HashMap<String,String>();
 		m.put("SinaCorpInfo","part");
 		cmdTableMap.put(SINA_STOCK_CORP_INFO, m);
 		
@@ -499,7 +505,8 @@ public class SinaStockConfig extends StockConfig {
 	};
 	
 	public static String[] syncConf = new String[]{SINA_STOCK_IPO}; //other cmd need this result
-	public static String[] allConf = (String[]) ListUtil.concatAll(corpConfs, tradeConfs, issueConfs, holderConfs, frConfs);
+	public static String[] allConf = (String[]) ListUtil.concatAll(new String[]{SINA_STOCK_IDS}, 
+			corpConfs, tradeConfs, issueConfs, holderConfs, frConfs);
 
 	@Override
 	public String getTestMarketId() {
@@ -649,22 +656,23 @@ public class SinaStockConfig extends StockConfig {
 	
 	@Override
 	public String[] getAllStrategy() {
-		return new String[]{
-				StockConfig.STR_BREAKLVL1, StockConfig.STR_DIVIDEND, StockConfig.STR_EARNFORECAST, 
-				StockConfig.STR_PE, StockConfig.STR_RALLY, StockConfig.STR_RANDOM};
-	}
-
-	@Override
-	public String[] getAllStrategyByStock() {
-		return new String[]{
-				"bs.dividend", "bs.rally", "bs.random"
-		};
+		String[] my = new String[]{};
+		return ArrayUtils.addAll(my, super.getAllStrategy());
 	}
 
 	@Override
 	public JDBCMapper getDividendTableMapper() {
 		return SinaDividendJDBCMapper.getInstance();
 	}
+	@Override
+	public JDBCMapper getExDivSplitHistoryTableMapper() {
+		return SinaDividendJDBCMapper.getInstance();
+	}
+	@Override
+	public JDBCMapper getSplitTableMapper() {
+		return SinaDividendJDBCMapper.getInstance();
+	}
+	
 	@Override
 	public String postImportSql() {
 		return "sinapostimport.sql";
@@ -674,4 +682,11 @@ public class SinaStockConfig extends StockConfig {
 	public JDBCMapper getEarnTableMapper() {
 		return SinaEarnJDBCMapper.getInstance();
 	}
+
+	@Override
+	public String[] getUpdateAllCmds() {
+		return new String[]{};
+	}
+
+	
 }

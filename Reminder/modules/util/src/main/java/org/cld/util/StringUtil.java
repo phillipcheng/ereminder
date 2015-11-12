@@ -27,15 +27,26 @@ public class StringUtil {
 	public static Logger logger = LogManager.getLogger(StringUtil.class);
 	
 	public static String sepp = "-"; 
-	//parse a 1-4-1 into [1,2,3,4]
+	
+	public static Pattern negP = Pattern.compile("\\((.*)\\)");
+	
+	private static float parseWithSign(String str){
+		Matcher m = negP.matcher(str);
+		if (m.matches()){
+			str = "-" + m.group(1);
+		}
+		return Float.parseFloat(str);
+	}
+	
+	//parse a (1)-4-1 into [-1, 0, 1,2,3,4]
 	public static Float[] parseSteps(String steps){
 		if (!steps.contains(sepp)){
 			return new Float[]{Float.parseFloat(steps)};
 		}else{
 			String[] a = steps.split(sepp);
-			float start = Float.parseFloat(a[0]);
-			float step = Float.parseFloat(a[2]);
-			float end = Float.parseFloat(a[1]);
+			float start = parseWithSign(a[0]);
+			float step = parseWithSign(a[2]);
+			float end = parseWithSign(a[1]);
 			List<Float> fl = new ArrayList<Float>();
 			float v = start;
 			while(v<=end){

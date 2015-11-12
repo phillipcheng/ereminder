@@ -1,3 +1,6 @@
+drop table if exists NasdaqIds;
+create table NasdaqIds(name varchar(150), stockid varchar(150), marketCap decimal(20,2), country varchar(30), ipoYear decimal(6,0), subsector varchar(40), primary key (stockid));
+
 #NasdaqIPO
 drop table if exists NasdaqIPO;
 create table NasdaqIPO(name varchar(150), stockid varchar(150), marketid varchar(150), ipoprice decimal(10,2), shares decimal(20,2), offerAmount decimal(20, 2), dt Date, primary key (stockid));
@@ -24,9 +27,15 @@ create table NasdaqFrQuarterIncomeStatement(stockid varchar(150), quarter varcha
 drop table if exists NasdaqFrQuarterRevenue;
 create table NasdaqFrQuarterRevenue(stockid varchar(150), dt Date, revenue decimal(20,2), eps decimal(10,3), dividends decimal(10,3), primary key (stockid, dt));
 
-#nasdaq-issue-dividend-history
-drop table if exists NasdaqDividendHistory;
-create table NasdaqDividendHistory(stockid varchar(150), EffDate Date, Type varchar(150), CashAmount decimal(20,4), dt Date, RecordDate Date, PaymentDate Date, primary key (stockid, dt));
+#nasdaq-issue-dividend
+drop table if exists NasdaqDividend;
+create table NasdaqDividend(stockid varchar(150), EffDate Date, Type varchar(150), CashAmount decimal(20,4), dt Date, RecordDate Date, PaymentDate Date, primary key (stockid, dt));
+
+drop table if exists NasdaqExDivSplit;
+create table NasdaqExDivSplit(stockid varchar(150), dt Date, info varchar(150), primary key (stockid, dt));
+
+drop table if exists NasdaqSplit;
+create table NasdaqSplit(stockid varchar(150), ratio varchar(50), paydate Date, exdt Date, dt Date, primary key (stockid, exdt));
 
 #nasdaq-quote-historical
 drop table if exists NasdaqFqHistory;

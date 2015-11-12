@@ -256,7 +256,7 @@ public class HadoopTaskLauncher {
 				job.setNumReduceTasks(0);//no reducer
 			else{
 				job.setReducerClass(reducerClass);
-				job.setNumReduceTasks(1);
+				//job.setNumReduceTasks(1);
 			}
 			job.setOutputKeyClass(Text.class);
 			job.setOutputValueClass(Text.class);

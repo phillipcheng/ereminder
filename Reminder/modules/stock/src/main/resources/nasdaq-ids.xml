@@ -1,7 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="nasdaq-ids" productType="default">
 	<PrdTask tryPattern="false">
 		<baseBrowseTask enableJS="false" dsm="hbase" taskName="stock-list" mbMemoryNeeded="1024">
@@ -13,20 +10,6 @@
 			<userAttribute name="ids">
 				<value value="//table[@id='CompanylistResults']/tbody/tr/td[2]/h3/a/text()" toType="externalList"/>
 			</userAttribute>
-			<!-- 
-			<userAttribute name="name">
-				<value value="//table[@id='CompanylistResults']/tbody/tr/td[1]/a/text()" toType="externalList"/>
-			</userAttribute>
-			<userAttribute name="country">
-				<value value="//table[@id='CompanylistResults']/tbody/tr/td[5]/text()" toType="externalList"/>
-			</userAttribute>
-			<userAttribute name="ipoDates">
-				<value value="//table[@id='CompanylistResults']/tbody/tr/td[6]/text()" toType="externalList"/>
-			</userAttribute>
-			<userAttribute name="subsector">
-				<value value="//table[@id='CompanylistResults']/tbody/tr/td[7]/text()" toType="externalList"/>
-			</userAttribute>
-			 -->
 			<userAttribute name="HasHeader">
 				<value value="false" toType="boolean"/>
 			</userAttribute>
@@ -39,8 +22,8 @@
 			<userAttribute name="data1">
 				<value value="//table[@id='CompanylistResults']/tbody/tr[count(td)>4]/td[not(@style) or @style!='display:none']" toType="externalList" toEntryType="string" optional="true"/>
 			</userAttribute>
-			<csvtransform outputType="byId" reverse="true" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
-			</csvtransform>			
+			<csvtransform outputType="byJobSingle" reverse="true" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
+			</csvtransform>
 		</baseBrowseTask>
 		<nextPage value="//div[@id='pagerContainer']/ul/li[last()-1]/a" optional="true"/>
 		<lastPageCondition>

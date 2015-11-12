@@ -106,11 +106,25 @@ public class SqlUtil {
 					}else if (param[i] instanceof Timestamp){
 						statement.setTimestamp(i+1, (Timestamp) param[i]);
 						i++;
+					}else if (param[i] instanceof Date){
+						statement.setDate(i+1, new java.sql.Date(((Date)param[i]).getTime()));
+						i++;
+					}else if (param[i] instanceof Float){
+						statement.setFloat(i+1, (Float)param[i]);
+						i++;
 					}else if (param[i] instanceof List){
 						List l = (List)param[i];
 						for (int j=0; j<l.size(); j++){
-							if (l.get(j) instanceof String){
-								statement.setString(i+j+1, (String)(l.get(j)));
+							Object o = l.get(j);
+							int idx = i+j+1;
+							if (o instanceof String){
+								statement.setString(idx, (String)(o));
+							}else if (o instanceof Date){
+								statement.setDate(idx, new java.sql.Date(((Date)o).getTime()));
+							}else if (o instanceof Integer){
+								statement.setInt(idx, (Integer)o);
+							}else if (o instanceof Float){
+								statement.setFloat(idx, (Float)o);
 							}else{
 								logger.error("unsupported type:" + l.get(j));
 							}

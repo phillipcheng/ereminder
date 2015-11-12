@@ -2,21 +2,19 @@ package org.cld.stock.strategy.select;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.TreeMap;
 import org.cld.stock.CandleQuote;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.strategy.SelectCandidateResult;
-import org.cld.stock.strategy.SelectStrategyMapperByStock;
+import org.cld.stock.strategy.SelectStrategy;
 import org.cld.util.jdbc.JDBCMapper;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class RandomSS extends SelectStrategyMapperByStock {
+public class RandomSS extends SelectStrategy {
 
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private StockConfig sc;
@@ -47,7 +45,9 @@ public class RandomSS extends SelectStrategyMapperByStock {
 		while (idx<lo.size()){
 			//emit a random value for stock on trading day dt
 			CandleQuote cq = (CandleQuote) lo.get(idx);
-			scrl.add(new SelectCandidateResult(sdf.format(cq.getStartTime()), r.nextFloat()));
+			if (checkValid(cq)){
+				scrl.add(new SelectCandidateResult(sdf.format(cq.getStartTime()), r.nextFloat()));
+			}
 			idx++;
 		}
 		return scrl;

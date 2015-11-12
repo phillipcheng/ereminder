@@ -27,7 +27,7 @@ public class HdfsDataStoreManagerImpl implements DataStoreManager{
 	private static Logger logger = LogManager.getLogger(HdfsDataStoreManagerImpl.class);
 
 	private Configuration hadoopConfig;
-	private String rootDir;
+	private String rootDir;//:/reminder/items
 	
 	public HdfsDataStoreManagerImpl(Configuration hadoopConfig, String rootDir) {
 		this.hadoopConfig = hadoopConfig;
@@ -117,13 +117,8 @@ public class HdfsDataStoreManagerImpl implements DataStoreManager{
 		return ret;
 	}
 	
-	@Override
-	public boolean addUpdateCrawledItem(CrawledItem ci, CrawledItem oldCi) {
-		//TODO pre-cache this
-		String fileName = ci.getId().getId(); //as file name
-		fileName = fileName.replaceAll("[^a-zA-Z0-9]", "_");
-		String outF = rootDir + "/" + ci.getId().getStoreId() + "/" + fileName;
-		Path op = new Path(outF);
+	public boolean addCrawledItem(CrawledItem ci, CrawledItem oldCi, String fileName){
+		Path op = new Path(rootDir + "/" + fileName);
 		BufferedWriter osw = null;
 		try {
 			FileSystem fs = FileSystem.get(hadoopConfig);
@@ -148,6 +143,14 @@ public class HdfsDataStoreManagerImpl implements DataStoreManager{
 			}
 		}
 		return true;
+	}
+	
+	@Override
+	public boolean addUpdateCrawledItem(CrawledItem ci, CrawledItem oldCi) {
+		String fileName = ci.getId().getId(); //as file name
+		fileName = fileName.replaceAll("[^a-zA-Z0-9]", "_");
+		String outF = ci.getId().getStoreId() + "/" + fileName;
+		return addCrawledItem(ci, oldCi, outF);
 	}
 	
 	

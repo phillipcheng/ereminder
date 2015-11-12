@@ -10,6 +10,20 @@
 			<userAttribute name="id">
 				<value value="marketId" toType="string" fromType="expression"/>
 			</userAttribute>
+			<userAttribute name="HasHeader">
+				<value value="false" toType="boolean"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="1" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="DataType1">
+				<value value="Text" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="data1">
+				<value value="//div[@id='tbl_wrap']/table[1]/tbody/tr[@style='']/th[1]/a/text()" toType="externalList" toEntryType="string" optional="true"/>
+			</userAttribute>
+			<csvtransform outputType="byJobSingle" reverse="true" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
+			</csvtransform>
 		</baseBrowseTask>
 		<totalPage value="//div[@id='list_pages_top2']/a[last()-1]/text()" toType="int" optional="true"/>
 		<nextPage value="//div[@id='list_pages_top2']/*[text()='下一页']" optional="true"/>

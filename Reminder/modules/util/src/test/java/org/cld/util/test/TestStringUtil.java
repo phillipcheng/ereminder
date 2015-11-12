@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.util.JsonUtil;
@@ -78,6 +79,12 @@ public class TestStringUtil {
 	public void testJsonUtil1(){
 		JSONObject jobj = JsonUtil.getJsonDataFromSingleParameterFunctionCall("sinaSSOController.preloginCallBack({\"retcode\":0})");
 		logger.info(jobj);
+	}
+	
+	@Test
+	public void testParseSteps(){
+		Float[] fl = StringUtil.parseSteps("(1)-1-0.5");
+		logger.info(StringUtils.join(fl,","));
 	}
 
 }

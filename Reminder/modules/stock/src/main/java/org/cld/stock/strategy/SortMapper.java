@@ -11,11 +11,12 @@ public class SortMapper extends Mapper<Object, Text, Text, Text>{
 	
 	private static Logger logger =  LogManager.getLogger(SortMapper.class);
 	
+	//use the last field to sort
 	@Override
 	public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 		String v = value.toString();
 		String vs[] = v.split(",");
-		String ratio = vs[vs.length-2];
+		String ratio = vs[vs.length-1];
 		context.write(new Text(ratio), value);
 	}
 }

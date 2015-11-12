@@ -19,6 +19,7 @@ import org.cld.stock.StockConfig;
 import org.cld.util.jdbc.DBConnConf;
 import org.cld.util.jdbc.JDBCMapper;
 import org.cld.util.jdbc.SqlUtil;
+import org.cld.util.jdbc.StringJDBCMapper;
 
 /**
  * Notes:
@@ -30,6 +31,45 @@ public class StockPersistMgr {
 	private static Logger logger =  LogManager.getLogger(StockPersistMgr.class);
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
+	public static List<String> getStockIds(DBConnConf dbconf, StockConfig sc){
+		return getStockIds(dbconf, sc, 0);
+	}
+	
+	public static List<String> getStockIds(DBConnConf dbconf, StockConfig sc, int limit){
+		Connection con = null;
+		String tableName = sc.getTablesByCmd(sc.getStockIdsCmd()).keySet().iterator().next();
+		String sql = null;
+		if (limit>0){
+			sql = String.format("select stockid from %s limit %d", tableName, limit);
+		}else{
+			sql = String.format("select stockid from %s", tableName);
+		}
+		try{
+			con = SqlUtil.getConnection(dbconf);
+			List<String> lo = (List<String>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
+					con, -1, -1, "", StringJDBCMapper.getInstance());
+			return lo;
+		}catch(Exception e){
+			logger.error("", e);
+			return null;
+		}finally{
+			SqlUtil.closeResources(con, null);
+		}
+	}
+	public static void truncateTable(DBConnConf dbconf, String tableName){
+		Connection con = null;
+		try{
+			con = SqlUtil.getConnection(dbconf);
+			String sql = String.format("truncate table %s", tableName);
+	        logger.info(String.format("start execute update query:%s", sql));
+	        SqlUtil.execUpdateSQL(con, sql);
+	        logger.info(String.format("finish execute update query:%s", sql));
+		}catch (Exception e){
+			logger.error("", e);
+		}finally{
+			SqlUtil.closeResources(con, null);
+		}
+	}
 	public static void loadData(DBConnConf dbconf, String fileName, String tableName){
 		Connection con = null;
 		Statement stmt = null;
@@ -47,6 +87,50 @@ public class StockPersistMgr {
 			logger.error("", e);
 		}finally{
 			SqlUtil.closeResources(con, stmt);
+		}
+	}
+	
+	public static List<Object> getDataByDate(DBConnConf dbconf, JDBCMapper tableMapper, Date ed, String dateFieldName){
+		Connection con = null;
+		String sql = null;
+		if (dateFieldName==null){
+			sql = String.format("select * from %s where dt='%s'", tableMapper.getTableName(), sdf.format(ed));
+		}else{
+			sql = String.format("select * from %s where %s='%s'", tableMapper.getTableName(), dateFieldName, sdf.format(ed));
+		}
+		try{
+			con = SqlUtil.getConnection(dbconf);
+			List<Object> lo = (List<Object>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
+					con, -1, -1, "", 
+					tableMapper);
+			return lo;
+		}catch(Exception e){
+			logger.error("", e);
+			return null;
+		}finally{
+			SqlUtil.closeResources(con, null);
+		}
+	}
+	
+	public static List<Object> getDataByDate(DBConnConf dbconf, JDBCMapper tableMapper, Date ed){
+		return getDataByDate(dbconf, tableMapper, ed, null);
+	}
+	//in descending order
+	public static List<Object> getDataByStockDateLimit(DBConnConf dbconf, JDBCMapper tableMapper, String stockId, Date ed, int limit){
+		Connection con = null;
+		String sql = String.format("select * from %s where stockid='%s' and dt<='%s' order by dt desc limit %d", 
+				tableMapper.getTableName(), stockId, sdf.format(ed), limit);
+		try{
+			con = SqlUtil.getConnection(dbconf);
+			List<Object> lo = (List<Object>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
+					con, -1, -1, "", 
+					tableMapper);
+			return lo;
+		}catch(Exception e){
+			logger.error("", e);
+			return null;
+		}finally{
+			SqlUtil.closeResources(con, null);
 		}
 	}
 	

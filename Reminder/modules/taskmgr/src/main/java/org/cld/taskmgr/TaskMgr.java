@@ -57,7 +57,7 @@ public class TaskMgr {
 	private String hadoopJobTracker = null;
 	private String hadoopTaskMapperClassName = null;
 	private String[] yarnAppCp = null;
-	private String hadoopCrawledItemFolder=null;
+	private String hadoopCrawledItemFolder=null;//: /reminder/items
 	private int crawlTasksPerMapper = 1;
 	private Map<String, String> hadoopConfigs = new HashMap<String,String>();
 

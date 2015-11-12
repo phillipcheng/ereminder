@@ -21,7 +21,8 @@ public class TableUtil {
 	public static final SimpleDateFormat[] sdfs = new SimpleDateFormat[]{
 			new SimpleDateFormat("MM/dd/yyyy"),
 			new SimpleDateFormat("yyyy-MM-dd"), 
-			new SimpleDateFormat("yyyy")};
+			new SimpleDateFormat("yyyy"),
+			new SimpleDateFormat("MMM d, yyyy")};
 	public static final String NO_DATE = "n/a";
 	
 	public static final SimpleDateFormat outsdf = new SimpleDateFormat("yyyy-MM-dd");

@@ -473,8 +473,10 @@ public class ETLUtil {
 			Map<String, Object> params, String cmd, boolean sync, Class mapperClass, Class reducerClass){
 		logger.info("into runTaskByStock");
 		Map<String, Date> stockLUMap = new HashMap<String, Date>();
-		if (needCheckDB(sc, cconf, cmd)){
-			stockLUMap = StockPersistMgr.getStockLUDateByCmd(sc, cmd, cconf.getBigdbconf());
+		if (!Arrays.asList(sc.getUpdateAllCmds()).contains(cmd)){
+			if (needCheckDB(sc, cconf, cmd)){
+				stockLUMap = StockPersistMgr.getStockLUDateByCmd(sc, cmd, cconf.getBigdbconf());
+			}
 		}
 		List<Task> tlist = new ArrayList<Task>();
 		List<String> allIds = Arrays.asList(getStockIdByMarketId(sc, marketId, cconf, cmd));
