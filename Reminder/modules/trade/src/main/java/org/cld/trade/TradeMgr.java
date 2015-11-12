@@ -72,6 +72,9 @@ public class TradeMgr {
 	private static final String OAUTH_TOKEN_SECRET = "oauth.token.secret";
 	private static final String ACCOUNT_ID= "account.id";
 	private static final String USE_AMOUNT="use.amount";
+	private static final String BASE_MARKET="base.market";
+	private static final String MARKET_ID="market.id";
+	
 	
 	private static final String PROFILE_URL = "https://api.tradeking.com/v1/member/profile.json";
 	private static final String PREVIEW_ORDER_URL="https://api.tradeking.com/v1/accounts/%s/orders/preview.json";
@@ -104,6 +107,8 @@ public class TradeMgr {
 	private String accountId;
 	private CrawlConf cconf;
 	private int useAmount;
+	private String baseMarketId;
+	private String marketId;
 	
 	private OAuthService service;
 	private Token accessToken;
@@ -125,6 +130,8 @@ public class TradeMgr {
 	                .build();
 			accessToken = new Token(oauthToken, oauthTokenSecret);
 			cconf = CrawlTestUtil.getCConf(cconffile);
+			setBaseMarketId(pc.getString(BASE_MARKET));
+			setMarketId(pc.getString(MARKET_ID));
 		}catch(Exception e){
 			logger.error("", e);
 		}
@@ -368,6 +375,10 @@ public class TradeMgr {
 				}
 				String stat = erm.getStat();
 				om.put(orderId, new OrderStatus(orderId, cumQty, avgPrice, stat));
+				String linkId = erm.getLnkID();
+				if (linkId!=null && !"".equals(linkId)){
+					om.put(linkId, new OrderStatus(linkId, cumQty, avgPrice, stat));
+				}
 			}
 		}catch(Exception e){
 			logger.error("", e);
@@ -389,13 +400,22 @@ public class TradeMgr {
 			Map<String, Object> map =  JsonUtil.fromJsonStringToMap(response.getBody());
 			map = (Map<String, Object>) map.get(RESPONSE);
 			map = (Map<String, Object>) map.get(QUOTES);
-			List ql = (List) map.get(QUOTE);
-			
 			List<Quote> retql = new ArrayList<Quote>();
-			for (Object o : ql){
-				map = (Map<String, Object>)o;
-				Quote q = new Quote(map);
-				retql.add(q);
+			if (map!=null){
+				Object oq = map.get(QUOTE);
+				if (oq instanceof List){
+					List ql = (List) map.get(QUOTE);
+					for (Object o : ql){
+						map = (Map<String, Object>)o;
+						Quote q = new Quote(map);
+						retql.add(q);
+					}
+				}else{
+					//single symbol quote is a map
+					map = (Map<String, Object>)oq;
+					Quote q = new Quote(map);
+					retql.add(q);
+				}
 			}
 			return retql;
 		}catch(Exception e){
@@ -433,11 +453,15 @@ public class TradeMgr {
 	public List<Quote> getMarketAllQuotes(String baseMarketId, String marketId){
 		return getMarketAllQuotes(cconf.getSmalldbconf(), baseMarketId, marketId);
 	}
+	
+	public SelectCandidateResult applyCloseDropAvgNow(String baseMarketId, String marketId, boolean useLast, SelectStrategy bs){
+		List<Quote> ql = getMarketAllQuotes(cconf.getSmalldbconf(), baseMarketId, marketId);
+		return applyCloseDropAvg(ql, baseMarketId, marketId, useLast, bs);
+	}
 	/*return the buy order
 	 *simulate true: use last price and preview the order
 	*/
-	public StockOrder applyCloseDropAvgNow(String baseMarketId, String marketId, boolean useLast, SelectStrategy bs, SellStrategy ss){
-		List<Quote> ql = getMarketAllQuotes(cconf.getSmalldbconf(), baseMarketId, marketId);
+	public SelectCandidateResult applyCloseDropAvg(List<Quote> ql, String baseMarketId, String marketId, boolean useLast, SelectStrategy bs){
 		Map<String, Float> newQuotes = new HashMap<String, Float>();
 		for (Quote q:ql){
 			if (useLast){
@@ -459,7 +483,7 @@ public class TradeMgr {
 		List<SelectCandidateResult> scrl = GenCloseDropAvgForDayTask.select(cconf, baseMarketId, marketId, submitDay, 3, bs, newQuotes);
 		if (scrl.size()>0){
 			SelectCandidateResult scr = scrl.get(0);
-			return SellStrategy.makeBuyOrder(scr, ss);
+			return scr;
 		}else{
 			logger.warn("no candidate found.");
 			return null;
@@ -480,5 +504,21 @@ public class TradeMgr {
 
 	public void setUseAmount(int useAmount) {
 		this.useAmount = useAmount;
+	}
+
+	public String getMarketId() {
+		return marketId;
+	}
+
+	public void setMarketId(String marketId) {
+		this.marketId = marketId;
+	}
+
+	public String getBaseMarketId() {
+		return baseMarketId;
+	}
+
+	public void setBaseMarketId(String baseMarketId) {
+		this.baseMarketId = baseMarketId;
 	}
 }

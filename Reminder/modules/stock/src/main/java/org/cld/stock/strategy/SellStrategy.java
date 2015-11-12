@@ -112,7 +112,7 @@ public class SellStrategy {
 	}
 
 	//used by real
-	public static StockOrder makeBuyOrder(SelectCandidateResult scr, SellStrategy ss){
+	public static StockOrder makeBuyOrder(SelectCandidateResult scr, SellStrategy ss, int cashAmount){
 		StockOrder buyOrder = new StockOrder();
 		Date dt = null;
 		try {
@@ -130,6 +130,8 @@ public class SellStrategy {
 		if (buyLimit>0){
 			buyOrder.setOrderType(OrderType.limit);
 			buyOrder.setLimitPrice(buyLimit);
+			int quantity=(int) (cashAmount/buyLimit);
+			buyOrder.setQuantity(quantity);
 		}else{
 			buyOrder.setOrderType(OrderType.market);
 		}

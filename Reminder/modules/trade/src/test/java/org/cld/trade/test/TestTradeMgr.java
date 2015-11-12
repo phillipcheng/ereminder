@@ -1,19 +1,19 @@
 package org.cld.trade.test;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.strategy.SellStrategy;
 import org.cld.stock.trade.StockOrder;
 import org.cld.stock.trade.StockOrder.ActionType;
 import org.cld.stock.trade.StockOrder.OrderType;
 import org.cld.stock.trade.StockOrder.TimeInForceType;
+import org.cld.trade.MarketOpenTrdMsg;
 import org.cld.trade.TradeMgr;
 import org.cld.trade.TutoArader;
-import org.cld.trade.persist.StockPosition;
 import org.cld.trade.response.Balance;
 import org.cld.trade.response.Holding;
 import org.cld.trade.response.OrderResponse;
@@ -131,7 +131,8 @@ public class TestTradeMgr {
 	public void realTutorAraderTryBuy(){
 		TutoArader ta = new TutoArader();
 		boolean useLast=true;
-		ta.tryBuy(false,useLast);
+		ta.getBs().setParams(new Object[]{1f,0f});//7,0);
+		ta.tryBuyNow(false,useLast);
 	}
 	
 	///
@@ -140,8 +141,19 @@ public class TestTradeMgr {
 		TutoArader ta = new TutoArader();
 		SellStrategy ss = new SellStrategy(1, 2, 4, 1);
 		ta.setSs(ss);
-		StockPosition sos = new StockPosition(new Date(), 120, 8.40f, "FTK", 1);
-		ta.trySell(true,sos);
+		//StockPosition sos = new StockPosition(new Date(), 120, 8.40f, "FTK", 1);
+		//ta.trySell(true,sos);
 	}
-
+	
+	@Test
+	public void testTA(){
+		TutoArader ta = new TutoArader();
+		SelectStrategy bs = new SelectStrategy();
+		bs.setOrderDirection(SelectStrategy.DESC);
+		bs.setParams(new Object[]{7f,-1f});//7,0
+		SellStrategy ss = new SellStrategy(1, 2, 9, 1);
+		MarketOpenTrdMsg mos = new MarketOpenTrdMsg(true, bs, ss);
+		mos.setSymbol("FIT");
+		ta.start(mos);
+	}
 }
