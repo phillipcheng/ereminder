@@ -11,15 +11,15 @@ import org.cld.trade.persist.StockPosition;
 import org.cld.trade.persist.TradePersistMgr;
 import org.cld.trade.response.OrderStatus;
 
-public class MonitorSellStopTrailingOrderTrdMsg extends TradeMsg {
-	private static Logger logger =  LogManager.getLogger(MonitorSellStopTrailingOrderTrdMsg.class);
+public class MonitorSellStopOrderTrdMsg extends TradeMsg {
+	private static Logger logger =  LogManager.getLogger(MonitorSellStopOrderTrdMsg.class);
 	private String orderId;
 	
-	public MonitorSellStopTrailingOrderTrdMsg(){
-		super(TradeMsgType.monitorSellStopTrailingOrder);
+	public MonitorSellStopOrderTrdMsg(){
+		super(TradeMsgType.monitorSellStopOrder);
 	}
 	
-	public MonitorSellStopTrailingOrderTrdMsg(String orderId, Map<StockOrderType, StockOrder> somap){
+	public MonitorSellStopOrderTrdMsg(String orderId, Map<StockOrderType, StockOrder> somap){
 		this();
 		this.orderId = orderId;
 		this.setSomap(somap);
@@ -44,13 +44,13 @@ public class MonitorSellStopTrailingOrderTrdMsg extends TradeMsg {
 	@Override
 	public TradeMsgPR process(TradeMgr tm) {
 		Map<String, OrderStatus> map = tm.getOrderStatus();
-		StockOrder sellstorder = getSomap().get(StockOrderType.sellstoptrail);
+		StockOrder sellstorder = getSomap().get(StockOrderType.sellstop);
 		OrderStatus os = map.get(getOrderId());
 		TradeMsgPR tmpr = new TradeMsgPR();
 		if (os!=null){
 			List<String> rmMsgList = new ArrayList<String>();
 			if (OrderStatus.FILLED.equals(os.getStat())){
-				logger.info(String.format("sell stop trailing order filled. %s", os));
+				logger.info(String.format("sell stop order filled. %s", os));
 				StockPosition trySp = new StockPosition(sellstorder, StockPosition.close, sellstorder.getOrderId());
 				TradePersistMgr.closePosition(tm.getCconf().getSmalldbconf(), trySp);//
 				String mpMsgId = String.format("%s", TradeMsgType.monitorSellLimitPrice);
@@ -59,7 +59,7 @@ public class MonitorSellStopTrailingOrderTrdMsg extends TradeMsg {
 				tmpr.setRmMsgs(rmMsgList);
 				return tmpr;
 			}else{
-				logger.info(String.format("status is %s for sell stop trailing order %s", os.getStat(), os.getOrderId()));
+				logger.info(String.format("status is %s for sell stop order %s", os.getStat(), os.getOrderId()));
 			}
 		}else{
 			logger.info(String.format("%s not found in the recent orders.", getOrderId()));

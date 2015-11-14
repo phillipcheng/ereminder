@@ -40,7 +40,7 @@ public class SellStrategyByStockReducer extends Reducer<Text, Text, Text, Text>{
 	private Map<String, Object> sssMap = null;
 	private CrawlConf cconf = null;
 	private String baseMarketId = null;
-	private MultipleOutputs<Text, Text> mos;
+	//private MultipleOutputs<Text, Text> mos;
 	@Override
 	public void setup(Context context) throws IOException, InterruptedException {
 		if (sssMap==null){
@@ -53,12 +53,12 @@ public class SellStrategyByStockReducer extends Reducer<Text, Text, Text, Text>{
 			cconf = CrawlTestUtil.getCConf(propFile);
 		}
 		baseMarketId = context.getConfiguration().get(StockBase.KEY_BASE_MARKET_ID);
-		mos = new MultipleOutputs<Text,Text>(context);
+		//mos = new MultipleOutputs<Text,Text>(context);
 	}
 	
     @Override
     protected void cleanup(Context context) throws IOException, InterruptedException {
-        mos.close();
+       //mos.close();
     }
 	
 	/**
@@ -131,11 +131,9 @@ public class SellStrategyByStockReducer extends Reducer<Text, Text, Text, Text>{
 				if (bsr!=null){
 					String k = String.format("%s,%s", bsi.getBs(), bsi.getSs());
 					String v = bsr.toString();
-					String filepart = bsi.getBs()+","+bsi.getSs();
-					filepart = filepart.replaceAll(":", "-");
-					filepart = filepart.replaceAll("\\.", "_");
-					filepart = filepart.replaceAll(",", "_");
-					mos.write(HadoopTaskLauncher.NAMED_OUTPUT_TXT, k, v, filepart);
+					//String filepart = bsi.getBs()+","+bsi.getSs();
+					//filepart = filepart.replaceAll(":", "-").replaceAll("\\.", "_").replaceAll(",", "_");
+					context.write(new Text(k), new Text(v));
 				}
 			}
 		}catch(Exception e){

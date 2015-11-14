@@ -30,7 +30,7 @@ import org.cld.datastore.entity.CrawledItemId;
 import org.cld.datastore.impl.HdfsDataStoreManagerImpl;
 import org.cld.taskmgr.entity.CmdStatus;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
-
+import org.cld.util.DateTimeUtil;
 import org.cld.util.JsonUtil;
 import org.cld.util.StringUtil;
 import org.cld.util.jdbc.ScriptRunner;
@@ -46,31 +46,25 @@ import org.cld.datacrawl.test.TestBase;
 import org.cld.stock.sina.task.FillEpsTask;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.strategy.SelectStrategyByStockTask;
-import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.strategy.SellStrategy;
 import org.cld.stock.strategy.SellStrategyByStockMapper;
 import org.cld.stock.strategy.SellStrategyByStockReducer;
 import org.cld.stock.strategy.SortMapper;
 import org.cld.stock.strategy.StrategyResultMapper;
 import org.cld.stock.strategy.StrategyResultReducer;
-import org.cld.stock.strategy.prepare.GenCloseDropAvgForDayTask;
 import org.cld.stock.strategy.select.CountWaveTask;
 import org.cld.stock.task.LoadDBDataTask;
 import org.cld.stock.task.MergeTask;
 
-
 public abstract class StockBase extends TestBase{
-
 	protected static Logger logger =  LogManager.getLogger(StockBase.class);
-	
 	public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private static SimpleDateFormat mdssdf = new SimpleDateFormat("MMddHHmmss");
+	
 	public static final String AllCmdRun_STATUS="AllCmdRun";
 	public static final String KEY_IDS = "ids";
-	
 	public static final String idKeySep = "_";
 	public static final String DELTA_NAME="delta";
-	
 	public static final String KEY_BASE_MARKET_ID="baseMarketId";
 	
 	private String baseMarketId;
@@ -79,16 +73,12 @@ public abstract class StockBase extends TestBase{
 	protected Date endDate; //of server timezone, since the static holidays, the dynamic date from hbase are all in server timezone
 	protected Date startDate;
 	protected String specialParam = null;//for special cmd to use as parameter
-	
 	protected DataStoreManager dsm = null;
 	protected HdfsDataStoreManagerImpl hdfsDsm = null;
 
 	public abstract StockConfig getStockConfig();
-	
-	public DataStoreManager getDsm(){
-		return dsm;
-	}
-	
+	public abstract boolean readyToCrawl(Date today);
+
 	public StockBase(String propFile, String baseMarketId, String marketId, Date sd, Date ed, String marketBaseId){
 		super();
 		this.setBaseMarketId(baseMarketId);
@@ -106,10 +96,6 @@ public abstract class StockBase extends TestBase{
 		return String.format("marketId:%s, propFile:%s, startDate:%s, endDate:%s", marketId, propFile, startDate, endDate);
 	}
 	
-	public CrawlConf getCconf(){
-		return this.cconf;
-	}
-	
 	public Map<String, Object> getDateParamMap(String startDate, String endDate){
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put(AbstractCrawlItemToCSV.FIELD_NAME_STARTDATE, startDate);
@@ -121,14 +107,15 @@ public abstract class StockBase extends TestBase{
 		CrawlUtil.hadoopExecuteCrawlTasksByFile(this.propFile, cconf, taskFileName, hadoopParams);
 	}
 	
-	/**
-	 * 
-	 * @param stockIdCrawlConfig: SinaStockConfig.SINA_STOCK_IDS, NasdaqStockConfig.STOCK_IDS
-	 * @param marketId: 
-	 * @param endDate
-	 * @return
-	 * @throws InterruptedException
-	 */
+	private void addCsvValue(CrawledItem ciDelta){
+		List<String> deltaIds = (List<String>) ciDelta.getParam(KEY_IDS);
+		String[][] csvValue = new String[deltaIds.size()][];
+		for (int i=0; i<deltaIds.size(); i++){
+			csvValue[i] = new String[]{"", deltaIds.get(i)};
+		}
+		ciDelta.setCsvValue(csvValue);
+	}
+	
 	public CrawledItem run_browse_idlist(String marketId, Date endDate) throws InterruptedException{
 		StockConfig sc = getStockConfig();
 		if (sc.getTestMarketId().equals(marketId)){
@@ -149,6 +136,7 @@ public abstract class StockBase extends TestBase{
 						new CrawledItemId(marketId, sc.getStockIdsCmd(), endDate));
 				ci.addParam(KEY_IDS, Arrays.asList(sc.getTestStockSet2()));
 			}
+			addCsvValue(ci);
 			return ci;
 		}
 		
@@ -282,11 +270,8 @@ public abstract class StockBase extends TestBase{
 		return cmdStatusList;
 	}
 	
-	//return all the cmds run
-	private List<CmdStatus> runFirstTime(StockConfig sc, CrawledItem ciIds, String curMarketId) throws InterruptedException {
-		//store the stock-ids for curMarket
-		logger.info(String.format("run first time for market:%s", curMarketId));
-		ciIds.getId().setId(curMarketId);
+	private void recordCiIds(CrawledItem ciIds){
+		StockConfig sc = getStockConfig();
 		List<String> curIds = (List<String>) ciIds.getParam(KEY_IDS);
 		logger.info(String.format("market %s 1st time fetch with size %d.", marketId, curIds.size()));
 		dsm.addUpdateCrawledItem(ciIds, null);//hbase persistence for curMarket
@@ -297,10 +282,77 @@ public abstract class StockBase extends TestBase{
 		//store the market-id-crawl status
 		CmdStatus mcs = new CmdStatus(marketId, sc.getStockIdsCmd(), endDate, startDate, true, sc.getSdf());
 		dsm.addUpdateCrawledItem(mcs, null);
+	}
+	
+	//return all the cmds run
+	private List<CmdStatus> runFirstTime(StockConfig sc, CrawledItem ciIds, String curMarketId) throws InterruptedException {
+		//store the stock-ids for curMarket
+		logger.info(String.format("run first time for market:%s", curMarketId));
+		ciIds.getId().setId(curMarketId);
+		recordCiIds(ciIds);
 		//do the (null, enDate) for the current market
 		return runAllCmd(curMarketId, startDate, endDate, CMDTYPE_ALL);
 	}
-
+	
+	public void runIdsCmd() throws InterruptedException {
+		String strEndDate=sdf.format(endDate);
+		String curMarketId = marketId + idKeySep+ strEndDate;
+		CrawledItem ciIds = null;
+		ciIds = run_browse_idlist(marketId, endDate);
+		ciIds.getId().setId(curMarketId);
+		recordCiIds(ciIds);
+	}
+	
+	//cmd cannot be the stock-ids cmd, assuming stock-ids command is run, if not, please runIdsCmd()
+	public List<CmdStatus> runAllCmd(String cmd) throws InterruptedException {
+		List<CmdStatus> csl = new ArrayList<CmdStatus>();
+		StockConfig sc = getStockConfig();
+		String strEndDate=sdf.format(endDate);
+		//get the market-ids-crawl-history
+		CmdStatus mcs = CmdStatus.getCmdStatus(dsm, marketId, sc.getStockIdsCmd());
+		//update the marketId by appending the endDate
+		String curMarketId = marketId + idKeySep+ strEndDate; 
+		Date lastRunDate = null;
+		if (mcs!=null){
+			String prevMarketId = marketId + idKeySep + sdf.format(mcs.getId().getCreateTime());
+			if (startDate!=null){
+				lastRunDate = startDate;
+			}else{
+				//get last all cmd run status, last run date
+				CmdStatus preAllCmdRunCS = CmdStatus.getCmdStatus(dsm, prevMarketId, AllCmdRun_STATUS);
+				if (preAllCmdRunCS==null){//last time AllCmdRun-CmdStatus failed to generate, from last Id-CmdStatus
+					logger.warn("System corrupted, AllCmdStatus is not generated for that market. Starting from last stock-id CmdStatus time!" + sdf.format(mcs.getId().getCreateTime()));
+					lastRunDate = mcs.getId().getCreateTime();
+				}else{
+					lastRunDate = preAllCmdRunCS.getId().getCreateTime();
+				}
+			}
+			CmdStatus cs = runCmd(cmd, curMarketId, sdf.format(lastRunDate), strEndDate);
+			csl.add(cs);
+			return csl;
+		}else{
+			logger.error(String.format("stock-id cmd status not found for marketId %s", marketId));
+			return csl;
+		}
+	}
+	
+	private String getCurMarketId(){
+		StockConfig sc = getStockConfig();
+		String strEndDate=sdf.format(endDate);
+		CmdStatus mcs = CmdStatus.getCmdStatus(dsm, marketId, sc.getStockIdsCmd());
+		String curMarketId = marketId + idKeySep+ strEndDate; 
+		if (mcs!=null){
+			curMarketId = marketId + idKeySep + sdf.format(mcs.getId().getCreateTime());
+		}
+		CrawledItem ci = cconf.getDsm("hbase").getCrawledItem(curMarketId, sc.getStockIdsCmd(), null);
+		if (ci==null){
+			logger.error(String.format("cur market not found."));
+			return null;
+		}else{
+			return curMarketId;
+		}
+	}
+	
 	public List<CmdStatus> runAllCmd() throws InterruptedException {
 		List<CmdStatus> cmdStatusList = new ArrayList<CmdStatus>();
 		
@@ -365,8 +417,9 @@ public abstract class StockBase extends TestBase{
 					ciDelta.addParam(KEY_IDS, deltaIds);
 					dsm.addUpdateCrawledItem(ciDelta, null);
 
-					//generate hdfs file delta market: raw/[marketId]_[endDate]/storeid/
-					String fileName = String.format("raw/%s_%s/data", this.getMarketId(), sdf.format(this.getEndDate()));
+					//generate hdfs file delta market: raw/[marketId]_[endDate]/storeid/data
+					String fileName = String.format("raw/%s_%s/%s/data", this.getMarketId(), sdf.format(this.getEndDate()), sc.getStockIdsCmd());
+					addCsvValue(ciDelta);
 					hdfsDsm.addCrawledItem(ciDelta, null, fileName);//hdfs persistence for curMarket
 					
 					//update the market-command-status
@@ -379,15 +432,8 @@ public abstract class StockBase extends TestBase{
 					logger.info("no delta market, so curMarket is prevMarket");
 					curMarketId = prevMarketId;//so that prevMarketId's allCmdRun status can be updated
 				}
-				/* we do not fill the gap between startDate and lastRunDate now
-				if (CompareUtil.ObjectDiffers(startDate, lastRunDate)){//check the (null, lastRunDate) for the pre market
-					logger.info(String.format("rerun all cmd for pre-market %s from %s to %s", prevMarketId, startDate, lastRunDate));
-					cmdStatusList.addAll(runAllCmd(curMarketId, startDate, lastRunDate, CMDTYPE_ALL));
-				}*/
-				//if (CompareUtil.ObjectDiffers(lastRunDate, endDate)){//do the [lastRunDate,endDate) for the cur market
-					logger.info(String.format("run dynamic cmd for market %s from %s to %s", prevMarketId, lastRunDate, endDate));
-					cmdStatusList.addAll(runAllCmd(curMarketId, lastRunDate, endDate, CMDTYPE_DYNAMIC)); //dynamic part
-				//}
+				logger.info(String.format("run dynamic cmd for market %s from %s to %s", prevMarketId, lastRunDate, endDate));
+				cmdStatusList.addAll(runAllCmd(curMarketId, lastRunDate, endDate, CMDTYPE_DYNAMIC)); //dynamic part
 			}
 		}else{
 			ciIds = run_browse_idlist(marketId, endDate);
@@ -568,7 +614,6 @@ public abstract class StockBase extends TestBase{
 			}
 			
 			if (stepParam==null || "2".equals(stepParam)){
-				//2
 				hadoopParams.put(SellStrategy.KEY_SELL_STRATEGYS, sssString);
 				hadoopParams.put(CrawlUtil.CRAWL_PROPERTIES, this.getPropFile());
 				hadoopParams.put(KEY_BASE_MARKET_ID, this.baseMarketId);
@@ -581,21 +626,34 @@ public abstract class StockBase extends TestBase{
 				hadoopParams.put("mapreduce.map.java.opts", mapOptValue);
 				hadoopParams.put("mapreduce.reduce.memory.mb", reduceMbMem + "");
 				hadoopParams.put("mapreduce.reduce.java.opts", reduceOptValue);
-				hadoopParams.put("mapreduce.job.reduces", 1+"");
-				HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), hadoopParams, new String[]{outputDir1}, true, outputDir2, true, 
+				hadoopParams.put("mapreduce.job.reduces", 20+"");
+				//1 output
+				HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), hadoopParams, new String[]{outputDir1}, false, outputDir2, true, 
 						SellStrategyByStockMapper.class, SellStrategyByStockReducer.class, false);
 			}
 			if (stepParam==null || "3".equals(stepParam)){
-				//3
-				HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), null, new String[]{outputDir2}, false, outputDir3, true, 
+				//multiple output
+				hadoopParams.clear();
+				int mapMbMem=1024;
+				int reduceMbMem=6196;
+				String mapOptValue = "-Xmx" + mapMbMem + "M";
+				String reduceOptValue = "-Xmx" + reduceMbMem + "M";
+				hadoopParams.put("mapreduce.map.speculative", "false");
+				hadoopParams.put("mapreduce.map.memory.mb", mapMbMem + "");
+				hadoopParams.put("mapreduce.map.java.opts", mapOptValue);
+				hadoopParams.put("mapreduce.reduce.memory.mb", reduceMbMem + "");
+				hadoopParams.put("mapreduce.reduce.java.opts", reduceOptValue);
+				hadoopParams.put("mapreduce.job.reduces", 10+"");
+				HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), hadoopParams, new String[]{outputDir2}, true, outputDir3, true, 
 						StrategyResultMapper.class, StrategyResultReducer.class, false);
 			}
 			if (stepParam==null || "4".equals(stepParam)){
-				//4
 				hadoopParams.clear();
 				hadoopParams.put("mapreduce.job.reduces", 1+"");
 				hadoopParams.put("mapred.output.key.comparator.class", "org.apache.hadoop.mapred.lib.KeyFieldBasedComparator");
 				hadoopParams.put("mapred.text.key.comparator.options", "-n");
+				hadoopParams.put("file.pattern", ".*part.*");
+				//1 output
 				HadoopTaskLauncher.executeTasks(this.getCconf().getNodeConf(), hadoopParams, new String[]{outputDir3}, false, outputDir4, true, 
 						SortMapper.class, DefaultCopyTextReducer.class, false);
 			}
@@ -623,7 +681,7 @@ public abstract class StockBase extends TestBase{
 		return null;
 	}
 	//from cmd directly
-	public void loadDataFiles(String param){
+	public void loadDataFilesDirectly(String param){
 		Map<String,String> paramMap = StringUtil.parseMapParams(param);
 		int threadNum=10;
 		String localDataDir="";
@@ -660,9 +718,18 @@ public abstract class StockBase extends TestBase{
 		Map<LaunchableTask, String[]> ppMap = this.getStockConfig().getPostProcessMap();
 		for (LaunchableTask t:ppMap.keySet()){
 			String[] cmds = ppMap.get(t);
-			String[] jobIdsOneCmd = t.launch(this.propFile, cconf, datePart, cmds);
-			if (jobIdsOneCmd!=null){
-				jobIds.addAll(Arrays.asList(jobIdsOneCmd));
+			if (param==null){
+				String[] jobIdsOneCmd = t.launch(this.propFile, cconf, datePart, cmds);
+				if (jobIdsOneCmd!=null){
+					jobIds.addAll(Arrays.asList(jobIdsOneCmd));
+				}
+			}else{
+				if (Arrays.asList(cmds).contains(param)){
+					String[] jobIdsOneCmd = t.launch(this.propFile, cconf, datePart, new String[]{param});
+					if (jobIdsOneCmd!=null){
+						jobIds.addAll(Arrays.asList(jobIdsOneCmd));
+					}
+				}
 			}
 		}
 		String[] rt = new String[jobIds.size()];
@@ -674,18 +741,28 @@ public abstract class StockBase extends TestBase{
 	}
 	
 	public static String dumpDir = "/data/cydata/stock/merge/";
-	public void dumpFiles(){
+	public void dumpFiles(String param){
 		String strEndDate = sdf.format(endDate);
 		String localDirRoot = dumpDir + strEndDate;
+		String includeFolder = strEndDate;
+		if (param!=null){
+			includeFolder = String.format("%s/%s_%s", param, marketId, strEndDate);
+		}
 		DumpHdfsFile.launch(20, cconf.getTaskMgr().getHdfsDefaultName(), "/reminder/items/merge",
-				localDirRoot, new String[]{strEndDate}, this.getStockConfig().getSlowCmds());
+				localDirRoot, new String[]{includeFolder}, this.getStockConfig().getSlowCmds());
 	}
-	public void loadDataFiles(){
+	
+	public void loadDataFiles(String param){
 		String strEndDate = sdf.format(endDate);
 		String localDirRoot = dumpDir + strEndDate;
+		String includeFolder = this.baseMarketId;
+		if (param!=null){
+			includeFolder = param;
+		}
 		LoadDBDataTask.launch(baseMarketId, strEndDate, cconf.getSmalldbconf(), 20, 
-				localDirRoot, new String[]{this.baseMarketId}, new String[]{});
+				localDirRoot, new String[]{includeFolder}, new String[]{});
 	}
+	
 	public void postImport(){
 		String postImportFileName = getStockConfig().postImportSql();
 		try{
@@ -733,8 +810,43 @@ public abstract class StockBase extends TestBase{
 		}
 	}
 	
-	public String[] genCloseDropAvg(String param){
-		return GenCloseDropAvgForDayTask.launch(this.getBaseMarketId(), this.getMarketId(), cconf, this.getPropFile(), this.startDate, this.endDate);
+	public String[] prepareAllData(String sn){
+		try {
+			String strategyName = STRATEGY_PREFIX+sn+STRATEGY_SUFFIX;
+			PropertiesConfiguration props = new PropertiesConfiguration(strategyName);
+			List<SelectStrategy> bsl = SelectStrategy.gen(props, sn);
+			if (bsl.size()>0){
+				SelectStrategy bs = bsl.get(0);
+				return bs.prepareData(this.getBaseMarketId(), this.getMarketId(), cconf, this.getPropFile(), this.startDate, this.endDate);
+			}else{
+				return null;
+			}
+		}catch(Exception e){
+			logger.error("", e);
+			return null;
+		}
+	}
+	
+	public String[] prepareOneDayData(String sn){
+		try {
+			String strategyName = STRATEGY_PREFIX+sn+STRATEGY_SUFFIX;
+			PropertiesConfiguration props = new PropertiesConfiguration(strategyName);
+			List<SelectStrategy> bsl = SelectStrategy.gen(props, sn);
+			if (bsl.size()>0){
+				String curMarketId = getCurMarketId();
+				SelectStrategy bs = bsl.get(0);
+				//set startDate to be one day before the day, and endDate to be one day after the day
+				Date theDay = StockUtil.getLastOpenDay(DateTimeUtil.yesterday(this.endDate), this.getStockConfig().getHolidays());
+				Date sd = DateTimeUtil.yesterday(theDay);
+				Date ed = DateTimeUtil.tomorrow(theDay);
+				return bs.prepareData(this.getBaseMarketId(), curMarketId, cconf, this.getPropFile(), sd, ed);
+			}else{
+				return null;
+			}
+		}catch(Exception e){
+			logger.error("", e);
+			return null;
+		}
 	}
 	
 	public List<CmdStatus> runSpecial(String method, String param){
@@ -792,24 +904,34 @@ public abstract class StockBase extends TestBase{
 		return null;
 	}
 	private static final int poll_interval=20000;
-	public static String[] cmds = new String[]{"runAllCmd", "postprocess", "run_merge", "dumpFiles", "loadDataFiles", 
-			"postImport"};
-	public void updateAll(String param) throws InterruptedException{
+	public static final String CMD_NAME="cmd";
+	public static String[] cmds = new String[]{"runAllCmd", "postprocess", "run_merge", "dumpFiles", "loadDataFiles", "postImport", "prepareOneDayData"};
+	public void updateAll(String inparam) throws InterruptedException{
+		Map<String,String> params = StringUtil.parseMapParams(inparam);
+		String cmdParam = params.get(CMD_NAME);
+		String stepParam = params.get(STEP_NAMES);
+		
+		String[] cmdParams = new String[]{cmdParam, cmdParam, cmdParam, cmdParam, cmdParam, null, "closedropavg"};
 		int step =0;
 		boolean oneStep = false;
-		if (param!=null){
-			if (!param.contains(".")){//for just 1 step
-				step = Integer.parseInt(param);
+		if (stepParam!=null){
+			if (!stepParam.contains(".")){//for just 1 step
+				step = Integer.parseInt(stepParam);
 			}else{
-				param = param.substring(0, param.indexOf("."));
-				step = Integer.parseInt(param);
+				stepParam = stepParam.substring(0, stepParam.indexOf("."));
+				step = Integer.parseInt(stepParam);
 				oneStep = true;
 			}
 		}
 		
 		for (int i=step; i<cmds.length; i++){
-			List<CmdStatus> csl = this.runSpecial(cmds[i], null);
+			List<CmdStatus> csl = this.runSpecial(cmds[i], cmdParams[i]);
 			if (csl!=null){//async
+				if (csl.size()==0){
+					//cmd failed, stop all
+					logger.error(String.format("cmd %s with param %s failed, stop all.", cmds[i], cmdParams[i]));
+					return;
+				}
 				int allDone=0;
 				while(allDone<csl.size()){
 					allDone = 0;
@@ -831,6 +953,12 @@ public abstract class StockBase extends TestBase{
 	}
 
 	//getter, setter
+	public CrawlConf getCconf(){
+		return this.cconf;
+	}
+	public DataStoreManager getDsm(){
+		return dsm;
+	}
 	public String getMarketId() {
 		return marketId;
 	}

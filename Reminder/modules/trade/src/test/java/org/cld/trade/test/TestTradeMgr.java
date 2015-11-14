@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.stock.StockCrawlScheduler;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.strategy.SellStrategy;
 import org.cld.stock.trade.StockOrder;
@@ -13,7 +14,7 @@ import org.cld.stock.trade.StockOrder.OrderType;
 import org.cld.stock.trade.StockOrder.TimeInForceType;
 import org.cld.trade.MarketOpenTrdMsg;
 import org.cld.trade.TradeMgr;
-import org.cld.trade.TutoArader;
+import org.cld.trade.AutoTrader;
 import org.cld.trade.response.Balance;
 import org.cld.trade.response.Holding;
 import org.cld.trade.response.OrderResponse;
@@ -128,32 +129,22 @@ public class TestTradeMgr {
 	}
 	///
 	@Test
-	public void realTutorAraderTryBuy(){
-		TutoArader ta = new TutoArader();
+	public void testTryBuy(){
+		AutoTrader ta = new AutoTrader();
 		boolean useLast=true;
-		ta.getBs().setParams(new Object[]{1f,0f});//7,0);
 		ta.tryBuyNow(false,useLast);
 	}
 	
-	///
+	//not with open, missed or completed the open hour transaction, want to try mid-day luck (to be verified)
 	@Test
-	public void testTutorAraderTrySell(){
-		TutoArader ta = new TutoArader();
-		SellStrategy ss = new SellStrategy(1, 2, 4, 1);
-		ta.setSs(ss);
-		//StockPosition sos = new StockPosition(new Date(), 120, 8.40f, "FTK", 1);
-		//ta.trySell(true,sos);
+	public void startWithLast(){
+		AutoTrader ta = new AutoTrader();
+		MarketOpenTrdMsg mos = new MarketOpenTrdMsg(true, true, ta.getBs(), ta.getSs());
+		ta.start(mos);
 	}
 	
 	@Test
-	public void testTA(){
-		TutoArader ta = new TutoArader();
-		SelectStrategy bs = new SelectStrategy();
-		bs.setOrderDirection(SelectStrategy.DESC);
-		bs.setParams(new Object[]{7f,-1f});//7,0
-		SellStrategy ss = new SellStrategy(1, 2, 9, 1);
-		MarketOpenTrdMsg mos = new MarketOpenTrdMsg(true, bs, ss);
-		mos.setSymbol("FIT");
-		ta.start(mos);
+	public void TAMain(){
+		AutoTrader.main(null);
 	}
 }

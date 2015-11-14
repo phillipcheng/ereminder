@@ -28,12 +28,14 @@ public class MarketOpenTrdMsg extends TradeMsg {
 	private SellStrategy ss;
 	private boolean useLast=false;
 	private String symbol;
+	private boolean real=false;
 	
 	public MarketOpenTrdMsg() {
 		super(TradeMsgType.marketOpenSoon);
 	}
-	public MarketOpenTrdMsg(boolean useLast, SelectStrategy bs, SellStrategy ss){
+	public MarketOpenTrdMsg(boolean real, boolean useLast, SelectStrategy bs, SellStrategy ss){
 		this();
+		this.real=real;
 		this.useLast = useLast;
 		this.bs=bs;
 		this.ss=ss;
@@ -61,7 +63,7 @@ public class MarketOpenTrdMsg extends TradeMsg {
 	public TradeMsgPR process(TradeMgr tm) {
 		StockConfig sc = StockUtil.getStockConfig(tm.getBaseMarketId());
 		Date checkDate = StockUtil.getLastOpenDay(DateTimeUtil.yesterday(new Date()), sc.getHolidays());
-		List<StockPosition> sp = TradePersistMgr.getPosition(tm.getCconf().getSmalldbconf(), checkDate);
+		List<StockPosition> sp = TradePersistMgr.getOpenPosition(tm.getCconf().getSmalldbconf(), checkDate);
 		TradeMsgPR tmpr = new TradeMsgPR();
 		if (sp.size()>0){
 			logger.info(String.format("has opened position %s.", sp.get(0)));
@@ -80,7 +82,7 @@ public class MarketOpenTrdMsg extends TradeMsg {
 				}
 				logger.info(String.format("market size:%d, open size:%d", ql.size(), openNum));
 				if (openNum>(ql.size()*0.5) && ql.size()>5800){
-					scr = tm.applyCloseDropAvg(ql, tm.getBaseMarketId(), tm.getMarketId(), useLast, bs);
+					scr = tm.applySelectStrategy(ql, tm.getBaseMarketId(), tm.getMarketId(), useLast, bs);
 				}
 			}else{
 				//buy specified symbol
@@ -91,9 +93,9 @@ public class MarketOpenTrdMsg extends TradeMsg {
 				}
 			}
 			if (scr!=null){
-				Map<StockOrderType, StockOrder> somap = TutoArader.genStockOrderMap(scr, ss, tm.getUseAmount());
+				Map<StockOrderType, StockOrder> somap = AutoTrader.genStockOrderMap(scr, ss, tm.getUseAmount());
 				StockOrder buyOrder = somap.get(StockOrderType.buy);
-				OrderResponse or = TutoArader.trySubmit(tm, buyOrder, true);
+				OrderResponse or = AutoTrader.trySubmit(tm, buyOrder, real);
 				if (OrderResponse.SUCCESS.equals(or.getError())){
 					List<TradeMsg> tml = new ArrayList<TradeMsg>();
 					TradeMsg mbo = new MonitorBuyOrderTrdMsg(StockOrderType.buy, or.getClientorderid(), somap);

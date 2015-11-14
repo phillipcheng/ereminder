@@ -116,9 +116,22 @@ public class TradeSimulator {
 									executedOrders.put(so.getOrderId(), so);
 									return qlist.subList(idx-1, qlist.size());
 								}
-							}else if (so.getOrderType() == OrderType.stoplimit){//not used yet
-								if (cq.getLow()<=so.getStopPrice()){
-									so.setExecutedPrice(so.getStopPrice());
+							}else if (so.getOrderType() == OrderType.stoplimit){
+								float stopPrice = 0;
+								if (so.getStopPrice()==0){
+									//use limitPercentage
+									StockOrder pairedBuyOrder = executedOrders.get(so.getPairOrderId());
+									if (pairedBuyOrder!=null && pairedBuyOrder.getExecutedPrice()>0){
+										float ratio = 1+ so.getLimitPercentage()/100;
+										stopPrice = pairedBuyOrder.getExecutedPrice() * ratio;
+									}else{
+										logger.error(String.format("paired buy order of sell order %s not found.", so.getOrderId()));
+									}
+								}else{
+									stopPrice = so.getStopPrice();
+								}
+								if (cq.getLow()<=stopPrice){
+									so.setExecutedPrice(stopPrice);
 									so.setStatus(StatusType.executed);
 									so.setExecuteTime(cq.getStartTime());
 									executedOrders.put(so.getOrderId(), so);

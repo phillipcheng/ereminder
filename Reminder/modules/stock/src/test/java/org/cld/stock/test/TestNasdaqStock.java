@@ -32,7 +32,7 @@ public class TestNasdaqStock {
 	private static Date endDate = null;
 	static{
 		try{
-			sdf.setTimeZone(TimeZone.getTimeZone("EST"));
+			//sdf.setTimeZone(TimeZone.getTimeZone("EST"));
 			startDate = sdf.parse(START_DATE);
 			endDate = sdf.parse(END_DATE);
 		}catch(Exception e){
@@ -53,7 +53,6 @@ public class TestNasdaqStock {
 	@Before
 	public void setUp()throws Exception{
 		nsb = new NasdaqStockBase(propFile, marketId, startDate, endDate);
-		nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(this.marketId, sdf.parse(END_DATE)), null);
 	}
 	
 	@Test
@@ -65,8 +64,15 @@ public class TestNasdaqStock {
 		nsb.runCmd(NasdaqStockConfig.STOCK_IDS, marketId, null, "2015-10-17");
 	}
 	@Test
-	public void testRunAllCmd1() throws Exception{
+	public void testRunAllCmd() throws Exception{
+		nsb.setStartDate(null);
+		nsb.setEndDate(NasdaqTestStockConfig.date_Test_END_D1);
 		nsb.runAllCmd();
+		
+		nsb.setStartDate(null);
+		nsb.setEndDate(NasdaqTestStockConfig.date_Test_END_D3);
+		nsb.runAllCmd();
+		
 	}
 	
 	@Test
@@ -251,5 +257,19 @@ public class TestNasdaqStock {
 		Date ed = sdf.parse("2015-11-02");
 		StockBase sb = new NasdaqStockBase(pFile, marketId, sd, ed);
 		sb.validateAllStrategyByStock("closedropavgclose");
+	}
+	
+	@Test
+	public void testReadyCrawl() throws Exception{
+		String pFile = "client1-v2.properties";
+		StockBase sb = new NasdaqStockBase(pFile, marketId, null, null);
+		sb.readyToCrawl(new Date());
+	}
+	
+	@Test
+	public void testPrepareOneDayData() throws Exception{
+		String pFile = "client1-v2.properties";
+		StockBase sb = new NasdaqStockBase(pFile, marketId, null, sdf.parse("2015-11-13"));
+		sb.prepareOneDayData("closedropavg");
 	}
 }

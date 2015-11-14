@@ -4,7 +4,6 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -21,37 +20,16 @@ import javax.xml.namespace.QName;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hadoop.yarn.webapp.hamlet.HamletSpec.MAP;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.test.CrawlTestUtil;
-import org.cld.stock.StockConfig;
-import org.cld.stock.StockUtil;
-import org.cld.stock.persistence.StockPersistMgr;
-import org.cld.stock.strategy.SelectCandidateResult;
-import org.cld.stock.strategy.SelectStrategy;
-import org.cld.stock.strategy.SellStrategy;
-import org.cld.stock.strategy.prepare.GenCloseDropAvgForDayTask;
-import org.cld.stock.trade.StockOrder;
-import org.cld.stock.trade.StockOrder.ActionType;
-import org.cld.stock.trade.StockOrder.OrderType;
-import org.cld.stock.trade.StockOrder.TimeInForceType;
-import org.cld.trade.persist.StockPosition;
-import org.cld.trade.persist.TradePersistMgr;
-import org.cld.trade.response.Balance;
-import org.cld.trade.response.Holding;
-import org.cld.trade.response.OrderResponse;
-import org.cld.trade.response.OrderStatus;
-import org.cld.trade.response.Quote;
-import org.cld.util.JsonUtil;
-import org.cld.util.jdbc.DBConnConf;
+
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
 import org.scribe.oauth.OAuthService;
+
 import org.xml.fixml.ExecutionReportMessageT;
 import org.xml.fixml.FIXML;
 import org.xml.fixml.InstrumentBlockT;
@@ -59,6 +37,29 @@ import org.xml.fixml.NewOrderSingleMessageT;
 import org.xml.fixml.OrderCancelRequestMessageT;
 import org.xml.fixml.OrderQtyDataBlockT;
 import org.xml.fixml.PegInstructionsBlockT;
+
+import org.cld.util.JsonUtil;
+import org.cld.util.jdbc.DBConnConf;
+
+import org.cld.datacrawl.CrawlConf;
+import org.cld.datacrawl.test.CrawlTestUtil;
+
+import org.cld.stock.StockConfig;
+import org.cld.stock.StockUtil;
+import org.cld.stock.persistence.StockPersistMgr;
+import org.cld.stock.strategy.SelectCandidateResult;
+import org.cld.stock.strategy.SelectStrategy;
+import org.cld.stock.trade.StockOrder;
+import org.cld.stock.trade.StockOrder.ActionType;
+import org.cld.stock.trade.StockOrder.OrderType;
+import org.cld.stock.trade.StockOrder.TimeInForceType;
+
+import org.cld.trade.response.Balance;
+import org.cld.trade.response.Holding;
+import org.cld.trade.response.OrderResponse;
+import org.cld.trade.response.OrderStatus;
+import org.cld.trade.response.Quote;
+
 
 public class TradeMgr {
 	private static Logger logger =  LogManager.getLogger(TradeMgr.class);
@@ -454,14 +455,15 @@ public class TradeMgr {
 		return getMarketAllQuotes(cconf.getSmalldbconf(), baseMarketId, marketId);
 	}
 	
-	public SelectCandidateResult applyCloseDropAvgNow(String baseMarketId, String marketId, boolean useLast, SelectStrategy bs){
+	//used by test
+	public SelectCandidateResult applySelectStrategyNow(String baseMarketId, String marketId, boolean useLast, SelectStrategy bs){
 		List<Quote> ql = getMarketAllQuotes(cconf.getSmalldbconf(), baseMarketId, marketId);
-		return applyCloseDropAvg(ql, baseMarketId, marketId, useLast, bs);
+		return applySelectStrategy(ql, baseMarketId, marketId, useLast, bs);
 	}
 	/*return the buy order
 	 *simulate true: use last price and preview the order
 	*/
-	public SelectCandidateResult applyCloseDropAvg(List<Quote> ql, String baseMarketId, String marketId, boolean useLast, SelectStrategy bs){
+	public SelectCandidateResult applySelectStrategy(List<Quote> ql, String baseMarketId, String marketId, boolean useLast, SelectStrategy bs){
 		Map<String, Float> newQuotes = new HashMap<String, Float>();
 		for (Quote q:ql){
 			if (useLast){
@@ -480,7 +482,7 @@ public class TradeMgr {
 		}catch(ParseException e){
 			logger.error("", e);
 		}
-		List<SelectCandidateResult> scrl = GenCloseDropAvgForDayTask.select(cconf, baseMarketId, marketId, submitDay, 3, bs, newQuotes);
+		List<SelectCandidateResult> scrl = bs.selectByCurrent(cconf, baseMarketId, marketId, submitDay, 3, newQuotes);
 		if (scrl.size()>0){
 			SelectCandidateResult scr = scrl.get(0);
 			return scr;

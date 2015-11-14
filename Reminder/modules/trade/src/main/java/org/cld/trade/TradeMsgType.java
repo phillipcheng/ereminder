@@ -5,7 +5,7 @@ public enum TradeMsgType {
 	marketOpenSoon,
 	marketCloseSoon,
 	monitorBuyLimitOrder,
-	monitorSellStopTrailingOrder,
+	monitorSellStopOrder,
 	monitorSellLimitPrice,
 
 }

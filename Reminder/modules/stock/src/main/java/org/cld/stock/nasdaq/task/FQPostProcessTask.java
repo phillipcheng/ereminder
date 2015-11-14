@@ -15,6 +15,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
+import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
@@ -120,6 +121,7 @@ public class FQPostProcessTask extends Task implements Serializable, LaunchableT
 		hadoopJobParams.put("mapreduce.map.speculative", "false");
 		hadoopJobParams.put("mapreduce.map.memory.mb", mbMem + "");
 		hadoopJobParams.put("mapreduce.map.java.opts", optValue);
+		hadoopJobParams.put(NLineInputFormat.LINES_PER_MAP, "50");
 		return CrawlUtil.hadoopExecuteCrawlTasks(propfile, cconf, tl, taskName, false, hadoopJobParams);
 	}
 	

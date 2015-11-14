@@ -55,4 +55,10 @@ public class SinaStockBase extends StockBase{
 	public String[] genNdLable(){
 		return GenNdLable.launch(this.propFile, getCconf(), this.specialParam, true);
 	}
+
+	@Override
+	public boolean readyToCrawl(Date today) {
+		//check fq
+		return true;
+	}
 }

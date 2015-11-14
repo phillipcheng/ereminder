@@ -61,12 +61,12 @@ public class MonitorBuyOrderTrdMsg extends TradeMsg {
 		if (os!=null){
 			if (OrderStatus.FILLED.equals(os.getStat())){
 				//submit 1 sell stop trailing order, 1 monitor order msg and 1 monitor price msg
-				StockOrder sellstorder = getSomap().get(StockOrderType.sellstoptrail);
+				StockOrder sellstorder = getSomap().get(StockOrderType.sellstop);
 				StockOrder selllmorder = getSomap().get(StockOrderType.selllimit);
-				OrderResponse or = TutoArader.trySubmit(tm, sellstorder, true); //submit stop trailing order
+				OrderResponse or = AutoTrader.trySubmit(tm, sellstorder, true); //submit stop order
 				if (OrderResponse.SUCCESS.equals(or.getError())){
 					logger.info(String.format("buy order filled. %s", os));
-					MonitorSellStopTrailingOrderTrdMsg mbo = new MonitorSellStopTrailingOrderTrdMsg(or.getClientorderid(), getSomap());
+					MonitorSellStopOrderTrdMsg mbo = new MonitorSellStopOrderTrdMsg(or.getClientorderid(), getSomap());
 					StockPosition trySp = new StockPosition(sellstorder, StockPosition.open, or.getClientorderid());
 					sellstorder.setOrderId(or.getClientorderid());//set this client id into the stock order context
 					TradePersistMgr.openPosition(tm.getCconf().getSmalldbconf(), trySp);//

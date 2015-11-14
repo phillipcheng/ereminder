@@ -41,7 +41,7 @@ public class DividendSS extends SelectStrategy {
 	
 	@JsonIgnore
 	@Override
-	public List<SelectCandidateResult> getSelectCandidate(Map<JDBCMapper, List<Object>> tableResults) {
+	public List<SelectCandidateResult> selectByHistory(Map<JDBCMapper, List<Object>> tableResults) {
 		Object[] params = this.getParams();
 		float threashold = ((Double)params[0]).floatValue();
 		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();

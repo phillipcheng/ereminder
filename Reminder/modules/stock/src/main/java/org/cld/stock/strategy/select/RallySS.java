@@ -71,7 +71,7 @@ public class RallySS extends SelectStrategy {
 	//using the close of current cq, then submit date has to be next trading day
 	@JsonIgnore
 	@Override
-	public List<SelectCandidateResult> getSelectCandidate(Map<JDBCMapper, List<Object>> tableResults) {
+	public List<SelectCandidateResult> selectByHistory(Map<JDBCMapper, List<Object>> tableResults) {
 		Object[] params = this.getParams();
 		int periodDays = (int) ((Double)params[0]).floatValue();
 		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();

@@ -36,7 +36,7 @@ public class RandomSS extends SelectStrategy {
 	
 	@JsonIgnore
 	@Override
-	public List<SelectCandidateResult> getSelectCandidate(Map<JDBCMapper, List<Object>> tableResults) {
+	public List<SelectCandidateResult> selectByHistory(Map<JDBCMapper, List<Object>> tableResults) {
 		Object[] params = this.getParams();
 		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
 		List<Object> lo = tableResults.get(sc.getFQDailyQuoteTableMapper());

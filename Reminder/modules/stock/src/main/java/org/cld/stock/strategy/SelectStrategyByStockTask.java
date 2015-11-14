@@ -89,7 +89,7 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 					List<Object> lo = tableResults.get(jmap);
 					resultMap.put(jmap, lo);
 				}
-				List<SelectCandidateResult> scrl = ss.getSelectCandidate(resultMap);
+				List<SelectCandidateResult> scrl = ss.selectByHistory(resultMap);
 				if (scrl!=null){
 					for (SelectCandidateResult scr:scrl){
 						String key = String.format("%s,%s,%s,%s", ss.getName(), scr.getDt(), ss.getOrderDirection(), ss.paramsToString());

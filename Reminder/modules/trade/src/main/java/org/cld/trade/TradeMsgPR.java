@@ -6,6 +6,7 @@ import java.util.List;
 public class TradeMsgPR {
 
 	boolean executed=false;//whether this message is executed, if yes, then it will be deleted, if not it will remain there to be executed in next round
+	boolean cleanAllMsgs=false;//clean all messages if this recieved
 	List<TradeMsg> newMsgs; //to add new messages
 	List<String> rmMsgs;//to remove msg ids
 	String msgId;
@@ -49,5 +50,13 @@ public class TradeMsgPR {
 
 	public void setMsgId(String msgId) {
 		this.msgId = msgId;
+	}
+
+	public boolean isCleanAllMsgs() {
+		return cleanAllMsgs;
+	}
+
+	public void setCleanAllMsgs(boolean cleanAllMsgs) {
+		this.cleanAllMsgs = cleanAllMsgs;
 	}
 }

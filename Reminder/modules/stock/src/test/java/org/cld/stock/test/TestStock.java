@@ -25,6 +25,7 @@ import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.strategy.SellStrategy;
 import org.cld.stock.strategy.prepare.GenCloseDropAvgForDayTask;
+import org.cld.stock.strategy.select.CloseDropAvgSS;
 import org.cld.stock.task.LoadDBDataTask;
 import org.cld.stock.trade.BuySellResult;
 import org.cld.stock.trade.TradeSimulator;
@@ -124,7 +125,7 @@ public class TestStock {
 		String marketId = NasdaqStockConfig.MarketId_ALL; //not used
 		StockBase nsb = new NasdaqStockBase(pFile, marketId, null, null);
 		String[] stockids=new String[]{"AIF","GOOG","AAPL"};
-		SellStrategy ss = new SellStrategy(1, 5, 2.5f, 1.5f);
+		SellStrategy ss = new SellStrategy(1, 5, 2.5f, 1.5f, true);
 		for (String stockid:stockids){
 			SelectCandidateResult scr = new SelectCandidateResult(stockid, "2015-10-29", 0, 0);
 			BuySellResult bsr = TradeSimulator.trade(scr, ss, nsb.getStockConfig(), cconf);
@@ -164,14 +165,14 @@ public class TestStock {
 		String baseMarketId="nasdaq";
 		StockConfig sc = StockUtil.getStockConfig(baseMarketId);
 		String marketId="ALL";
-		SelectStrategy bs = new SelectStrategy();
+		CloseDropAvgSS bs = new CloseDropAvgSS();
 		bs.setOrderDirection(SelectStrategy.DESC);
 		bs.setParams(new Object[]{7f,0f});
 		Date startDay= sdf.parse("2015-10-03");
 		Date endDay = sdf.parse("2015-11-07");
 		Date day = startDay;
 		while (day.before(endDay)){
-			List<SelectCandidateResult> sl = GenCloseDropAvgForDayTask.select(cconf, baseMarketId, marketId, day, 10, bs, null);
+			List<SelectCandidateResult> sl = bs.selectByCurrent(cconf, baseMarketId, marketId, day, 10, null);
 			logger.info(String.format("%s,%s", sdf.format(day), sl));
 			day = StockUtil.getNextOpenDay(day, sc.getHolidays());
 		}

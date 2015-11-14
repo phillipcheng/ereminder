@@ -14,10 +14,10 @@ public class TradePersistMgr {
 	private static Logger logger =  LogManager.getLogger(TradePersistMgr.class);
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
-	public static List<StockPosition> getPosition(DBConnConf dbconf, Date dt){
+	public static List<StockPosition> getOpenPosition(DBConnConf dbconf, Date dt){
 		StockPositionJDBCMapper mapper = StockPositionJDBCMapper.getInstance();
 		Connection con = null;
-		String sql = String.format("select * from %s where dt>=?", mapper.getTableName());
+		String sql = String.format("select * from %s where dt>=? and isOpenPos=1", mapper.getTableName());
 		try{
 			con = SqlUtil.getConnection(dbconf);
 			List<StockPosition> lo = (List<StockPosition>) SqlUtil.getObjectsByParam(sql, new Object[]{dt}, 

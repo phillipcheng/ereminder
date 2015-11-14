@@ -36,7 +36,7 @@ public class CloseDropAvgCloseSS extends SelectStrategy {
 	//just use up to the close of prev day and submit at the open
 	@JsonIgnore
 	@Override
-	public List<SelectCandidateResult> getSelectCandidate(Map<JDBCMapper, List<Object>> tableResults) {
+	public List<SelectCandidateResult> selectByHistory(Map<JDBCMapper, List<Object>> tableResults) {
 		Object[] params = this.getParams();
 		float threashold = ((Double)params[0]).floatValue();//drop percentage
 		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();

@@ -36,7 +36,7 @@ public class CloseDropSS extends SelectStrategy {
 	//use the open of submit day and submit at the open
 	@JsonIgnore
 	@Override
-	public List<SelectCandidateResult> getSelectCandidate(Map<JDBCMapper, List<Object>> tableResults) {
+	public List<SelectCandidateResult> selectByHistory(Map<JDBCMapper, List<Object>> tableResults) {
 		Object[] params = this.getParams();
 		float threashold = ((Double)params[0]).floatValue();//drop percentage
 		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();

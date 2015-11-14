@@ -1,6 +1,7 @@
 package org.cld.stock.strategy;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -8,6 +9,7 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.datacrawl.CrawlConf;
 import org.cld.stock.CandleQuote;
 import org.cld.util.CombPermUtil;
 import org.cld.util.StringUtil;
@@ -49,8 +51,12 @@ public class SelectStrategy {
 	public void init(){}
 	public void evalExp(){}
 	public JDBCMapper[] getTableMappers(){return null;}
-	public List<SelectCandidateResult> getSelectCandidate(Map<JDBCMapper, List<Object>> tableResults){return null;}
-
+	public List<SelectCandidateResult> selectByHistory(Map<JDBCMapper, List<Object>> tableResults){return null;}
+	public List<SelectCandidateResult> selectByCurrent(CrawlConf cconf, String baseMarketId, String marketId, Date submitDay, int n, Map<String, Float> newQuotes){return null;}
+	public String[] prepareData(String baseMarketId, String marketId, CrawlConf cconf, String propfile, Date start, Date end){return null;}
+	
+	
+	//
 	public static final double MIN_PRICE=2;//avoid penny stock
 	public static final double MIN_AMOUNT=1000000;//avoid dead stock, 1 million $ transaction at least
 	public static boolean checkValid(CandleQuote cq){
