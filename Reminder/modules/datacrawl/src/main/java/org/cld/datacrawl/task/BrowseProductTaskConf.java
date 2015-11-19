@@ -93,12 +93,12 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 	}
 
 	//using the task param map to evaluate expression type params
-	private void evalParams(BrowseDetailType bdt){
+	public static void evalParams(Task t, BrowseDetailType bdt){
 		for (ParamType pt: bdt.getBaseBrowseTask().getParam()){
 			if (pt.getValue()!=null){
 				if (pt.getType()==VarType.EXPRESSION){
-					String ret = (String)ScriptEngineUtil.eval(pt.getValue(), VarType.STRING, this.getParamMap());
-					putParam(pt.getName(), ret);
+					String ret = (String)ScriptEngineUtil.eval(pt.getValue(), VarType.STRING, t.getParamMap());
+					t.putParam(pt.getName(), ret);
 					logger.info(String.format("exp: %s eval to %s", pt.getValue(), ret));
 				}
 			}
@@ -127,9 +127,14 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		this.enableJS = bdt.getBaseBrowseTask().isEnableJS();
 		for (ParamType pt: bdt.getBaseBrowseTask().getParam()){
 			if (pt.getValue()!=null){
-				Object value = TaskUtil.getValue(null, pt.getValue(), pt.getType());
+				Object value = null;
+				if (pt.getType()==VarType.EXPRESSION){
+					value = ScriptEngineUtil.eval(pt.getValue(), VarType.STRING, this.getParamMap());
+				}else{
+					value = TaskUtil.getValue(null, pt.getValue(), pt.getType());
+				}
 				putParam(pt.getName(), value);
-			}else{
+			}else{//value is null, set default value for different types
 				if (VarType.INT == pt.getType()){
 					putParam(pt.getName(), -1);
 				}else if (VarType.BOOLEAN == pt.getType()){
@@ -139,7 +144,6 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 				}
 			}
 		}
-		evalParams(bdt);
 	}
 	
 	private static void addFullUrl(ParsedBrowsePrd pbpTemplate, Map<String, Object> singleValueParams, 
@@ -184,7 +188,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		DataStoreManager dsManager = cconf.getDsm(getDsm(bdt, cconf));
 		//re-evaluate params
 		task.putAllParams(params);
-		task.evalParams(bdt);
+		BrowseProductTaskConf.evalParams(task, bdt);
 		//startUrl may contains parameters needs to be converted to startUrlWithValue (maybe multiple) by filling the ParamValueMap
 		List<String> startUrlList = new ArrayList<String>();
 		List<String> cachePageList = new ArrayList<String>(); //if configured to save cache pages
@@ -401,7 +405,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 				//raw/[marketId]_[endDate]/storeid/[year]_[quarter]
 				StringBuffer od = new StringBuffer("raw/");
 				String marketId = (String) paramMap.get(AbstractCrawlItemToCSV.FN_MARKETID);
-				String endDate = (String) paramMap.get(AbstractCrawlItemToCSV.FIELD_NAME_ENDDATE);
+				String endDate = (String) paramMap.get(AbstractCrawlItemToCSV.FN_ENDDATE);
 				//remove the ending endDate_delta
 				String deltaSuffix = "_" + endDate + "_delta";
 				if (marketId.endsWith(deltaSuffix)){
@@ -411,7 +415,12 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 				od.append("_");
 				od.append(endDate);
 				od.append("/");
-				od.append(this.getStoreId());
+				String storeId = (String) paramMap.get(AbstractCrawlItemToCSV.FN_STOREID);
+				if (storeId==null){
+					od.append(this.getStoreId());
+				}else{
+					od.append(storeId);
+				}
 				od.append("/");
 				logger.info(String.format("output dir is %s.", od.toString()));
 				if (paramMap.containsKey(AbstractCrawlItemToCSV.FN_YEAR)){

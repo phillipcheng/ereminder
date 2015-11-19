@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.stock.hk.HKStockConfig;
 import org.cld.stock.nasdaq.NasdaqStockConfig;
 import org.cld.stock.sina.SinaStockConfig;
 import org.cld.util.DateTimeUtil;
@@ -15,6 +16,7 @@ import org.cld.util.DateTimeUtil;
 public class StockUtil {
 	public static final String SINA_STOCK_BASE="sina";
 	public static final String NASDAQ_STOCK_BASE="nasdaq";
+	public static final String HK_STOCK_BASE="hk";
 	
 	protected static Logger logger =  LogManager.getLogger(StockUtil.class);
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -24,6 +26,8 @@ public class StockUtil {
 			return new SinaStockConfig();
 		}else if (NASDAQ_STOCK_BASE.equals(stockBase)){
 			return new NasdaqStockConfig();
+		}else if (HK_STOCK_BASE.equals(stockBase)){
+			return new HKStockConfig();
 		}else{
 			logger.error(String.format("stockBase %s not supported.", stockBase));
 			return null;

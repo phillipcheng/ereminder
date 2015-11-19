@@ -147,44 +147,47 @@ public class SellStrategy {
 		return buyOrder;
 	}
 	
-	//used by real
-	public static List<StockOrder> makeSellOrders(String stockid, Date buyDate, int qty, float buyPrice, SellStrategy ss){
-		ArrayList<StockOrder> sol = new ArrayList<StockOrder>();
-		if (ss.getLimitPercentage()!=0){
-			StockOrder limitSellOrder = new StockOrder();
-			limitSellOrder.setSubmitTime(buyDate);
-			limitSellOrder.setStockid(stockid);
-			limitSellOrder.setAction(ActionType.sell);
-			limitSellOrder.setOrderType(OrderType.limit);
-			limitSellOrder.setQuantity(qty);
-			limitSellOrder.setLimitPrice((float) (buyPrice*(1+ss.getLimitPercentage()*0.01)));
-			limitSellOrder.setTif(TimeInForceType.DayOrder);
-			sol.add(limitSellOrder);
-		}
-		
-		if (ss.getStopPercentage()!=0){
-			StockOrder stopSellOrder = new StockOrder();
-			stopSellOrder.setSubmitTime(buyDate);
-			stopSellOrder.setStockid(stockid);
-			stopSellOrder.setAction(ActionType.sell);
-			if (ss.isTrailing()){
-				stopSellOrder.setOrderType(OrderType.stoptrailingpercentage);
-				stopSellOrder.setIncrementPercent(-1*ss.getStopPercentage());
-			}else{
-				stopSellOrder.setOrderType(OrderType.stoplimit);
-				stopSellOrder.setLimitPrice(buyPrice * (1-ss.getStopPercentage()));
-			}
-			stopSellOrder.setQuantity(qty);
-			stopSellOrder.setTif(TimeInForceType.DayOrder);
-			sol.add(stopSellOrder);
-		}
-		
+	//by real
+	public static StockOrder makeForceSellOrder(String stockid, int qty){
 		StockOrder forceCleanSellOrder = new StockOrder();
 		forceCleanSellOrder.setTif(TimeInForceType.MarktOnClose);//of the last day
 		forceCleanSellOrder.setStockid(stockid);
 		forceCleanSellOrder.setAction(ActionType.sell);
+		forceCleanSellOrder.setOrderType(OrderType.market);
 		forceCleanSellOrder.setQuantity(qty);
-		sol.add(forceCleanSellOrder);
+		return forceCleanSellOrder;
+	}
+	//used by real
+	public static List<StockOrder> makeSellOrders(String stockid, Date buyDate, int qty, float buyPrice, SellStrategy ss){
+		ArrayList<StockOrder> sol = new ArrayList<StockOrder>();
+		
+		StockOrder limitSellOrder = new StockOrder();
+		limitSellOrder.setSubmitTime(buyDate);
+		limitSellOrder.setStockid(stockid);
+		limitSellOrder.setAction(ActionType.sell);
+		limitSellOrder.setOrderType(OrderType.limit);
+		limitSellOrder.setQuantity(qty);
+		limitSellOrder.setLimitPrice((float) (buyPrice*(1+ss.getLimitPercentage()*0.01)));
+		limitSellOrder.setTif(TimeInForceType.DayOrder);
+		sol.add(limitSellOrder);
+		
+		StockOrder stopSellOrder = new StockOrder();
+		stopSellOrder.setSubmitTime(buyDate);
+		stopSellOrder.setStockid(stockid);
+		stopSellOrder.setAction(ActionType.sell);
+		if (ss.isTrailing()){
+			stopSellOrder.setOrderType(OrderType.stoptrailingpercentage);
+			stopSellOrder.setIncrementPercent(-1*ss.getStopPercentage());
+		}else{
+			stopSellOrder.setOrderType(OrderType.stoplimit);
+			stopSellOrder.setLimitPrice(buyPrice * (float)(1-ss.getStopPercentage()*0.01));
+			stopSellOrder.setStopPrice(buyPrice * (float)(1-ss.getStopPercentage()*0.01));
+		}
+		stopSellOrder.setQuantity(qty);
+		stopSellOrder.setTif(TimeInForceType.DayOrder);
+		sol.add(stopSellOrder);
+		sol.add(makeForceSellOrder(stockid, qty));
+		
 		return sol;
 	}
 	

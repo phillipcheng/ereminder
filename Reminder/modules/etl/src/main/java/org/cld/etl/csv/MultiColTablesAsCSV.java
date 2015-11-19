@@ -61,7 +61,7 @@ public class MultiColTablesAsCSV extends AbstractCrawlItemToCSV{
 			if (dateIdx!=null){
 				dIdx = dateIdx.get(i);
 			}
-			List<String> ls = (List<String>)ci.getParam(FIELD_NAME_DATA+(i+1));
+			List<String> ls = (List<String>)ci.getParam(FN_DATA+(i+1));
 			List<String> dataTypes = (List<String>)ci.getParam(DATA_TYPE_KEY+(i+1));
 			dataTypes = getDefaultDataType(dataTypes, colnum);
 			

@@ -7,15 +7,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.util.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.taskmgr.NodeConf;
@@ -27,6 +25,7 @@ import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.hadooputil.HadoopUtil;
 import org.cld.stock.ETLUtil;
+import org.cld.stock.StockBase;
 import org.cld.stock.StockConfig;
 
 public class MergeTask extends Task implements Serializable{
@@ -125,7 +124,17 @@ public class MergeTask extends Task implements Serializable{
 	}
 	
 	//return jobId list
-	public static String[] launch(StockConfig sc, String propfile, CrawlConf cconf, String datePart, String whichStore, boolean doMR){
+	public static String[] launch(StockConfig sc, String propfile, String baseMarketId, CrawlConf cconf, String datePart, 
+			String param, boolean doMR){
+		String[] excludeCmds = null;
+		String[] includeCmds = null;
+		if (param.startsWith(StockBase.EXCLUDE_MARK+"")){
+			param = param.substring(1);
+			excludeCmds = StringUtils.split(param,StockBase.EXCLUDE_MARK);
+		}else if (param.startsWith(StockBase.INCLUDE_MARK+"")){
+			param = param.substring(1);
+			includeCmds = StringUtils.split(param,StockBase.INCLUDE_MARK);
+		}
 		NodeConf nc = cconf.getNodeConf();
 		Configuration conf = HadoopTaskLauncher.getHadoopConf(nc);
 		//generate task list file
@@ -137,36 +146,43 @@ public class MergeTask extends Task implements Serializable{
 			List<String> jobIdList = new ArrayList<String>();
 			Path fromDir = new Path(StockConfig.RAW_ROOT+"/"+datePart);
 			logger.info(String.format("root from path: %s", fromDir.toString()));
-			logger.info(String.format("whichStore is: %s", whichStore));
 			FileStatus[] fsList = fs.listStatus(fromDir);
 			for (FileStatus store: fsList){
 				if (!store.isFile()){
 					logger.info(String.format("store %s found.", store.getPath().toString()));
 					ContentSummary cs = fs.getContentSummary(store.getPath());
 					if (cs.getLength()>0){
-						String storeid = store.getPath().getName();
-						if (whichStore == null || (whichStore!=null && whichStore.equals(storeid))){
-							boolean needOverwrite = ETLUtil.needOverwrite(cconf, storeid);
-							Path storePath = store.getPath();
-							if (Arrays.asList(sc.getPostProcessCmds()).contains(storeid)){
-								//some cmd has post-processed, so the input folder changed
-								storePath = new Path(storePath.toString().replace("raw", "postprocess"));
+						String cmd = store.getPath().getName();
+						if (includeCmds!=null){
+							if (!Arrays.asList(includeCmds).contains(cmd)){
+								continue;
 							}
-							try{
-								Path[] leafDirs = HadoopUtil.getLeafPath(fs, storePath);
-								for (Path leafDir:leafDirs){
-									MergeTask t = new MergeTask(leafDir.toString(), datePart, storeid, needOverwrite);
-									cs = fs.getContentSummary(leafDir);
-									if (cs.getLength()>0){
-										tl.add(t);
-									}else{
-										logger.info(String.format("empty leaf folder found:%s, delete it!!!", leafDir));
-										fs.delete(leafDir, true);
-									}
+						}
+						if (excludeCmds!=null){
+							if (Arrays.asList(excludeCmds).contains(cmd)){
+								continue;
+							}
+						}
+						boolean needOverwrite = ETLUtil.needOverwrite(cconf, cmd);
+						Path storePath = store.getPath();
+						if (Arrays.asList(sc.getPostProcessCmds()).contains(cmd)){
+							//some cmd has post-processed, so the input folder changed
+							storePath = new Path(storePath.toString().replace("raw", "postprocess"));
+						}
+						try{
+							Path[] leafDirs = HadoopUtil.getLeafPath(fs, storePath);
+							for (Path leafDir:leafDirs){
+								MergeTask t = new MergeTask(leafDir.toString(), datePart, cmd, needOverwrite);
+								cs = fs.getContentSummary(leafDir);
+								if (cs.getLength()>0){
+									tl.add(t);
+								}else{
+									logger.info(String.format("empty leaf folder found:%s, delete it!!!", leafDir));
+									fs.delete(leafDir, true);
 								}
-							}catch(Exception e){
-								logger.warn(String.format("cmd %s data %s not exist, skip..", storeid, storePath));
 							}
+						}catch(Exception e){
+							logger.warn(String.format("cmd %s data %s not exist, skip..", cmd, storePath));
 						}
 					}else{
 						logger.info(String.format("empty store folder found:%s, delete it!!!", store.getPath()));
@@ -175,7 +191,7 @@ public class MergeTask extends Task implements Serializable{
 				}
 			}
 			if (doMR){
-				String taskName = MergeTask.class.getName() + "_" + datePart + "_" + whichStore;
+				String taskName = MergeTask.class.getName() + "_" + datePart + "_" + param;
 				int mbMem = 3072;
 				String optValue = "-Xmx" + mbMem + "M";
 				Map<String, String> hadoopJobParams = new HashMap<String, String>();

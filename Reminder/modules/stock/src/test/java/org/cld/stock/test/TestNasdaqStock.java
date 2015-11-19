@@ -67,11 +67,11 @@ public class TestNasdaqStock {
 	public void testRunAllCmd() throws Exception{
 		nsb.setStartDate(null);
 		nsb.setEndDate(NasdaqTestStockConfig.date_Test_END_D1);
-		nsb.runAllCmd();
+		nsb.runAllCmd(null);
 		
 		nsb.setStartDate(null);
 		nsb.setEndDate(NasdaqTestStockConfig.date_Test_END_D3);
-		nsb.runAllCmd();
+		nsb.runAllCmd(null);
 		
 	}
 	
@@ -89,7 +89,11 @@ public class TestNasdaqStock {
 	}
 	@Test
 	public void testCmd_QuoteFq() throws Exception{
-		nsb.runCmd(NasdaqStockConfig.QUOTE_FQ_HISTORY, marketId, null, "2015-10-10");
+		nsb.runCmd(NasdaqStockConfig.QUOTE_FQ_HISTORY, marketId, null, "2015-11-18");
+	}
+	@Test
+	public void testCmd_QuoteHistory(){
+		nsb.runCmd(NasdaqStockConfig.QUOTE_HISTORY, marketId, null, "2015-11-19");
 	}
 	@Test
 	public void testPostProcess() throws Exception{
@@ -148,10 +152,6 @@ public class TestNasdaqStock {
 		nsb.runCmd(NasdaqStockConfig.REVENUE, marketId, null,  sdf.format(nsb.getStockConfig().getLatestOpenMarketDate(new Date())));
 	}	
 	@Test
-	public void testCmd_HolderInstitutional(){
-		nsb.runCmd(NasdaqStockConfig.HOLDING_INSTITUTIONAL, marketId, null, "2015-10-06");
-	}
-	@Test
 	public void testCmd_Issue_Dividend(){
 		nsb.runCmd(NasdaqStockConfig.ISSUE_DIVIDEND, marketId, "2015-08-01", sdf.format(nsb.getStockConfig().getLatestOpenMarketDate(new Date())));
 	}
@@ -175,62 +175,10 @@ public class TestNasdaqStock {
 	public void testCmd_HolderInsidersDateRange(){
 		nsb.runCmd(NasdaqStockConfig.HOLDING_INSIDERS, marketId, "2015-02-01", sdf.format(nsb.getStockConfig().getLatestOpenMarketDate(new Date())));
 	}
-	
 	@Test
-	public void testCrawl_QuoteHistorical() throws InterruptedException {
-		List<Task> tl = nsb.getCconf().setUpSite("nasdaq-quote-historical.xml", null);
-		String startDate = "2014-01-01";
-		String endDate = "2015-09-02";
-		String stockId = "flws";
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put(TaskMgr.TASK_RUN_PARAM_CCONF, nsb.getCconf());
-		params.put("marketId", NasdaqStockConfig.MarketId_NASDAQ);
-		params.put("stockid", stockId);
-		params.put("startDate", startDate);
-		params.put("endDate", endDate);
-		List<CrawledItem> cil = tl.get(0).runMyselfWithOutput(params, false);
-		logger.info(cil.get(0));
+	public void testCmd_HolderInstitutional(){
+		nsb.runCmd(NasdaqStockConfig.HOLDING_INSTITUTIONAL, marketId, null, "2015-10-06");
 	}
-	
-	@Test
-	public void testCrawl_QuoteTick() throws InterruptedException {
-		List<Task> tl = nsb.getCconf().setUpSite("nasdaq-quote-tick.xml", null);
-		Date d = nsb.getStockConfig().getLatestOpenMarketDate(new Date());
-		String strD = sdf.format(d);
-		//String stockId = "ba";
-		String stockId = "disca";
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put(TaskMgr.TASK_RUN_PARAM_CCONF, nsb.getCconf());
-		params.put("marketId", NasdaqStockConfig.MarketId_NASDAQ);
-		params.put("stockid", stockId);
-		params.put("startDate", strD);
-		params.put("endDate", strD);
-		List<CrawledItem> cil = tl.get(0).runMyselfWithOutput(params, false);
-		for (CrawledItem ci: cil){
-			logger.info(ci);
-		}
-	}
-	
-	@Test
-	public void testCrawl_QuoteAfterHours() throws InterruptedException {
-		List<Task> tl = nsb.getCconf().setUpSite("nasdaq-quote-afterhours.xml", null);
-		Date d = nsb.getStockConfig().getLatestOpenMarketDate(new Date());
-		String strD = sdf.format(d);
-		//String stockId = "ba";
-		//String stockId = "baba";
-		String stockId = "aapl";
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put(TaskMgr.TASK_RUN_PARAM_CCONF, nsb.getCconf());
-		params.put("marketId", NasdaqStockConfig.MarketId_NASDAQ);
-		params.put("stockid", stockId);
-		params.put("startDate", strD);
-		params.put("endDate", strD);
-		List<CrawledItem> cil = tl.get(0).runMyselfWithOutput(params, false);
-		for (CrawledItem ci: cil){
-			logger.info(ci);
-		}
-	}
-	
 	//strategy
 	@Test
 	public void testAllStrategy() throws Exception{
@@ -263,7 +211,7 @@ public class TestNasdaqStock {
 	public void testReadyCrawl() throws Exception{
 		String pFile = "client1-v2.properties";
 		StockBase sb = new NasdaqStockBase(pFile, marketId, null, null);
-		sb.readyToCrawl(new Date());
+		sb.fqReady(new Date());
 	}
 	
 	@Test

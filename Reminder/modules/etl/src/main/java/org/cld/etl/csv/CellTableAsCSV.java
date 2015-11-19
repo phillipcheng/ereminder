@@ -46,7 +46,7 @@ public class CellTableAsCSV extends AbstractCrawlItemToCSV{
 	@Override
 	public String[][] getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		init(ci, paramMap);
-		List<String> ls = (List<String>)ci.getParam(FIELD_NAME_DATA);
+		List<String> ls = (List<String>)ci.getParam(FN_DATA);
 		int cellrownum = (int)ci.getParam(FIELD_NAME_CELLROWNUMBER);
 		List<String> colHeaders = (List<String>) ci.getParam(FIELD_NAME_COLHEADER);
 		int colnum = (int)ci.getParam(FIELD_NAME_COLNUM);

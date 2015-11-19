@@ -26,16 +26,16 @@ public abstract class StockConfig {
 	
 	public abstract String getTestMarketId();
 	
-	public abstract String trimStockId(String stockid);
-
+	public abstract String stockIdMarket2Cmd(String stockid, String cmd);//from the market-stock-ids to the format each cmd needs
+	public abstract String stockIdCmd2DB(String stockid, String cmd);//from stockid used for cmd to stored in db
+	
 	public abstract Date getMarketStartDate();
 	
 	public abstract String getStockIdsCmd();
 	public abstract String getIPODateCmd();//this is a sync, hbase stored cmd
-	public abstract String[] getAllCmds(String marketId);
+	public abstract String[] getAllCmds(CrawlCmdGroupType groupType);
 	public abstract String[] getSyncCmds();
 	public abstract String[] getCurrentDayCmds();
-	public abstract String[] getUntrimmedStockIdCmds();
 	public abstract String[] getSlowCmds();
 	public abstract String[] getFirstStartTimeUseNullCmds();//if the cmd runs first time for a stock, use null as start time instead of ipodates
 	public abstract String[] getUpdateAllCmds();//like backward ex-div price quotes
@@ -43,7 +43,6 @@ public abstract class StockConfig {
 	public abstract String getTestMarketChangeDate();//date before this using test_stock_set1, date after this using test_stock_set2
 	public abstract String[] getTestStockSet1();
 	public abstract String[] getTestStockSet2();
-	public abstract String getTestShortStartDate();
 	public abstract Map<LaunchableTask, String[]> getPostProcessMap();
 	
 	public abstract Map<String, String> getPairedMarket(); //like MarketId_HS_A paired with MarketId_HS_A_ST
@@ -62,13 +61,16 @@ public abstract class StockConfig {
 	public abstract JDBCMapper getDividendTableMapper();//future
 	public abstract JDBCMapper getExDivSplitHistoryTableMapper();//history
 	public abstract JDBCMapper getEarnTableMapper();
-	
 	public abstract String postImportSql();
 	
 	public String[] getAllStrategy(){
 		return new String[]{"random", "rally", "dividend", "closedrop", "closedropavg", "closedropavgclose"};
 	}
 	
+	public String getCrawlByCmd(String cmd){
+		return cmd;
+	}
+
 	public StockConfig() {
 		sdf = new SimpleDateFormat("yyyy-MM-dd");
 		//sdf.setTimeZone(this.getTimeZone());
@@ -76,57 +78,63 @@ public abstract class StockConfig {
 	
 	//last update date per stock by cmd
 	public String getStockLUDateByCmd(String cmd){
-		Set<String> tables = getTablesByCmd(cmd).keySet();
-		if (tables == null){
-			logger.error(String.format("tables for stock last update are not defined for cmd: %s", cmd));
-			return null;
-		}
+		Map<String, String> map = getTablesByCmd(cmd);
 		String sql = null;
-		if (tables.size()==1){
-			sql = String.format("select stockid, max(dt) from %s group by stockid", tables.iterator().next());
-		}else{
-			StringBuffer sb = new StringBuffer("select stockid, max(ludt) from (");
-			int i=0;
-			Iterator<String> it = tables.iterator();
-			while (it.hasNext()){
-				String table = it.next();
-				if (i>0){
-					sb.append(" union ");
-				}
-				sb.append(String.format("select stockid, max(dt) as ludt from %s group by stockid", table));
-				i++;
+		if (map!=null){
+			Set<String> tables = map.keySet();
+			if (tables == null){
+				logger.error(String.format("tables for stock last update are not defined for cmd: %s", cmd));
+				return null;
 			}
-			sb.append(") as stocklu group by stockid");
-			sql = sb.toString();
+			if (tables.size()==1){
+				sql = String.format("select stockid, max(dt) from %s group by stockid", tables.iterator().next());
+			}else{
+				StringBuffer sb = new StringBuffer("select stockid, max(ludt) from (");
+				int i=0;
+				Iterator<String> it = tables.iterator();
+				while (it.hasNext()){
+					String table = it.next();
+					if (i>0){
+						sb.append(" union ");
+					}
+					sb.append(String.format("select stockid, max(dt) as ludt from %s group by stockid", table));
+					i++;
+				}
+				sb.append(") as stocklu group by stockid");
+				sql = sb.toString();
+			}
+			logger.info(String.format("get lu date sql defined for %s is %s", cmd, sql));
 		}
-		logger.info(String.format("get lu date sql defined for %s is %s", cmd, sql));
 		return sql;
 	}
 	
 	//last update date per stock by cmd
 	public String getMarketLUDateByCmd(String cmd){
-		Set<String> tables = getTablesByCmd(cmd).keySet();
-		if (tables == null){
-			logger.error(String.format("tables for market last update are not defined for cmd: %s", cmd));
-			return null;
-		}
+		Map<String, String> map = getTablesByCmd(cmd);
 		String sql = null;
-		if (tables.size()==1){
-			sql = String.format("select max(dt) from %s", tables.iterator().next());
-		}else{
-			StringBuffer sb = new StringBuffer("select max(ludt) from (");
-			int i=0;
-			Iterator<String> it = tables.iterator();
-			while (it.hasNext()){
-				String table = it.next();
-				if (i>0){
-					sb.append(" union ");
-				}
-				sb.append(String.format("select max(dt) as ludt from %s", table));
-				i++;
+		if (map!=null){
+			Set<String> tables = map.keySet();
+			if (tables == null){
+				logger.error(String.format("tables for market last update are not defined for cmd: %s", cmd));
+				return null;
 			}
-			sb.append(") as marketlu");
-			sql = sb.toString();
+			if (tables.size()==1){
+				sql = String.format("select max(dt) from %s", tables.iterator().next());
+			}else{
+				StringBuffer sb = new StringBuffer("select max(ludt) from (");
+				int i=0;
+				Iterator<String> it = tables.iterator();
+				while (it.hasNext()){
+					String table = it.next();
+					if (i>0){
+						sb.append(" union ");
+					}
+					sb.append(String.format("select max(dt) as ludt from %s", table));
+					i++;
+				}
+				sb.append(") as marketlu");
+				sql = sb.toString();
+			}
 		}
 		logger.info(String.format("get market lu date sql defined for %s is %s", cmd, sql));
 		return sql;

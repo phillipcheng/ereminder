@@ -7,15 +7,15 @@ import org.apache.logging.log4j.Logger;
 import org.cld.stock.CandleQuote;
 import org.cld.util.jdbc.JDBCMapper;
 
-public class NasdaqDailyQuoteCQJDBCMapper extends JDBCMapper{
-	Logger logger = LogManager.getLogger(NasdaqDailyQuoteCQJDBCMapper.class);
+public class NasdaqDailyQuoteMapper extends JDBCMapper{
+	Logger logger = LogManager.getLogger(NasdaqDailyQuoteMapper.class);
 	
-	private NasdaqDailyQuoteCQJDBCMapper(){
+	private NasdaqDailyQuoteMapper(){
 		
 	}
-	private static NasdaqDailyQuoteCQJDBCMapper singleton = new NasdaqDailyQuoteCQJDBCMapper();
+	private static NasdaqDailyQuoteMapper singleton = new NasdaqDailyQuoteMapper();
 	
-	public static NasdaqDailyQuoteCQJDBCMapper getInstance(){
+	public static NasdaqDailyQuoteMapper getInstance(){
 		return singleton;
 	}
 /*

@@ -138,7 +138,7 @@ public class QuotePostProcessTask extends Task implements Serializable, Launchab
 	}
 	
 	@Override
-	public String[] launch(String propfile, CrawlConf cconf, String datePart, String[] cmds) {
+	public String[] launch(String propfile, String baseMarketId, CrawlConf cconf, String datePart, String[] cmds) {
 		NodeConf nc = cconf.getNodeConf();
 		Configuration conf = HadoopTaskLauncher.getHadoopConf(nc);
 		// generate task list file

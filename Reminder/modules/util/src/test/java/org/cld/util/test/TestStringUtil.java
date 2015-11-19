@@ -2,6 +2,7 @@ package org.cld.util.test;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -85,6 +86,13 @@ public class TestStringUtil {
 	public void testParseSteps(){
 		Float[] fl = StringUtil.parseSteps("(1)-1-0.5");
 		logger.info(StringUtils.join(fl,","));
+	}
+	
+	@Test
+	public void testSplit(){
+		String param="|nasdaq-quote-fq-historical|nasdaq-quote-historical";
+		String[] excludeCmds = StringUtils.split(param,'|');
+		logger.info(String.format("excludeCmds: %s", Arrays.asList(excludeCmds)));
 	}
 
 }

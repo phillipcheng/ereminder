@@ -22,8 +22,7 @@ public class GenMsgQuartzJob implements Job {
 		AutoTrader at = (AutoTrader) context.getMergedJobDataMap().get(AutoTrader.JDM_KEY_AT);
 		String triggerName=context.getTrigger().getKey().getName();
 		if (TradeMsgType.marketOpenSoon.toString().equals(triggerName)){
-			MarketOpenTrdMsg motm = new MarketOpenTrdMsg(false, true, at.getBs(), at.getSs()); //simulate use last
-			//MarketOpenTrdMsg motm = new MarketOpenTrdMsg(true, false, at.getBs(), at.getSs());//real use open
+			MarketOpenTrdMsg motm = new MarketOpenTrdMsg(!at.getTm().isPreview(), at.getTm().isUseLast(), at.getBs(), at.getSs()); //simulate use last
 			at.addMsg(motm);
 			logger.info(String.format("message %s added.", motm));
 		}else if (TradeMsgType.marketCloseSoon.toString().equals(triggerName)){

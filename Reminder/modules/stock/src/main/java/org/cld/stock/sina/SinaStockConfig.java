@@ -11,6 +11,7 @@ import java.util.TimeZone;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.stock.CrawlCmdGroupType;
 import org.cld.stock.LaunchableTask;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
@@ -250,8 +251,8 @@ public class SinaStockConfig extends StockConfig {
 			CNHolidays.add(sdf.parse("2014-10-01"));
 			CNHolidays.add(sdf.parse("2014-10-02"));
 			CNHolidays.add(sdf.parse("2014-10-03"));
-			CNHolidays.add(sdf.parse("2013-10-06"));
-			CNHolidays.add(sdf.parse("2013-10-07"));
+			CNHolidays.add(sdf.parse("2014-10-06"));
+			CNHolidays.add(sdf.parse("2014-10-07"));
 			//
 			CNHolidays.add(sdf.parse("2015-01-01"));
 			CNHolidays.add(sdf.parse("2015-01-02"));
@@ -505,8 +506,9 @@ public class SinaStockConfig extends StockConfig {
 	};
 	
 	public static String[] syncConf = new String[]{SINA_STOCK_IPO}; //other cmd need this result
-	public static String[] allConf = (String[]) ListUtil.concatAll(new String[]{SINA_STOCK_IDS}, 
-			corpConfs, tradeConfs, issueConfs, holderConfs, frConfs);
+	public static String[] testAllConf = (String[]) ArrayUtils.addAll(new String[]{});
+	public static String[] allConf = (String[]) ListUtil.concatAll(corpConfs, tradeConfs, issueConfs, holderConfs, frConfs);
+	public static String[] noneQuoteConf = (String[]) ListUtil.concatAll(corpConfs, issueConfs, holderConfs, frConfs);
 
 	@Override
 	public String getTestMarketId() {
@@ -562,17 +564,17 @@ public class SinaStockConfig extends StockConfig {
 	}
 
 	@Override
-	public String[] getAllCmds(String marketId) {
-		if (marketId.startsWith(SinaStockConfig.MarketId_HS_Test)){
-			return SinaTestStockConfig.testAllConf;
+	public String[] getAllCmds(CrawlCmdGroupType groupType) {
+		if (groupType == CrawlCmdGroupType.test){
+			return testAllConf;
+		}else if (groupType == CrawlCmdGroupType.all){
+			return allConf;
+		}else if (groupType == CrawlCmdGroupType.nonequote){
+			return noneQuoteConf;
 		}else{
-			return SinaStockConfig.allConf;
+			logger.error(String.format("group type:%s not supported.", groupType));
+			return new String[]{};
 		}
-	}
-
-	@Override
-	public String getTestShortStartDate() {
-		return SinaTestStockConfig.Test_SHORT_SD;
 	}
 
 	@Override
@@ -590,10 +592,7 @@ public class SinaStockConfig extends StockConfig {
 		return date_HS_A_START_DATE;
 	}
 	
-	@Override
-	public String trimStockId(String stockid) {
-		return stockid.substring(2); //remove the sz, sh prefix
-	}
+	
 	@Override
 	public String[] getCurrentDayCmds() {
 		return new String[]{};
@@ -616,11 +615,23 @@ public class SinaStockConfig extends StockConfig {
 		}
 		return d;
 	}
+	//from market we get sz000001, only trade_detail need this untrimmed version
 	@Override
-	public String[] getUntrimmedStockIdCmds() {
-		return new String[]{SINA_STOCK_TRADE_DETAIL};
+	public String stockIdMarket2Cmd(String stockid, String cmd) {
+		if (cmd.equals(SINA_STOCK_TRADE_DETAIL)){
+			return stockid;
+		}else{
+			return stockid.substring(2);
+		}
 	}
-	
+	@Override
+	public String stockIdCmd2DB(String stockid, String cmd) {
+		if (cmd.equals(SINA_STOCK_TRADE_DETAIL)){
+			return stockid.substring(2);//sh601766 for cmd url => 601766 in the db
+		}else{
+			return stockid;
+		}
+	}
 	
 	@Override
 	public Set<Date> getHolidays() {

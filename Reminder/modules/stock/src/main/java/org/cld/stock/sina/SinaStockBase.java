@@ -57,7 +57,7 @@ public class SinaStockBase extends StockBase{
 	}
 
 	@Override
-	public boolean readyToCrawl(Date today) {
+	public boolean fqReady(Date today) {
 		//check fq
 		return true;
 	}

@@ -37,12 +37,16 @@ create table NasdaqExDivSplit(stockid varchar(150), dt Date, info varchar(150), 
 drop table if exists NasdaqSplit;
 create table NasdaqSplit(stockid varchar(150), ratio varchar(50), paydate Date, exdt Date, dt Date, primary key (stockid, exdt));
 
-#nasdaq-quote-historical
+#nasdaq-fq-quote-historical
 drop table if exists NasdaqFqHistory;
 create table NasdaqFqHistory(stockid varchar(150), dt Date, open decimal(20,2), high decimal(20,2), low decimal(20,2), close decimal(20,2), volume bigint, adjClose decimal(20,2), primary key (stockid, dt));
 create index Idx_NasdaqFqHistory_Date on NasdaqFqHistory (dt);
 create index Idx_NasdaqFqHistory_stockid on NasdaqFqHistory (stockid);
 create index Idx_NasdaqFqHistory_adjClose on NasdaqFqHistory (adjClose);
+
+#nasdaq-quote-historical
+drop table if exists NasdaqHistory;
+create table NasdaqHistory(stockid varchar(150), dt Date, open decimal(20,2), high decimal(20,2), low decimal(20,2), close decimal(20,2), volume bigint, primary key (stockid, dt));
 
 #nasdaq-quote-short-interest
 drop table if exists NasdaqShortInterest;

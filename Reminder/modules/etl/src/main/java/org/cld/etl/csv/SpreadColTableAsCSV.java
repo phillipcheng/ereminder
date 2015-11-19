@@ -127,7 +127,7 @@ public class SpreadColTableAsCSV extends AbstractCrawlItemToCSV{
 	@Override
 	public String[][] getCSV(CrawledItem ci, Map<String, Object> paramMap) {
 		init(ci, paramMap);
-		List<String> ls = (List<String>)ci.getParam(FIELD_NAME_DATA);
+		List<String> ls = (List<String>)ci.getParam(FN_DATA);
 		int colnum = (int) ci.getParam(FIELD_NAME_COLNUM);
 		if (colnum==0){
 			return new String[0][];

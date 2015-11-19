@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.trade.StockOrder;
+import org.cld.stock.trade.StockOrder.ActionType;
 import org.cld.stock.trade.StockOrder.OrderType;
 import org.cld.trade.persist.StockPosition;
 import org.cld.trade.persist.TradePersistMgr;
@@ -59,18 +60,19 @@ public class MonitorSellPriceTrdMsg extends TradeMsg {
 				tmpr.setExecuted(true);
 				//send 1 cancel order (succeeded), send 1 market order
 				logger.info(String.format("price %s crossed sell limit %s.", q, this));
-				StockOrder sellstorder = getSomap().get(StockOrderType.sellstop);
-				tm.cancelOrder(sellstorder.getOrderId());//send cancel order
-				StockOrder sellorder = getSomap().get(StockOrderType.selllimit);
+				StockOrder sellstop = getSomap().get(StockOrderType.sellstop);
+				tm.cancelOrder(sellstop.getOrderId(), ActionType.sell, sellstop.getStockid(), sellstop.getQuantity());//send cancel order
+				StockOrder selllimit = getSomap().get(StockOrderType.selllimit);
 				//change this into a market order
-				sellorder.setOrderType(OrderType.market);
-				OrderResponse or = AutoTrader.trySubmit(tm, sellorder, true);
+				selllimit.setOrderType(OrderType.market);
+				OrderResponse or = AutoTrader.trySubmit(tm, selllimit, true);
+				selllimit.setOrderId(or.getClientorderid());
 				if (OrderResponse.SUCCESS.equals(or.getError())){
-					StockPosition trySp = new StockPosition(sellorder, StockPosition.close, sellorder.getOrderId());
+					StockPosition trySp = new StockPosition(selllimit, StockPosition.close, selllimit.getOrderId());
 					TradePersistMgr.closePosition(tm.getCconf().getSmalldbconf(), trySp);//
 				}else{
 					//TODO error handling
-					logger.error(String.format("sell market order error: sell order: %s, response: %s", sellorder, or));
+					logger.error(String.format("sell market order error: sell order: %s, response: %s", selllimit, or));
 				}
 				return tmpr;
 			}

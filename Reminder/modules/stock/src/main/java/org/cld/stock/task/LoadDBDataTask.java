@@ -13,6 +13,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.stock.CrawlCmdGroupType;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.persistence.StockPersistMgr;
@@ -71,19 +72,21 @@ class LoadTask implements Runnable {
 	private File inFile;
 	private StockConfig sc;
 	private String marketId;
+	private String baseMarketId;
 	private DBConnConf dbconf;
 	
 	public LoadTask(File f, String baseMarketId, String marketId, DBConnConf dbconf){
 		this.inFile = f;
 		this.sc = StockUtil.getStockConfig(baseMarketId);
 		this.marketId = marketId;
+		this.baseMarketId = baseMarketId;
 		this.dbconf = dbconf;
 	}
 	
 	@Override
 	public void run() {
 		try{
-			String[] cmds = sc.getAllCmds(marketId);
+			String[] cmds = sc.getAllCmds(CrawlCmdGroupType.all);
 			String belongCmd = null;
 			for (String cmd:cmds){
 				if (inFile.toString().contains(cmd)){

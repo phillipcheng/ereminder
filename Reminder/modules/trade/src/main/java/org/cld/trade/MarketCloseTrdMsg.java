@@ -7,7 +7,9 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.stock.strategy.SellStrategy;
 import org.cld.stock.trade.StockOrder;
+import org.cld.stock.trade.StockOrder.ActionType;
 import org.cld.trade.persist.StockPosition;
 import org.cld.trade.persist.TradePersistMgr;
 import org.cld.trade.response.OrderResponse;
@@ -34,13 +36,13 @@ public class MarketCloseTrdMsg extends TradeMsg {
 			StockPosition sp = lp.get(0);
 			Map<String, OrderStatus> map = tm.getOrderStatus();
 			if (map.containsKey(sp.getOrderId())){
-				OrderResponse or = tm.cancelOrder(sp.getOrderId());
+				OrderResponse or = tm.cancelOrder(sp.getOrderId(), ActionType.sell, sp.getSymbol(), sp.getOrderQty());
 				if (OrderResponse.SUCCESS.equals(or.getError())){
 					//submit sell on close order
-					StockOrder so = this.getSomap().get(StockOrderType.sellmarketclose);
+					StockOrder so = SellStrategy.makeForceSellOrder(sp.getSymbol(), sp.getOrderQty());
 					OrderResponse sor = AutoTrader.trySubmit(tm, so, true);
 					if (OrderResponse.SUCCESS.equals(sor.getError())){
-						//done
+						logger.info(String.format("submitted sell at market close: %s", so));
 					}else{
 						logger.error(String.format("submit sell market on close order failed. %s", sor));
 					}

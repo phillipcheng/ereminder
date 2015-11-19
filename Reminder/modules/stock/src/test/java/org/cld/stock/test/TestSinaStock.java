@@ -69,7 +69,7 @@ public class TestSinaStock {
 	
 	@Test
 	public void testRunAllCmd1() throws Exception{
-		ssb.runAllCmd();
+		ssb.runAllCmd(null);
 	}
 	@Test
 	public void testPostProcess() throws Exception{
@@ -78,15 +78,15 @@ public class TestSinaStock {
 	}
 	@Test
 	public void tradedetail_postprocess_1() {
-		new TradeDetailPostProcessTask().launch(this.propFile, ssb.getCconf(), SinaTestStockConfig.Test_D1 + "_" + SinaTestStockConfig.Test_D2, new String[]{});
+		new TradeDetailPostProcessTask().launch(this.propFile, ssb.getBaseMarketId(), ssb.getCconf(), SinaTestStockConfig.Test_D1 + "_" + SinaTestStockConfig.Test_D2, new String[]{});
 	}
 	@Test
 	public void testMerge_1() throws Exception{
-		MergeTask.launch(ssb.getStockConfig(), this.propFile, ssb.getCconf(), SinaTestStockConfig.Test_D1 + "_" + SinaTestStockConfig.Test_D2, null, false);
+		MergeTask.launch(ssb.getStockConfig(), this.propFile, ssb.getBaseMarketId(), ssb.getCconf(), SinaTestStockConfig.Test_D1 + "_" + SinaTestStockConfig.Test_D2, null, false);
 	}
 	@Test
 	public void testMRMerge_1() throws Exception{
-		MergeTask.launch(ssb.getStockConfig(), this.propFile, ssb.getCconf(), SinaTestStockConfig.Test_D1 + "_" + SinaTestStockConfig.Test_D2, null, true);
+		MergeTask.launch(ssb.getStockConfig(), this.propFile, ssb.getBaseMarketId(), ssb.getCconf(), SinaTestStockConfig.Test_D1 + "_" + SinaTestStockConfig.Test_D2, null, true);
 	}
 	@Test
 	public void run_task_1() throws Exception{

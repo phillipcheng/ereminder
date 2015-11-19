@@ -14,7 +14,7 @@ import org.cld.datastore.entity.CrawledItemId;
 
 /*
 	CrawledId: storeid:'CmdStatus', id:marketId + cmdName, createTime is the 'endTime'
-	Params: startTime, Map<JobId, Status>
+	Params: Map<JobId, Status>
 	Status:
 	RUNNING(1),
    SUCCEEDED(2),
@@ -32,7 +32,6 @@ public class CmdStatus extends CrawledItem{
 	private String cmdName;
 
 	private Map<String, Integer> jsMap = new HashMap<String, Integer>();
-	private Date startTime;
 	private Date endTime;
 	
 	//default constructor for json
@@ -40,7 +39,7 @@ public class CmdStatus extends CrawledItem{
 	}
 	
 	//timeless cmd, static info, only related to market, not related to time
-	public CmdStatus(String marketId, String cmdName, Date endTime, Date startTime, boolean timeless, SimpleDateFormat sdf){
+	public CmdStatus(String marketId, String cmdName, Date endTime, boolean timeless, SimpleDateFormat sdf){
 		super(CRAWLITEM_TYPE, "default");
 		if (timeless){
 			this.setId(new CrawledItemId(getId(marketId, cmdName), STORE_ID, endTime));
@@ -49,13 +48,12 @@ public class CmdStatus extends CrawledItem{
 		}
 		this.marketId=marketId;
 		this.cmdName=cmdName;
-		this.startTime = startTime;
 		this.setEndTime(endTime);
 	}
 	
 	public String toString(){
-		return String.format("id: %s, marketId:%s, cmdName:%s, startTime:%s, endTime:%s, jobStatusMap:%s", 
-				this.getId(), marketId, cmdName, startTime, endTime, jsMap);
+		return String.format("id: %s, marketId:%s, cmdName:%s, endTime:%s, jobStatusMap:%s", 
+				this.getId(), marketId, cmdName, endTime, jsMap);
 	}
 	
 	public static String getId(String marketId, String cmdName, Date endTime, SimpleDateFormat sdf){
@@ -102,14 +100,6 @@ public class CmdStatus extends CrawledItem{
 
 	public void setJsMap(Map<String, Integer> jsMap) {
 		this.jsMap = jsMap;
-	}
-
-	public Date getStartTime() {
-		return startTime;
-	}
-
-	public void setStartTime(Date startTime) {
-		this.startTime = startTime;
 	}
 
 	public Date getEndTime() {

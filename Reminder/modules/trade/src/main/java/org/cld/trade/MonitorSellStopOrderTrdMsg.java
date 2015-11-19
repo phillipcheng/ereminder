@@ -58,6 +58,10 @@ public class MonitorSellStopOrderTrdMsg extends TradeMsg {
 				tmpr.setExecuted(true);
 				tmpr.setRmMsgs(rmMsgList);
 				return tmpr;
+			}else if (OrderStatus.CANCELED.equals(os.getStat())){
+				//do not monitor any more
+				tmpr.setExecuted(true);
+				return tmpr;
 			}else{
 				logger.info(String.format("status is %s for sell stop order %s", os.getStat(), os.getOrderId()));
 			}

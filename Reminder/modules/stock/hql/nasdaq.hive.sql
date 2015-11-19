@@ -39,6 +39,10 @@ create external table NasdaqSplit(stockid String, ratio String, paydt Date, exdt
 drop table if exists NasdaqFqHistory;
 create external table NasdaqFqHistory(stockid String, dt Date, Open decimal(20,2), high decimal(20,2), low decimal(20,2), close decimal(20,2), volume bigint, adjClose decimal(20,2)) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-quote-fq-historical';
 
+
+drop table if exists NasdaqHistory;
+create external table NasdaqHistory(stockid String, dt Date, Open decimal(20,2), high decimal(20,2), low decimal(20,2), close decimal(20,2), volume bigint) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-quote-historical';
+
 --nasdaq-quote-short-interest
 drop table if exists NasdaqShortInterest;
 create external table NasdaqShortInterest(stockid String, dt Date, ShortInterest bigint, AvgDailyShareVolume bigint, daysToCover decimal(20,10)) row format delimited fields terminated by ',' escaped by '\\' stored as textfile location '/reminder/items/merge/nasdaq-quote-short-interest';

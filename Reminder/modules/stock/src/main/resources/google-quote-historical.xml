@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="google-quote-historical" productType="default">
+	<PrdTask tryPattern="false">
+		<baseBrowseTask enableJS="false" taskName="google-quote-history" dsm="hdfs" mbMemoryNeeded="256">
+			<param name="stockid"/>
+			<param name="marketId"/>
+			<param name="startDate"/>
+			<param name="endDate"/>
+			<param name="HasHeader" type="boolean" value="false"/>
+			<param name="storeId" type="expression" value="baseMarketId + '-quote-historical'"/>
+			<startUrl value="https://www.google.com/finance/historical?q=[stockid]"/>
+			<userAttribute name="id">
+				<value value='stockid' toType="string" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="6" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="DataType1">
+				<value value="Date,Number,Number,Number,Number,Number" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="data1">
+				<value value="//div[@id='prices']/table[1]/tbody/tr[2]/td" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="RowDateIdx">
+				<value value="0" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<csvtransform outputType="byId" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV"/>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>

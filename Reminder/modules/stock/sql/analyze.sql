@@ -1,0 +1,2 @@
+drop table if exists TradeDetail;
+create table TradeDetail(symbol varchar(10), buydate Date, buyPrice decimal(10,5), sellDate Date, orderType varchar(40), sellPrice decimal(10,5), percentage decimal(10,5), primary key (symbol, buydate));

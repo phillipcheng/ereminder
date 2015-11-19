@@ -5,7 +5,8 @@ public class OrderStatus {
 	public static final String REJECTED="8";
 	public static final String CANCELED="4";
 	public static final String FILLED="2";
-	public static final String OPEN="1";
+	public static final String OPEN="0";
+	public static final String PENDING="A";
 	
 	String orderId;
 	int cumQty;

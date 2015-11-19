@@ -213,34 +213,36 @@ public class StockPersistMgr {
 	
 	public static Map<String, Date> getStockIPOData(StockConfig sc, DBConnConf dbconf){
 		Map<String, Date> ipoDateMap = new HashMap<String, Date>();
-		Connection con = null;
-		Statement stmt = null;
-		String query = "";
-		try{
-			con = SqlUtil.getConnection(dbconf);	
-			String tableName = sc.getTablesByCmd(sc.getIPODateCmd()).keySet().iterator().next();
-			query = String.format("select stockid, dt from %s", tableName);
-			stmt = con.createStatement();
-			ResultSet res = stmt.executeQuery(query);
-			while (res.next()){
-				ResultSetMetaData rsmd = res.getMetaData();
-				try{
-					if (rsmd.getColumnType(2)==Types.DATE){
-						ipoDateMap.put(res.getString(1), res.getDate(2));
-					}
-				}catch(Exception e){
+		if (sc.getIPODateCmd()!=null){
+			Connection con = null;
+			Statement stmt = null;
+			String query = "";
+			try{
+				con = SqlUtil.getConnection(dbconf);	
+				String tableName = sc.getTablesByCmd(sc.getIPODateCmd()).keySet().iterator().next();
+				query = String.format("select stockid, dt from %s", tableName);
+				stmt = con.createStatement();
+				ResultSet res = stmt.executeQuery(query);
+				while (res.next()){
+					ResultSetMetaData rsmd = res.getMetaData();
 					try{
-						logger.error(String.format("error converting for stockid:%s, max dt: %s", res.getString(1), res.getString(2)), e);
-					}catch(Exception e1){
-						logger.error("", e1);
+						if (rsmd.getColumnType(2)==Types.DATE){
+							ipoDateMap.put(res.getString(1), res.getDate(2));
+						}
+					}catch(Exception e){
+						try{
+							logger.error(String.format("error converting for stockid:%s, max dt: %s", res.getString(1), res.getString(2)), e);
+						}catch(Exception e1){
+							logger.error("", e1);
+						}
 					}
 				}
+				res.close();
+			}catch(Exception e){
+				logger.error(String.format("exceptin while execute %s", query), e);
+			}finally{
+				SqlUtil.closeResources(con, stmt);
 			}
-			res.close();
-		}catch(Exception e){
-			logger.error(String.format("exceptin while execute %s", query), e);
-		}finally{
-			SqlUtil.closeResources(con, stmt);
 		}
 		return ipoDateMap;
 	}

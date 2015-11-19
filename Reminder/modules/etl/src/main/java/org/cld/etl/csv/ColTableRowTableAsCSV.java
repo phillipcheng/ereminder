@@ -67,7 +67,7 @@ public class ColTableRowTableAsCSV extends AbstractCrawlItemToCSV{
 			rowDateIdx = (int) ci.getParam(FIELD_NAME_RowDateIdx);
 		};
 
-		List<String> ls = (List<String>)ci.getParam(FIELD_NAME_DATA);
+		List<String> ls = (List<String>)ci.getParam(FN_DATA);
 		boolean hasColumnTable = true;
 		//for column table
 		int colnum = 0;
@@ -236,7 +236,7 @@ public class ColTableRowTableAsCSV extends AbstractCrawlItemToCSV{
 				iter++;
 			}while(true);
 		}else{
-			logger.error(String.format("no %s found.", FIELD_NAME_DATA));
+			logger.error(String.format("no %s found.", FN_DATA));
 		}
 		
 		String[][] retlist = null;

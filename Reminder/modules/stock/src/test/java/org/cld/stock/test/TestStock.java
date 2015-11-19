@@ -15,6 +15,8 @@ import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.stock.StockBase;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
+import org.cld.stock.hk.HKStockBase;
+import org.cld.stock.hk.HKStockConfig;
 import org.cld.stock.nasdaq.NasdaqStockBase;
 import org.cld.stock.nasdaq.NasdaqStockConfig;
 import org.cld.stock.nasdaq.NasdaqTestStockConfig;
@@ -24,7 +26,6 @@ import org.cld.stock.sina.SinaStockConfig;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.strategy.SellStrategy;
-import org.cld.stock.strategy.prepare.GenCloseDropAvgForDayTask;
 import org.cld.stock.strategy.select.CloseDropAvgSS;
 import org.cld.stock.task.LoadDBDataTask;
 import org.cld.stock.trade.BuySellResult;
@@ -34,6 +35,12 @@ import org.junit.Test;
 public class TestStock {
 	private static Logger logger =  LogManager.getLogger(TestStock.class);
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	
+	@Test
+	public void testHKIds() throws Exception{
+		HKStockBase hksb = new HKStockBase("client1-v2.properties", HKStockConfig.MarketId_HGT, null, sdf.parse("2015-10-11"));
+		hksb.runAllCmd(null);
+	}
 	@Test
 	public void testDateInHbase() throws Exception{
 		NasdaqStockBase nsb = new NasdaqStockBase("cld-stock-cluster.properties", "ALL", null, sdf.parse("2015-10-11"));
@@ -87,27 +94,6 @@ public class TestStock {
 		td = sdf.parse("2015-09-26");
 		dl = StockUtil.getOpenDayList(fd, td, SinaStockConfig.CNHolidays);
 		logger.info(String.format("dl is %s", dl));
-	}
-
-	@Test
-	public void testCountWave() throws Exception{
-		String pFile = "client1-v2.properties";
-		String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test; //not used
-		Date sd = sdf.parse("2015-10-12");
-		Date ed = sdf.parse("2015-10-15");
-		StockBase nsb = new NasdaqStockBase(pFile, marketId, sd, ed);
-		nsb.getDsm().addUpdateCrawledItem(nsb.run_browse_idlist(marketId, ed), null);//init stockid
-		nsb.countWave("wavecount1.properties");
-	}
-	
-	@Test
-	public void testGenFillEpsSql() throws Exception{
-		String pFile = "client1-v2.properties";
-		String marketId = SinaStockConfig.MarketId_HS_A; //not used
-		Date sd = null;
-		Date ed = sdf.parse("2015-10-29");
-		StockBase nsb = new SinaStockBase(pFile, marketId, sd, ed);
-		nsb.genFillEpsSql(null);
 	}
 	
 	@Test

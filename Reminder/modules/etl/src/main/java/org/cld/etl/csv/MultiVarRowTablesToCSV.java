@@ -40,7 +40,7 @@ public class MultiVarRowTablesToCSV extends AbstractCrawlItemToCSV{
 		List<String[]> retlist = new ArrayList<String[]>();
 		for (int i=0; i<csvnames.size(); i++){
 			String csvname = csvnames.get(i);
-			List<String> vl = (List<String>)ci.getParam(FIELD_NAME_DATA+(i+1));
+			List<String> vl = (List<String>)ci.getParam(FN_DATA+(i+1));
 			List<Integer> rsvl = (List<Integer>)ci.getParam(FIELD_NAME_ROWSPAN+(i+1));
 			int colNum = (Integer)ci.getParam(FIELD_NAME_COLNUM+(i+1));
 			int rowDateIdx=-1;

@@ -213,7 +213,7 @@ public class ProductAnalyzeUtil {
 	private static boolean taskNeedFilter(ParsedBrowsePrd taskDef, CrawledItem ci){
 		if ((taskDef.getPdtAttrMap().containsKey(AbstractCrawlItemToCSV.FIELD_NAME_ColDateIdx)
 				|| taskDef.getPdtAttrMap().containsKey(AbstractCrawlItemToCSV.FIELD_NAME_RowDateIdx)) 
-			&& ci.getParam(AbstractCrawlItemToCSV.FIELD_NAME_STARTDATE)!=null)
+			&& ci.getParam(AbstractCrawlItemToCSV.FN_STARTDATE)!=null)
 			return true;
 		return false;
 	}

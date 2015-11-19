@@ -2,6 +2,7 @@ package org.cld.hadooputil;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -80,6 +81,7 @@ class DumpTask implements Runnable {
 		}
 		return names;
 	}
+	
 	public DumpTask(String fsDefaultName, Path fromPath, String toLocalRoot, FileSystem fs, 
 			String[] skipFolderNames, String[] includeFolderNames, LocatedFileStatus fl){
 		this.fs = fs;
@@ -91,12 +93,16 @@ class DumpTask implements Runnable {
 		this.fl = fl;
 	}
 	
+	public String toString(){
+		return String.format("from Path:%s, toLocalRoot: %s, skip:%s, include:%s, filePath:%s", 
+				fromPath, toLocalRoot, Arrays.toString(skipFolderNames), Arrays.toString(includeFolderNames), fl.getPath().toString());
+	}
 	@Override
 	public void run() {
 		try{
 			Configuration conf = new Configuration();
 			conf.set("fs.defaultFS", fsDefaultName);
-			
+			//logger.info(String.format("task:%s", this.toString()));
 			MyPathFilter mpf = new MyPathFilter(fs, skipFolderNames, includeFolderNames);
 			if (mpf.accept(fl.getPath())){
 				//hdfs://192.85.247.104:19000/reminder/items/merge/sina-stock-market-fq/hs_a_2015-10-21
@@ -114,6 +120,8 @@ class DumpTask implements Runnable {
 				logger.info(String.format("start copying file from %s to %s", fl.getPath().toString(), dst.toString()));
 				FileUtil.copy(fs, fl.getPath(), dst, false, conf);
 				logger.info(String.format("finished copying file from %s", fl.getPath().toString()));
+			}else{
+				//logger.warn(String.format("fl:%s not accepted.", fl.getPath().toString()));
 			}
 		}catch(Throwable t){
 			logger.error("", t);
@@ -131,6 +139,8 @@ public class DumpHdfsFile {
 	
 	public static void launch(int threadNum, String fsDefaultName, String fromHdfsRoot, String localDirRoot, 
 			String[] includeFolderNames, String skipFolderNames[]){
+		logger.info(String.format("dumpHdfsFile with includeFolderNames:%s, skipFolderNames:%s", 
+				Arrays.asList(includeFolderNames), Arrays.asList(skipFolderNames)));
 		ExecutorService executor = Executors.newFixedThreadPool(threadNum);
 		try{
 			Configuration conf = new Configuration();

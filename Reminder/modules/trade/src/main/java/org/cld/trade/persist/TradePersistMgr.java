@@ -67,7 +67,7 @@ public class TradePersistMgr {
 		logger.info(String.format("close position with %s", sp));
 		StockPositionJDBCMapper mapper = StockPositionJDBCMapper.getInstance();
 		Connection con = null;
-		String sql = String.format("update %s set isOpenPos=2,orderid=? where dt=?", mapper.getTableName());
+		String sql = String.format("update %s set isOpenPos=2, orderid=? where dt=?", mapper.getTableName());
 		try{
 			con = SqlUtil.getConnection(dbconf);
 			Object[] params = new Object[]{sp.getOrderId(),sp.getDt()};

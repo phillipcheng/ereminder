@@ -29,7 +29,7 @@ public class NasdaqStockBase extends StockBase{
 	public static final String[] tryIds = new String[]{"FIT","AAPL","BABA", "IBM", "HPQ", "VIPS", "JD", "Z", "ZNGA"};
 	
 	@Override
-	public boolean readyToCrawl(Date today) {
+	public boolean fqReady(Date today) {
 		try{
 			String checkFqCmdFile = "nasdaq-quote-fq-check.xml";
 			List<Task> tl = cconf.setUpSite(checkFqCmdFile, null);
@@ -63,7 +63,7 @@ public class NasdaqStockBase extends StockBase{
 					}
 				}
 				if (readyCount>(tryIds.length*0.9)){
-					logger.info(String.format("more than 90% is ready. readyCount %d, total %s", readyCount, tryIds.length));
+					logger.info(String.format("more than 90 percent is ready. readyCount %d, total %s", readyCount, tryIds.length));
 					return true;
 				}
 			}else{

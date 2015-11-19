@@ -1,4 +1,4 @@
-package org.cld.stock.nasdaq.persistence;
+package org.cld.stock.yahoo;
 
 import java.sql.ResultSet;
 
@@ -7,17 +7,9 @@ import org.apache.logging.log4j.Logger;
 import org.cld.stock.CandleQuote;
 import org.cld.util.jdbc.JDBCMapper;
 
-public class NasdaqFQDailyQuoteCQJDBCMapper extends JDBCMapper{
-	Logger logger = LogManager.getLogger(NasdaqFQDailyQuoteCQJDBCMapper.class);
-	
-	private NasdaqFQDailyQuoteCQJDBCMapper(){
-		
-	}
-	private static NasdaqFQDailyQuoteCQJDBCMapper singleton = new NasdaqFQDailyQuoteCQJDBCMapper();
-	
-	public static NasdaqFQDailyQuoteCQJDBCMapper getInstance(){
-		return singleton;
-	}
+public abstract class YahooFQDailyQuoteMapper extends JDBCMapper{
+	Logger logger = LogManager.getLogger(YahooFQDailyQuoteMapper.class);
+
 	
 /**
 +---------+------------+------+------+------+-------+--------+----------+
@@ -47,11 +39,6 @@ public class NasdaqFQDailyQuoteCQJDBCMapper extends JDBCMapper{
     		logger.error("", e);
     		return null;
     	}
-	}
-
-	@Override
-	public String getTableName() {
-		return "NasdaqFqHistory";
 	}
 
 }

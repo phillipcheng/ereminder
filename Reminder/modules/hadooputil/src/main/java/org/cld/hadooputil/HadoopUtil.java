@@ -1,6 +1,8 @@
 package org.cld.hadooputil;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -72,6 +74,7 @@ class DirFilter implements PathFilter{
 public class HadoopUtil {
 	
 	private static Logger logger =  LogManager.getLogger(HadoopUtil.class);
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-ddd");
 	
 	public static Path[] getLeafPath(FileSystem fs, Path start){
 		List<Path> leafPaths = new ArrayList<Path>();
@@ -112,12 +115,16 @@ public class HadoopUtil {
 		try {
 			fs.listStatus(start, fffilter);
 			Set<String> partNames = fffilter.getPrefixes();
-			String[] retPrefix = new String[partNames.size()];
-			int i=0;
+			List<String> fpartNames = new ArrayList<String>();//filtered
 			for (String partName:partNames){
-				retPrefix[i]=partName;
-				i++;
+				try {
+					sdf.parse(partName);
+				}catch(ParseException pe){
+					fpartNames.add(partName);
+				}
 			}
+			String[] retPrefix = new String[fpartNames.size()];
+			retPrefix = fpartNames.toArray(retPrefix);
 			return retPrefix;
 		} catch (Exception e) {
 			logger.error("", e);

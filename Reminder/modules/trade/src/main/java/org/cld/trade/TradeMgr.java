@@ -75,6 +75,10 @@ public class TradeMgr {
 	private static final String USE_AMOUNT="use.amount";
 	private static final String BASE_MARKET="base.market";
 	private static final String MARKET_ID="market.id";
+	private static final String MARKET_OPEN_CRON="market.open.cron";
+	private static final String MARKET_CLOSE_CRON="market.close.cron";
+	private static final String IS_PREVIEW="is.preview";
+	private static final String USE_LAST="use.last";
 	
 	
 	private static final String PROFILE_URL = "https://api.tradeking.com/v1/member/profile.json";
@@ -113,6 +117,10 @@ public class TradeMgr {
 	
 	private OAuthService service;
 	private Token accessToken;
+	private String marketOpenCron="0 26 9 ? * 2-6";
+	private String marketCloseCron="0 55 15 ? * 2-6";
+	private boolean isPreview=true;
+	private boolean useLast=false;
 	
 	public TradeMgr(String properFile){//1 proper file 1 account
 		try{
@@ -133,6 +141,10 @@ public class TradeMgr {
 			cconf = CrawlTestUtil.getCConf(cconffile);
 			setBaseMarketId(pc.getString(BASE_MARKET));
 			setMarketId(pc.getString(MARKET_ID));
+			marketOpenCron = pc.getString(MARKET_OPEN_CRON);
+			marketCloseCron = pc.getString(MARKET_CLOSE_CRON);
+			isPreview = pc.getBoolean(IS_PREVIEW);
+			setUseLast(pc.getBoolean(USE_LAST));
 		}catch(Exception e){
 			logger.error("", e);
 		}
@@ -159,6 +171,7 @@ public class TradeMgr {
 		}else if (so.getOrderType()==OrderType.stop){
 			nosm.setTyp("3");
 		}else if (so.getOrderType()==OrderType.stoplimit){
+			nosm.setStopPx(new BigDecimal(String.format("%.2f", so.getStopPrice())));
 			nosm.setTyp("4");
 		}else if (so.getOrderType()==OrderType.stoptrailingdollar || so.getOrderType()==OrderType.stoptrailingpercentage){
 			nosm.setTyp("P");
@@ -190,7 +203,7 @@ public class TradeMgr {
 		instr.setSecTyp("CS");
 		nosm.setInstrmt(instr);
 		
-		nosm.setPx(new BigDecimal(String.format("%.2f",so.getLimitPrice())));
+		nosm.setPx(new BigDecimal(String.format("%.2f", so.getLimitPrice())));
 		OrderQtyDataBlockT oq = new OrderQtyDataBlockT();
 		oq.setQty(new BigDecimal(so.getQuantity()));
 		nosm.setOrdQty(oq);
@@ -272,19 +285,26 @@ public class TradeMgr {
 		return null;
 	}
 	
-	public OrderResponse cancelOrder(String clientOrderId){
+	public OrderResponse cancelOrder(String clientOrderId, ActionType at, String symbol, int quantity){
 		OAuthRequest request = new OAuthRequest(Verb.POST, String.format(MAKE_ORDER_URL, accountId));
 
 		FIXML fixml = new FIXML();
 		OrderCancelRequestMessageT nosm = new OrderCancelRequestMessageT();
 		nosm.setAcct(accountId);
 		nosm.setOrigID(clientOrderId);
-		nosm.setSide("1");
+		if (at==ActionType.buy || at==ActionType.buycover){
+			nosm.setSide("1");
+		}else if (at==ActionType.sell){
+			nosm.setSide("2");
+		}else if (at==ActionType.sellshort){
+			nosm.setSide("5");
+		}
 		InstrumentBlockT instr = new InstrumentBlockT();
 		instr.setSecTyp("CS");
+		instr.setSym(symbol);
 		nosm.setInstrmt(instr);
 		OrderQtyDataBlockT oq = new OrderQtyDataBlockT();
-		oq.setQty(new BigDecimal(1));
+		oq.setQty(new BigDecimal(quantity));
 		nosm.setOrdQty(oq);
 		JAXBElement<OrderCancelRequestMessageT> me = new JAXBElement<OrderCancelRequestMessageT>(
 				new QName(QNAME_ORDER_CANCEL), OrderCancelRequestMessageT.class, nosm);
@@ -347,11 +367,18 @@ public class TradeMgr {
 		OAuthRequest request = new OAuthRequest(Verb.GET, String.format(ORDERSTATUS_URL,accountId));
 		service.signRequest(accessToken, request);
 		Response response = request.send();
-		logger.info(response.getBody());
+		//logger.info(response.getBody());
 		Map<String, Object> map =  JsonUtil.fromJsonStringToMap(response.getBody());
 		map = (Map<String, Object>) map.get(RESPONSE);
 		map = (Map<String, Object>) map.get(ORDERSTATUS);
-		List fml = (List) map.get(ORDER);
+		List<Map<String, Object>> fml;
+		Object orders = map.get(ORDER);
+		if (orders instanceof List){
+			fml = (List) orders;
+		}else{
+			fml = new ArrayList<Map<String, Object>>();
+			fml.add((Map<String, Object>)orders);
+		}
 		Map<String, OrderStatus> om = new HashMap<String, OrderStatus>();
 		try{
 			JAXBContext jaxbContext = JAXBContext.newInstance("org.xml.fixml");
@@ -388,13 +415,19 @@ public class TradeMgr {
 	}
 	
 	public List<Quote> getQuotes(String[] stockids){
+		return getQuotes(stockids, false);
+	}
+	
+	public List<Quote> getQuotes(String[] stockids, boolean allInfo){
 		try{
 			String[] fids = Quote.getAllFields();
 			String symbols = StringUtils.join(stockids, ",");
 			String strFids = StringUtils.join(fids, ",");
 			OAuthRequest request = new OAuthRequest(Verb.POST, QUOTES_URL);
 			request.addBodyParameter("symbols", symbols);
-			request.addBodyParameter("fids", strFids);
+			if (!allInfo){
+				request.addBodyParameter("fids", strFids);
+			}
 			service.signRequest(accessToken, request);
 			Response response = request.send();
 			logger.info(response.getBody());
@@ -522,5 +555,37 @@ public class TradeMgr {
 
 	public void setBaseMarketId(String baseMarketId) {
 		this.baseMarketId = baseMarketId;
+	}
+
+	public String getMarketOpenCron() {
+		return marketOpenCron;
+	}
+
+	public void setMarketOpenCron(String marketOpenCron) {
+		this.marketOpenCron = marketOpenCron;
+	}
+
+	public String getMarketCloseCron() {
+		return marketCloseCron;
+	}
+
+	public void setMarketCloseCron(String marketCloseCron) {
+		this.marketCloseCron = marketCloseCron;
+	}
+
+	public boolean isPreview() {
+		return isPreview;
+	}
+
+	public void setPreview(boolean isPreview) {
+		this.isPreview = isPreview;
+	}
+
+	public boolean isUseLast() {
+		return useLast;
+	}
+
+	public void setUseLast(boolean useLast) {
+		this.useLast = useLast;
 	}
 }

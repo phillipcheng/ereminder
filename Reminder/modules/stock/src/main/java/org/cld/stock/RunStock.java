@@ -5,10 +5,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TimeZone;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.stock.hk.HKStockBase;
 import org.cld.stock.nasdaq.NasdaqStockBase;
 import org.cld.stock.sina.SinaStockBase;
 import org.cld.util.StringUtil;
@@ -20,7 +19,7 @@ public class RunStock {
 	//x.properties nasdaq ALL run_all_cmd - 2015-09-10
 	//x.properties nasdaq ALL_2015-09-09 run_cmd - - nasdaq-quote-tick
 	//x.properties nasdaq ALL run_special - - run_merge
-	//x.properties sina hs_a run_special - - genNdLable xxx,x:xx,xx
+	//x.properties sina hs_a run_special - - genNdLable x:xvalue,y:yvalue
 	//x.properties sina hs_a run_special 2015-08-29 2015-09-22 run_merge
 	//x.properties sina hs_a run_special 2015-08-29 2015-09-22 
 	public static String getDefaultCmdLine(){
@@ -68,6 +67,8 @@ public class RunStock {
 				sb = new SinaStockBase(propFile, marketId, startDate, endDate);
 			}else if (StockUtil.NASDAQ_STOCK_BASE.equals(stockBase)){
 				sb = new NasdaqStockBase(propFile, marketId, startDate, endDate);
+			}else if (StockUtil.HK_STOCK_BASE.equals(stockBase)){
+				sb = new HKStockBase(propFile, marketId, startDate, endDate);
 			}else{
 				logger.error(String.format("stockBase %s not supported.", stockBase));
 				return;
@@ -89,7 +90,7 @@ public class RunStock {
 				}
 			}else if ("run_all_cmd".equals(cmd)){
 				try {
-					sb.runAllCmd();
+					sb.runAllCmd(null);
 				} catch (InterruptedException e) {
 					logger.error("", e);
 				}

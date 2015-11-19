@@ -11,14 +11,15 @@ import java.util.TimeZone;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.stock.CrawlCmdGroupType;
 import org.cld.stock.LaunchableTask;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
-import org.cld.stock.nasdaq.persistence.NasdaqDailyQuoteCQJDBCMapper;
+import org.cld.stock.nasdaq.persistence.NasdaqDailyQuoteMapper;
 import org.cld.stock.nasdaq.persistence.NasdaqDividendJDBCMapper;
 import org.cld.stock.nasdaq.persistence.NasdaqEarnJDBCMapper;
 import org.cld.stock.nasdaq.persistence.NasdaqExDivSplitMapper;
-import org.cld.stock.nasdaq.persistence.NasdaqFQDailyQuoteCQJDBCMapper;
+import org.cld.stock.nasdaq.persistence.NasdaqFQDailyQuoteMapper;
 import org.cld.stock.nasdaq.persistence.NasdaqSplitJDBCMapper;
 import org.cld.stock.nasdaq.task.FQPostProcessTask;
 import org.cld.stock.nasdaq.task.QuotePostProcessTask;
@@ -40,6 +41,7 @@ public class NasdaqStockConfig extends StockConfig{
 	static{
 		//sdf.setTimeZone(TimeZone.getTimeZone("EST"));
 		try{
+			//
 			USHolidays.add(sdf.parse("2014-01-01"));
 			USHolidays.add(sdf.parse("2014-01-20"));
 			USHolidays.add(sdf.parse("2014-02-17"));
@@ -73,7 +75,8 @@ public class NasdaqStockConfig extends StockConfig{
 	public static final String QUOTE_AFTERHOURS="nasdaq-quote-afterhours";//current day
 	public static final String QUOTE_TICK="nasdaq-quote-tick";//current day
 	public static final String QUOTE_SHORT_INTEREST="nasdaq-quote-short-interest";
-	public static final String QUOTE_FQ_HISTORY="nasdaq-quote-fq-historical";//from yahoo finance
+	public static final String QUOTE_FQ_HISTORY="nasdaq-quote-fq-historical";
+	public static final String QUOTE_HISTORY="nasdaq-quote-historical";
 	
 	//issue
 	public static final String ISSUE_SPLIT="nasdaq-issue-split";//upcoming split
@@ -95,11 +98,6 @@ public class NasdaqStockConfig extends StockConfig{
 	public static final String EARN_ANNOUNCE_TIME="nasdaq-earn-announce-time";
 	
 	public static final String STOCK_DATA="data";
-	
-	//
-	public static final String RAW_ROOT="/reminder/items/raw";
-	public static final String MERGE_ROOT="/reminder/items/merge";
-	public static final String CHECK_ROOT="/reminder/items/check";
 	
 	public static final Map<String, Map<String,String>> cmdTableMap = new HashMap<String, Map<String,String>>();
 	static{
@@ -159,6 +157,10 @@ public class NasdaqStockConfig extends StockConfig{
 		m.put("NasdaqFqHistory","part");
 		cmdTableMap.put(QUOTE_FQ_HISTORY, m);
 		
+		m = new HashMap<String,String>();
+		m.put("NasdaqHistory","part");
+		cmdTableMap.put(QUOTE_HISTORY, m);
+		
 		//stock holder
 		m = new HashMap<String,String>();
 		m.put("NasdaqHoldingInstitutional","part");
@@ -191,6 +193,7 @@ public class NasdaqStockConfig extends StockConfig{
 		QUOTE_TICK, // 9:30AM ET - 4:00PM ET
 		QUOTE_SHORT_INTEREST,
 		QUOTE_FQ_HISTORY,//daily
+		QUOTE_HISTORY,
 	};
 	public static String[] issueConfs = new String[]{
 		ISSUE_XDIVSPLIT_HISTORY, //
@@ -213,8 +216,9 @@ public class NasdaqStockConfig extends StockConfig{
 	};
 	
 	public static String[] syncConf = new String[]{STOCK_IPO}; //other cmd need this result
-	public static String[] allConf = (String[]) ListUtil.concatAll(new String[]{STOCK_IDS}, 
-			corpConfs, quoteConfs, issueConfs, holderConfs, frConfs);
+	public static String[] testAllConf = (String[]) ArrayUtils.addAll(new String[]{});
+	public static String[] allConf = (String[]) ListUtil.concatAll(corpConfs, quoteConfs, issueConfs, holderConfs, frConfs);
+	public static String[] noneQuoteConf = (String[]) ListUtil.concatAll(corpConfs, issueConfs, holderConfs, frConfs);
 	
 	public static final String START_MARKET="1999-01-01";
 	public static Date date_START_MARKET=null;
@@ -225,6 +229,19 @@ public class NasdaqStockConfig extends StockConfig{
 			logger.error("", e);
 		}
 	}
+	
+	public String getCrawlByCmd(String cmd){
+		if (cmd.equals(QUOTE_FQ_HISTORY)){
+			return "yahoo-quote-fq-historical";
+		}else if (cmd.equals(ISSUE_XDIVSPLIT_HISTORY)){
+			return "yahoo-issue-xds-history";
+		}else if (cmd.equals(QUOTE_HISTORY)){ 
+			return "google-quote-historical";
+		}else{
+			return cmd;
+		}
+	}
+	
 	@Override
 	public String getTestMarketId() {
 		return NasdaqTestStockConfig.MarketId_NASDAQ_Test;
@@ -238,11 +255,16 @@ public class NasdaqStockConfig extends StockConfig{
 		return STOCK_IPO;
 	}
 	@Override
-	public String[] getAllCmds(String marketId) {
-		if (marketId.startsWith(NasdaqTestStockConfig.MarketId_NASDAQ_Test)){
-			return NasdaqTestStockConfig.testAllConf;
+	public String[] getAllCmds(CrawlCmdGroupType groupType) {
+		if (groupType == CrawlCmdGroupType.test){
+			return testAllConf;
+		}else if (groupType == CrawlCmdGroupType.all){
+			return allConf;
+		}else if (groupType == CrawlCmdGroupType.nonequote){
+			return noneQuoteConf;
 		}else{
-			return NasdaqStockConfig.allConf;
+			logger.error(String.format("group type:%s not supported.", groupType));
+			return new String[]{};
 		}
 	}
 	@Override
@@ -266,10 +288,6 @@ public class NasdaqStockConfig extends StockConfig{
 		return NasdaqTestStockConfig.Test_D3_Stocks;
 	}
 	@Override
-	public String getTestShortStartDate() {
-		return NasdaqTestStockConfig.Test_SHORT_SD;
-	}
-	@Override
 	public String[] getSlowCmds() {
 		return new String[]{QUOTE_TICK, QUOTE_PREMARKET, QUOTE_AFTERHOURS};
 	}
@@ -286,13 +304,18 @@ public class NasdaqStockConfig extends StockConfig{
 		}
 		return startDate;
 	}
+	//from market we get sz000001, only trade_detail need this untrimmed version
 	@Override
-	public String trimStockId(String stockid) {
-		return stockid;//untrimmed
+	public String stockIdMarket2Cmd(String stockid, String cmd) {
+		return stockid;
+	}
+	@Override
+	public String stockIdCmd2DB(String stockid, String cmd) {
+		return stockid;
 	}
 	@Override
 	public String[] getCurrentDayCmds() {
-		return new String[]{QUOTE_TICK, QUOTE_PREMARKET, QUOTE_AFTERHOURS, HOLDING_SUMMARY, HOLDING_TOP5, ISSUE_SPLIT};
+		return new String[]{QUOTE_TICK, QUOTE_PREMARKET, QUOTE_AFTERHOURS, HOLDING_SUMMARY, HOLDING_TOP5};
 	}
 	@Override
 	public Map<String, String> getTablesByCmd(String cmd) {
@@ -311,10 +334,6 @@ public class NasdaqStockConfig extends StockConfig{
 		return d;
 	}
 	@Override
-	public String[] getUntrimmedStockIdCmds() {
-		return new String[]{};
-	}
-	@Override
 	public Set<Date> getHolidays() {
 		return USHolidays;
 	}
@@ -322,16 +341,16 @@ public class NasdaqStockConfig extends StockConfig{
 	public Map<LaunchableTask, String[]> getPostProcessMap() {
 		Map<LaunchableTask, String[]> map = new HashMap<LaunchableTask, String[]>();
 		map.put(QuotePostProcessTask.getLaunchInstance(), new String[]{QUOTE_TICK, QUOTE_PREMARKET, QUOTE_AFTERHOURS});
-		map.put(FQPostProcessTask.getLaunchInstance(), new String[]{QUOTE_FQ_HISTORY});
+		map.put(FQPostProcessTask.getLaunchInstance(), new String[]{"nasdaq-quote-fq-historical"});//TODO
 		return map;
 	}
 	@Override
 	public JDBCMapper getDailyQuoteTableMapper() {
-		return NasdaqDailyQuoteCQJDBCMapper.getInstance();
+		return NasdaqDailyQuoteMapper.getInstance();
 	}
 	@Override
 	public JDBCMapper getFQDailyQuoteTableMapper() {
-		return NasdaqFQDailyQuoteCQJDBCMapper.getInstance();
+		return NasdaqFQDailyQuoteMapper.getInstance();
 	}
 	@Override
 	public float getDailyLimit() {

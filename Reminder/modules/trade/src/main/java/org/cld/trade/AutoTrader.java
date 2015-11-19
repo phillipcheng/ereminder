@@ -1,8 +1,10 @@
 package org.cld.trade;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -17,8 +19,9 @@ import org.cld.stock.trade.StockOrder;
 import org.cld.stock.trade.StockOrder.ActionType;
 import org.cld.stock.trade.StockOrder.OrderType;
 import org.cld.stock.trade.StockOrder.TimeInForceType;
+import org.cld.trade.persist.StockPosition;
+import org.cld.trade.persist.TradePersistMgr;
 import org.cld.trade.response.OrderResponse;
-import org.quartz.CronExpression;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
@@ -30,7 +33,7 @@ import org.quartz.impl.StdSchedulerFactory;
 
 public class AutoTrader {
 	private static Logger logger =  LogManager.getLogger(AutoTrader.class);
-	
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private TradeMgr tm;
 	private SelectStrategy bs;
 	private SellStrategy ss;
@@ -63,16 +66,23 @@ public class AutoTrader {
 					if (so.getTif()==TimeInForceType.MarktOnClose){
 						map.put(StockOrderType.sellmarketclose, so);
 					}else{
-						if (so.getOrderType()==OrderType.limit){
-							map.put(StockOrderType.selllimit, so);
+						if (so.getOrderType()==OrderType.stoplimit){
+							map.put(StockOrderType.sellstop, so);
 						}else if (so.getOrderType()==OrderType.stoptrailingpercentage){
 							map.put(StockOrderType.sellstop, so);
+						}else if (so.getOrderType()==OrderType.limit){
+							map.put(StockOrderType.selllimit, so);
 						}
 					}
 				}
 			}
 		}
 		return map;
+	}
+	
+	public static Map<StockOrderType, StockOrder> genSellOrderMap(StockPosition sp, SellStrategy ss){
+		List<StockOrder> sellsos= SellStrategy.makeSellOrders(sp.getSymbol(), sp.getDt(), sp.getOrderQty(), sp.getOrderPrice(), ss);
+		return makeMap(sellsos);
 	}
 	
 	public static Map<StockOrderType, StockOrder> genStockOrderMap(SelectCandidateResult scr, SellStrategy ss, int cashAmount){
@@ -86,14 +96,17 @@ public class AutoTrader {
 	public static OrderResponse trySubmit(TradeMgr tm, StockOrder sobuy, boolean submit){
 		if (sobuy!=null){
 			if (!submit){
-				tm.previewOrder(sobuy);
+				logger.info(String.format("preview order: %s",sobuy));
+				return tm.previewOrder(sobuy);
 			}else{
+				logger.info(String.format("make order: %s",sobuy));
 				return tm.makeOrder(sobuy);
 			}
 		}else{
-			logger.info(String.format("no buy order."));
+			logger.info(String.format("no order to submit."));
+			return null;
 		}
-		return null;
+		
 	}
 	
 	//useLast price or use Open price
@@ -107,9 +120,39 @@ public class AutoTrader {
 		return null;
 	}
 
-	public void addMsg(TradeMsg tm){
-		getMsgMap().put(tm.getMsgId(), tm);
+	public void addMsg(TradeMsg tmsg){
+		synchronized(this.msgMap){
+			msgMap.put(tmsg.getMsgId(), tmsg);
+		}
 	}
+	public void addMsgs(List<TradeMsg> tml){
+		synchronized(this.msgMap){
+			for (TradeMsg tmsg:tml){
+				msgMap.put(tmsg.getMsgId(), tmsg);
+			}
+		}
+	}
+	public int msgMapSize(){
+		synchronized(this.msgMap){
+			return msgMap.size();
+		}
+	}
+	public List<String> getMsgMapKeys(){
+		synchronized(this.msgMap){
+			List<String> kl = new ArrayList<String>();
+			Iterator<String> it = this.msgMap.keySet().iterator();
+			while(it.hasNext()){
+				kl.add(it.next());
+			}
+			return kl;
+		}
+	}
+	public TradeMsg getMsg(String key){
+		synchronized(this.msgMap){
+			return this.msgMap.get(key);
+		}
+	}
+	
 	/**
 	 * start: Msgs: [market will open]|[market will close]
 	 *  [market will open]
@@ -131,39 +174,68 @@ public class AutoTrader {
 	 */
 	public void run() {
 		while (true){
-			logger.info(String.format("%d messages to process.", getMsgMap().size()));
-			List<TradeMsgPR> tmprlist = new ArrayList<TradeMsgPR>();
-			for (TradeMsg msg:getMsgMap().values()){
-				logger.info(String.format("process msg: %s",msg));
-				TradeMsgPR tmpr = msg.process(tm);
-				tmpr.setMsgId(msg.getMsgId());
-				tmprlist.add(tmpr);
-			}
-			for (TradeMsgPR tmpr: tmprlist){
-				if (tmpr.getNewMsgs()!=null){
-					for (TradeMsg sm:tmpr.getNewMsgs()){
-						getMsgMap().put(sm.getMsgId(), sm);
+			if (getMsgMap().size()>0){
+				logger.info(String.format("%d messages to process.", getMsgMap().size()));
+				List<TradeMsgPR> tmprlist = new ArrayList<TradeMsgPR>();
+				List<String> keys = getMsgMapKeys();
+				for (String key:keys){
+					TradeMsg msg = getMsg(key);
+					if (msg!=null){
+						logger.info(String.format("process msg: %s",msg));
+						TradeMsgPR tmpr = msg.process(tm);
+						tmpr.setMsgId(msg.getMsgId());
+						tmprlist.add(tmpr);
+					}else{
+						logger.error(String.format("msg for key:%s not found.", key));
 					}
 				}
-				if (tmpr.getRmMsgs()!=null){
-					for (String mid:tmpr.getRmMsgs()){
-						getMsgMap().remove(mid);
+				for (TradeMsgPR tmpr: tmprlist){
+					if (tmpr.getNewMsgs()!=null){
+						for (TradeMsg sm:tmpr.getNewMsgs()){
+							getMsgMap().put(sm.getMsgId(), sm);
+						}
+					}
+					if (tmpr.getRmMsgs()!=null){
+						for (String mid:tmpr.getRmMsgs()){
+							getMsgMap().remove(mid);
+						}
+					}
+					if (tmpr.isExecuted()){
+						getMsgMap().remove(tmpr.getMsgId());
+					}
+					if (tmpr.cleanAllMsgs){
+						getMsgMap().clear();
 					}
 				}
-				if (tmpr.isExecuted()){
-					getMsgMap().remove(tmpr.getMsgId());
-				}
-				if (tmpr.cleanAllMsgs){
-					getMsgMap().clear();
-				}
 			}
-			
 			try {
-				Thread.sleep(3000);
+				Thread.sleep(4000);
 			} catch (InterruptedException e) {
 				logger.error("", e);
 			}
 		}
+	}
+	
+	//generate monitor buy order msgs
+	public List<TradeMsg> processOpenPosition(){
+		List<TradeMsg> tml = new ArrayList<TradeMsg>();
+		Date dt= new Date();
+		List<StockPosition> lp = TradePersistMgr.getOpenPosition(tm.getCconf().getSmalldbconf(), dt);
+		if (lp.size()>0){
+			for (StockPosition sp: lp){
+				Map<StockOrderType, StockOrder> somap = AutoTrader.genSellOrderMap(sp, ss);
+				TradeMsg tmsg;
+				if (sp.getOrderId()!=null && !"".equals(sp.getOrderId())){
+					tmsg = new MonitorBuyOrderTrdMsg(StockOrderType.buy, sp.getOrderId(), somap);
+				}else{//has an open position which is opened day before so the order id is not working.
+					tmsg = new BuyOrderFilledTrdMsg(somap);
+				}
+				tml.add(tmsg);
+			}
+		}else{
+			logger.info(String.format("no open position for day:%s", sdf.format(dt)));
+		}
+		return tml;
 	}
 	
 	public void start(TradeMsg tmsg){
@@ -183,22 +255,23 @@ public class AutoTrader {
 	        jdm.put(JDM_KEY_AT, at);
 	        JobDetail genMarketMsgJob = JobBuilder.newJob(GenMsgQuartzJob.class).
 	        		withIdentity("genMarketMsg", "genMarketMsg").storeDurably().usingJobData(jdm).build();
-	        String marketOpenCronExp = "0 26 9 ? * 2-6";
-	        String marketCloseCronExp = "0 55 16 ? * 2-6";
+	        
 	        //scheduler to send market open msg
 	        Trigger marketOpenTrigger = TriggerBuilder.newTrigger().
 	        		withIdentity(TradeMsgType.marketOpenSoon.toString(), TradeMsgType.marketOpenSoon.toString()).forJob(genMarketMsgJob).
-	        		withSchedule(CronScheduleBuilder.cronSchedule(marketOpenCronExp).inTimeZone(TimeZone.getTimeZone("EST"))).
+	        		withSchedule(CronScheduleBuilder.cronSchedule(at.getTm().getMarketOpenCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
 	        		build();
 	        //scheduler to send market close msg
 	        Trigger marketCloseTrigger = TriggerBuilder.newTrigger().
 	        		withIdentity(TradeMsgType.marketCloseSoon.toString(), TradeMsgType.marketCloseSoon.toString()).forJob(genMarketMsgJob).
-	        		withSchedule(CronScheduleBuilder.cronSchedule(marketCloseCronExp).inTimeZone(TimeZone.getTimeZone("EST"))).
+	        		withSchedule(CronScheduleBuilder.cronSchedule(at.getTm().getMarketCloseCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
 	        		build();
 	        scheduler.addJob(genMarketMsgJob, true);
 	        scheduler.scheduleJob(marketOpenTrigger);
 	        scheduler.scheduleJob(marketCloseTrigger);
 	        scheduler.start();
+	        List<TradeMsg> tml = at.processOpenPosition();
+	        at.addMsgs(tml);
 	        at.run();
 	        while(true){
 	        	Thread.sleep(10000);

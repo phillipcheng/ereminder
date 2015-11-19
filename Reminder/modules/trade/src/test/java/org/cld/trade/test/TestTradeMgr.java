@@ -15,6 +15,7 @@ import org.cld.stock.trade.StockOrder.TimeInForceType;
 import org.cld.trade.MarketOpenTrdMsg;
 import org.cld.trade.TradeMgr;
 import org.cld.trade.AutoTrader;
+import org.cld.trade.MarketCloseTrdMsg;
 import org.cld.trade.response.Balance;
 import org.cld.trade.response.Holding;
 import org.cld.trade.response.OrderResponse;
@@ -107,7 +108,7 @@ public class TestTradeMgr {
 	
 	@Test
 	public void testGetQuotes(){
-		tm.getQuotes(new String[]{"GLUU", "FIT"});
+		tm.getQuotes(new String[]{"GLUU", "FIT"}, true);
 	}
 	
 	@Test
@@ -118,7 +119,7 @@ public class TestTradeMgr {
 	
 	@Test
 	public void testCancelOrder(){
-		OrderResponse or = tm.cancelOrder("SVI-6007191439");
+		OrderResponse or = tm.cancelOrder("SVI-6007515427", ActionType.sell, "CLVS", 36);
 		logger.info(or);
 	}
 	
@@ -131,16 +132,24 @@ public class TestTradeMgr {
 	@Test
 	public void testTryBuy(){
 		AutoTrader ta = new AutoTrader();
+		ta.getBs().setParams(new Object[]{3f, 0f});
 		boolean useLast=true;
 		ta.tryBuyNow(false,useLast);
 	}
 	
 	//not with open, missed or completed the open hour transaction, want to try mid-day luck (to be verified)
 	@Test
-	public void startWithLast(){
+	public void testStartWithOpenMsg(){
 		AutoTrader ta = new AutoTrader();
-		MarketOpenTrdMsg mos = new MarketOpenTrdMsg(true, true, ta.getBs(), ta.getSs());
+		MarketOpenTrdMsg mos = new MarketOpenTrdMsg(false, true, ta.getBs(), ta.getSs());
 		ta.start(mos);
+	}
+	
+	@Test
+	public void testStartWithCloseMsg(){
+		AutoTrader ta = new AutoTrader();
+		MarketCloseTrdMsg mc = new MarketCloseTrdMsg();
+		ta.start(mc);
 	}
 	
 	@Test

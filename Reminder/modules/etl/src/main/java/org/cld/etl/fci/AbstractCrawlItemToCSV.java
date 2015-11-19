@@ -1,6 +1,5 @@
 package org.cld.etl.fci;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -14,10 +13,12 @@ import org.cld.etl.csv.TableUtil;
 
 public abstract class AbstractCrawlItemToCSV {
 	
-	public static final String FIELD_NAME_KEYID="stockid";
-	public static final String FIELD_NAME_STARTDATE="startDate";
-	public static final String FIELD_NAME_ENDDATE="endDate";
-	public static final String FIELD_NAME_DATA="data";
+	public static final String FN_KEYID="stockid";
+	public static final String FN_STOREID="storeId";
+	public static final String FN_STARTDATE="startDate";
+	public static final String FN_ENDDATE="endDate";
+	public static final String FN_DATA="data";
+	public static final String FN_BASEMARKETID="baseMarketId";
 	public static final String FN_MARKETID="marketId";
 	public static final String FN_YEAR="year";
 	public static final String FN_QUARTER="quarter";
@@ -64,11 +65,11 @@ public abstract class AbstractCrawlItemToCSV {
 	
 	public void init(CrawledItem ci, Map<String, Object> paramMap){
 		try{
-			String strDate = (String) ci.getParam(FIELD_NAME_STARTDATE);
+			String strDate = (String) ci.getParam(FN_STARTDATE);
 			if (strDate!=null){
 				startDate = sdf.parse(strDate);
 			}
-			strDate = (String) ci.getParam(FIELD_NAME_ENDDATE);
+			strDate = (String) ci.getParam(FN_ENDDATE);
 			if (strDate!=null){
 				endDate = sdf.parse(strDate);
 			}
@@ -83,7 +84,7 @@ public abstract class AbstractCrawlItemToCSV {
 		if (bHasHeader!=null){
 			hasHeader = bHasHeader.booleanValue();
 		}
-		String key = (String) ci.getParam(FIELD_NAME_KEYID);
+		String key = (String) ci.getParam(FN_KEYID);
 		if (key!=null){
 			keyid = key;
 		}
