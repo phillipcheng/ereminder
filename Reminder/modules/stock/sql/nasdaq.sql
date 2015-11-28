@@ -25,7 +25,7 @@ create table NasdaqFrQuarterIncomeStatement(stockid varchar(150), quarter varcha
 
 #nasdaq-fr-quarter-revenue
 drop table if exists NasdaqFrQuarterRevenue;
-create table NasdaqFrQuarterRevenue(stockid varchar(150), dt Date, revenue decimal(20,2), eps decimal(10,3), dividends decimal(10,3), primary key (stockid, dt));
+create table NasdaqFrQuarterRevenue(stockid varchar(150), quarterend Date, revenue decimal(20,2), eps decimal(10,3), dividends decimal(10,3), dt Date, primary key (stockid, dt));
 
 #nasdaq-issue-dividend
 drop table if exists NasdaqDividend;

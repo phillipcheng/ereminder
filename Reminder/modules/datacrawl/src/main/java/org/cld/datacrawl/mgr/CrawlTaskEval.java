@@ -466,9 +466,12 @@ public class CrawlTaskEval {
 		setUserAttributes(pageMap, attrs, paramMap, cconf, inParams, false);
 	}
 	
+	public static boolean setUserAttributes(Map<String, List<? extends DomNode>> pages, List<AttributeType> attrs, 
+			Map<String, Object> paramMap, CrawlConf cconf, Map<String, Object> inParams, boolean tryPattern) throws InterruptedException {
+		return setUserAttributes(pages, attrs, paramMap, cconf, inParams, tryPattern, false);
+	}
 	//TODO currently only 1 external list type var with tryPattern supported
 	/**
-	 * 
 	 * @param pages
 	 * @param attrs
 	 * @param paramMap: inout, can not be null
@@ -479,7 +482,7 @@ public class CrawlTaskEval {
 	 * @throws InterruptedException
 	 */
 	public static boolean setUserAttributes(Map<String, List<? extends DomNode>> pages, List<AttributeType> attrs, 
-			Map<String, Object> paramMap, CrawlConf cconf, Map<String, Object> inParams, boolean tryPattern) throws InterruptedException {
+			Map<String, Object> paramMap, CrawlConf cconf, Map<String, Object> inParams, boolean tryPattern, boolean firstPage) throws InterruptedException {
 		boolean externalistFinished=false;
 		for (int i=0; i<attrs.size(); i++){
 			AttributeType nvt = attrs.get(i);
@@ -491,58 +494,42 @@ public class CrawlTaskEval {
 			Object val = eval(pages, vt, cconf, paramMap);
 			if (vt.getToType()==VarType.EXTERNAL_LIST){
 				List listvar = (List)val;
+				if (vt.isFirstPageOnly() && !firstPage){//for first page only external list variable only record the first page value
+					listvar.clear();
+				}
+				Object newFirstEntry = null;
 				if (listvar.size()>0){
-					Object entry = listvar.get(0);
-					boolean doTryPattern=false;
-					String patternVarName=nvt.getName() + "_pattern";
-					if (entry instanceof String && tryPattern){
-						doTryPattern=true;
-					}
-					if (paramMap.containsKey(nvt.getName())){
-						List elistvarorg = (List) paramMap.get(nvt.getName());
-						if (elistvarorg!=null){
-							Object last = elistvarorg.get(elistvarorg.size()-1);
-							Object first = elistvarorg.get(0);
-							if (vt.isCirclicEntry()){
-								//circlic
-								if (entry.equals(last)||entry.equals(first)){
-									logger.info(String.format("this entry %s equals last %s or first %s", entry, last, first));
+					newFirstEntry = listvar.get(0);
+				}
+				boolean doTryPattern=false;
+				String patternVarName=nvt.getName() + "_pattern";
+				if (newFirstEntry!=null && newFirstEntry instanceof String && tryPattern){
+					doTryPattern=true;
+				}
+				if (paramMap.containsKey(nvt.getName())){
+					List elistvarorg = (List) paramMap.get(nvt.getName());
+					if (elistvarorg!=null){
+						Object last = elistvarorg.get(elistvarorg.size()-1);
+						Object first = elistvarorg.get(0);
+						if (vt.isCirclicEntry()){//circlic
+							if (newFirstEntry!=null){
+								if (newFirstEntry.equals(last)||newFirstEntry.equals(first)){
+									logger.info(String.format("this entry %s equals last %s or first %s", newFirstEntry, last, first));
 									externalistFinished=true;
 								}
 							}
-							if (doTryPattern){
-								PatternIO pio = (PatternIO) paramMap.get(patternVarName);
-								if (pio==null){
-									pio = new PatternIO();
-									paramMap.put(patternVarName, pio);
-								}
-								List elistvar = new ArrayList();
-								for (int j=0; j<listvar.size(); j++){
-									elistvar.clear();
-									elistvar.addAll(elistvarorg);
-									elistvar.addAll(listvar.subList(0, j+1));
-									PatternUtil.usePattern(pio, elistvar);
-									if (pio.isFinished()){
-										externalistFinished=true;
-										break;
-									}
-								}
-								paramMap.put(nvt.getName(), elistvar);
-							}else{
-								elistvarorg.addAll(listvar);
-								paramMap.put(nvt.getName(), elistvarorg);
-							}
-						}else{
-							paramMap.put(nvt.getName(), listvar);
 						}
-					}else{
 						if (doTryPattern){
-							//create the pattern attribute for this external list as well
-							PatternIO pio = new PatternIO();
-							paramMap.put(patternVarName, pio);
+							PatternIO pio = (PatternIO) paramMap.get(patternVarName);
+							if (pio==null){
+								pio = new PatternIO();
+								paramMap.put(patternVarName, pio);
+							}
 							List elistvar = new ArrayList();
 							for (int j=0; j<listvar.size(); j++){
-								elistvar = listvar.subList(0, j+1);
+								elistvar.clear();
+								elistvar.addAll(elistvarorg);
+								elistvar.addAll(listvar.subList(0, j+1));
 								PatternUtil.usePattern(pio, elistvar);
 								if (pio.isFinished()){
 									externalistFinished=true;
@@ -551,8 +538,29 @@ public class CrawlTaskEval {
 							}
 							paramMap.put(nvt.getName(), elistvar);
 						}else{
-							paramMap.put(nvt.getName(), listvar);
+							elistvarorg.addAll(listvar);
+							paramMap.put(nvt.getName(), elistvarorg);
 						}
+					}else{
+						paramMap.put(nvt.getName(), listvar);
+					}
+				}else{
+					if (doTryPattern){
+						//create the pattern attribute for this external list as well
+						PatternIO pio = new PatternIO();
+						paramMap.put(patternVarName, pio);
+						List elistvar = new ArrayList();
+						for (int j=0; j<listvar.size(); j++){
+							elistvar = listvar.subList(0, j+1);
+							PatternUtil.usePattern(pio, elistvar);
+							if (pio.isFinished()){
+								externalistFinished=true;
+								break;
+							}
+						}
+						paramMap.put(nvt.getName(), elistvar);
+					}else{
+						paramMap.put(nvt.getName(), listvar);
 					}
 				}
 			}else{

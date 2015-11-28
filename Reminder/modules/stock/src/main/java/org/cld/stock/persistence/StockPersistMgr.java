@@ -1,5 +1,7 @@
 package org.cld.stock.persistence;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -12,10 +14,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.datacrawl.CrawlConf;
 import org.cld.stock.CandleQuote;
 import org.cld.stock.StockConfig;
+import org.cld.stock.nasdaq.persistence.NasdaqFQDailyQuoteMapper;
+import org.cld.util.DataMapper;
+import org.cld.util.FileDataMapper;
 import org.cld.util.jdbc.DBConnConf;
 import org.cld.util.jdbc.JDBCMapper;
 import org.cld.util.jdbc.SqlUtil;
@@ -134,80 +143,72 @@ public class StockPersistMgr {
 		}
 	}
 	
-	public static List<Object> getDataByStockDate(DBConnConf dbconf, JDBCMapper tableMapper, String stockId, Date sd, Date ed){
-		Connection con = null;
-		String sql = String.format("select * from %s where stockid='%s' and dt>='%s' and dt<'%s' order by dt asc", 
-				tableMapper.getTableName(), stockId, sdf.format(sd), sdf.format(ed));
+	//BTD for back testing data, they are ajusted till a certain-day
+	public static List<Object> getBTDByStockDate(CrawlConf cconf, FileDataMapper fdMapper, String stockId, Date sd, Date ed){
+		List<Object> lo = new ArrayList<Object>();
+		BufferedReader br = null;
 		try{
-			con = SqlUtil.getConnection(dbconf);
-			List<Object> lo = (List<Object>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
-					con, -1, -1, "", 
-					tableMapper);
-			return lo;
-		}catch(Exception e){
-			logger.error("", e);
-			return null;
-		}finally{
-			SqlUtil.closeResources(con, null);
-		}
-	}
-	
-	//return the (beforeDays + [pivotMin,pivotMax] + afterDays) number of data
-	public static List<Object> getDataPivotByStockDate(DBConnConf dbconf, JDBCMapper tableMapper, String stockId, 
-			Date pivotMin, Date pivotMax, int beforeDays, int afterDays){
-		Connection con = null;
-		String sql = String.format(
-				  "(select * from %s where stockid='%s' and dt<'%s' order by dt desc limit %d) union "
-				+ "(select * from %s where stockid='%s' and dt>='%s' and dt<='%s' order by dt asc) union " 
-				+ "(select * from %s where stockid='%s' and dt>'%s' order by dt asc limit %d)", 
-				tableMapper.getTableName(), stockId, sdf.format(pivotMin), beforeDays, 
-				tableMapper.getTableName(), stockId, sdf.format(pivotMin), sdf.format(pivotMax), 
-				tableMapper.getTableName(), stockId, sdf.format(pivotMax), afterDays);
-		try{
-			con = SqlUtil.getConnection(dbconf);
-			List<Object> lo = (List<Object>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
-					con, -1, -1, "", 
-					tableMapper);
-			return lo;
-		}catch(Exception e){
-			logger.error("", e);
-			return null;
-		}finally{
-			SqlUtil.closeResources(con, null);
-		}
-	}
-	
-	public static Map<String, List<CandleQuote>> getFQDailyQuote(StockConfig sc, DBConnConf dbconf, List<String> stockidList, Date sd, Date ed){
-		Connection con = null;
-		String sql = String.format("select * from %s where stockid in %s and dt>'%s' and dt <='%s' order by stockid, dt", 
-				sc.getFQDailyQuoteTableMapper().getTableName(), SqlUtil.generateInParameterValues(stockidList), sdf.format(sd), sdf.format(ed));
-		try{
-			con = SqlUtil.getConnection(dbconf);
-			List<CandleQuote> lo = (List<CandleQuote>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
-					con, -1, -1, "", 
-					sc.getFQDailyQuoteTableMapper());
-			Map<String, List<CandleQuote>> map = new HashMap<String, List<CandleQuote>>();
-			if (lo.size()>1){
-				String stid = lo.get(0).getStockid();
-				List<CandleQuote> cql = new ArrayList<CandleQuote>();
-				for (CandleQuote cq:lo){
-					if (!cq.getStockid().equals(stid)){
-						map.put(stid, cql);
-						cql = new ArrayList<CandleQuote>();
-						cql.add(cq);
-						stid = cq.getStockid();
-					}else{
-						cql.add(cq);
+			Configuration conf = new Configuration();
+			conf.set("fs.defaultFS", cconf.getTaskMgr().getHdfsDefaultName());
+			FileSystem fs = FileSystem.get(conf);
+			Path fp = new Path(fdMapper.getFileName(stockId));
+			br=new BufferedReader(new InputStreamReader(fs.open(fp)));
+			String line;
+            line=br.readLine();
+            while (line != null){//suppose in time ascending order
+				Object o = fdMapper.getObject(line);
+				if (o instanceof CandleQuote){
+					CandleQuote cq = (CandleQuote)o;
+					cq.setStockid(stockId);
+					if (!cq.getStartTime().before(sd)){
+						if (cq.getStartTime().after(ed)){
+							break;
+						}else{
+							lo.add(o);
+						}
 					}
 				}
-				map.put(stid, cql); //the last stid
-			}
-			return map;
+				line=br.readLine();
+            }
 		}catch(Exception e){
-			logger.error(String.format("exceptin while execute %s", sql), e);
-			return null;
+			logger.error("", e);
 		}finally{
-			SqlUtil.closeResources(con, null);
+			if (br!=null){
+				try{
+					br.close();
+				}catch(Exception e1){
+					logger.error("", e1);
+				}
+			}
+		}
+		return lo;
+	}
+	//
+	public static List<Object> getDataByStockDate(CrawlConf cconf, DataMapper dataMapper, String stockId, Date sd, Date ed){
+		if (dataMapper instanceof JDBCMapper){
+			JDBCMapper tableMapper = null;
+			tableMapper = (JDBCMapper) dataMapper;
+			Connection con = null;
+			String sql = String.format("select * from %s where stockid='%s' and dt>='%s' and dt<'%s' order by dt asc", 
+					tableMapper.getTableName(), stockId, sdf.format(sd), sdf.format(ed));
+			try{
+				con = SqlUtil.getConnection(cconf.getSmalldbconf());
+				List<Object> lo = (List<Object>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
+						con, -1, -1, "", 
+						tableMapper);
+				return lo;
+			}catch(Exception e){
+				logger.error("", e);
+				return null;
+			}finally{
+				SqlUtil.closeResources(con, null);
+			}
+		}else if (dataMapper instanceof FileDataMapper){
+			FileDataMapper fdMapper = (FileDataMapper) dataMapper;
+			return getBTDByStockDate(cconf, fdMapper, stockId, sd, ed);
+		}else{
+			logger.error(String.format("mapper type not supported. %s", dataMapper));
+			return null;
 		}
 	}
 	
@@ -218,7 +219,9 @@ public class StockPersistMgr {
 			Statement stmt = null;
 			String query = "";
 			try{
-				con = SqlUtil.getConnection(dbconf);	
+				con = SqlUtil.getConnection(dbconf);
+				if (con==null)
+					return ipoDateMap;
 				String tableName = sc.getTablesByCmd(sc.getIPODateCmd()).keySet().iterator().next();
 				query = String.format("select stockid, dt from %s", tableName);
 				stmt = con.createStatement();

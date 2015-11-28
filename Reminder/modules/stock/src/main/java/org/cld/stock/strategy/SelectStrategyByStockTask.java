@@ -20,15 +20,15 @@ import org.cld.stock.ETLUtil;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.persistence.StockPersistMgr;
+import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
-import org.cld.util.jdbc.DBConnConf;
-import org.cld.util.jdbc.JDBCMapper;
+import org.cld.util.DataMapper;
 
 public class SelectStrategyByStockTask extends Task implements Serializable{
 	private static final long serialVersionUID = 1L;
 	private static Logger logger =  LogManager.getLogger(SelectStrategyByStockTask.class);
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	public static SimpleDateFormat detailSdf = new SimpleDateFormat("yyyyMMddhhmmss");
+	private static SimpleDateFormat msdf = new SimpleDateFormat("yyyy-MM-dd hh:mm");
 	
 	private SelectStrategy[] scsl;
 
@@ -37,14 +37,13 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	private String stockId;
 	private Date startDate;
 	private Date endDate;
-	private DBConnConf dbconf;
 	private String outputDir;
 	
 	public SelectStrategyByStockTask(){
 	}
 	
 	public SelectStrategyByStockTask(SelectStrategy[] scsl, String marketBaseId, String marketId, String stockId, 
-			Date startDate, Date endDate, String outputDir, DBConnConf dbconf){
+			Date startDate, Date endDate, String outputDir){
 		this.scsl = scsl;
 		this.marketBaseId = marketBaseId;
 		this.setMarketId(marketId);
@@ -52,7 +51,6 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 		this.startDate = startDate;
 		this.endDate = endDate;
 		this.setOutputDir(outputDir);
-		this.setDbconf(dbconf);
 		genId();
 	}
 	
@@ -72,27 +70,29 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	public void runMyselfAndOutput(Map<String, Object> params, 
 			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
 		try{
-			Map<JDBCMapper, List<Object>> tableResults = new HashMap<JDBCMapper, List<Object>>();
+			CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
+			Map<DataMapper, List<Object>> tableResults = new HashMap<DataMapper, List<Object>>();
 			for (SelectStrategy ss:scsl){
 				ss.init();
-				for (JDBCMapper jmap:ss.getTableMappers()){
+				for (DataMapper jmap:ss.getDataMappers()){
 					tableResults.put(jmap, null);
 				}
 			}
-			for (JDBCMapper jmap:tableResults.keySet()){
-				List<Object> lo = StockPersistMgr.getDataByStockDate(dbconf, jmap, stockId, startDate, endDate);
+			for (DataMapper jmap:tableResults.keySet()){
+				List<Object> lo = StockPersistMgr.getDataByStockDate(cconf, jmap, stockId, startDate, endDate);
 				tableResults.put(jmap, lo);
 			}
 			for (SelectStrategy ss:scsl){
-				Map<JDBCMapper, List<Object>> resultMap = new HashMap<JDBCMapper, List<Object>>();
-				for (JDBCMapper jmap:ss.getTableMappers()){
+				Map<DataMapper, List<Object>> resultMap = new HashMap<DataMapper, List<Object>>();
+				for (DataMapper jmap:ss.getDataMappers()){
 					List<Object> lo = tableResults.get(jmap);
 					resultMap.put(jmap, lo);
 				}
 				List<SelectCandidateResult> scrl = ss.selectByHistory(resultMap);
 				if (scrl!=null){
 					for (SelectCandidateResult scr:scrl){
-						String key = String.format("%s,%s,%s,%s", ss.getName(), scr.getDt(), ss.getOrderDirection(), ss.paramsToString());
+						String key = String.format("%s,%s,%s,%s", ss.getName(), msdf.format(scr.getDt()), 
+								ss.getOrderDirection(), ss.paramsToString());
 						String value = String.format("%s,%.4f,%.3f", stockId, scr.getValue(), scr.getBuyPrice());
 						context.write(new Text(key), new Text(value));
 					}
@@ -115,12 +115,12 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	}
 	
 	public static String[] launch(String propfile, CrawlConf cconf, String marketBaseId, String marketId, String outputDir, 
-			SelectStrategy[] bsl, Date startDate, Date endDate, DBConnConf dbconf) {
+			SelectStrategy[] bsl, Date startDate, Date endDate) {
 		StockConfig sc = StockUtil.getStockConfig(marketBaseId);
 		List<Task> tl = new ArrayList<Task>();
 		String[] stockids = ETLUtil.getStockIdByMarketId(sc, marketId, cconf, null);
 		for (String stockid: stockids){
-			Task t = new SelectStrategyByStockTask(bsl, marketBaseId, marketId, stockid, startDate, endDate, outputDir, dbconf);
+			Task t = new SelectStrategyByStockTask(bsl, marketBaseId, marketId, stockid, startDate, endDate, outputDir);
 			tl.add(t);
 		}
 		String sb = "";
@@ -161,14 +161,6 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	}
 	public void setMarketBaseId(String marketBaseId) {
 		this.marketBaseId = marketBaseId;
-	}
-
-	public DBConnConf getDbconf() {
-		return dbconf;
-	}
-
-	public void setDbconf(DBConnConf dbconf) {
-		this.dbconf = dbconf;
 	}
 
 	public String getMarketId() {

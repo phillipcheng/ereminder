@@ -12,9 +12,8 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.stock.CandleQuote;
 import org.cld.util.CombPermUtil;
+import org.cld.util.DataMapper;
 import org.cld.util.StringUtil;
-import org.cld.util.jdbc.JDBCMapper;
-
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonTypeInfo(use=JsonTypeInfo.Id.CLASS, include=JsonTypeInfo.As.PROPERTY, property="@class")
@@ -29,6 +28,7 @@ public class SelectStrategy {
 	public static String DESC = "desc";
 	
 	public static final String KEY_PARAM="scs.param";
+	public static final int LOOKUP_DAYS=50;
 	
 	private String name;
 	private int mbMemory=512;
@@ -50,8 +50,8 @@ public class SelectStrategy {
 	//to be overriden
 	public void init(){}
 	public void evalExp(){}
-	public JDBCMapper[] getTableMappers(){return null;}
-	public List<SelectCandidateResult> selectByHistory(Map<JDBCMapper, List<Object>> tableResults){return null;}
+	public DataMapper[] getDataMappers(){return null;}
+	public List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<Object>> tableResults){return null;}
 	public List<SelectCandidateResult> selectByCurrent(CrawlConf cconf, String baseMarketId, String marketId, Date submitDay, int n, Map<String, Float> newQuotes){return null;}
 	public String[] prepareData(String baseMarketId, String marketId, CrawlConf cconf, String propfile, Date start, Date end){return null;}
 	

@@ -15,7 +15,7 @@ public class BuySellResult {
 	private float sellPrice;
 	private float percent;
 	
-	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 	
 	public BuySellResult(Date submitD, String stockid, Date buyTime, float buyPrice, Date sellTime, float sellPrice, String sellOrderType, float percent){
 		this.submitD = submitD;

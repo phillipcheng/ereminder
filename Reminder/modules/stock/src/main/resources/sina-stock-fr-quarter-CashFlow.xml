@@ -33,13 +33,13 @@
 			</pageVerify>
 			<csvtransform transformClass="org.cld.etl.csv.SpreadColTableAsCSV" outputType="byJobSingle">
 			</csvtransform>
-			<filter>function getDate(q) {
+			<filter byDate="true"><function>function getDate(q) {
     if (q=='1') return '-03-31'
     if (q=='2') return '-06-30'
     if (q=='3') return '-09-30'
     if (q=='4') return '-12-31'
 }
-year==0 || quarter==0 || arr[0]&gt;=(year+getDate(quarter))</filter>
+year==0 || quarter==0 || arr[0]&gt;=(year+getDate(quarter))</function></filter>
 		</baseBrowseTask>
 	</PrdTask>
 </Tasks>

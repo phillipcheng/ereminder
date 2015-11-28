@@ -3,9 +3,10 @@ package org.cld.util.jdbc;
 import java.sql.ResultSet;
 
 import org.apache.commons.lang.ObjectUtils;
+import org.cld.util.DataMapper;
 
 
-public abstract class JDBCMapper {
+public abstract class JDBCMapper implements DataMapper {
 	public abstract String getTableName();
 	public abstract Object getObject(ResultSet cursor);//may return null if want to be filtered
 	

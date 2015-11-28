@@ -315,6 +315,8 @@ public class SqlUtil {
 	
 	public static int tryTimes=10;
 	public static Connection getConnection(DBConnConf dbconf){
+		if (dbconf.getUrl()==null)
+			return null;
 		Connection con = null;
 		try {
 			Class.forName(dbconf.getDriver());

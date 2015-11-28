@@ -45,6 +45,7 @@ import org.xml.taskdef.BrowseDetailType;
 import org.xml.taskdef.BrowseTaskType;
 import org.xml.taskdef.CsvOutputType;
 import org.xml.taskdef.CsvTransformType;
+import org.xml.taskdef.FilterType;
 import org.xml.taskdef.TransformOp;
 import org.xml.taskdef.VarType;
 
@@ -152,7 +153,7 @@ public class ProductAnalyze{
 		}
 	}
 
-	//return true for there are records filtered
+	//return true for there are records filtered by date, so I do not need to crawl anymore, since the data is ordered by date
 	public static boolean postCrawlProcess(Task taskInstance, BrowseTaskType btt, CrawledItem product){
 		CsvTransformType csvTransform = btt.getCsvtransform();
 		if (csvTransform!=null){
@@ -182,11 +183,12 @@ public class ProductAnalyze{
 			}
 			product.setCsvValue(csv);
 			//filter the csv
-			String filterExp = btt.getFilter();
+			FilterType ft= btt.getFilter();
+			String filterExp = ft.getFunction();
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.putAll(product.getParamMap());
 			boolean hasFiltered=false;
-			if (filterExp!=null){
+			if (ft!=null){
 				List<String[]> passedCsv = new ArrayList<String[]>();
 				for (String[] arr:csv){
 					//anyway the csv[1] is the value list, i need to make it into an array
@@ -207,7 +209,7 @@ public class ProductAnalyze{
 				passedCsvArray = passedCsv.toArray(passedCsvArray);
 				product.setCsvValue(passedCsvArray);
 			}
-			return (cicsv.isFiltered()||hasFiltered);//filter by dateIdx or filter exp
+			return (cicsv.isFiltered()||(hasFiltered&&ft.isByDate()));//filter by dateIdx or filter date exp
 		}else{
 			return false;
 		}

@@ -20,10 +20,12 @@ import org.cld.stock.nasdaq.persistence.NasdaqDividendJDBCMapper;
 import org.cld.stock.nasdaq.persistence.NasdaqEarnJDBCMapper;
 import org.cld.stock.nasdaq.persistence.NasdaqExDivSplitMapper;
 import org.cld.stock.nasdaq.persistence.NasdaqFQDailyQuoteMapper;
+import org.cld.stock.nasdaq.persistence.NasdaqFileFQDailyMapper;
+import org.cld.stock.nasdaq.persistence.NasdaqFileFQMinuteMapper;
 import org.cld.stock.nasdaq.persistence.NasdaqSplitJDBCMapper;
 import org.cld.stock.nasdaq.task.FQPostProcessTask;
 import org.cld.stock.nasdaq.task.QuotePostProcessTask;
-import org.cld.stock.sina.SinaStockConfig;
+import org.cld.util.FileDataMapper;
 import org.cld.util.ListUtil;
 import org.cld.util.jdbc.JDBCMapper;
 
@@ -388,5 +390,25 @@ public class NasdaqStockConfig extends StockConfig{
 	@Override
 	public String[] getUpdateAllCmds() {
 		return new String[]{QUOTE_FQ_HISTORY};
+	}
+
+	@Override
+	public FileDataMapper getBTFQDailyQuoteMapper() {
+		return NasdaqFileFQDailyMapper.getInstance();
+	}
+
+	@Override
+	public FileDataMapper getBTFQMinuteQuoteMapper() {
+		return NasdaqFileFQMinuteMapper.getInstance();
+	}
+
+	@Override
+	public String getMarketStart() {
+		return "9:30";
+	}
+
+	@Override
+	public String getMarketStop() {
+		return "16:00";
 	}
 }

@@ -42,13 +42,14 @@
 				<value value="Number,Text,Number,Number,Text" toType="list" toEntryType="string"/>
 			</userAttribute>
 			<csvtransform transformClass="org.cld.etl.csv.ColTableRowTableAsCSV" outputType="byJobMulti"><!-- 1 file -->
-			</csvtransform><filter>function getDate(q) {
+			</csvtransform>
+			<filter><function>function getDate(q) {
     if (q=='1') return '-03-31'
     if (q=='2') return '-06-30'
     if (q=='3') return '-09-30'
     if (q=='4') return '-12-31'
 }
-year==0 || quarter==0 || arr[0]==(year+getDate(quarter))</filter>
+year==0 || quarter==0 || arr[0]==(year+getDate(quarter))</function></filter>
 		</baseBrowseTask>
 	</PrdTask>
 </Tasks>

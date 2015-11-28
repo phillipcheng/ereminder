@@ -14,17 +14,18 @@ import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
+import org.cld.util.DataMapper;
 import org.cld.util.DateTimeUtil;
 import org.cld.util.jdbc.JDBCMapper;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class DividendSS extends SelectStrategy {
+public class DividendD extends SelectStrategy {
 
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private StockConfig sc;
 	
-	public DividendSS(){
+	public DividendD(){
 	}
 	
 	//init after json deserilized
@@ -35,17 +36,16 @@ public class DividendSS extends SelectStrategy {
 	
 	@JsonIgnore
 	@Override
-	public JDBCMapper[] getTableMappers() {
-		return new JDBCMapper[]{sc.getFQDailyQuoteTableMapper(), sc.getDividendTableMapper()};
+	public DataMapper[] getDataMappers() {
+		return new DataMapper[]{sc.getBTFQDailyQuoteMapper(), sc.getDividendTableMapper()};
 	}
 	
-	@JsonIgnore
 	@Override
-	public List<SelectCandidateResult> selectByHistory(Map<JDBCMapper, List<Object>> tableResults) {
+	public List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<Object>> tableResults) {
 		Object[] params = this.getParams();
 		float threashold = ((Double)params[0]).floatValue();
 		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
-		List<Object> fqlist = tableResults.get(sc.getFQDailyQuoteTableMapper());
+		List<Object> fqlist = tableResults.get(sc.getBTFQDailyQuoteMapper());
 		TreeMap<Date, CandleQuote> cqMap = new TreeMap<Date, CandleQuote>();
 		for (Object cqo:fqlist){
 			CandleQuote cq = (CandleQuote) cqo;
@@ -66,7 +66,7 @@ public class DividendSS extends SelectStrategy {
 				if (checkValid(cq)){
 					float yield = dv.getDividend()/(cq.getClose()/cq.getFqIdx());
 					if (yield>threashold){
-						scrl.add(new SelectCandidateResult(sdf.format(submitD), yield));
+						scrl.add(new SelectCandidateResult(sc.getNormalTradeStartTime(submitD), yield));
 					}
 				}
 			}

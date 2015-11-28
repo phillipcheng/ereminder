@@ -17,23 +17,23 @@ import org.cld.etl.fci.AbstractCrawlItemToCSV;
  * 
  *      , c-h1, c-h2, c-h3
  * r-h1 ,
- * atr-1,   v1,   v2,   v3
- * atr-2,   v1,   v2,   v3
- * atr-3,   v1,   v2,   v3
+ * atr-1,   v11,   v21,   v31
+ * atr-2,   v12,   v22,   v32
+ * atr-3,   v13,   v23,   v33
  * 
  * r-h2 ,
- * atr-1,   v1,   v2,   v3
- * atr-2,   v1,   v2,   v3
- * atr-3,   v1,   v2,   v3
+ * atr-1,   v14,   v24,   v34
+ * atr-2,   v15,   v25,   v35
+ * atr-3,   v16,   v26,   v36
  * 
  * the csv output:
  * 
- * c-h1, r-h1, v1, v2, v3
- * c-h1, r-h2, v1, v2, v3
- * c-h2, r-h1, v1, v2, v3
- * c-h2, r-h2, v1, v2, v3
- * c-h3, r-h1, v1, v2, v3
- * c-h3, r-h2, v1, v2, v3
+ * c-h1, r-h1, v11, v12, v13
+ * c-h1, r-h2, v14, v15, v16
+ * c-h2, r-h1, v21, v22, v23
+ * c-h2, r-h2, v24, v25, v26
+ * c-h3, r-h1, v31, v32, v33
+ * c-h3, r-h2, v34, v35, v36
  */
 public class CellTableAsCSV extends AbstractCrawlItemToCSV{
 	
@@ -42,16 +42,7 @@ public class CellTableAsCSV extends AbstractCrawlItemToCSV{
 	private static final String FIELD_NAME_ROWHEADER="RowHeader";
 	private static final String FIELD_NAME_CELLROWNUMBER="CellRowNum"; //how many rows per cell
 	
-	
-	@Override
-	public String[][] getCSV(CrawledItem ci, Map<String, Object> paramMap) {
-		init(ci, paramMap);
-		List<String> ls = (List<String>)ci.getParam(FN_DATA);
-		int cellrownum = (int)ci.getParam(FIELD_NAME_CELLROWNUMBER);
-		List<String> colHeaders = (List<String>) ci.getParam(FIELD_NAME_COLHEADER);
-		int colnum = (int)ci.getParam(FIELD_NAME_COLNUM);
-		List<String> rowHeaders = (List<String>) ci.getParam(FIELD_NAME_ROWHEADER);
-		List<String> dataTypes = (List<String>)ci.getParam(DATA_TYPE_KEY); //number of items in the cell not including the row-header and col-header
+	private List<String[]> getCSVOneTable(List<String> ls, List<String> colHeaders, List<String> rowHeaders, int cellrownum, int colnum, List<String> dataTypes){
 		List<String[]> csvs = new ArrayList<String[]>();
 		if (colHeaders!=null){
 			for (int j=0; j<colHeaders.size(); j++){
@@ -82,7 +73,33 @@ public class CellTableAsCSV extends AbstractCrawlItemToCSV{
 				}
 			}
 		}
-		
+		return csvs;
+	}
+	
+	@Override
+	public String[][] getCSV(CrawledItem ci, Map<String, Object> paramMap) {
+		init(ci, paramMap);
+		List<String> ls = (List<String>)ci.getParam(FN_DATA);
+		int cellrownum = (int)ci.getParam(FIELD_NAME_CELLROWNUMBER);//number of items in the cell not including the row-header and col-header
+		List<String> colHeaders = (List<String>) ci.getParam(FIELD_NAME_COLHEADER);
+		int colnum = (int)ci.getParam(FIELD_NAME_COLNUM);
+		List<String> rowHeaders = (List<String>) ci.getParam(FIELD_NAME_ROWHEADER);
+		List<String> dataTypes = (List<String>)ci.getParam(DATA_TYPE_KEY); 
+		List<String[]> csvs = new ArrayList<String[]>();
+		if (colHeaders!=null){
+			//split colHeaders into batches with colnum size
+			int batchNum = colHeaders.size()/colnum;
+			int batchSize = colnum * rowHeaders.size() * cellrownum;
+			for (int i=0; i<batchNum; i++){
+				List<String> lsb = ls.subList(i*batchSize, (i+1)*batchSize);
+				List<String> colHeadersb = colHeaders.subList(i*colnum, (i+1)*colnum);
+				csvs.addAll(getCSVOneTable(lsb, colHeadersb, rowHeaders, cellrownum, colnum, dataTypes));
+			}
+			//for last left batch
+			List<String> lsb = ls.subList(batchNum*batchSize, ls.size());
+			List<String> colHeadersb = colHeaders.subList(batchNum*colnum, colHeaders.size());
+			csvs.addAll(getCSVOneTable(lsb, colHeadersb, rowHeaders, cellrownum, colnum, dataTypes));
+		}
 		String[][] retlist = new String[csvs.size()][];
 		return csvs.toArray(retlist);
 	}

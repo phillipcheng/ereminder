@@ -16,6 +16,7 @@ import org.cld.stock.LaunchableTask;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.nasdaq.task.FQPostProcessTask;
+import org.cld.util.FileDataMapper;
 import org.cld.util.ListUtil;
 import org.cld.util.jdbc.JDBCMapper;
 
@@ -309,5 +310,25 @@ public class HKStockConfig extends StockConfig{
 	@Override
 	public String[] getUpdateAllCmds() {
 		return new String[]{QUOTE_FQ_HISTORY};
+	}
+	@Override
+	public FileDataMapper getBTFQDailyQuoteMapper() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public FileDataMapper getBTFQMinuteQuoteMapper() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public String getMarketStart() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public String getMarketStop() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

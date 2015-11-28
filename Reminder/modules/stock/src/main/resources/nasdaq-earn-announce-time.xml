@@ -35,8 +35,8 @@
 					</expression>
 				</ops>
 			</csvtransform>
-			<filter>
-			arr[1].indexOf(".")==-1
+			<filter byDate="false"><function>
+			arr[1].indexOf(".")==-1</function>
 			</filter>
 		</baseBrowseTask>
 	</PrdTask>

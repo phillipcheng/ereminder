@@ -19,6 +19,8 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.hadoop.CrawlTaskMapper;
@@ -34,31 +36,23 @@ import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.strategy.prepare.GenCloseDropAvgForDayTask;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
+import org.cld.util.DataMapper;
 import org.cld.util.DateTimeUtil;
-import org.cld.util.jdbc.JDBCMapper;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class CloseDropAvgSS extends SelectStrategy {
-
-	public static final int LOOKUP_DAYS=20;
+public class OpenCloseDropAvgD extends SelectStrategy {
+	public static Logger logger = LogManager.getLogger(OpenCloseDropAvgD.class);
 	
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private StockConfig sc;
 	
-	public CloseDropAvgSS(){
+	public OpenCloseDropAvgD(){
 	}
 	
 	//init after json deserilized
 	public void init(){
 		super.init();
 		sc = StockUtil.getStockConfig(this.getBaseMarketId());
-	}
-	
-	@JsonIgnore
-	@Override
-	public JDBCMapper[] getTableMappers() {
-		return new JDBCMapper[]{sc.getFQDailyQuoteTableMapper(), sc.getExDivSplitHistoryTableMapper()};
 	}
 	
 	//preparedData is adjusted, 
@@ -86,7 +80,7 @@ public class CloseDropAvgSS extends SelectStrategy {
 							scrl = new ArrayList<SelectCandidateResult>();
 							map.put(value, scrl);
 						}
-						scrl.add(new SelectCandidateResult(stockId, sdf.format(submitDay), value, price));
+						scrl.add(new SelectCandidateResult(stockId, submitDay, value, price));
 					}
 				}
 			}
@@ -179,10 +173,45 @@ public class CloseDropAvgSS extends SelectStrategy {
 		}
 	}
 	
-	//use the open of submit day and submit at the open, table results are per stock
+	@Override
+	public String[] prepareData(String baseMarketId, String marketId, CrawlConf cconf, String propfile, Date start, Date end){
+		StockConfig sc = StockUtil.getStockConfig(baseMarketId);
+		List<String> allIds = Arrays.asList(ETLUtil.getStockIdByMarketId(sc, marketId, cconf, ""));
+		List<Task> tl = new ArrayList<Task>();
+		Date day = StockUtil.getNextOpenDay(start, sc.getHolidays());
+		List<String> jobidlist = new ArrayList<String>();
+		while (day.before(end)){
+			for (String stockid: allIds){
+				Task t = new GenCloseDropAvgForDayTask(baseMarketId, stockid, sdf.format(day));
+				tl.add(t);
+			}
+			int mbMem = 512;
+			String optValue = "-Xmx" + mbMem + "M";
+			Map<String, String> hadoopJobParams = new HashMap<String, String>();
+			hadoopJobParams.put("mapreduce.map.speculative", "false");//since we do not allow same map multiple instance
+			hadoopJobParams.put("mapreduce.map.memory.mb", mbMem+"");
+			hadoopJobParams.put("mapreduce.map.java.opts", optValue);
+			hadoopJobParams.put(NLineInputFormat.LINES_PER_MAP, "200");
+			String taskName = String.format("%s%s", GenCloseDropAvgForDayTask.class.getSimpleName(), sdf.format(day));
+			String jobId = CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tl, taskName, false, 
+					CrawlTaskMapper.class, DefaultCopyTextReducer.class, hadoopJobParams);
+			jobidlist.add(jobId);
+			tl.clear();
+			day = StockUtil.getNextOpenDay(day, sc.getHolidays());
+		}
+		String[] jobidarray = new String[jobidlist.size()];
+		return jobidlist.toArray(jobidarray);
+	}
+	
 	@JsonIgnore
 	@Override
-	public List<SelectCandidateResult> selectByHistory(Map<JDBCMapper, List<Object>> tableResults) {
+	public DataMapper[] getDataMappers() {
+		return new DataMapper[]{sc.getBTFQDailyQuoteMapper(), sc.getExDivSplitHistoryTableMapper()};
+	}
+	
+	//use the open of submit day and submit at the open, table results are per stock
+	@Override
+	public List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<Object>> tableResults) {
 		Object[] params = this.getParams();
 		float threashold = ((Double)params[0]).floatValue();//drop percentage 5 mean 5%
 		float openUpRatio = ((Double)params[1]).floatValue();//the limit price ratio submit to open price -1 mean -1%
@@ -193,7 +222,7 @@ public class CloseDropAvgSS extends SelectStrategy {
 			DivSplit ds = (DivSplit)o;
 			lxdds.add(ds.getDt());
 		}
-		List<Object> lo = tableResults.get(sc.getFQDailyQuoteTableMapper());
+		List<Object> lo = tableResults.get(sc.getBTFQDailyQuoteMapper());
 		for (int i=lo.size()-1; i>=0; i--){
 			CandleQuote submitCq = (CandleQuote) lo.get(i);
 			if (lxdds.contains(submitCq.getStartTime())){//skip ex days
@@ -228,7 +257,7 @@ public class CloseDropAvgSS extends SelectStrategy {
 							float value = (high-submitCq.getOpen())/(high*days);
 							if (value>threashold*0.01){
 								float price = submitCq.getOpen()*(1+openUpRatio*0.01f);
-								scrl.add(new SelectCandidateResult(sdf.format(submitCq.getStartTime()), value, price));
+								scrl.add(new SelectCandidateResult(sc.getNormalTradeStartTime(submitCq.getStartTime()), value, price));
 								logger.info(String.format("%s has consecutive drop %.3f for %d days til %s", submitCq.getStockid(), value, days, 
 										sdf.format(submitCq.getStartTime())));
 							}
@@ -240,35 +269,5 @@ public class CloseDropAvgSS extends SelectStrategy {
 			}
 		}
 		return scrl;
-	}
-	
-	@Override
-	public String[] prepareData(String baseMarketId, String marketId, CrawlConf cconf, String propfile, Date start, Date end){
-		StockConfig sc = StockUtil.getStockConfig(baseMarketId);
-		List<String> allIds = Arrays.asList(ETLUtil.getStockIdByMarketId(sc, marketId, cconf, ""));
-		List<Task> tl = new ArrayList<Task>();
-		Date day = StockUtil.getNextOpenDay(start, sc.getHolidays());
-		List<String> jobidlist = new ArrayList<String>();
-		while (day.before(end)){
-			for (String stockid: allIds){
-				Task t = new GenCloseDropAvgForDayTask(baseMarketId, stockid, sdf.format(day));
-				tl.add(t);
-			}
-			int mbMem = 512;
-			String optValue = "-Xmx" + mbMem + "M";
-			Map<String, String> hadoopJobParams = new HashMap<String, String>();
-			hadoopJobParams.put("mapreduce.map.speculative", "false");//since we do not allow same map multiple instance
-			hadoopJobParams.put("mapreduce.map.memory.mb", mbMem+"");
-			hadoopJobParams.put("mapreduce.map.java.opts", optValue);
-			hadoopJobParams.put(NLineInputFormat.LINES_PER_MAP, "200");
-			String taskName = String.format("%s%s", GenCloseDropAvgForDayTask.class.getSimpleName(), sdf.format(day));
-			String jobId = CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tl, taskName, false, 
-					CrawlTaskMapper.class, DefaultCopyTextReducer.class, hadoopJobParams);
-			jobidlist.add(jobId);
-			tl.clear();
-			day = StockUtil.getNextOpenDay(day, sc.getHolidays());
-		}
-		String[] jobidarray = new String[jobidlist.size()];
-		return jobidlist.toArray(jobidarray);
 	}
 }

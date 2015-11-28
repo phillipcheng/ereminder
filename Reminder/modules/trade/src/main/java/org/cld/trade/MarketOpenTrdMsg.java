@@ -89,7 +89,7 @@ public class MarketOpenTrdMsg extends TradeMsg {
 				List<Quote> ql = tm.getQuotes(new String[]{symbol});
 				if (ql!=null && ql.size()==1){
 					Quote q = ql.get(0);
-					scr = new SelectCandidateResult(symbol, sdf.format(new Date()), 0f, q.getLast());
+					scr = new SelectCandidateResult(symbol, new Date(), 0f, q.getLast());
 				}
 			}
 			if (scr!=null){

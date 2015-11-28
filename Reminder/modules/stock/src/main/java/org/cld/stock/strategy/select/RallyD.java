@@ -11,16 +11,17 @@ import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
+import org.cld.util.DataMapper;
 import org.cld.util.jdbc.JDBCMapper;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class RallySS extends SelectStrategy {
+public class RallyD extends SelectStrategy {
 
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private StockConfig sc;
 	
-	public RallySS(){
+	public RallyD(){
 	}
 	
 	//init after json deserilized
@@ -31,8 +32,8 @@ public class RallySS extends SelectStrategy {
 	
 	@JsonIgnore
 	@Override
-	public JDBCMapper[] getTableMappers() {
-		return new JDBCMapper[]{sc.getFQDailyQuoteTableMapper()};
+	public DataMapper[] getDataMappers() {
+		return new DataMapper[]{sc.getBTFQDailyQuoteMapper()};
 	}
 
 	//max and latest
@@ -69,13 +70,12 @@ public class RallySS extends SelectStrategy {
 	}
 	
 	//using the close of current cq, then submit date has to be next trading day
-	@JsonIgnore
 	@Override
-	public List<SelectCandidateResult> selectByHistory(Map<JDBCMapper, List<Object>> tableResults) {
+	public List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<Object>> tableResults) {
 		Object[] params = this.getParams();
 		int periodDays = (int) ((Double)params[0]).floatValue();
 		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
-		List<Object> lo = tableResults.get(sc.getFQDailyQuoteTableMapper());
+		List<Object> lo = tableResults.get(sc.getBTFQDailyQuoteMapper());
 		TreeMap<Float, TreeMap<Date, CandleQuote>> dailyFQMap = new TreeMap<Float, TreeMap<Date, CandleQuote>>();
 		if (lo.size()>periodDays){
 			//init
@@ -94,7 +94,7 @@ public class RallySS extends SelectStrategy {
 				if (checkValid(currentCq)){
 					if (minCq.getStartTime().before(maxCq.getStartTime()) && maxCq.getClose()>minCq.getClose()){
 						float value = (currentCq.getClose()-minCq.getClose())/(maxCq.getClose()-minCq.getClose());
-						scrl.add(new SelectCandidateResult(sdf.format(nextCq.getStartTime()), value));
+						scrl.add(new SelectCandidateResult(sc.getNormalTradeStartTime(nextCq.getStartTime()), value));
 					}
 				}
 				//

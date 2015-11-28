@@ -18,11 +18,14 @@
 			<userAttribute name="CellRowNum">
 				<value value="3" toType="int"/>
 			</userAttribute>
+			<userAttribute name="DataType">
+				<value value="Number,Text,Number" toType="list" toEntryType="string"/>
+			</userAttribute>
 			<userAttribute name="ColNum">
 				<value value="3" toType="int"/>
 			</userAttribute>
 			<userAttribute name="RowHeader">
-				<value value="//table[@class='ipos']/tbody/tr[not(@bgcolor)]/td[@class='body1']/b" toType="list" toEntryType="string" optional="true"/>
+				<value value="//table[@class='ipos']/tbody/tr[not(@bgcolor)]/td[@class='body1']/b" toType="externalList" toEntryType="string" firstPageOnly="true" optional="true"/>
 			</userAttribute>
 			<userAttribute name="ColHeader">
 				<value value="//table[@class='ipos']/tbody/tr[4]/td[@nowrap='nowrap'][position()>1]/b/text()[position()=1]" toType="externalList" toEntryType="string" optional="true"/>
@@ -58,16 +61,25 @@ function merge(arr){
 }
 rarr = arr.split(',')
 rarr[1] = getQuarterEndDateFromMonth(rarr[1])
+var eps = rarr[3].substring(0,rarr[3].lastIndexOf("("));
+var epsd = rarr[3].substring(rarr[3].lastIndexOf("(")+1,rarr[3].lastIndexOf(")"));
+rarr[3]=eps;
+rarr[5]=epsd;
+var month = epsd.substring(0, epsd.indexOf("/"));
+var day = epsd.substring(epsd.indexOf("/")+1, epsd.lastIndexOf("/"));
+var year = epsd.substring(epsd.lastIndexOf("/")+1);
+rarr[5] = year + "-" + month + "-" + day
+rarr[0] = year
 merge(rarr)</expression>
 				</ops>
 			</csvtransform>
-			<filter>function getDate(q) {
+			<filter byDate="false"><function>function getDate(q) {
     if (q=='1') return '-03-31'
     if (q=='2') return '-06-30'
     if (q=='3') return '-09-30'
     if (q=='4') return '-12-31'
 }
-(year==0 || quarter==0 || arr[0]&gt;=(year+getDate(quarter))) &amp;&amp; arr.length>3 &amp;&amp; arr[0].indexOf('Total')==-1</filter>
+(year==0 || quarter==0 || arr[0]&gt;=(year+getDate(quarter))) &amp;&amp; arr.length>3 &amp;&amp; arr[0].indexOf('Total')==-1</function></filter>
 		</baseBrowseTask>
 		<nextPage value="//table[@class='ipos']/tbody/tr[last()]/td/a[text()='Previous 3 Years']" optional="true"/>
 		<lastPageCondition>

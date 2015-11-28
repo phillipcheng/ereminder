@@ -33,13 +33,13 @@
 			</userAttribute>
 			<csvtransform outputType="byId" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
 			</csvtransform>
-			<filter>function getDate(q) {
+			<filter><function>function getDate(q) {
     if (q=='1') return '-03-31'
     if (q=='2') return '-06-30'
     if (q=='3') return '-09-30'
     if (q=='4') return '-12-31'
 }
-year==0 || quarter==0 || arr[1]&gt;=(year+getDate(quarter))</filter>
+year==0 || quarter==0 || arr[1]&gt;=(year+getDate(quarter))</function></filter>
 		</baseBrowseTask>
 		<nextPage value="//ul[@id='pager']/ul[1]/li[last()-1]/a" optional="true"/>
 		<lastPageCondition>

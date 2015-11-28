@@ -2,9 +2,9 @@ package org.cld.stock.hk;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.stock.yahoo.YahooFQDailyQuoteMapper;
+import org.cld.stock.yahoo.YahooExDivSplitMapper;
 
-public class HKExDivSplitMapper extends YahooFQDailyQuoteMapper{
+public class HKExDivSplitMapper extends YahooExDivSplitMapper{
 	Logger logger = LogManager.getLogger(HKExDivSplitMapper.class);
 	
 	private HKExDivSplitMapper(){

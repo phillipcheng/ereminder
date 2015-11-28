@@ -1,8 +1,8 @@
 package org.cld.stock.strategy;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -17,12 +17,15 @@ import org.cld.util.StringUtil;
 
 //for abstract class json mapping
 public class SellStrategy {
-	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private static Logger logger =  LogManager.getLogger(SellStrategy.class);
 
+	public static final int HU_DAY=0;
+	public static final int HU_MIN=1;
+	
 	public static String KEY_SELL_STRATEGYS="sellstrategys";
 	public static String KEY_SELECT_NUMBER="sls.selectnumber"; //the number of stock selected
 	public static String KEY_SELLS_DURATION="sls.duration";
+	public static String KEY_SELLS_DURATION_UNIT="sls.duration.unit";
 	public static String KEY_SELLS_LIMIT_PERCENTAGE="sls.limitPercentage";
 	public static String KEY_SELLS_STOP_PERCENTAGE="sls.stopPercentage";
 	public static String KEY_SELLS_ISTRAILING="sls.trailing";
@@ -30,6 +33,7 @@ public class SellStrategy {
 
 	private int selectNumber=1;
 	private int holdDuration=0;
+	private int holdUnit = HU_DAY;
 	private float limitPercentage=0;//% unit
 	private float stopPercentage=0; //%unit
 	private boolean trailing=false;
@@ -37,9 +41,10 @@ public class SellStrategy {
 	public SellStrategy(){
 	}
 	
-	public SellStrategy(int selectNumber, int holdDuration, float limitPercentage, float stopPercentage, boolean trailing){
+	public SellStrategy(int selectNumber, int holdDuration, int unit, float limitPercentage, float stopPercentage, boolean trailing){
 		this.selectNumber = selectNumber;
 		this.holdDuration = holdDuration;
+		this.setHoldUnit(unit);
 		this.limitPercentage = limitPercentage;
 		this.stopPercentage = stopPercentage;
 		this.trailing = trailing;
@@ -86,6 +91,7 @@ public class SellStrategy {
 		if (strDurations!=null){
 			durations = StringUtil.parseSteps(strDurations);
 		}
+		int hu = props.getInt(SellStrategy.KEY_SELLS_DURATION_UNIT, 0);
 		String strLimitPercents = props.getString(SellStrategy.KEY_SELLS_LIMIT_PERCENTAGE);
 		if (strLimitPercents!=null){
 			limitPercentages = StringUtil.parseSteps(strLimitPercents);
@@ -104,13 +110,16 @@ public class SellStrategy {
 			for (float duration:durations){
 				for (float lp:limitPercentages){
 					for (float stp:stopTrailingPercentages){
-						SellStrategy sls = new SellStrategy();
-						sls.setSelectNumber((int)selectNumber);
-				        sls.setHoldDuration((int) duration);
-				        sls.setLimitPercentage(lp);
-				        sls.setStopPercentage(stp);
-				        sls.setTrailing(trailing);
-				        ssl.add(sls);
+						if (lp>stp){//sell limit percent should be bigger then stop loss percent
+							SellStrategy sls = new SellStrategy();
+							sls.setSelectNumber((int)selectNumber);
+					        sls.setHoldDuration((int) duration);
+					        sls.setHoldUnit(hu);
+					        sls.setLimitPercentage(lp);
+					        sls.setStopPercentage(stp);
+					        sls.setTrailing(trailing);
+					        ssl.add(sls);
+						}
 					}
 				}
 			}
@@ -123,18 +132,11 @@ public class SellStrategy {
 	//used by real
 	public static StockOrder makeBuyOrder(SelectCandidateResult scr, SellStrategy ss, int cashAmount){
 		StockOrder buyOrder = new StockOrder();
-		Date dt = null;
-		try {
-			dt = sdf.parse(scr.getDt());
-		} catch (ParseException e) {
-			logger.error("", e);
-			return null;
-		}
 		String stockid = scr.getStockId();
 		float buyLimit = scr.getBuyPrice();
 		buyOrder.setStockid(stockid);
 		buyOrder.setAction(ActionType.buy);
-		buyOrder.setSubmitTime(dt);
+		buyOrder.setSubmitTime(scr.getDt());
 		buyOrder.setTif(TimeInForceType.DayOrder);
 		if (buyLimit>0){
 			buyOrder.setOrderType(OrderType.limit);
@@ -195,18 +197,11 @@ public class SellStrategy {
 	public static List<StockOrder> makeStockOrders(SelectCandidateResult scr, SellStrategy ss){
 		ArrayList<StockOrder> sol = new ArrayList<StockOrder>();
 		StockOrder buyOrder = new StockOrder();
-		Date dt = null;
-		try {
-			dt = sdf.parse(scr.getDt());
-		} catch (ParseException e) {
-			logger.error("", e);
-			return null;
-		}
 		String stockid = scr.getStockId();
 		float buyLimit = scr.getBuyPrice();
 		buyOrder.setStockid(stockid);
 		buyOrder.setAction(ActionType.buy);
-		buyOrder.setSubmitTime(dt);
+		buyOrder.setSubmitTime(scr.getDt());
 		buyOrder.setTif(TimeInForceType.DayOrder);
 		if (buyLimit>0){
 			buyOrder.setOrderType(OrderType.limit);
@@ -216,40 +211,40 @@ public class SellStrategy {
 		}
 		buyOrder.setDuration(ss.getHoldDuration());//TODO
 		sol.add(buyOrder);
+
 		
-		if (ss.getLimitPercentage()!=0){
-			StockOrder limitSellOrder = new StockOrder();
-			limitSellOrder.setSubmitTime(dt);
-			limitSellOrder.setStockid(stockid);
-			limitSellOrder.setAction(ActionType.sell);
-			limitSellOrder.setOrderType(OrderType.limit);
-			limitSellOrder.setLimitPercentage(ss.getLimitPercentage());
-			limitSellOrder.setPairOrderId(buyOrder.getOrderId());
-			limitSellOrder.setTif(TimeInForceType.GTC);
-			sol.add(limitSellOrder);
-		}
+		StockOrder limitSellOrder = new StockOrder();
+		limitSellOrder.setSubmitTime(null);//this submit time will be set after buyOrder executed.
+		limitSellOrder.setStockid(stockid);
+		limitSellOrder.setAction(ActionType.sell);
+		limitSellOrder.setOrderType(OrderType.limit);
+		limitSellOrder.setLimitPercentage(ss.getLimitPercentage());
+		limitSellOrder.setPairOrderId(buyOrder.getOrderId());
+		limitSellOrder.setTif(TimeInForceType.GTC);
 		
-		if (ss.getStopPercentage()!=0){
-			StockOrder stopSellOrder = new StockOrder();
-			sol.add(stopSellOrder);
-			stopSellOrder.setSubmitTime(dt);
-			stopSellOrder.setStockid(stockid);
-			stopSellOrder.setAction(ActionType.sell);
-			stopSellOrder.setTif(TimeInForceType.GTC);
-			if (ss.trailing){
-				stopSellOrder.setOrderType(OrderType.stoptrailingpercentage);
-				stopSellOrder.setIncrementPercent(-1*ss.getStopPercentage());
-			}else{
-				stopSellOrder.setOrderType(OrderType.stoplimit);
-				stopSellOrder.setLimitPercentage(-1*ss.getStopPercentage());
-				stopSellOrder.setPairOrderId(buyOrder.getOrderId());
-			}
+		StockOrder stopSellOrder = new StockOrder();
+		stopSellOrder.setSubmitTime(null);
+		stopSellOrder.setStockid(stockid);
+		stopSellOrder.setAction(ActionType.sell);
+		stopSellOrder.setTif(TimeInForceType.GTC);
+		stopSellOrder.setPairOrderId(buyOrder.getOrderId());
+		if (ss.trailing){
+			stopSellOrder.setOrderType(OrderType.stoptrailingpercentage);
+			stopSellOrder.setIncrementPercent(-1*ss.getStopPercentage());
+		}else{
+			stopSellOrder.setOrderType(OrderType.stoplimit);
+			stopSellOrder.setLimitPercentage(-1*ss.getStopPercentage());
+			stopSellOrder.setPairOrderId(buyOrder.getOrderId());
 		}
+		sol.add(limitSellOrder);
+		sol.add(stopSellOrder);
 		
 		StockOrder forceCleanSellOrder = new StockOrder();
 		forceCleanSellOrder.setTif(TimeInForceType.MarktOnClose);//of the last day
+		forceCleanSellOrder.setSubmitTime(null);
 		forceCleanSellOrder.setStockid(stockid);
 		forceCleanSellOrder.setAction(ActionType.sell);
+		forceCleanSellOrder.setPairOrderId(buyOrder.getOrderId());
 		sol.add(forceCleanSellOrder);
 		
 		return sol;
@@ -292,5 +287,13 @@ public class SellStrategy {
 
 	public void setStopPercentage(float stopPercentage) {
 		this.stopPercentage = stopPercentage;
+	}
+
+	public int getHoldUnit() {
+		return holdUnit;
+	}
+
+	public void setHoldUnit(int holdUnit) {
+		this.holdUnit = holdUnit;
 	}
 }

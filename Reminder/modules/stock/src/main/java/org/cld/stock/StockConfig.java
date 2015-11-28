@@ -3,6 +3,7 @@ package org.cld.stock;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -12,6 +13,8 @@ import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.stock.strategy.SellStrategy;
+import org.cld.util.FileDataMapper;
 import org.cld.util.jdbc.JDBCMapper;
 
 public abstract class StockConfig {
@@ -63,8 +66,49 @@ public abstract class StockConfig {
 	public abstract JDBCMapper getEarnTableMapper();
 	public abstract String postImportSql();
 	
+	//for back testing, BT
+	public abstract FileDataMapper getBTFQDailyQuoteMapper();
+	public abstract FileDataMapper getBTFQMinuteQuoteMapper();
+	
+	public static final SimpleDateFormat msdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+	public static final SimpleDateFormat dsdf = new SimpleDateFormat("yyyy-MM-dd");
+	public abstract String getMarketStart();
+	public abstract String getMarketStop();
+	
+	public Date getNormalTradeStartTime(Date d){
+		Date sd = null;
+		try{
+			sd = msdf.parse(String.format("%s %s", dsdf.format(d), getMarketStart()));
+		}catch(Exception e){
+			logger.error("", e);
+		}
+		return sd;
+	}
+	public Date getCloseTime(Date d, int holdDuration, int unit){
+		if (unit == SellStrategy.HU_DAY){
+			Date sd = d;
+			if (holdDuration>1){
+				sd = StockUtil.getNextOpenDay(d, this.getHolidays(), holdDuration-1);
+			}
+			//then set the time to market end
+			try{
+				Date ed = msdf.parse(String.format("%s %s", dsdf.format(sd), getMarketStop()));
+				return ed;
+			}catch(Exception e){
+				logger.error("", e);
+			}
+		}else if (unit==SellStrategy.HU_MIN){
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(d);
+			cal.add(Calendar.MINUTE, holdDuration);
+			return cal.getTime();
+		}else{
+			logger.error("unsupported unit:" + unit);
+		}
+		return null;
+	}
 	public String[] getAllStrategy(){
-		return new String[]{"random", "rally", "dividend", "closedrop", "closedropavg", "closedropavgclose"};
+		return new String[]{"random", "rally", "closedrop", "closedropavg", "closeraiseavg"};
 	}
 	
 	public String getCrawlByCmd(String cmd){

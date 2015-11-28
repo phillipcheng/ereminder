@@ -14,18 +14,19 @@ import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
+import org.cld.util.DataMapper;
 import org.cld.util.DateTimeUtil;
 import org.cld.util.jdbc.JDBCMapper;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 //TODO
-public class EarnSS extends SelectStrategy {
+public class EarnD extends SelectStrategy {
 
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private StockConfig sc;
 	
-	public EarnSS(){
+	public EarnD(){
 	}
 	
 	//init after json deserilized
@@ -36,8 +37,8 @@ public class EarnSS extends SelectStrategy {
 	
 	@JsonIgnore
 	@Override
-	public JDBCMapper[] getTableMappers() {
-		return new JDBCMapper[]{sc.getFQDailyQuoteTableMapper(), sc.getEarnTableMapper()};
+	public DataMapper[] getDataMappers() {
+		return new DataMapper[]{sc.getBTFQDailyQuoteMapper(), sc.getEarnTableMapper()};
 	}
 	
 	//the bigger the better
@@ -46,13 +47,12 @@ public class EarnSS extends SelectStrategy {
 		return (currentPrice/assumePE)/(eps-lyeps);
 	}
 	
-	@JsonIgnore
 	@Override
-	public List<SelectCandidateResult> selectByHistory(Map<JDBCMapper, List<Object>> tableResults) {
+	public List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<Object>> tableResults) {
 		Object[] params = this.getParams();
 		float threashold = ((Double)params[0]).floatValue();//
 		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
-		List<Object> fqlist = tableResults.get(sc.getFQDailyQuoteTableMapper());
+		List<Object> fqlist = tableResults.get(sc.getBTFQDailyQuoteMapper());
 		TreeMap<Date, CandleQuote> cqMap = new TreeMap<Date, CandleQuote>();
 		for (Object cqo:fqlist){
 			CandleQuote cq = (CandleQuote) cqo;
@@ -75,7 +75,7 @@ public class EarnSS extends SelectStrategy {
 					if (qev.getConsensusEps()!=QEarnEvent.NO_VALUE){
 						float above = (qev.getEps() - qev.getConsensusEps())/(cq.getClose()/cq.getFqIdx());
 						if (qev.getEps() > qev.getConsensusEps()){
-							scrl.add(new SelectCandidateResult(sdf.format(submitD), cq.getClose()/cq.getFqIdx(), above));
+							scrl.add(new SelectCandidateResult(sc.getNormalTradeStartTime(submitD), cq.getClose()/cq.getFqIdx(), above));
 						}
 					}else{
 						//market buy order if eps increases then same quarter last year
@@ -86,7 +86,7 @@ public class EarnSS extends SelectStrategy {
 								CandleQuote cqly = cqMap.get(dqly);	
 								float adjLyEps = qevly.getEps()*cqly.getFqIdx()/cq.getFqIdx();
 								float ratio = calcRatio(adjLyEps, qev.getEps(), cq.getClose());
-								scrl.add(new SelectCandidateResult(sdf.format(submitD), 0, ratio));
+								scrl.add(new SelectCandidateResult(sc.getNormalTradeStartTime(submitD), 0, ratio));
 							}
 						}
 					}

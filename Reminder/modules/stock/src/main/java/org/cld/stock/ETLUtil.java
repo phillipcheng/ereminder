@@ -246,6 +246,8 @@ public class ETLUtil {
 	}
 	
 	private static boolean needCheckDB(StockConfig sc, CrawlConf cconf, String cmd){
+		if (cconf.getBigdbconf().getUrl()==null)
+			return false;
 		if (isStatic(sc, cconf, cmd)){
 			return false;
 		}else if (Arrays.asList(sc.getCurrentDayCmds()).contains(cmd)){

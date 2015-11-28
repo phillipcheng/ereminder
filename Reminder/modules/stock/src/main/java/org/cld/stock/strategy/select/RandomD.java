@@ -10,16 +10,15 @@ import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
-import org.cld.util.jdbc.JDBCMapper;
-
+import org.cld.util.DataMapper;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class RandomSS extends SelectStrategy {
+public class RandomD extends SelectStrategy {
 
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private StockConfig sc;
 	
-	public RandomSS(){
+	public RandomD(){
 	}
 	
 	//init after json deserilized
@@ -30,23 +29,22 @@ public class RandomSS extends SelectStrategy {
 	
 	@JsonIgnore
 	@Override
-	public JDBCMapper[] getTableMappers() {
-		return new JDBCMapper[]{sc.getFQDailyQuoteTableMapper()};
+	public DataMapper[] getDataMappers() {
+		return new DataMapper[]{sc.getBTFQDailyQuoteMapper()};
 	}
 	
-	@JsonIgnore
 	@Override
-	public List<SelectCandidateResult> selectByHistory(Map<JDBCMapper, List<Object>> tableResults) {
+	public List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<Object>> tableResults) {
 		Object[] params = this.getParams();
 		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
-		List<Object> lo = tableResults.get(sc.getFQDailyQuoteTableMapper());
+		List<Object> lo = tableResults.get(sc.getBTFQDailyQuoteMapper());
 		int idx=0;
 		Random r = new Random();
 		while (idx<lo.size()){
 			//emit a random value for stock on trading day dt
 			CandleQuote cq = (CandleQuote) lo.get(idx);
 			if (checkValid(cq)){
-				scrl.add(new SelectCandidateResult(sdf.format(cq.getStartTime()), r.nextFloat()));
+				scrl.add(new SelectCandidateResult(sc.getNormalTradeStartTime(cq.getStartTime()), r.nextFloat()));
 			}
 			idx++;
 		}

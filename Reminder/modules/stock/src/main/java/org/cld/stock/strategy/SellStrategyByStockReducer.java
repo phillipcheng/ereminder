@@ -4,17 +4,13 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.Reducer.Context;
-import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
@@ -28,14 +24,12 @@ import org.cld.stock.persistence.StockPersistMgr;
 import org.cld.stock.trade.BuySellInfo;
 import org.cld.stock.trade.BuySellResult;
 import org.cld.stock.trade.StockOrder;
-import org.cld.stock.trade.StockOrder.*;
 import org.cld.util.JsonUtil;
 import org.cld.stock.trade.TradeSimulator;
-import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 
 public class SellStrategyByStockReducer extends Reducer<Text, Text, Text, Text>{
 	private static Logger logger =  LogManager.getLogger(SellStrategyByStockReducer.class);
-	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 	
 	private Map<String, Object> sssMap = null;
 	private CrawlConf cconf = null;
@@ -109,21 +103,14 @@ public class SellStrategyByStockReducer extends Reducer<Text, Text, Text, Text>{
 					if (ss.getSelectNumber()<rank){
 						continue;
 					}
-					SelectCandidateResult scr = new SelectCandidateResult(stockid, sdf.format(dt), 0, buyLimit);
+					SelectCandidateResult scr = new SelectCandidateResult(stockid, dt, 0, buyLimit);
 					List<StockOrder> sol = SellStrategy.makeStockOrders(scr, ss);
 					BuySellInfo bsi = new BuySellInfo(String.format("%s,%s", bsName, bsParams), ss, sol, dt);
 					bsil.add(bsi);
 				}
 			}
-			List<Object> lo = StockPersistMgr.getDataPivotByStockDate(cconf.getSmalldbconf(), sc.getFQDailyQuoteTableMapper(), stockid, 
-					minDate, maxDate, 1, maxHolding);
-			TreeMap<Date, CandleQuote> dcmap = new TreeMap<Date, CandleQuote>();
-			for (Object o:lo){
-				CandleQuote cq = (CandleQuote) o;
-				dcmap.put(cq.getStartTime(), cq);
-			}
-			
-			TradeSimulator.submitDailyOrder(bsil, dcmap, sc);
+			TreeMap<Date, CandleQuote> dcmap = TradeSimulator.getCQMap(cconf, sc, stockid, minDate, maxDate, maxHolding);
+			TradeSimulator.submitStockOrder(bsil, dcmap, sc);
 			
 			for (BuySellInfo bsi: bsil){
 				List<StockOrder> solist = bsi.getSos();

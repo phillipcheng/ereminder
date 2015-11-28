@@ -15,6 +15,8 @@ import java.util.Map;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
@@ -38,7 +40,7 @@ import org.cld.util.jdbc.SqlUtil;
 import org.xml.taskdef.BrowseDetailType;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.cld.hadooputil.DefaultCopyTextReducer;
-import org.cld.hadooputil.DumpHdfsFile;
+import org.cld.hadooputil.TransferHdfsFile;
 
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
@@ -417,6 +419,8 @@ public abstract class StockBase extends TestBase{
 	public static final String STRATEGY_NAMES="sn";
 	public static final String STEP_NAMES="step";
 	public static final String STRATEGY_NAMES_SEP="_";//can't be , :
+	public static final String GEN_DETAIL_FILE="gendetailfile";
+	public static final int NUM_REDUCER=100;
 	public void validateAllStrategyByStock(String inparam){
 		Map<String,String> params = StringUtil.parseMapParams(inparam);
 		String snParam = params.get(STRATEGY_NAMES);
@@ -444,6 +448,7 @@ public abstract class StockBase extends TestBase{
 			}else{
 				strategyNames = snParam.split(STRATEGY_NAMES_SEP);
 			}
+			int totalBS = 0;
 			for (String sn:strategyNames){
 				String strategyName = STRATEGY_PREFIX+sn+STRATEGY_SUFFIX;
 				PropertiesConfiguration props = new PropertiesConfiguration(strategyName);
@@ -454,16 +459,24 @@ public abstract class StockBase extends TestBase{
 				}
 				SellStrategy[] slsl = SellStrategy.gen(props);
 				sssMap.put(sn, slsl);
+				totalBS+=slsl.length;
 			}
 			
 			String sssString = JsonUtil.ObjToJson(sssMap);
 			SelectStrategy[] allSelectStrategyArray = new SelectStrategy[allSelectStrategy.size()];
+			int totalSS = allSelectStrategy.size();
+			int totalFiles = totalBS * totalSS;
+			boolean genDetailFiles=true;
+			if (totalFiles>7000){
+				genDetailFiles = false;
+			}
+			logger.info(String.format("total files: %d", totalFiles));
 			Map<String, String> hadoopParams = new HashMap<String, String>();
 			if (stepParam==null || "1".equals(stepParam)){
 				//1
 				allSelectStrategyArray = allSelectStrategy.toArray(allSelectStrategyArray);
 				SelectStrategyByStockTask.launch(this.getPropFile(), cconf, baseMarketId, marketId, outputDir1, 
-						allSelectStrategyArray, startDate, endDate, cconf.getSmalldbconf());
+						allSelectStrategyArray, startDate, endDate);
 			}
 			
 			if (stepParam==null || "2".equals(stepParam)){
@@ -479,7 +492,7 @@ public abstract class StockBase extends TestBase{
 				hadoopParams.put("mapreduce.map.java.opts", mapOptValue);
 				hadoopParams.put("mapreduce.reduce.memory.mb", reduceMbMem + "");
 				hadoopParams.put("mapreduce.reduce.java.opts", reduceOptValue);
-				hadoopParams.put("mapreduce.job.reduces", 20+"");
+				hadoopParams.put("mapreduce.job.reduces", NUM_REDUCER+"");
 				//1 output
 				HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), hadoopParams, new String[]{outputDir1}, false, outputDir2, true, 
 						SellStrategyByStockMapper.class, SellStrategyByStockReducer.class, false);
@@ -488,7 +501,7 @@ public abstract class StockBase extends TestBase{
 				//multiple output
 				hadoopParams.clear();
 				int mapMbMem=1024;
-				int reduceMbMem=6196;
+				int reduceMbMem=8192;
 				String mapOptValue = "-Xmx" + mapMbMem + "M";
 				String reduceOptValue = "-Xmx" + reduceMbMem + "M";
 				hadoopParams.put("mapreduce.map.speculative", "false");
@@ -496,7 +509,8 @@ public abstract class StockBase extends TestBase{
 				hadoopParams.put("mapreduce.map.java.opts", mapOptValue);
 				hadoopParams.put("mapreduce.reduce.memory.mb", reduceMbMem + "");
 				hadoopParams.put("mapreduce.reduce.java.opts", reduceOptValue);
-				hadoopParams.put("mapreduce.job.reduces", 10+"");
+				hadoopParams.put("mapreduce.job.reduces", NUM_REDUCER+"");
+				hadoopParams.put(GEN_DETAIL_FILE, Boolean.toString(genDetailFiles));
 				HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), hadoopParams, new String[]{outputDir2}, true, outputDir3, true, 
 						StrategyResultMapper.class, StrategyResultReducer.class, false);
 			}
@@ -726,8 +740,8 @@ public abstract class StockBase extends TestBase{
 		}else{
 			includeFolders = new String[]{String.format("%s_%s", marketId, strEndDate)};
 		}
-		DumpHdfsFile.launch(20, cconf.getTaskMgr().getHdfsDefaultName(), "/reminder/items/merge",
-				localDirRoot, includeFolders, ListUtil.concatAll(this.getStockConfig().getSlowCmds(), excludeCmds));
+		TransferHdfsFile.launch(20, cconf.getTaskMgr().getHdfsDefaultName(), "/reminder/items/merge",
+				localDirRoot, includeFolders, ListUtil.concatAll(this.getStockConfig().getSlowCmds(), excludeCmds), false);
 	}
 	
 	//param is null:all, startwith -:exclude these cmd, startwith +:only include these cmd
@@ -803,6 +817,29 @@ public abstract class StockBase extends TestBase{
 			logger.error("", e);
 			return null;
 		}
+	}
+	
+	//remove the raw files for this cmd under folders from startDate to endDate
+	public void removeRaw(String cmd){
+		if (startDate == null || endDate==null){
+			logger.error("for removeRaw startDate and endDate can't be null.");
+		}
+		Date d = startDate;
+		try {
+			FileSystem fs = FileSystem.get(HadoopTaskLauncher.getHadoopConf(this.cconf.getNodeConf()));
+			while (d.before(endDate)){
+				String fn = String.format("/reminder/items/raw/%s_%s/%s", this.marketId, sdf.format(d), cmd);
+				Path p = new Path(fn);
+				if (fs.exists(p)){
+					fs.delete(p, true);
+					logger.info(String.format("delete path %s", fn));
+				}
+				d = DateTimeUtil.tomorrow(d);
+			}
+		}catch(Exception e){
+			logger.error("", e);
+		}
+		
 	}
 	
 	private static final int poll_interval=20000;

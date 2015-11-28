@@ -20,6 +20,7 @@ import org.cld.stock.sina.persistence.SinaDividendJDBCMapper;
 import org.cld.stock.sina.persistence.SinaEarnJDBCMapper;
 import org.cld.stock.sina.persistence.SinaFQDailyQuoteCQJDBCMapper;
 import org.cld.stock.sina.task.TradeDetailPostProcessTask;
+import org.cld.util.FileDataMapper;
 import org.cld.util.ListUtil;
 import org.cld.util.jdbc.JDBCMapper;
 
@@ -697,6 +698,30 @@ public class SinaStockConfig extends StockConfig {
 	@Override
 	public String[] getUpdateAllCmds() {
 		return new String[]{};
+	}
+
+	@Override
+	public FileDataMapper getBTFQDailyQuoteMapper() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public FileDataMapper getBTFQMinuteQuoteMapper() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getMarketStart() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getMarketStop() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	

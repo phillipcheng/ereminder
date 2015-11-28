@@ -4,13 +4,16 @@ import static org.junit.Assert.*;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
+import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.stock.StockBase;
 import org.cld.stock.StockConfig;
@@ -21,15 +24,19 @@ import org.cld.stock.nasdaq.NasdaqStockBase;
 import org.cld.stock.nasdaq.NasdaqStockConfig;
 import org.cld.stock.nasdaq.NasdaqTestStockConfig;
 import org.cld.stock.persistence.StockPersistMgr;
-import org.cld.stock.sina.SinaStockBase;
 import org.cld.stock.sina.SinaStockConfig;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
+import org.cld.stock.strategy.SelectStrategyByStockTask;
 import org.cld.stock.strategy.SellStrategy;
-import org.cld.stock.strategy.select.CloseDropAvgSS;
+import org.cld.stock.strategy.SellStrategyByStockMapper;
+import org.cld.stock.strategy.SellStrategyByStockReducer;
+import org.cld.stock.strategy.select.OpenCloseDropAvgD;
 import org.cld.stock.task.LoadDBDataTask;
 import org.cld.stock.trade.BuySellResult;
 import org.cld.stock.trade.TradeSimulator;
+import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
+import org.cld.util.JsonUtil;
 import org.junit.Test;
 
 public class TestStock {
@@ -105,22 +112,79 @@ public class TestStock {
 	}
 	
 	@Test
-	public void testTradeSimulator(){
+	public void testSelectCloseDropAvg() throws Exception {
+		String pFile = "client1-v2.properties";
+		String startDate = "2014-04-01";
+		String endDate = "2015-11-10";
+		String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test;
+		String baseMarketId = "nasdaq";
+		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
+		String sn = "closedropavgone";
+		List<SelectStrategy> bsl = SelectStrategy.gen(new PropertiesConfiguration("strategy."+sn+".properties"), sn);
+		SelectStrategy bs = bsl.get(0);
+		bs.setBaseMarketId(baseMarketId);
+		bs.init();
+		String folderName = String.format("%s_%s_%s", marketId, startDate, endDate);
+		String outputDir1 = String.format("/reminder/sresult/%s/all1", folderName);
+		String outputDir2 = String.format("/reminder/sresult/%s/all2", folderName);
+		SelectStrategyByStockTask.launch(pFile, cconf, baseMarketId, marketId, outputDir1, 
+				new SelectStrategy[]{bs}, sdf.parse(startDate), sdf.parse(endDate));
+		Map<String, Object> sssMap = new HashMap<String, Object>();
+		SellStrategy[] slsl = SellStrategy.gen(new PropertiesConfiguration("strategy."+sn+".properties"));
+		sssMap.put(sn, slsl);
+		String sssString = JsonUtil.ObjToJson(sssMap);
+		Map<String, String> hadoopParams = new HashMap<String, String>();
+		hadoopParams.put(SellStrategy.KEY_SELL_STRATEGYS, sssString);
+		hadoopParams.put(CrawlUtil.CRAWL_PROPERTIES, pFile);
+		hadoopParams.put(StockBase.KEY_BASE_MARKET_ID, baseMarketId);
+		HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), hadoopParams, new String[]{outputDir1}, false, outputDir2, true, 
+				SellStrategyByStockMapper.class, SellStrategyByStockReducer.class, false);
+	}
+	
+	@Test
+	public void testTradeSimulator() throws Exception{
 		String pFile = "client1-v2.properties";
 		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
 		String marketId = NasdaqStockConfig.MarketId_ALL; //not used
 		StockBase nsb = new NasdaqStockBase(pFile, marketId, null, null);
-		String[] stockids=new String[]{"AIF","GOOG","AAPL"};
-		SellStrategy ss = new SellStrategy(1, 5, 2.5f, 1.5f, true);
+		String[] stockids=new String[]{"TUES"};
+		SellStrategy ss = new SellStrategy(1, 1, SellStrategy.HU_DAY, 2f, 1f, true);
 		for (String stockid:stockids){
-			SelectCandidateResult scr = new SelectCandidateResult(stockid, "2015-10-29", 0, 0);
+			SelectCandidateResult scr = new SelectCandidateResult(stockid, nsb.getStockConfig().getNormalTradeStartTime(sdf.parse("2015-08-21")), 0, 5.98f);
 			BuySellResult bsr = TradeSimulator.trade(scr, ss, nsb.getStockConfig(), cconf);
 			logger.info(bsr);
 		}
-		//3 scenarios
+		//using daily data
 		//2015-10-29, AIF, 2015-10-29, 14.67, 2015-11-04, MarktOnClose, 14.78, 0.007498272
 		//2015-10-29, GOOG, 2015-10-29, 710.5, 2015-11-02, stoptrailingpercentage, 707.23, -0.00460242
 		//2015-10-29, AAPL, 2015-10-29, 118.7, 2015-11-03, limit, 121.667496, 0.024999991
+		
+		//5 min data, no trailing
+		//2015-10-29 09:30, AIF, 2015-10-29 09:30, 14.557, 2015-11-05 09:30, MarktOnClose, 14.711, 0.010579122
+		//2015-10-29 09:30, GOOG, 2015-10-29 09:30, 711.23, 2015-11-04 00:05, limit, 729.01074, 0.025000017
+		//2015-10-29 09:30, AAPL, 2015-10-29 09:30, 118.19, 2015-11-02 15:25, limit, 121.14475, 0.025
+
+
+		//5 minute trailing
+		//2015-10-29 09:30, AIF, 2015-10-29 09:30, 14.557, 2015-11-05 09:30, MarktOnClose, 14.711, 0.010579122
+		//2015-10-29 09:30, GOOG, 2015-10-29 09:30, 711.23, 2015-11-02 09:40, stoptrailingpercentage, 707.48615, -0.0052638887
+		//2015-10-29 09:30, AAPL, 2015-10-29 09:30, 118.19, 2015-10-30 15:00, stoptrailingpercentage, 119.017555, 0.0070018847
+
+	}
+	
+	@Test
+	public void testTradeSimulator1() throws Exception{
+		String pFile = "client1-v2.properties";
+		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
+		String marketId = NasdaqStockConfig.MarketId_ALL; //not used
+		StockBase nsb = new NasdaqStockBase(pFile, marketId, null, null);
+		String[] stockids=new String[]{"XGTI"};
+		SellStrategy ss = new SellStrategy(1, 5, SellStrategy.HU_DAY, 2.5f, 1.5f, true);
+		for (String stockid:stockids){
+			SelectCandidateResult scr = new SelectCandidateResult(stockid, nsb.getStockConfig().getNormalTradeStartTime(sdf.parse("2015-08-14")), 0, 0);
+			BuySellResult bsr = TradeSimulator.trade(scr, ss, nsb.getStockConfig(), cconf);
+			logger.info(bsr);
+		}
 	}
 	
 	@Test
@@ -151,7 +215,7 @@ public class TestStock {
 		String baseMarketId="nasdaq";
 		StockConfig sc = StockUtil.getStockConfig(baseMarketId);
 		String marketId="ALL";
-		CloseDropAvgSS bs = new CloseDropAvgSS();
+		OpenCloseDropAvgD bs = new OpenCloseDropAvgD();
 		bs.setOrderDirection(SelectStrategy.DESC);
 		bs.setParams(new Object[]{7f,0f});
 		Date startDay= sdf.parse("2015-10-03");

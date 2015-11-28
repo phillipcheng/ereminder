@@ -284,7 +284,7 @@ public class ProductAnalyzeUtil {
 					pagelist.add(curPage);
 					pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
 					externalistFinished = CrawlTaskEval.setUserAttributes(pageMap, bdt.getBaseBrowseTask().getUserAttribute(), 
-							product.getParamMap(), cconf, task.getParamMap(), tryPattern);
+							product.getParamMap(), cconf, task.getParamMap(), tryPattern, curPageNum==1);
 					if (ProductAnalyze.postCrawlProcess(task, bdt.getBaseBrowseTask(), product)){//suppose the data are listed in the desc order
 						externalistFinished = true; //if there is any data filtered, we donot need go further
 						logger.info("filter condition meet do not crawl further.");
@@ -311,7 +311,7 @@ public class ProductAnalyzeUtil {
 				pagelist.add(curPage);
 				pageMap.put(ConfKey.CURRENT_PAGE, pagelist);
 				CrawlTaskEval.setUserAttributes(pageMap, bdt.getBaseBrowseTask().getUserAttribute(), 
-						product.getParamMap(), cconf, task.getParamMap(), tryPattern);
+						product.getParamMap(), cconf, task.getParamMap(), tryPattern, curPageNum==1);
 				logger.info("curPageNum:" + curPageNum + ", totalPage:" + totalPage);
 				logger.debug(product.getParamMap());
 				product.setCompleted(true);

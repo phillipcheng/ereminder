@@ -2,9 +2,9 @@ package org.cld.stock.nasdaq.persistence;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.stock.yahoo.YahooFQDailyQuoteMapper;
+import org.cld.stock.yahoo.YahooExDivSplitMapper;
 
-public class NasdaqExDivSplitMapper extends YahooFQDailyQuoteMapper{
+public class NasdaqExDivSplitMapper extends YahooExDivSplitMapper{
 	Logger logger = LogManager.getLogger(NasdaqExDivSplitMapper.class);
 	
 	private NasdaqExDivSplitMapper(){
