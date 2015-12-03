@@ -24,7 +24,7 @@ import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.persistence.StockPersistMgr;
 import org.cld.stock.strategy.SelectStrategy;
-import org.cld.stock.strategy.select.OpenCloseDropAvgD;
+import org.cld.stock.strategy.select.OverTrade;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
 
@@ -71,7 +71,7 @@ public class GenCloseDropAvgForDayTask extends Task implements Serializable{
 			CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
 			StockConfig sc = StockUtil.getStockConfig(baseMarketId);
 			List<Object> lo = StockPersistMgr.getDataByStockDateLimit(cconf.getSmalldbconf(), sc.getFQDailyQuoteTableMapper(), 
-					stockId, sdf.parse(whichDay), OpenCloseDropAvgD.LOOKUP_DAYS);
+					stockId, sdf.parse(whichDay), OverTrade.LOOKUP_DAYS);
 			if (lo.size()>0){
 				CandleQuote startCq =(CandleQuote) lo.get(0);
 				CandleQuote thisCq = startCq;
@@ -104,7 +104,7 @@ public class GenCloseDropAvgForDayTask extends Task implements Serializable{
 					logger.error(String.format("data for %s on %s not there.", stockId, whichDay));
 				}
 			}else{
-				logger.error(String.format("no data for %s for the past %d calendar days.", stockId, OpenCloseDropAvgD.LOOKUP_DAYS));
+				logger.error(String.format("no data for %s for the past %d calendar days.", stockId, OverTrade.LOOKUP_DAYS));
 			}
 		}catch(Exception e){
 			logger.error("", e);

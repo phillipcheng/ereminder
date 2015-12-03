@@ -327,7 +327,7 @@ public class HKStockConfig extends StockConfig{
 		return null;
 	}
 	@Override
-	public String getMarketStop() {
+	public String getMarketEnd() {
 		// TODO Auto-generated method stub
 		return null;
 	}

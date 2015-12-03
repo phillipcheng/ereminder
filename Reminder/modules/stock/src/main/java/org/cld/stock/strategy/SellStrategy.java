@@ -1,8 +1,6 @@
 package org.cld.stock.strategy;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -78,47 +76,54 @@ public class SellStrategy {
 	}
 	
 	public static SellStrategy[] gen(PropertiesConfiguration props){
-		Float[] selectNumbers = new Float[]{1f};
-		Float[] durations = new Float[]{0f};
-		Float[] limitPercentages = new Float[]{0f};
-		Float[] stopTrailingPercentages = new Float[]{0f};
+		String[] selectNumbers = new String[]{"1"};
+		String[] durations = new String[]{"0"};
+		String[] limitPercentages = new String[]{"0"};
+		String[] stopPercentage = new String[]{"0"};
+		String[] trailings = new String[]{"true"};
 		
 		String strSelectNumber = props.getString(SellStrategy.KEY_SELECT_NUMBER);
 		if (strSelectNumber!=null){
-			selectNumbers = StringUtil.parseSteps(strSelectNumber);
+			selectNumbers = StringUtil.parseFloatSteps(strSelectNumber);
 		}
 		String strDurations = props.getString(SellStrategy.KEY_SELLS_DURATION);
 		if (strDurations!=null){
-			durations = StringUtil.parseSteps(strDurations);
+			durations = StringUtil.parseFloatSteps(strDurations);
 		}
 		int hu = props.getInt(SellStrategy.KEY_SELLS_DURATION_UNIT, 0);
 		String strLimitPercents = props.getString(SellStrategy.KEY_SELLS_LIMIT_PERCENTAGE);
 		if (strLimitPercents!=null){
-			limitPercentages = StringUtil.parseSteps(strLimitPercents);
+			limitPercentages = StringUtil.parseFloatSteps(strLimitPercents);
 		}
-		String strStopTrailingPercents = props.getString(SellStrategy.KEY_SELLS_STOP_PERCENTAGE);
-		if (strStopTrailingPercents!=null){
-			stopTrailingPercentages = StringUtil.parseSteps(strStopTrailingPercents);
+		String strStopPercents = props.getString(SellStrategy.KEY_SELLS_STOP_PERCENTAGE);
+		if (strStopPercents!=null){
+			stopPercentage = StringUtil.parseFloatSteps(strStopPercents);
 		}
 		String strTrailing = props.getString(SellStrategy.KEY_SELLS_ISTRAILING);
-		boolean trailing = false;
 		if (strTrailing!=null){
-			trailing = Boolean.parseBoolean(strTrailing);
+			trailings = StringUtil.parseSteps(strTrailing);
 		}
 		List<SellStrategy> ssl = new ArrayList<SellStrategy>();
-		for (float selectNumber:selectNumbers){
-			for (float duration:durations){
-				for (float lp:limitPercentages){
-					for (float stp:stopTrailingPercentages){
-						if (lp>stp){//sell limit percent should be bigger then stop loss percent
-							SellStrategy sls = new SellStrategy();
-							sls.setSelectNumber((int)selectNumber);
-					        sls.setHoldDuration((int) duration);
-					        sls.setHoldUnit(hu);
-					        sls.setLimitPercentage(lp);
-					        sls.setStopPercentage(stp);
-					        sls.setTrailing(trailing);
-					        ssl.add(sls);
+		for (String sselectNumber:selectNumbers){
+			for (String sduration:durations){
+				for (String slp:limitPercentages){
+					for (String sstp:stopPercentage){
+						for (String trail:trailings){
+							boolean btrail = Boolean.parseBoolean(trail);
+							float lp = Float.parseFloat(slp);
+							float stp = Float.parseFloat(sstp);
+							int selectNumber = (int) Float.parseFloat(sselectNumber);
+							int duration = (int) Float.parseFloat(sduration);
+							if (lp>stp){//sell limit percent should be bigger then stop loss percent
+								SellStrategy sls = new SellStrategy();
+								sls.setSelectNumber((int)selectNumber);
+						        sls.setHoldDuration((int) duration);
+						        sls.setHoldUnit(hu);
+						        sls.setLimitPercentage(lp);
+						        sls.setStopPercentage(stp);
+						        sls.setTrailing(btrail);
+						        ssl.add(sls);
+							}
 						}
 					}
 				}

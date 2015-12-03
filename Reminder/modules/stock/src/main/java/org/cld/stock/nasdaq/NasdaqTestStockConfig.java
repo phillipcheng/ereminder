@@ -37,6 +37,6 @@ public class NasdaqTestStockConfig {
 	//public static final String[] Test_D1_Stocks = new String[]{"baba", "goog"};
 	//public static final String[] Test_D3_Stocks = new String[]{"baba", "goog", "bidu"};
 
-	public static final String[] Test_D1_Stocks = new String[]{"AAPL","HTA"};
+	public static final String[] Test_D1_Stocks = new String[]{"AAPL"};//,"GOOG","TUES","XGTI"
 	public static final String[] Test_D3_Stocks = Test_D1_Stocks;
 }

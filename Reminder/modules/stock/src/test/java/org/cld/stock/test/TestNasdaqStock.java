@@ -1,24 +1,13 @@
 package org.cld.stock.test;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datastore.entity.CrawledItem;
 import org.cld.stock.StockBase;
 import org.cld.stock.nasdaq.NasdaqStockBase;
 import org.cld.stock.nasdaq.NasdaqStockConfig;
 import org.cld.stock.nasdaq.NasdaqTestStockConfig;
-import org.cld.stock.sina.SinaStockBase;
-import org.cld.stock.strategy.SelectStrategy;
-import org.cld.taskmgr.TaskMgr;
-import org.cld.taskmgr.entity.Task;
 import org.junit.Before;
 import org.junit.Test;
 

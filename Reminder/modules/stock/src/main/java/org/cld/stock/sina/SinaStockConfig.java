@@ -719,7 +719,7 @@ public class SinaStockConfig extends StockConfig {
 	}
 
 	@Override
-	public String getMarketStop() {
+	public String getMarketEnd() {
 		// TODO Auto-generated method stub
 		return null;
 	}

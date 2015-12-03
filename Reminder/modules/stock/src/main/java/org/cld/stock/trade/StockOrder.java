@@ -65,7 +65,13 @@ public class StockOrder {
 		}else{
 			strExeTime = sdf.format(executeTime);
 		}
-		return String.format("stockid:%s, exePrice:%.2f, exeTime:%s", stockid, executedPrice, strExeTime);
+		String strSubmitTime=null;
+		if (submitTime==null){
+			strSubmitTime="";
+		}else{
+			strSubmitTime = sdf.format(submitTime);
+		}
+		return String.format("stockid:%s, actionType:%s, orderType: %s, submitTime:%s, exePrice:%.2f, exeTime:%s", stockid, action, orderType, strSubmitTime, executedPrice, strExeTime);
 	}
 	public StockOrder(){
 		String sd = detailSdf.format(new Date());

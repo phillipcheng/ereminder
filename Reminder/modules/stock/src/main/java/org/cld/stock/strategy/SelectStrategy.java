@@ -2,6 +2,8 @@ package org.cld.stock.strategy;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +35,7 @@ public class SelectStrategy {
 	private String name;
 	private int mbMemory=512;
 	private String orderDirection;
-	protected Object[] params = new Object[]{};
+	protected Map<String, Object> params = new HashMap<String, Object>();
 	private String baseMarketId;
 	
 	public SelectStrategy(){
@@ -44,7 +46,7 @@ public class SelectStrategy {
 	}
 	
 	public String paramsToString(){
-		return StringUtils.join(params, ":");
+		return StringUtils.join(params.values(), ":");
 	}
 
 	//to be overriden
@@ -57,8 +59,8 @@ public class SelectStrategy {
 	
 	
 	//
-	public static final double MIN_PRICE=2;//avoid penny stock
-	public static final double MIN_AMOUNT=1000000;//avoid dead stock, 1 million $ transaction at least
+	public static final double MIN_PRICE=3;//avoid penny stock
+	public static final double MIN_AMOUNT=500000;//avoid dead stock, 1 million $ transaction at least
 	public static boolean checkValid(CandleQuote cq){
 		if (cq.getVolume()*(cq.getClose()/cq.getFqIdx())<MIN_AMOUNT ||
 				(cq.getClose()/cq.getFqIdx())<MIN_PRICE
@@ -69,27 +71,23 @@ public class SelectStrategy {
 		}
 	}
 	
-	public static List<SelectStrategy> gen(PropertiesConfiguration props, String simpleStrategyName){
+	public static List<SelectStrategy> gen(PropertiesConfiguration props, String simpleStrategyName, String baseMarketId){
 		List<SelectStrategy> lss =new ArrayList<SelectStrategy>();
-		List<Object[]> paramList = new ArrayList<Object[]>();
-		for (int k=1;k<10;k++){
-			String paramName = KEY_PARAM+"."+k;
-			if (props.containsKey(paramName)){
-				paramList.add(StringUtil.parseSteps(props.getString(paramName)));
-			}else{
-				break;
-			}
+		Map<String, Object[]> paramMap = new HashMap<String,Object[]>();
+		Iterator<String> paramKeyIt = props.getKeys(KEY_PARAM);
+		while (paramKeyIt.hasNext()){
+			String pk = paramKeyIt.next();
+			paramMap.put(pk, StringUtil.parseSteps(props.getString(pk)));
 		}
 		try{
 			Class selectClass = Class.forName(props.getString(KEY_SELECTS_TYPE));
-			List<List<Object>> paramsList = CombPermUtil.eachOne(paramList);
-			if (paramsList.size()>0){
-				for (List<Object> pl:paramsList){
+			List<Map<String,Object>> paramsMapList = CombPermUtil.eachOne(paramMap);
+			if (paramsMapList.size()>0){
+				for (Map<String,Object> pm:paramsMapList){
 					SelectStrategy css = (SelectStrategy) selectClass.newInstance();
+					css.setBaseMarketId(baseMarketId);
 					css.init(props);
-					Object[] params = new Object[pl.size()];
-					params =  pl.toArray(params);
-					css.setParams(params);
+					css.setParams(pm);
 					css.evalExp();
 					css.setName(simpleStrategyName);
 					lss.add(css);
@@ -97,6 +95,7 @@ public class SelectStrategy {
 			}else{
 				SelectStrategy css = (SelectStrategy) selectClass.newInstance();
 				css.setName(simpleStrategyName);
+				css.setBaseMarketId(baseMarketId);
 				css.init(props);
 				lss.add(css);
 			}
@@ -122,14 +121,6 @@ public class SelectStrategy {
 	public void setMbMemory(int mbMemory) {
 		this.mbMemory = mbMemory;
 	}
-	
-	public Object[] getParams() {
-		return params;
-	}
-	
-	public void setParams(Object[] params) {
-		this.params = params;
-	}
 
 	public String getOrderDirection() {
 		return orderDirection;
@@ -142,5 +133,13 @@ public class SelectStrategy {
 	}
 	public void setBaseMarketId(String baseMarketId) {
 		this.baseMarketId = baseMarketId;
+	}
+
+	public Map<String, Object> getParams() {
+		return params;
+	}
+
+	public void setParams(Map<String, Object> params) {
+		this.params = params;
 	}
 }

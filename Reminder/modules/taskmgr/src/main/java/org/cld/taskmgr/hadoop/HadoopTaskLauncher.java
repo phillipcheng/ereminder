@@ -14,8 +14,12 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.RawComparator;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Partitioner;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -93,6 +97,7 @@ public class HadoopTaskLauncher {
 		
 		for (String key:taskMgr.getHadoopConfigs().keySet()){
 			String value = taskMgr.getHadoopConfigs().get(key);
+			//logger.info(String.format("key:%s,value:%s", key, value));
 			conf.set(key, value);
 		}
 		return conf;
@@ -223,7 +228,18 @@ public class HadoopTaskLauncher {
 	public static final String FILTER_REGEXP_KEY="file.pattern";
 	public static String executeTasks(NodeConf nc, Map<String, String> hadoopParams, 
 			String[] inputPaths, boolean multipleOutput, String outputDir, 
-			boolean sync, Class mapperClass, Class reducerClass, boolean uselinesPerMap){
+			boolean sync, Class<? extends Mapper> mapperClass, Class<? extends Reducer> reducerClass, boolean uselinesPerMap){
+		return executeTasks(nc, hadoopParams, inputPaths, multipleOutput, outputDir, sync, mapperClass, reducerClass, null, null, null, uselinesPerMap);
+	}
+	
+	public static String executeTasks(NodeConf nc, Map<String, String> hadoopParams, 
+			String[] inputPaths, boolean multipleOutput, String outputDir, 
+			boolean sync, 
+			Class<? extends Mapper> mapperClass, 
+			Class<? extends Reducer> reducerClass, 
+			Class<? extends Partitioner> partitionerClass, 
+			Class<? extends RawComparator> groupComparatorClass, 
+			Class mapperOutputKeyClass, boolean uselinesPerMap){
 		try{
 			TaskMgr taskMgr = nc.getTaskMgr();
 			Configuration conf = getHadoopConf(nc);
@@ -231,7 +247,7 @@ public class HadoopTaskLauncher {
 			if (hadoopParams!=null){
 				for(String key: hadoopParams.keySet()){
 					conf.set(key, hadoopParams.get(key));
-					logger.info(String.format("add conf entry: %s, %s", key, hadoopParams.get(key)));
+					//logger.info(String.format("add conf entry: %s, %s", key, hadoopParams.get(key)));
 				}
 			}
 			Job job = Job.getInstance(conf, inputPaths[0]+"|"+inputPaths.length);
@@ -249,22 +265,29 @@ public class HadoopTaskLauncher {
 					}
 				}
 			}
-
 			job.setJarByClass(mapperClass);
 			job.setMapperClass(mapperClass);
-			if (reducerClass==null)
+			if (mapperOutputKeyClass!=null){
+				job.setMapOutputKeyClass(mapperOutputKeyClass);
+			}
+			if (reducerClass==null){
 				job.setNumReduceTasks(0);//no reducer
-			else{
+			}else{
 				job.setReducerClass(reducerClass);
 				//job.setNumReduceTasks(1);
 			}
+			if (partitionerClass!=null){
+				job.setPartitionerClass(partitionerClass);
+			}
+			if (groupComparatorClass!=null){
+				job.setGroupingComparatorClass(groupComparatorClass);
+			}
 			job.setOutputKeyClass(Text.class);
 			job.setOutputValueClass(Text.class);
-			if (multipleOutput)
+			if (multipleOutput){
 				MultipleOutputs.addNamedOutput(job, NAMED_OUTPUT_TXT, TextOutputFormat.class, Text.class, Text.class);
-			
+			}
 			FileInputFormat.setInputDirRecursive(job, true);
-
 			if (hadoopParams!=null){
 				if (hadoopParams.containsKey(FILTER_REGEXP_KEY)){
 					FileInputFormat.setInputPathFilter(job, RegexFilter.class);

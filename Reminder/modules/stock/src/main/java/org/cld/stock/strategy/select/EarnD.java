@@ -25,6 +25,7 @@ public class EarnD extends SelectStrategy {
 
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private StockConfig sc;
+	public static final String threshold="threshold";
 	
 	public EarnD(){
 	}
@@ -49,8 +50,6 @@ public class EarnD extends SelectStrategy {
 	
 	@Override
 	public List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<Object>> tableResults) {
-		Object[] params = this.getParams();
-		float threashold = ((Double)params[0]).floatValue();//
 		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
 		List<Object> fqlist = tableResults.get(sc.getBTFQDailyQuoteMapper());
 		TreeMap<Date, CandleQuote> cqMap = new TreeMap<Date, CandleQuote>();

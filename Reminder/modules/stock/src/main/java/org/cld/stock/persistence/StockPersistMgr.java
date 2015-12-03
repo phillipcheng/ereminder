@@ -20,9 +20,11 @@ import org.apache.hadoop.fs.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
+import org.cld.hadooputil.HdfsReader;
 import org.cld.stock.CandleQuote;
 import org.cld.stock.StockConfig;
 import org.cld.stock.nasdaq.persistence.NasdaqFQDailyQuoteMapper;
+import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.DataMapper;
 import org.cld.util.FileDataMapper;
 import org.cld.util.jdbc.DBConnConf;
@@ -148,7 +150,7 @@ public class StockPersistMgr {
 		List<Object> lo = new ArrayList<Object>();
 		BufferedReader br = null;
 		try{
-			Configuration conf = new Configuration();
+			Configuration conf = HadoopTaskLauncher.getHadoopConf(cconf.getNodeConf());
 			conf.set("fs.defaultFS", cconf.getTaskMgr().getHdfsDefaultName());
 			FileSystem fs = FileSystem.get(conf);
 			Path fp = new Path(fdMapper.getFileName(stockId));
@@ -180,6 +182,49 @@ public class StockPersistMgr {
 					logger.error("", e1);
 				}
 			}
+		}
+		return lo;
+	}
+	
+	//BTD for back testing data, they are ajusted till a certain-day
+	public static HdfsReader getReader(CrawlConf cconf, FileDataMapper fdMapper, String stockId){
+		BufferedReader br = null;
+		try{
+			Configuration conf = HadoopTaskLauncher.getHadoopConf(cconf.getNodeConf());
+			FileSystem fs = FileSystem.newInstance(conf);
+			Path fp = new Path(fdMapper.getFileName(stockId));
+			br=new BufferedReader(new InputStreamReader(fs.open(fp)));
+			return new HdfsReader(fs, br);
+		}catch(Exception e){
+			logger.error("error when get reader.", e);
+		}
+		return null;
+	}
+	
+	public static List<CandleQuote> getBTDDate(BufferedReader reader, FileDataMapper fdMapper, Date sd, Date ed){
+		List<CandleQuote> lo = new ArrayList<CandleQuote>();
+		try{
+			String line;
+            line=reader.readLine();
+            while (line != null){//in time ascending order
+            	CandleQuote cq = (CandleQuote) fdMapper.getObject(line);
+				if (sd!=null){
+					if (!cq.getStartTime().before(sd)){
+						lo.add(cq);
+						if (cq.getStartTime().after(ed)){	
+							break;
+						}
+					}
+				}else{
+					lo.add(cq);
+					if (cq.getStartTime().after(ed)){
+						break;
+					}
+				}
+				line=reader.readLine();
+            }
+    	}catch(Exception e){
+			logger.error("error when readline.", e);
 		}
 		return lo;
 	}

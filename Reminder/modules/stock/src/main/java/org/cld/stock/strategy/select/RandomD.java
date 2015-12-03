@@ -35,7 +35,6 @@ public class RandomD extends SelectStrategy {
 	
 	@Override
 	public List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<Object>> tableResults) {
-		Object[] params = this.getParams();
 		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
 		List<Object> lo = tableResults.get(sc.getBTFQDailyQuoteMapper());
 		int idx=0;

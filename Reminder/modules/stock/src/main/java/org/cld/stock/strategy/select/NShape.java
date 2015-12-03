@@ -16,12 +16,12 @@ import org.cld.util.jdbc.JDBCMapper;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class RallyD extends SelectStrategy {
+public class NShape extends SelectStrategy {
 
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private StockConfig sc;
-	
-	public RallyD(){
+	public static final String LOOKUP_PERIOD="luperiod";
+	public NShape(){
 	}
 	
 	//init after json deserilized
@@ -72,8 +72,8 @@ public class RallyD extends SelectStrategy {
 	//using the close of current cq, then submit date has to be next trading day
 	@Override
 	public List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<Object>> tableResults) {
-		Object[] params = this.getParams();
-		int periodDays = (int) ((Double)params[0]).floatValue();
+		String lup = (String) this.getParams().get(LOOKUP_PERIOD);
+		int periodDays = Integer.parseInt(lup);
 		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
 		List<Object> lo = tableResults.get(sc.getBTFQDailyQuoteMapper());
 		TreeMap<Float, TreeMap<Date, CandleQuote>> dailyFQMap = new TreeMap<Float, TreeMap<Date, CandleQuote>>();

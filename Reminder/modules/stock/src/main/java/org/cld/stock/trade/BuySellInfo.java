@@ -1,5 +1,6 @@
 package org.cld.stock.trade;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -11,12 +12,16 @@ public class BuySellInfo {
 	private SellStrategy ss;
 	private List<StockOrder> sos;
 	private Date submitD;
-	
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 	public BuySellInfo(String bs, SellStrategy ss, List<StockOrder> sos, Date d){
 		this.setBs(bs);
 		this.sos = sos;
 		this.setSs(ss);
 		this.setSubmitD(d);
+	}
+	
+	public String toString(){
+		return String.format("bs:%s, ss:%s, sos:%s, submitDate:%s", bs, ss.toString(), sos, sdf.format(submitD));
 	}
 	
 	public List<StockOrder> getSos() {

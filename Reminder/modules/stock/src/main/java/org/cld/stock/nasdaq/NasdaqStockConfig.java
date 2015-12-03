@@ -408,7 +408,7 @@ public class NasdaqStockConfig extends StockConfig{
 	}
 
 	@Override
-	public String getMarketStop() {
+	public String getMarketEnd() {
 		return "16:00";
 	}
 }

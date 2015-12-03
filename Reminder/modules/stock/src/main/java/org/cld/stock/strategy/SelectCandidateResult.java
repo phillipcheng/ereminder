@@ -1,5 +1,6 @@
 package org.cld.stock.strategy;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class SelectCandidateResult {
@@ -7,6 +8,8 @@ public class SelectCandidateResult {
 	private Date dt;//the submit time
 	private float value;
 	private float buyPrice;
+	
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 	
 	public SelectCandidateResult(Date dt, float value){
 		this.dt = dt;
@@ -26,7 +29,7 @@ public class SelectCandidateResult {
 		this.setBuyPrice(buyPrice);
 	}
 	public String toString(){
-		return String.format("%s,%s,%.4f,%.3f", stockId, dt, value, buyPrice);
+		return String.format("%s,%s,%.4f,%.3f", stockId, sdf.format(dt), value, buyPrice);
 	}
 	
 	public Date getDt() {

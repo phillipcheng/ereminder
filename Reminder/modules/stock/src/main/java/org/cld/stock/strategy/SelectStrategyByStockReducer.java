@@ -8,23 +8,29 @@ import java.util.TreeMap;
 
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.Mapper.Context;
-import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlUtil;
-import org.cld.datacrawl.test.CrawlTestUtil;
 
 public class SelectStrategyByStockReducer extends Reducer<Text, Text, Text, Text>{
 	private static Logger logger =  LogManager.getLogger(SelectStrategyByStockReducer.class);
     
+
+	public static final String MaxSelectNumber="MaxSelectNumber";
+	
+	int maxSelectNumber=0;
+	
+	@Override
+	public void setup(Context context) throws IOException, InterruptedException {
+		maxSelectNumber = context.getConfiguration().getInt(MaxSelectNumber, 0);
+		logger.info(String.format("max select number get: %d", maxSelectNumber));
+	}
+	
     /**
      * input key: bs.name, dt, bs.orderDirection, bs.params
      * input values: stockId, value, buyPrice
      * from given select strategy, we use direction to output the topN (value) of the day
      * output: stockid, value, buyPrice, dt, rank, bs.name, bs.params
      */
-	public static final int MAX_SEL_COUNT=5;
 	@Override
 	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 		String[] kv = key.toString().split(",");
@@ -56,7 +62,7 @@ public class SelectStrategyByStockReducer extends Reducer<Text, Text, Text, Text
 			float f = kl.next();
 			List<String> sl = map.get(f);
 			for (String vstr:sl){
-				if (cnt<=MAX_SEL_COUNT){
+				if (cnt<=maxSelectNumber){
 					String k = String.format("%s,%s,%d", vstr, dt, cnt);
 					String v = String.format("%s,%s", bsName, bsParams);
 					context.write(new Text(k), new Text(v));

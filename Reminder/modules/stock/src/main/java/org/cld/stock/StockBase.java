@@ -52,6 +52,9 @@ import org.cld.stock.strategy.SellStrategy;
 import org.cld.stock.strategy.SellStrategyByStockMapper;
 import org.cld.stock.strategy.SellStrategyByStockReducer;
 import org.cld.stock.strategy.SortMapper;
+import org.cld.stock.strategy.StockIdDateGroupingComparator;
+import org.cld.stock.strategy.StockIdDatePair;
+import org.cld.stock.strategy.StockIdDatePartitioner;
 import org.cld.stock.strategy.StrategyResultMapper;
 import org.cld.stock.strategy.StrategyResultReducer;
 import org.cld.stock.task.LoadDBDataTask;
@@ -60,7 +63,6 @@ import org.cld.stock.task.MergeTask;
 public abstract class StockBase extends TestBase{
 	protected static Logger logger =  LogManager.getLogger(StockBase.class);
 	public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	private static SimpleDateFormat mdssdf = new SimpleDateFormat("MMddHHmmss");
 	
 	public static final String AllCmdRun_STATUS="AllCmdRun";
 	public static final String KEY_IDS = "ids";
@@ -420,7 +422,10 @@ public abstract class StockBase extends TestBase{
 	public static final String STEP_NAMES="step";
 	public static final String STRATEGY_NAMES_SEP="_";//can't be , :
 	public static final String GEN_DETAIL_FILE="gendetailfile";
-	public static final int NUM_REDUCER=100;
+	public static final int NUM_REDUCER= 200;
+	public static final int mapMbMem = 1024;
+	public static final int reduceMbMemSellStrategy = 1024;
+	public static final int reduceMbMemStrategyResult = 2048;
 	public void validateAllStrategyByStock(String inparam){
 		Map<String,String> params = StringUtil.parseMapParams(inparam);
 		String snParam = params.get(STRATEGY_NAMES);
@@ -441,7 +446,6 @@ public abstract class StockBase extends TestBase{
 		try{
 			StockConfig sc = this.getStockConfig();
 			Map<String, Object> sssMap = new HashMap<String, Object>();
-			List<SelectStrategy> allSelectStrategy = new ArrayList<SelectStrategy>();
 			String[] strategyNames;
 			if (snParam==null){
 				strategyNames = sc.getAllStrategy();
@@ -449,15 +453,19 @@ public abstract class StockBase extends TestBase{
 				strategyNames = snParam.split(STRATEGY_NAMES_SEP);
 			}
 			int totalBS = 0;
+			List<SelectStrategy> allSelectStrategy = new ArrayList<SelectStrategy>();
+			int maxSelectNumber=0;
 			for (String sn:strategyNames){
 				String strategyName = STRATEGY_PREFIX+sn+STRATEGY_SUFFIX;
 				PropertiesConfiguration props = new PropertiesConfiguration(strategyName);
-				List<SelectStrategy> scsl = SelectStrategy.gen(props, sn);
-				for (SelectStrategy scs: scsl){
-					((SelectStrategy)scs).setBaseMarketId(this.getBaseMarketId());
-					allSelectStrategy.add((SelectStrategy) scs);
-				}
+				List<SelectStrategy> scsl = SelectStrategy.gen(props, sn, this.getBaseMarketId());
+				allSelectStrategy.addAll(scsl);
 				SellStrategy[] slsl = SellStrategy.gen(props);
+				for (SellStrategy ss: slsl){
+					if (ss.getSelectNumber()>maxSelectNumber){
+						maxSelectNumber = ss.getSelectNumber();
+					}
+				}
 				sssMap.put(sn, slsl);
 				totalBS+=slsl.length;
 			}
@@ -470,44 +478,39 @@ public abstract class StockBase extends TestBase{
 			if (totalFiles>7000){
 				genDetailFiles = false;
 			}
-			logger.info(String.format("total files: %d", totalFiles));
+			logger.info(String.format("total files: %d, select strategy:%d, sell strategy:%d", totalFiles, totalBS, totalSS));
 			Map<String, String> hadoopParams = new HashMap<String, String>();
 			if (stepParam==null || "1".equals(stepParam)){
-				//1
 				allSelectStrategyArray = allSelectStrategy.toArray(allSelectStrategyArray);
 				SelectStrategyByStockTask.launch(this.getPropFile(), cconf, baseMarketId, marketId, outputDir1, 
-						allSelectStrategyArray, startDate, endDate);
+						allSelectStrategyArray, startDate, endDate, maxSelectNumber);
 			}
 			
 			if (stepParam==null || "2".equals(stepParam)){
 				hadoopParams.put(SellStrategy.KEY_SELL_STRATEGYS, sssString);
 				hadoopParams.put(CrawlUtil.CRAWL_PROPERTIES, this.getPropFile());
 				hadoopParams.put(KEY_BASE_MARKET_ID, this.baseMarketId);
-				int mapMbMem=1024;
-				int reduceMbMem=6196;
 				String mapOptValue = "-Xmx" + mapMbMem + "M";
-				String reduceOptValue = "-Xmx" + reduceMbMem + "M";
+				String reduceOptValue = "-Xmx" + reduceMbMemSellStrategy + "M";
 				hadoopParams.put("mapreduce.map.speculative", "false");
 				hadoopParams.put("mapreduce.map.memory.mb", mapMbMem + "");
 				hadoopParams.put("mapreduce.map.java.opts", mapOptValue);
-				hadoopParams.put("mapreduce.reduce.memory.mb", reduceMbMem + "");
+				hadoopParams.put("mapreduce.reduce.memory.mb", reduceMbMemSellStrategy + "");
 				hadoopParams.put("mapreduce.reduce.java.opts", reduceOptValue);
-				hadoopParams.put("mapreduce.job.reduces", NUM_REDUCER+"");
-				//1 output
+				hadoopParams.put("mapreduce.job.reduces", 5+"");
 				HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), hadoopParams, new String[]{outputDir1}, false, outputDir2, true, 
-						SellStrategyByStockMapper.class, SellStrategyByStockReducer.class, false);
+						SellStrategyByStockMapper.class, SellStrategyByStockReducer.class, 
+						StockIdDatePartitioner.class, StockIdDateGroupingComparator.class, StockIdDatePair.class, false);
 			}
 			if (stepParam==null || "3".equals(stepParam)){
 				//multiple output
 				hadoopParams.clear();
-				int mapMbMem=1024;
-				int reduceMbMem=8192;
 				String mapOptValue = "-Xmx" + mapMbMem + "M";
-				String reduceOptValue = "-Xmx" + reduceMbMem + "M";
+				String reduceOptValue = "-Xmx" + reduceMbMemStrategyResult + "M";
 				hadoopParams.put("mapreduce.map.speculative", "false");
 				hadoopParams.put("mapreduce.map.memory.mb", mapMbMem + "");
 				hadoopParams.put("mapreduce.map.java.opts", mapOptValue);
-				hadoopParams.put("mapreduce.reduce.memory.mb", reduceMbMem + "");
+				hadoopParams.put("mapreduce.reduce.memory.mb", reduceMbMemStrategyResult + "");
 				hadoopParams.put("mapreduce.reduce.java.opts", reduceOptValue);
 				hadoopParams.put("mapreduce.job.reduces", NUM_REDUCER+"");
 				hadoopParams.put(GEN_DETAIL_FILE, Boolean.toString(genDetailFiles));
@@ -520,7 +523,6 @@ public abstract class StockBase extends TestBase{
 				hadoopParams.put("mapred.output.key.comparator.class", "org.apache.hadoop.mapred.lib.KeyFieldBasedComparator");
 				hadoopParams.put("mapred.text.key.comparator.options", "-n");
 				hadoopParams.put("file.pattern", ".*part.*");
-				//1 output
 				HadoopTaskLauncher.executeTasks(this.getCconf().getNodeConf(), hadoopParams, new String[]{outputDir3}, false, outputDir4, true, 
 						SortMapper.class, DefaultCopyTextReducer.class, false);
 			}
@@ -784,7 +786,7 @@ public abstract class StockBase extends TestBase{
 		try {
 			String strategyName = STRATEGY_PREFIX+sn+STRATEGY_SUFFIX;
 			PropertiesConfiguration props = new PropertiesConfiguration(strategyName);
-			List<SelectStrategy> bsl = SelectStrategy.gen(props, sn);
+			List<SelectStrategy> bsl = SelectStrategy.gen(props, sn, this.getBaseMarketId());
 			if (bsl.size()>0){
 				SelectStrategy bs = bsl.get(0);
 				return bs.prepareData(this.getBaseMarketId(), this.getMarketId(), cconf, this.getPropFile(), this.startDate, this.endDate);
@@ -801,7 +803,7 @@ public abstract class StockBase extends TestBase{
 		try {
 			String strategyName = STRATEGY_PREFIX+sn+STRATEGY_SUFFIX;
 			PropertiesConfiguration props = new PropertiesConfiguration(strategyName);
-			List<SelectStrategy> bsl = SelectStrategy.gen(props, sn);
+			List<SelectStrategy> bsl = SelectStrategy.gen(props, sn, this.getBaseMarketId());
 			if (bsl.size()>0){
 				String curMarketId = getCurMarketId();
 				SelectStrategy bs = bsl.get(0);

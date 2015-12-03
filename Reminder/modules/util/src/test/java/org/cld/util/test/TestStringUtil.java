@@ -84,7 +84,7 @@ public class TestStringUtil {
 	
 	@Test
 	public void testParseSteps(){
-		Float[] fl = StringUtil.parseSteps("(1)-1-0.5");
+		String[] fl = StringUtil.parseFloatSteps("(1)-1-0.5");
 		logger.info(StringUtils.join(fl,","));
 	}
 	

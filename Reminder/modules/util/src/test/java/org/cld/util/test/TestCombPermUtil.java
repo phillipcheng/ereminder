@@ -1,7 +1,8 @@
 package org.cld.util.test;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,11 +17,11 @@ public class TestCombPermUtil {
 		String[] b = new String[]{"b1","b2"};
 		String[] c = new String[]{"c1","c2","c3"};
 		
-		List<Object[]> ab = new ArrayList<Object[]>();
-		ab.add(a);
-		ab.add(b);
-		ab.add(c);
-		List<List<Object>> llo = CombPermUtil.eachOne(ab);
+		Map<String, Object[]> ab = new HashMap<String, Object[]>();
+		ab.put("a", a);
+		ab.put("b", b);
+		ab.put("c", c);
+		List<Map<String, Object>> llo = CombPermUtil.eachOne(ab);
 		logger.info(llo);
 	}
 

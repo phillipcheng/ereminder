@@ -1,7 +1,9 @@
 package org.cld.stock.trade;
 
+import java.io.BufferedReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -9,10 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.apache.commons.lang.time.DateUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
+import org.cld.hadooputil.HdfsReader;
 import org.cld.stock.CandleQuote;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
@@ -76,7 +78,7 @@ public class TradeSimulator {
 					if (so.getTif()==TimeInForceType.MarktOnClose){
 						if (prevCq!=null){
 							if (!so.getTriggerTime().before(prevCq.getStartTime()) && 
-									so.getTriggerTime().before(cq.getStartTime())){//triggerTime between [prevCq and Cq), in case missing data
+									so.getTriggerTime().before(cq.getStartTime()) || !qlist.hasNext()){//triggerTime between [prevCq and Cq), in case missing data
 								so.setExecutedPrice(cq.getClose());
 								so.setStatus(StatusType.executed);
 								so.setExecuteTime(cq.getStartTime());//TODO this should be the endTime
@@ -162,10 +164,21 @@ public class TradeSimulator {
 				}
 			}
 			if (exeNum>1){
-				logger.error(String.format("multiple order executed within same candle quote, data not granular enough. %s", executedOrders.values()));
+				logger.warn(String.format("multiple order executed within same candle quote, data not granular enough. %s", executedOrders.values()));
+				TreeMap<Float, StockOrder> fsm = new TreeMap<Float, StockOrder>();
 				for (StockOrder so:executedOrders.values()){
-					so.setStatus(StatusType.cancelled);
-					so.setExecutedPrice(0f);
+					if (so.getAction()==ActionType.sell){
+						fsm.put(so.getExecutedPrice(), so);
+					}
+				}
+				int i=0;
+				for (StockOrder so:fsm.values()){
+					if (i>0){
+						//only take the lowest sell price one, other mark as cancelled
+						so.setExecuteTime(null);
+						so.setStatus(StatusType.cancelled);
+					}
+					i++;
 				}
 				return qlist;
 			}else if (exeNum==1){
@@ -176,46 +189,88 @@ public class TradeSimulator {
 		return qlist;
 	}
 	
+	public static List<CandleQuote> getFromCache(List<CandleQuote> cacheQuote, Date start, Date end){
+		List<CandleQuote> cql = new ArrayList<CandleQuote>();
+		for (CandleQuote cq: cacheQuote){
+			if (!cq.getStartTime().before(start)){//[start
+				if (cq.getStartTime().before(end)){//,end)
+					cql.add(cq);
+				}else{
+					break;
+				}
+			}
+		}
+		return cql;
+	}
+	
+	public static void optiCache(List<CandleQuote> cacheQuote, Date start){
+		int numberToRemove=0;
+		for (int i=0; i<cacheQuote.size(); i++){
+			CandleQuote cq = cacheQuote.get(i);
+			if (!cq.getStartTime().before(start)){
+				numberToRemove = i;
+				break;
+			}
+		}
+		logger.debug(String.format("number of items to remove from cache:%d", numberToRemove));
+		for (int i=0; i<numberToRemove; i++){
+			cacheQuote.remove(0);
+		}
+	}
 	/**
 	 * 
 	 * @param dsoMap: for each day(submit day), given stockid, submit order to execute
 	 * @param cq
 	 */
-	public static void submitStockOrder(List<BuySellInfo> bsil, TreeMap<Date, CandleQuote> cq, StockConfig sc){
-		for (BuySellInfo bsi: bsil){
-			Map<String, StockOrder> executedOrder = new HashMap<String, StockOrder>(); //
-			List<StockOrder> sol = bsi.getSos();
-			List<StockOrder> buySOs = new ArrayList<StockOrder>();
-			List<StockOrder> sellSOs = new ArrayList<StockOrder>();
-			for (StockOrder so:sol){
-				if (so.getAction()==ActionType.buy){
-					buySOs.add(so);
-				}else if (so.getAction() == ActionType.sell){
-					sellSOs.add(so);
+	public static void submitStockOrder(BuySellInfo bsi, StockConfig sc, List<CandleQuote> cqCache, BufferedReader br){
+		logger.debug(bsi.toString());
+		Map<String, StockOrder> executedOrder = new HashMap<String, StockOrder>(); //
+		List<StockOrder> sol = bsi.getSos();
+		List<StockOrder> buySOs = new ArrayList<StockOrder>();
+		List<StockOrder> sellSOs = new ArrayList<StockOrder>();
+		for (StockOrder so:sol){
+			if (so.getAction()==ActionType.buy){
+				buySOs.add(so);
+			}else if (so.getAction() == ActionType.sell){
+				sellSOs.add(so);
+			}
+		}
+		int holdDays = bsi.getSs().getHoldDuration();
+		Date ed = StockUtil.getNextOpenDay(bsi.getSubmitD(), sc.getHolidays(), holdDays);
+		List<CandleQuote> moreCq = null;
+		if (cqCache.size()==0){
+			moreCq = StockPersistMgr.getBTDDate(br, sc.getBTFQMinuteQuoteMapper(), bsi.getSubmitD(), ed);
+			cqCache.addAll(moreCq);
+			logger.debug(String.format("number of items to add to cache:%d", moreCq.size()));
+		}else{
+			if (ed.after(cqCache.get(cqCache.size()-1).getStartTime())){
+				moreCq = StockPersistMgr.getBTDDate(br, sc.getBTFQMinuteQuoteMapper(), null, ed);//from current mark to ed
+				cqCache.addAll(moreCq);
+				logger.debug(String.format("number of items to add to cache:%d", moreCq.size()));
+			}
+		}
+		List<CandleQuote> myCq = getFromCache(cqCache, bsi.getSubmitD(), ed);
+		optiCache(cqCache, bsi.getSubmitD());
+		Iterator<CandleQuote> cqi = myCq.iterator();
+		Iterator<CandleQuote> afterBuyCQI = tryExecuteOrder(buySOs, cqi, executedOrder, sc);
+		StockOrder buySO = buySOs.get(0);
+		if (buySO.getExecuteTime()!=null){
+			for (StockOrder sellSO: sellSOs){
+				sellSO.setSubmitTime(buySO.getExecuteTime());//assume at the same time we submit
+				if (sellSO.getTif()==TimeInForceType.MarktOnClose){
+					sellSO.setTriggerTime(sc.getCloseTime(buySO.getExecuteTime(), bsi.getSs().getHoldDuration(), 
+							bsi.getSs().getHoldUnit()));
 				}
 			}
-			
-			Iterator<CandleQuote> cqi = cq.tailMap(bsi.getSubmitD(), true).values().iterator();
-			Iterator<CandleQuote> afterBuyCQI = tryExecuteOrder(buySOs, cqi, executedOrder, sc);
-			StockOrder buySO = buySOs.get(0);
-			if (buySO.getExecuteTime()!=null){
-				for (StockOrder sellSO: sellSOs){
-					sellSO.setSubmitTime(buySO.getExecuteTime());//assume at the same time we submit
-					if (sellSO.getTif()==TimeInForceType.MarktOnClose){
-						sellSO.setTriggerTime(sc.getCloseTime(buySO.getExecuteTime(), bsi.getSs().getHoldDuration(), 
-								bsi.getSs().getHoldUnit()));
-					}
-				}
-				tryExecuteOrder(sellSOs, afterBuyCQI, executedOrder, sc);
-				logger.debug(buySOs);
-				logger.debug(sellSOs);
-			}else{
-				//logger.info(String.format("failed to buy: %s", buySO));
-			}
+			tryExecuteOrder(sellSOs, afterBuyCQI, executedOrder, sc);
+			logger.debug("buySO:" + buySOs);
+			logger.debug("sellSO:" + sellSOs);
+		}else{
+			logger.debug(String.format("failed to buy: %s", buySO));
 		}
 	}
 	
-	public static BuySellResult calculateBuySellResult(BuySellInfo bsi, List<StockOrder> solist){
+	public static BuySellResult calculateBuySellResult(Date submitD, List<StockOrder> solist){
 		List<StockOrder> buySOs = new ArrayList<StockOrder>();
 		List<StockOrder> sellSOs = new ArrayList<StockOrder>();
 		for (StockOrder so:solist){
@@ -257,50 +312,38 @@ public class TradeSimulator {
 				}else{
 					logger.error(String.format("tif and ordertype all null? for so:%s", exeSo));
 				}
-				return new BuySellResult(bsi.getSubmitD(), stockid, buyTime, buyPrice, 
+				return new BuySellResult(submitD, stockid, buyTime, buyPrice, 
 						exeSo.getExecuteTime(), sellPrice, selltype, percent);
 			}else{//system error, because of data not granular enough or the stock not active enough, must avoid this
-				return new BuySellResult(bsi.getSubmitD(), stockid, buyTime, buyPrice, 
-						bsi.getSubmitD(), 0f, OrderType.stop.toString(), 0f);
+				return new BuySellResult(submitD, stockid, buyTime, buyPrice, 
+						submitD, 0f, OrderType.stop.toString(), 0f);
 			}
 		}else{//failed to buy
-			return new BuySellResult(bsi.getSubmitD(), stockid, bsi.getSubmitD(), 0f, 
-					bsi.getSubmitD(), 0f, OrderType.stop.toString(), 0f);
+			return new BuySellResult(submitD, stockid, submitD, 0f, submitD, 0f, OrderType.stop.toString(), 0f);
 		}
-		
-	}
-	
-	public static TreeMap<Date, CandleQuote> getCQMap(CrawlConf cconf, StockConfig sc, String stockid, Date submitDt, int holdDays){
-		return getCQMap(cconf, sc, stockid, submitDt, submitDt, holdDays);
-	}
-	
-	public static TreeMap<Date, CandleQuote> getCQMap(CrawlConf cconf, StockConfig sc, String stockid, Date minDate, Date maxDate, int holdDays){
-		Date startDate = minDate;
-		Date endDate = StockUtil.getNextOpenDay(maxDate, sc.getHolidays(), holdDays);
-		List<Object> lo = StockPersistMgr.getDataByStockDate(cconf, sc.getBTFQMinuteQuoteMapper(), stockid, 
-				startDate, endDate);
-		TreeMap<Date, CandleQuote> dcmap = new TreeMap<Date, CandleQuote>();
-		for (Object o:lo){
-			CandleQuote cq = (CandleQuote) o;
-			dcmap.put(cq.getStartTime(), cq);
-		}
-		return dcmap;
 	}
 	
 	//used by test
 	public static BuySellResult trade(SelectCandidateResult scr, SellStrategy ss, StockConfig sc, CrawlConf cconf){
+		HdfsReader hr =  null;
 		try {
 			String stockid = scr.getStockId();
 			List<StockOrder> sol = SellStrategy.makeStockOrders(scr, ss);
 			BuySellInfo bsi = new BuySellInfo("any", ss, sol, scr.getDt());
-			TreeMap<Date, CandleQuote> dcmap = getCQMap(cconf, sc, stockid, scr.getDt(), ss.getHoldDuration());
-			List<BuySellInfo> bsil = new ArrayList<BuySellInfo>();
-			bsil.add(bsi);
-			TradeSimulator.submitStockOrder(bsil, dcmap, sc);
-			return TradeSimulator.calculateBuySellResult(bsi, sol);
+			hr = StockPersistMgr.getReader(cconf, sc.getBTFQMinuteQuoteMapper(), stockid);
+			List<CandleQuote> cqCache = new ArrayList<CandleQuote>();
+			TradeSimulator.submitStockOrder(bsi, sc, cqCache, hr.getBr());
+			return TradeSimulator.calculateBuySellResult(scr.getDt(), sol);
 		}catch(Exception e){
 			logger.error("", e);
 			return null;
+		}finally{
+			try {
+				hr.getBr().close();
+				hr.getFs().close();
+			}catch(Exception e){
+				logger.error("", e);
+			}
 		}
 	}
 }

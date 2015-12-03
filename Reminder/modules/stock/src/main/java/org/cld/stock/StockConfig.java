@@ -73,12 +73,21 @@ public abstract class StockConfig {
 	public static final SimpleDateFormat msdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 	public static final SimpleDateFormat dsdf = new SimpleDateFormat("yyyy-MM-dd");
 	public abstract String getMarketStart();
-	public abstract String getMarketStop();
+	public abstract String getMarketEnd();
 	
 	public Date getNormalTradeStartTime(Date d){
 		Date sd = null;
 		try{
 			sd = msdf.parse(String.format("%s %s", dsdf.format(d), getMarketStart()));
+		}catch(Exception e){
+			logger.error("", e);
+		}
+		return sd;
+	}
+	public Date getNormalTradeEndTime(Date d){
+		Date sd = null;
+		try{
+			sd = msdf.parse(String.format("%s %s", dsdf.format(d), getMarketEnd()));
 		}catch(Exception e){
 			logger.error("", e);
 		}
@@ -92,7 +101,7 @@ public abstract class StockConfig {
 			}
 			//then set the time to market end
 			try{
-				Date ed = msdf.parse(String.format("%s %s", dsdf.format(sd), getMarketStop()));
+				Date ed = msdf.parse(String.format("%s %s", dsdf.format(sd), getMarketEnd()));
 				return ed;
 			}catch(Exception e){
 				logger.error("", e);

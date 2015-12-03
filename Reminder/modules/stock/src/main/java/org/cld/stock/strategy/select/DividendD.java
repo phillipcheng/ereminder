@@ -24,7 +24,7 @@ public class DividendD extends SelectStrategy {
 
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private StockConfig sc;
-	
+	public static final String yield="yield";
 	public DividendD(){
 	}
 	
@@ -42,8 +42,8 @@ public class DividendD extends SelectStrategy {
 	
 	@Override
 	public List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<Object>> tableResults) {
-		Object[] params = this.getParams();
-		float threashold = ((Double)params[0]).floatValue();
+		String syield = (String) this.getParams().get(yield);
+		float threashold = Float.parseFloat(syield);
 		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
 		List<Object> fqlist = tableResults.get(sc.getBTFQDailyQuoteMapper());
 		TreeMap<Date, CandleQuote> cqMap = new TreeMap<Date, CandleQuote>();

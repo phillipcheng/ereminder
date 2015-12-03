@@ -26,7 +26,8 @@ public class StringUtil {
 
 	public static Logger logger = LogManager.getLogger(StringUtil.class);
 	
-	public static String sepp = "-"; 
+	public static String float_step_sep = "-";
+	public static String string_step_sep = ",";
 	
 	public static Pattern negP = Pattern.compile("\\((.*)\\)");
 	
@@ -38,12 +39,12 @@ public class StringUtil {
 		return Float.parseFloat(str);
 	}
 	
-	//parse a (1)-4-1 into [-1, 0, 1,2,3,4]
-	public static Float[] parseSteps(String steps){
-		if (!steps.contains(sepp)){
-			return new Float[]{Float.parseFloat(steps)};
+	//parse (1)-4-1 into [-1, 0, 1,2,3,4]
+	public static String[] parseFloatSteps(String steps){
+		if (!steps.contains(float_step_sep)){
+			return new String[]{steps};
 		}else{
-			String[] a = steps.split(sepp);
+			String[] a = steps.split(float_step_sep);
 			float start = parseWithSign(a[0]);
 			float step = parseWithSign(a[2]);
 			float end = parseWithSign(a[1]);
@@ -53,11 +54,23 @@ public class StringUtil {
 				fl.add(v);
 				v += step;
 			}
-			Float[] vf = new Float[fl.size()];
+			String[] vf = new String[fl.size()];
 			for (int i=0; i<vf.length; i++){
-				vf[i] = fl.get(i);
+				vf[i] = fl.get(i).toString();
 			}
 			return vf;
+		}
+	}
+	
+	//parse all types
+	//parse up,down into [up, down]
+	public static String[] parseSteps(String steps){
+		if (steps.contains(string_step_sep)){
+			return steps.split(string_step_sep);
+		}else if (steps.contains(float_step_sep)){
+			return parseFloatSteps(steps);
+		}else{
+			return new String[]{steps};
 		}
 	}
 	public static Map<String, String> parseMapParams(String params){

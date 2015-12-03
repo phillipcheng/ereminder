@@ -28,6 +28,7 @@ import org.cld.hadooputil.DefaultCopyTextReducer;
 import org.cld.stock.CandleQuote;
 import org.cld.stock.DivSplit;
 import org.cld.stock.ETLUtil;
+import org.cld.stock.PriceSeg;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.persistence.StockPersistMgr;
@@ -40,13 +41,28 @@ import org.cld.util.DataMapper;
 import org.cld.util.DateTimeUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class OpenCloseDropAvgD extends SelectStrategy {
-	public static Logger logger = LogManager.getLogger(OpenCloseDropAvgD.class);
+public class OverTrade extends SelectStrategy {
+	public static Logger logger = LogManager.getLogger(OverTrade.class);
 	
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private StockConfig sc;
 	
-	public OpenCloseDropAvgD(){
+	public static final String p_threshold="scs.param.threshold";
+	public static final String p_submitprice="scs.param.submitprice";
+	public static final String p_submittime="scs.param.submittime";
+	public static final String p_lookupdn="scs.param.lookupdn";
+	public static final String p_aggregation="scs.param.aggregation";
+	public static final String p_direction="scs.param.direction";
+	
+	public static final String v_direction_up="up";
+	public static final String v_direction_down="down";
+	public static final String v_aggregation_avg="avg";
+	public static final String v_aggregation_sum="sum";
+	public static final String v_submittime_open="open";
+	public static final String v_submittime_close="close";
+	
+	
+	public OverTrade(){
 	}
 	
 	//init after json deserilized
@@ -55,12 +71,42 @@ public class OpenCloseDropAvgD extends SelectStrategy {
 		sc = StockUtil.getStockConfig(this.getBaseMarketId());
 	}
 	
+	@Override
+	public String[] prepareData(String baseMarketId, String marketId, CrawlConf cconf, String propfile, Date start, Date end){
+		StockConfig sc = StockUtil.getStockConfig(baseMarketId);
+		List<String> allIds = Arrays.asList(ETLUtil.getStockIdByMarketId(sc, marketId, cconf, ""));
+		List<Task> tl = new ArrayList<Task>();
+		Date day = StockUtil.getNextOpenDay(start, sc.getHolidays());
+		List<String> jobidlist = new ArrayList<String>();
+		while (day.before(end)){
+			for (String stockid: allIds){
+				Task t = new GenCloseDropAvgForDayTask(baseMarketId, stockid, sdf.format(day));
+				tl.add(t);
+			}
+			int mbMem = 512;
+			String optValue = "-Xmx" + mbMem + "M";
+			Map<String, String> hadoopJobParams = new HashMap<String, String>();
+			hadoopJobParams.put("mapreduce.map.speculative", "false");//since we do not allow same map multiple instance
+			hadoopJobParams.put("mapreduce.map.memory.mb", mbMem+"");
+			hadoopJobParams.put("mapreduce.map.java.opts", optValue);
+			hadoopJobParams.put(NLineInputFormat.LINES_PER_MAP, "200");
+			String taskName = String.format("%s%s", GenCloseDropAvgForDayTask.class.getSimpleName(), sdf.format(day));
+			String jobId = CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tl, taskName, false, 
+					CrawlTaskMapper.class, DefaultCopyTextReducer.class, hadoopJobParams);
+			jobidlist.add(jobId);
+			tl.clear();
+			day = StockUtil.getNextOpenDay(day, sc.getHolidays());
+		}
+		String[] jobidarray = new String[jobidlist.size()];
+		return jobidlist.toArray(jobidarray);
+	}
+	
 	//preparedData is adjusted, 
-	public List<SelectCandidateResult> select(Map<String, String> preparedData, Map<String, Float> newQuotes, 
+	private List<SelectCandidateResult> select(Map<String, String> preparedData, Map<String, Float> newQuotes, 
 			Date submitDay, int n){
 		TreeMap<Float, List<SelectCandidateResult>> map = new TreeMap<Float, List<SelectCandidateResult>>();
-		float threashold = (float)getParams()[0];//drop percentage 5 mean 5%
-		float openUpRatio = (float)getParams()[1];//the limit price ratio submit to open price -1 mean -1%
+		float threashold = 0f;//TODO
+		float openUpRatio = 0f;//TODO
 		boolean orderDir = getOrderDirection().equals(SelectStrategy.ASC);
 		for (String stockId:newQuotes.keySet()){
 			float newQuote = newQuotes.get(stockId);
@@ -173,35 +219,7 @@ public class OpenCloseDropAvgD extends SelectStrategy {
 		}
 	}
 	
-	@Override
-	public String[] prepareData(String baseMarketId, String marketId, CrawlConf cconf, String propfile, Date start, Date end){
-		StockConfig sc = StockUtil.getStockConfig(baseMarketId);
-		List<String> allIds = Arrays.asList(ETLUtil.getStockIdByMarketId(sc, marketId, cconf, ""));
-		List<Task> tl = new ArrayList<Task>();
-		Date day = StockUtil.getNextOpenDay(start, sc.getHolidays());
-		List<String> jobidlist = new ArrayList<String>();
-		while (day.before(end)){
-			for (String stockid: allIds){
-				Task t = new GenCloseDropAvgForDayTask(baseMarketId, stockid, sdf.format(day));
-				tl.add(t);
-			}
-			int mbMem = 512;
-			String optValue = "-Xmx" + mbMem + "M";
-			Map<String, String> hadoopJobParams = new HashMap<String, String>();
-			hadoopJobParams.put("mapreduce.map.speculative", "false");//since we do not allow same map multiple instance
-			hadoopJobParams.put("mapreduce.map.memory.mb", mbMem+"");
-			hadoopJobParams.put("mapreduce.map.java.opts", optValue);
-			hadoopJobParams.put(NLineInputFormat.LINES_PER_MAP, "200");
-			String taskName = String.format("%s%s", GenCloseDropAvgForDayTask.class.getSimpleName(), sdf.format(day));
-			String jobId = CrawlUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tl, taskName, false, 
-					CrawlTaskMapper.class, DefaultCopyTextReducer.class, hadoopJobParams);
-			jobidlist.add(jobId);
-			tl.clear();
-			day = StockUtil.getNextOpenDay(day, sc.getHolidays());
-		}
-		String[] jobidarray = new String[jobidlist.size()];
-		return jobidlist.toArray(jobidarray);
-	}
+	
 	
 	@JsonIgnore
 	@Override
@@ -212,9 +230,32 @@ public class OpenCloseDropAvgD extends SelectStrategy {
 	//use the open of submit day and submit at the open, table results are per stock
 	@Override
 	public List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<Object>> tableResults) {
-		Object[] params = this.getParams();
-		float threashold = ((Double)params[0]).floatValue();//drop percentage 5 mean 5%
-		float openUpRatio = ((Double)params[1]).floatValue();//the limit price ratio submit to open price -1 mean -1%
+		float pthreshold=5f;
+		float psubmitpriceUpRatio=0f;
+		int plookupdn=0;//unlimited
+		String paggregation=v_aggregation_avg;
+		String pdirection=v_direction_down;
+		String psubmittime=v_submittime_open;
+		
+		if (this.getParams().containsKey(p_threshold)){
+			pthreshold = Float.parseFloat(getParams().get(p_threshold).toString());
+		}
+		if (this.getParams().containsKey(p_submitprice)){
+			psubmitpriceUpRatio = Float.parseFloat(getParams().get(p_submitprice).toString());
+		}
+		if (this.getParams().containsKey(p_lookupdn)){
+			plookupdn = Integer.parseInt(getParams().get(p_lookupdn).toString());
+		}
+		if (this.getParams().containsKey(p_aggregation)){
+			paggregation = getParams().get(p_aggregation).toString();
+		}
+		if (this.getParams().containsKey(p_direction)){
+			pdirection = getParams().get(p_direction).toString();
+		}
+		if (this.getParams().containsKey(p_submittime)){
+			psubmittime = getParams().get(p_submittime).toString();
+		}
+		
 		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
 		List<Object> lxd = tableResults.get(sc.getExDivSplitHistoryTableMapper());
 		Set<Date> lxdds = new HashSet<Date>();
@@ -223,7 +264,7 @@ public class OpenCloseDropAvgD extends SelectStrategy {
 			lxdds.add(ds.getDt());
 		}
 		List<Object> lo = tableResults.get(sc.getBTFQDailyQuoteMapper());
-		for (int i=lo.size()-1; i>=0; i--){
+		for (int i=lo.size()-1; i>=0; i--){//go backward
 			CandleQuote submitCq = (CandleQuote) lo.get(i);
 			if (lxdds.contains(submitCq.getStartTime())){//skip ex days
 				continue;
@@ -233,38 +274,75 @@ public class OpenCloseDropAvgD extends SelectStrategy {
 			CandleQuote oneDayBeforeSumbitCq = null;
 			if (i-1>=0){
 				oneDayBeforeSumbitCq = (CandleQuote) lo.get(i-1);
-				float high=0;
+				float limit=0;
 				int days=0;//include the submit day
 				if (checkValid(oneDayBeforeSumbitCq)){
-					for (int j=i-1; j>0; j--){
-						prevCq = (CandleQuote)lo.get(j);
-						if (j==i-1){
-							//for the day before submit day, i need to make sure the open of submit day is lower then the close of prev day
-							if (thisCq.getOpen()>=prevCq.getClose()){
-								break;
-							}
+					int ndays = 0;
+					if (plookupdn>0){
+						ndays = plookupdn;
+					}
+					boolean isDay = true;//using the open-close day portion, else use the close-open night portion
+					if (psubmittime.equals(v_submittime_open)){
+						isDay = false;
+					}else{
+						isDay = true;
+					}
+					int j=i-1;
+					prevCq = (CandleQuote)lo.get(j);
+					List<PriceSeg> psl = new ArrayList<PriceSeg>();
+					while (j>0){
+						PriceSeg ps = null;
+						if (isDay && (pdirection.equals(v_direction_down) && thisCq.getClose()<thisCq.getOpen() || 
+								pdirection.equals(v_direction_up) && thisCq.getClose()>thisCq.getOpen())){
+							limit = thisCq.getOpen();
+							ps = new PriceSeg(PriceSeg.TAG_OPEN, thisCq.getStartTime(), thisCq.getOpen(), 
+									PriceSeg.TAG_CLOSE, thisCq.getStartTime(), thisCq.getClose());
+						}else if (!isDay && (pdirection.equals(v_direction_down) && thisCq.getOpen()<prevCq.getClose() ||
+								pdirection.equals(v_direction_up) && thisCq.getOpen()>prevCq.getClose())){
+							limit = prevCq.getClose();
+							ps = new PriceSeg(PriceSeg.TAG_CLOSE, prevCq.getStartTime(), prevCq.getClose(), 
+									PriceSeg.TAG_OPEN, thisCq.getStartTime(), thisCq.getOpen());
 						}else{
-							if (thisCq.getClose()>=prevCq.getClose()){
-								break;
-							}
+							break;
 						}
+						if (ps!=null) psl.add(ps);
+						if (ndays!=0 && days>ndays){
+							break;
+						}
+						isDay = !isDay;
 						days++;
-						high = prevCq.getClose();
-						thisCq = prevCq;
-					}
-					if (high>0){
-						if (DateTimeUtil.DateDiff(oneDayBeforeSumbitCq.getStartTime().getTime(),thisCq.getStartTime().getTime())<=LOOKUP_DAYS){
-							float value = (high-submitCq.getOpen())/(high*days);
-							if (value>threashold*0.01){
-								float price = submitCq.getOpen()*(1+openUpRatio*0.01f);
-								scrl.add(new SelectCandidateResult(sc.getNormalTradeStartTime(submitCq.getStartTime()), value, price));
-								logger.info(String.format("%s has consecutive drop %.3f for %d days til %s", submitCq.getStockid(), value, days, 
-										sdf.format(submitCq.getStartTime())));
-							}
-						}else{
-							logger.info(String.format("%s has used data %d days before. ignored.", submitCq.getStockid(), LOOKUP_DAYS));
+						if (isDay){
+							thisCq = prevCq;
+							j--;
+							prevCq = (CandleQuote)lo.get(j);
 						}
 					}
+					logger.debug(String.format("psl for day %s:%s", sdf.format(submitCq.getStartTime()), psl));
+					if (limit*days>0){
+						float value =0f;
+						if (psubmittime.equals(v_submittime_open)){
+							value = limit - submitCq.getOpen();
+						}else{
+							value = limit - submitCq.getClose();
+						}
+						value = value / limit;
+						if (paggregation.equals(v_aggregation_avg)){
+							value= value/days;
+						}
+						value = Math.abs(value);
+						if (value>pthreshold*0.01){
+							float price = submitCq.getOpen()*(1+psubmitpriceUpRatio*0.01f);
+							if (psubmittime.equals(v_submittime_open)){
+								scrl.add(new SelectCandidateResult(sc.getNormalTradeStartTime(submitCq.getStartTime()), value, price));
+							}else{
+								scrl.add(new SelectCandidateResult(sc.getNormalTradeEndTime(submitCq.getStartTime()), value, price));
+							}
+							logger.info(String.format("%s has consecutive %s %s %.3f for %d nd til %s", submitCq.getStockid(), pdirection, paggregation, 
+									value, days, sdf.format(submitCq.getStartTime())));
+						}
+					}
+				}else{
+					logger.debug(String.format("not valid stock %s", oneDayBeforeSumbitCq.toString()));
 				}
 			}
 		}

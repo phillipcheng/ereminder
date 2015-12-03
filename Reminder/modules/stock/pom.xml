@@ -56,6 +56,14 @@
                 </excludes>
 				<filtering>false</filtering>
 			</resource>
+			<resource>
+				<directory>src/main/crawl</directory>
+				<filtering>false</filtering>
+			</resource>
+			<resource>
+				<directory>src/main/strategy</directory>
+				<filtering>false</filtering>
+			</resource>
 		</resources>
 		<pluginManagement>
 		  <plugins>

@@ -15,7 +15,7 @@ public class NasdaqFileFQMinuteMapper extends FileDataMapper{
 		
 	}
 	private static NasdaqFileFQMinuteMapper singleton = new NasdaqFileFQMinuteMapper();
-	private static final SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy hh:mm");
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm");
 	public static NasdaqFileFQMinuteMapper getInstance(){
 		return singleton;
 	}

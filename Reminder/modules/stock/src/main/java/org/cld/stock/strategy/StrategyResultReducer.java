@@ -14,7 +14,7 @@ import org.cld.util.DateTimeUtil;
 
 public class StrategyResultReducer extends Reducer<Text, Text, Text, Text>{
 	private static Logger logger =  LogManager.getLogger(StrategyResultReducer.class);
-	private static SimpleDateFormat msdf = new SimpleDateFormat("yyyy-MM-dd hh:mm");
+	private static SimpleDateFormat msdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
 	private MultipleOutputs<Text, Text> mos;
 	private boolean genDetailFile=true;
