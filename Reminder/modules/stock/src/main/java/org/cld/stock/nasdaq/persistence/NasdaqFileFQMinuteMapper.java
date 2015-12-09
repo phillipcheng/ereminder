@@ -45,5 +45,10 @@ public class NasdaqFileFQMinuteMapper extends FileDataMapper{
 		String fn = stockId.replace("^", ".");
 		return String.format("/reminder/nasdaq/min/%s.txt", fn);
 	}
+	
+	@Override
+	public boolean oneFetch() {
+		return false;
+	}
 
 }

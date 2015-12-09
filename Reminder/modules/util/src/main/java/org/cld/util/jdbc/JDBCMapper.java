@@ -24,5 +24,8 @@ public abstract class JDBCMapper implements DataMapper {
 	public int hashCode(){
 		return getTableName().hashCode();
 	}
-
+	
+	public boolean oneFetch(){
+		return true;
+	}
 }

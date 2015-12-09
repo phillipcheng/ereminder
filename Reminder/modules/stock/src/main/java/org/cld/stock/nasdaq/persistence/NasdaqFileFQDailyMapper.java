@@ -43,4 +43,9 @@ public class NasdaqFileFQDailyMapper extends FileDataMapper{
 		String fn = stockId.replace("^", ".");
 		return String.format("/reminder/nasdaq/daily/%s.txt", fn);
 	}
+	
+	@Override
+	public boolean oneFetch() {
+		return true;
+	}
 }

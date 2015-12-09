@@ -170,7 +170,7 @@ public class TransferHdfsFile {
 	
 	public static String usage(){
 		//DumpFiles 
-		return String.format("%s threadNum fsDefaultName fromHdfsRoot toLocalRoot skipFolderNames includeFolderNames", TransferHdfsFile.class.getSimpleName());
+		return String.format("%s threadNum fsDefaultName hdfsRoot localRoot skipFolderNames includeFolderNames toHdfs", TransferHdfsFile.class.getSimpleName());
 	}
 	
 	public static void launch(int threadNum, String fsDefaultName, String hdfsRoot, String localRoot, 
@@ -180,6 +180,7 @@ public class TransferHdfsFile {
 		ExecutorService executor = Executors.newFixedThreadPool(threadNum);
 		try{
 			Configuration conf = new Configuration();
+			conf.set("dfs.replication", 1+"");
 			conf.set("fs.defaultFS", fsDefaultName);
 			//FileSystem fs = FileSystem.get(conf);//fs can't be closed
 			FileSystem fs = FileSystem.get(FileSystem.getDefaultUri(conf), conf, "dbadmin");

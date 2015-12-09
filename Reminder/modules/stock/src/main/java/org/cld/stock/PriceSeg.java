@@ -27,6 +27,6 @@ public class PriceSeg {
 	}
 	
 	public String toString(){
-		return String.format("seg: from %s %s %.2f to %s %s %.2f, value:%.2f", sdf.format(fromDt), fromTag, fromPrice, sdf.format(toDt), toTag, toPrice, value);
+		return String.format("\nseg: from %s %s %.2f to %s %s %.2f, value:%.2f", sdf.format(fromDt), fromTag, fromPrice, sdf.format(toDt), toTag, toPrice, value);
 	}
 }

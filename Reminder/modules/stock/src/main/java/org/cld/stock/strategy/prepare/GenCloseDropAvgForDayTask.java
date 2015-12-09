@@ -71,7 +71,7 @@ public class GenCloseDropAvgForDayTask extends Task implements Serializable{
 			CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
 			StockConfig sc = StockUtil.getStockConfig(baseMarketId);
 			List<Object> lo = StockPersistMgr.getDataByStockDateLimit(cconf.getSmalldbconf(), sc.getFQDailyQuoteTableMapper(), 
-					stockId, sdf.parse(whichDay), OverTrade.LOOKUP_DAYS);
+					stockId, sdf.parse(whichDay), OverTrade.MAX_LOOKUP);
 			if (lo.size()>0){
 				CandleQuote startCq =(CandleQuote) lo.get(0);
 				CandleQuote thisCq = startCq;
@@ -104,7 +104,7 @@ public class GenCloseDropAvgForDayTask extends Task implements Serializable{
 					logger.error(String.format("data for %s on %s not there.", stockId, whichDay));
 				}
 			}else{
-				logger.error(String.format("no data for %s for the past %d calendar days.", stockId, OverTrade.LOOKUP_DAYS));
+				logger.error(String.format("no data for %s for the past %d calendar days.", stockId, OverTrade.MAX_LOOKUP));
 			}
 		}catch(Exception e){
 			logger.error("", e);

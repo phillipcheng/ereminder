@@ -1,41 +1,56 @@
 package org.cld.stock.strategy.select;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.cld.stock.CandleQuote;
-import org.cld.stock.StockConfig;
-import org.cld.stock.StockUtil;
+import org.cld.stock.CqIndicators;
+import org.cld.stock.strategy.IntervalUnit;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.util.DataMapper;
-import org.cld.util.jdbc.JDBCMapper;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class NShape extends SelectStrategy {
 
-	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	private StockConfig sc;
-	public static final String LOOKUP_PERIOD="luperiod";
+	public static final String LOOKUP_PERIOD="scs.param.luperiod";
+	
 	public NShape(){
 	}
 	
-	//init after json deserilized
+	private int periodNum=0;
+	private List<CandleQuote> cqlist = new ArrayList<CandleQuote>();
+	
+
+	@Override
 	public void init(){
 		super.init();
-		sc = StockUtil.getStockConfig(this.getBaseMarketId());
+		String lup = (String) this.getParams().get(LOOKUP_PERIOD);
+		periodNum = Integer.parseInt(lup);
+	}
+	
+	@Override
+	public void initData(Map<DataMapper, List<? extends Object>> resultMap){
+		List<CqIndicators> cqilist = (List<CqIndicators>) resultMap.get(this.quoteMapper());
+		for (CqIndicators cqi:cqilist){
+			cqlist.add(cqi.getCq());
+		}
+	}
+	
+	@Override
+	public int maxLookupNum() {
+		return periodNum;
 	}
 	
 	@JsonIgnore
 	@Override
 	public DataMapper[] getDataMappers() {
-		return new DataMapper[]{sc.getBTFQDailyQuoteMapper()};
+		return new DataMapper[]{super.quoteMapper()};
 	}
-
 	//max and latest
 	private CandleQuote getMaxCq(TreeMap<Float, TreeMap<Date, CandleQuote>> dailyFQMap){
 		TreeMap<Date, CandleQuote> map = dailyFQMap.get(dailyFQMap.descendingKeySet().first());
@@ -71,26 +86,33 @@ public class NShape extends SelectStrategy {
 	
 	//using the close of current cq, then submit date has to be next trading day
 	@Override
-	public List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<Object>> tableResults) {
-		String lup = (String) this.getParams().get(LOOKUP_PERIOD);
-		int periodDays = Integer.parseInt(lup);
+	public List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<? extends Object>> tableResults) {
 		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
-		List<Object> lo = tableResults.get(sc.getBTFQDailyQuoteMapper());
+		List<CandleQuote> lo = null;
+		if (super.quoteMapper().oneFetch()){
+			lo = cqlist;
+		}else{
+			lo = new ArrayList<CandleQuote>();
+			List<CqIndicators> cqilist = (List<CqIndicators>) tableResults.get(this.quoteMapper());
+			for (CqIndicators cqi:cqilist){
+				lo.add(cqi.getCq());
+			}
+		}
 		TreeMap<Float, TreeMap<Date, CandleQuote>> dailyFQMap = new TreeMap<Float, TreeMap<Date, CandleQuote>>();
-		if (lo.size()>periodDays){
+		if (lo.size()>periodNum){
 			//init
-			for (int i=0; i<periodDays; i++){
+			for (int i=0; i<periodNum; i++){
 				CandleQuote cq = (CandleQuote)lo.get(i);
 				addCq(dailyFQMap, cq);
 			}
-			int idx=periodDays;
+			int idx=periodNum;
 			while (idx<lo.size()){
 				//calculate the value for date at lo.get(idx) using data in the dailyFQMap which contains data [lo.get(idx-periodDays), lo.get(idx-1)]
 				CandleQuote currentCq = (CandleQuote) lo.get(idx-1);
 				CandleQuote maxCq = getMaxCq(dailyFQMap);
 				CandleQuote minCq = getMinCq(dailyFQMap);
 				CandleQuote nextCq = (CandleQuote) lo.get(idx);
-				CandleQuote firstCq = (CandleQuote) lo.get(idx-periodDays);
+				CandleQuote firstCq = (CandleQuote) lo.get(idx-periodNum);
 				if (checkValid(currentCq)){
 					if (minCq.getStartTime().before(maxCq.getStartTime()) && maxCq.getClose()>minCq.getClose()){
 						float value = (currentCq.getClose()-minCq.getClose())/(maxCq.getClose()-minCq.getClose());

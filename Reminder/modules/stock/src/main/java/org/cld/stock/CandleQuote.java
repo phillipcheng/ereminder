@@ -54,45 +54,6 @@ public class CandleQuote {
 		this.volume = volume;
 	}
 	
-	//get max/min, first/last
-	public static CandleQuote getCq(TreeMap<Float, TreeMap<Date, CandleQuote>> cqMap, boolean max, boolean first){
-		TreeMap<Date, CandleQuote> map = null;
-		if (max){
-			map = cqMap.get(cqMap.lastKey());
-		}else{
-			map = cqMap.get(cqMap.firstKey());
-		}
-		if (first){
-			return map.get(map.firstKey());
-		}else{
-			return map.get(map.lastKey());
-		}
-	}
-	
-	public static boolean removeCq(TreeMap<Float, TreeMap<Date, CandleQuote>> cqMap, CandleQuote cq){
-		if (cqMap.containsKey(cq.getClose())){
-			TreeMap<Date, CandleQuote> cqTree = cqMap.get(cq.getClose());
-			cqTree.remove(cq.getStartTime());
-			if (cqTree.size()==0){
-				cqMap.remove(cq.getClose());
-			}
-			return true;
-		}else{
-			return false;
-		}
-	}
-	
-	public static void addCq(TreeMap<Float, TreeMap<Date, CandleQuote>> cqMap, CandleQuote cq){
-		if (cqMap.containsKey(cq.getClose())){
-			TreeMap<Date, CandleQuote> cqTree = cqMap.get(cq.getClose());
-			cqTree.put(cq.getStartTime(), cq);
-		}else{
-			TreeMap<Date, CandleQuote> cqTree = new TreeMap<Date, CandleQuote>();
-			cqTree.put(cq.getStartTime(), cq);
-			cqMap.put(cq.getClose(), cqTree);
-		}
-	}
-	
 	public String getStockid() {
 		return stockid;
 	}

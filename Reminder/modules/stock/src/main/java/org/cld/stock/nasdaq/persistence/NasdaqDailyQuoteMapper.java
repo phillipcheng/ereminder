@@ -42,5 +42,10 @@ public class NasdaqDailyQuoteMapper extends JDBCMapper{
 	public String getTableName() {
 		return "NasdaqQuoteHistory";
 	}
+	
+	@Override
+	public boolean oneFetch() {
+		return true;
+	}
 
 }

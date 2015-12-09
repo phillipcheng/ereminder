@@ -47,5 +47,10 @@ public class SinaEarnJDBCMapper extends EarnJDBCMapper{
 	public boolean cumulativeEps() {
 		return true;
 	}
+	
+	@Override
+	public boolean oneFetch() {
+		return true;
+	}
 
 }

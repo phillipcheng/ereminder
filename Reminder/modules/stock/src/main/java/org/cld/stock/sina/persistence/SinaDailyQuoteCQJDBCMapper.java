@@ -42,5 +42,10 @@ public class SinaDailyQuoteCQJDBCMapper extends JDBCMapper{
 	public String getTableName() {
 		return "SinaMarketDaily";
 	}
+	
+	@Override
+	public boolean oneFetch() {
+		return true;
+	}
 
 }

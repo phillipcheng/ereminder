@@ -41,5 +41,10 @@ public class SinaDividendJDBCMapper extends JDBCMapper{
 	public String getTableName() {
 		return "SinaShareBonusDividend";
 	}
+	
+	@Override
+	public boolean oneFetch() {
+		return true;
+	}
 
 }

@@ -1,78 +1,108 @@
 package org.cld.stock.strategy.select;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+
 import org.cld.stock.CandleQuote;
-import org.cld.stock.StockConfig;
-import org.cld.stock.StockUtil;
+import org.cld.stock.CandleQuoteDS;
+import org.cld.stock.CqIndicators;
+import org.cld.stock.strategy.IntervalUnit;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.util.DataMapper;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class WShape extends SelectStrategy {
 
-	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	private StockConfig sc;
 	public static final String LOOKUP_PERIOD="scs.param.luperiod";
 	public static final String AMPLITUDE="scs.param.amplitude";
-	public static final String BELOW_LOW="scs.param.belowlow";
+	
+	private int periods;
+	private float ampThresh;
+	private List<CandleQuote> cqlist;
+	CandleQuoteDS cqds = new CandleQuoteDS();
 	
 	public WShape(){
 	}
 	
-	//init after json deserilized
+	@Override
 	public void init(){
 		super.init();
-		sc = StockUtil.getStockConfig(this.getBaseMarketId());
+		periods = (int) Float.parseFloat((String) this.getParams().get(LOOKUP_PERIOD));
+		ampThresh = Float.parseFloat((String) this.getParams().get(AMPLITUDE));
+	}
+	
+	@Override
+	public void initData(Map<DataMapper, List<? extends Object>> resultMap){
+		List<CqIndicators> cqilist = (List<CqIndicators>) resultMap.get(this.quoteMapper());
+		for (CqIndicators cqi:cqilist){
+			cqlist.add(cqi.getCq());
+		}
+	}
+	
+	@Override
+	public int maxLookupNum() {
+		return periods;
 	}
 	
 	@JsonIgnore
 	@Override
 	public DataMapper[] getDataMappers() {
-		return new DataMapper[]{sc.getBTFQDailyQuoteMapper()};
+		return new DataMapper[]{super.quoteMapper()};
 	}
 	
 	//using the close of current cq, then submit date has to be next trading day
 	@Override
-	public List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<Object>> tableResults) {
-		String lup = (String) this.getParams().get(LOOKUP_PERIOD);
-		int periodDays = Integer.parseInt(lup);
+	public List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<? extends Object>> tableResults) {
 		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
-		List<Object> lo = tableResults.get(sc.getBTFQDailyQuoteMapper());
-		TreeMap<Float, TreeMap<Date, CandleQuote>> dailyFQMap = new TreeMap<Float, TreeMap<Date, CandleQuote>>();
-		if (lo.size()>periodDays){
-			//init
-			for (int i=0; i<periodDays; i++){
-				CandleQuote cq = (CandleQuote)lo.get(i);
-				CandleQuote.addCq(dailyFQMap, cq);
+		List<CandleQuote> lo = null;
+		if (super.quoteMapper().oneFetch()){
+			lo = cqlist;
+		}else{
+			lo = new ArrayList<CandleQuote>();
+			List<CqIndicators> cqilist = (List<CqIndicators>) tableResults.get(this.quoteMapper());
+			for (CqIndicators cqi:cqilist){
+				lo.add(cqi.getCq());
 			}
-			int idx=periodDays;
+		}
+		int idx=0;//
+		while (cqds.size()<periods){
+			if (idx<lo.size()){
+				cqds.add((CandleQuote)lo.get(idx));
+				idx++;
+			}else{
+				break;
+			}
+		}
+		if (cqds.size()>=periods){
 			while (idx<lo.size()){
-				//calculate the value for date at lo.get(idx) using data in the dailyFQMap which contains data [lo.get(idx-periodDays), lo.get(idx-1)]
-				CandleQuote currentCq = (CandleQuote) lo.get(idx-1);
-				CandleQuote maxCq = CandleQuote.getCq(dailyFQMap, true, false);
-				CandleQuote minCq = CandleQuote.getCq(dailyFQMap, false, false);
-				CandleQuote nextCq = (CandleQuote) lo.get(idx);
-				CandleQuote firstCq = (CandleQuote) lo.get(idx-periodDays);
-				if (checkValid(currentCq)){
-					if (minCq.getStartTime().before(maxCq.getStartTime()) && maxCq.getClose()>minCq.getClose()){
-						float value = (currentCq.getClose()-minCq.getClose())/(maxCq.getClose()-minCq.getClose());
-						scrl.add(new SelectCandidateResult(sc.getNormalTradeStartTime(nextCq.getStartTime()), value));
+				CandleQuote currentCq = cqds.getLast();
+				CandleQuote prevCq = cqds.getPrev(currentCq);
+				CandleQuote maxCq = cqds.getCq(prevCq.getStartTime(), true);//get max
+				CandleQuote minCq = cqds.getCq(maxCq.getStartTime(), false);//get min
+				if (maxCq!=null && minCq!=null){//checkValid(prevCq) && 
+					float amplitude = (maxCq.getClose()-minCq.getClose())/(maxCq.getClose()+minCq.getClose());
+					if (amplitude>ampThresh*0.01f && prevCq.getClose()<minCq.getClose() && currentCq.getOpen()>prevCq.getClose()){
+						logger.debug(String.format("amp:%.4f,\n min:%s,\n max:%s,\n prev:%s,\n cur:%s", amplitude, minCq, maxCq, prevCq, currentCq));
+						if (this.getLookupUnit() == IntervalUnit.day){
+							scrl.add(new SelectCandidateResult(sc.getNormalTradeStartTime(currentCq.getStartTime()), 0f));
+						}else if (this.getLookupUnit() == IntervalUnit.minute){
+							scrl.add(new SelectCandidateResult(currentCq.getStartTime(), 0f));
+						}
 					}
 				}
 				//
-				CandleQuote.addCq(dailyFQMap, nextCq);
-				CandleQuote.removeCq(dailyFQMap, firstCq);
+				CandleQuote nextCq = (CandleQuote) lo.get(idx);
+				cqds.add(nextCq);
+				cqds.removeMin();
 				idx++;
 			}
 			return scrl;
 		}else{
 			return null;
 		}
+
 	}
 }

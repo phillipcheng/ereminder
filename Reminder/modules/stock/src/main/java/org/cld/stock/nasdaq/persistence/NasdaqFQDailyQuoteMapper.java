@@ -21,4 +21,8 @@ public class NasdaqFQDailyQuoteMapper extends YahooFQDailyQuoteMapper{
 		return "NasdaqFqHistory";
 	}
 
+	@Override
+	public boolean oneFetch() {
+		return true;
+	}
 }

@@ -1,6 +1,5 @@
 package org.cld.stock.strategy.select;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -9,37 +8,44 @@ import java.util.TreeMap;
 
 import org.cld.stock.AnnounceTime;
 import org.cld.stock.CandleQuote;
+import org.cld.stock.CqIndicators;
 import org.cld.stock.QEarnEvent;
-import org.cld.stock.StockConfig;
-import org.cld.stock.StockUtil;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.util.DataMapper;
 import org.cld.util.DateTimeUtil;
-import org.cld.util.jdbc.JDBCMapper;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 //TODO
 public class EarnD extends SelectStrategy {
 
-	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	private StockConfig sc;
-	public static final String threshold="threshold";
+	public static final String threshold="scs.param.threshold";
 	
 	public EarnD(){
 	}
+
+	TreeMap<Date, CandleQuote> cqMap = new TreeMap<Date, CandleQuote>();
+	List<QEarnEvent> elist;
 	
-	//init after json deserilized
-	public void init(){
-		super.init();
-		sc = StockUtil.getStockConfig(this.getBaseMarketId());
+	@Override
+	public void initData(Map<DataMapper, List<? extends Object>> resultMap){	
+		List<? extends Object> fqlist = resultMap.get(super.quoteMapper());
+		for (Object cqo:fqlist){
+			CqIndicators cqi = (CqIndicators) cqo;
+			cqMap.put(cqi.getCq().getStartTime(), cqi.getCq());
+		}
+		elist = (List<QEarnEvent>) resultMap.get(sc.getEarnTableMapper());
 	}
 	
+	@Override
+	public int maxLookupNum() {
+		return 0;
+	}
+
 	@JsonIgnore
 	@Override
 	public DataMapper[] getDataMappers() {
-		return new DataMapper[]{sc.getBTFQDailyQuoteMapper(), sc.getEarnTableMapper()};
+		return new DataMapper[]{super.quoteMapper(), sc.getEarnTableMapper()};
 	}
 	
 	//the bigger the better
@@ -48,18 +54,15 @@ public class EarnD extends SelectStrategy {
 		return (currentPrice/assumePE)/(eps-lyeps);
 	}
 	
+	/**
+	 * @param tableResults not used. using the one passed by init
+	 */
 	@Override
-	public List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<Object>> tableResults) {
+	public List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<? extends Object>> tableResults) {
 		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
-		List<Object> fqlist = tableResults.get(sc.getBTFQDailyQuoteMapper());
-		TreeMap<Date, CandleQuote> cqMap = new TreeMap<Date, CandleQuote>();
-		for (Object cqo:fqlist){
-			CandleQuote cq = (CandleQuote) cqo;
-			cqMap.put(cq.getStartTime(), cq);
-		}
-		List<Object> elist = tableResults.get(sc.getEarnTableMapper());
+		
 		for (int i=0; i<elist.size(); i++){
-			QEarnEvent qev = (QEarnEvent)elist.get(i);
+			QEarnEvent qev = elist.get(i);
 			Date submitD = cqMap.ceilingKey(qev.getPubDt());//>=
 			int diffDays = DateTimeUtil.DateDiff(submitD, qev.getPubDt());
 			if (diffDays<10){//earning date and trading day gap

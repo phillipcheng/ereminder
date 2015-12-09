@@ -34,6 +34,7 @@ import org.cld.stock.strategy.SellStrategyByStockReducer;
 import org.cld.stock.strategy.StockIdDateGroupingComparator;
 import org.cld.stock.strategy.StockIdDatePair;
 import org.cld.stock.strategy.StockIdDatePartitioner;
+import org.cld.stock.strategy.StrategyConst;
 import org.cld.stock.strategy.select.OverTrade;
 import org.cld.stock.task.LoadDBDataTask;
 import org.cld.stock.trade.BuySellResult;
@@ -115,130 +116,28 @@ public class TestStock {
 	}
 	
 	@Test
-	public void testOverTradeSelectSell() throws Exception {
+	public void testBuySell() throws Exception {
 		String pFile = "client1-v2.properties";
-		String startDate = "2015-09-15";
-		String endDate = "2015-10-01";
+		Date startDate = sdf.parse("2015-09-01");
+		Date endDate = sdf.parse("2015-10-01");
 		String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test;
 		String baseMarketId = "nasdaq";
 		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
-		String sn = "overtradeone";
-		List<SelectStrategy> bsl = SelectStrategy.gen(new PropertiesConfiguration("strategy."+sn+".properties"), sn, baseMarketId);
-		SelectStrategy[] bsa = new SelectStrategy[bsl.size()];
-		bsl.toArray(bsa);
-		String folderName = String.format("%s_%s_%s", marketId, startDate, endDate);
-		String outputDir1 = String.format("/reminder/sresult/%s/all1", folderName);
-		String outputDir2 = String.format("/reminder/sresult/%s/all2", folderName);
-		
-		//1
-		SelectStrategyByStockTask.launch(pFile, cconf, baseMarketId, marketId, outputDir1, 
-				bsa, sdf.parse(startDate), sdf.parse(endDate), 10);
-		//2
-		Map<String, Object> sssMap = new HashMap<String, Object>();
-		SellStrategy[] slsl = SellStrategy.gen(new PropertiesConfiguration("strategy."+sn+".properties"));
-		sssMap.put(sn, slsl);
-		String sssString = JsonUtil.ObjToJson(sssMap);
-		Map<String, String> hadoopParams = new HashMap<String, String>();
-		hadoopParams.put(SellStrategy.KEY_SELL_STRATEGYS, sssString);
-		hadoopParams.put(CrawlUtil.CRAWL_PROPERTIES, pFile);
-		hadoopParams.put(StockBase.KEY_BASE_MARKET_ID, baseMarketId);
-		HadoopTaskLauncher.executeTasks(cconf.getNodeConf(), hadoopParams, new String[]{outputDir1}, false, outputDir2, true, 
-				SellStrategyByStockMapper.class, SellStrategyByStockReducer.class, 
-				StockIdDatePartitioner.class, StockIdDateGroupingComparator.class, StockIdDatePair.class, false);
+		String sn = "macd";
+		StockUtil.validateAllStrategyByStock(pFile, cconf, baseMarketId, marketId, startDate, endDate, sn, null);
 	}
 	
 	@Test
-	public void testTradeSimulator() throws Exception{
+	public void testBuyOvertrade() throws Exception{
 		String pFile = "client1-v2.properties";
 		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
-		String marketId = NasdaqStockConfig.MarketId_ALL; //not used
-		StockBase nsb = new NasdaqStockBase(pFile, marketId, null, null);
-		String[] stockids=new String[]{"CETC"};
-		SellStrategy ss = new SellStrategy(1, 3, SellStrategy.HU_DAY, 9f, 1f, true);
-		for (String stockid:stockids){
-			SelectCandidateResult scr = new SelectCandidateResult(stockid, 
-					nsb.getStockConfig().getNormalTradeStartTime(sdf.parse("2011-04-26")), 0, 9.95f*1.005f);
-			BuySellResult bsr = TradeSimulator.trade(scr, ss, nsb.getStockConfig(), cconf);
-			logger.info(bsr);
-		}
-		//using daily data
-		//2015-10-29, AIF, 2015-10-29, 14.67, 2015-11-04, MarktOnClose, 14.78, 0.007498272
-		//2015-10-29, GOOG, 2015-10-29, 710.5, 2015-11-02, stoptrailingpercentage, 707.23, -0.00460242
-		//2015-10-29, AAPL, 2015-10-29, 118.7, 2015-11-03, limit, 121.667496, 0.024999991
-		
-		//5 min data, no trailing
-		//2015-10-29 09:30, AIF, 2015-10-29 09:30, 14.557, 2015-11-05 09:30, MarktOnClose, 14.711, 0.010579122
-		//2015-10-29 09:30, GOOG, 2015-10-29 09:30, 711.23, 2015-11-04 00:05, limit, 729.01074, 0.025000017
-		//2015-10-29 09:30, AAPL, 2015-10-29 09:30, 118.19, 2015-11-02 15:25, limit, 121.14475, 0.025
-
-
-		//5 minute trailing
-		//2015-10-29 09:30, AIF, 2015-10-29 09:30, 14.557, 2015-11-05 09:30, MarktOnClose, 14.711, 0.010579122
-		//2015-10-29 09:30, GOOG, 2015-10-29 09:30, 711.23, 2015-11-02 09:40, stoptrailingpercentage, 707.48615, -0.0052638887
-		//2015-10-29 09:30, AAPL, 2015-10-29 09:30, 118.19, 2015-10-30 15:00, stoptrailingpercentage, 119.017555, 0.0070018847
-
-	}
-	
-	@Test
-	public void testTradeSimulator1() throws Exception{
-		String pFile = "client1-v2.properties";
-		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
-		String marketId = NasdaqStockConfig.MarketId_ALL; //not used
-		StockBase nsb = new NasdaqStockBase(pFile, marketId, null, null);
-		String[] stockids=new String[]{"XGTI"};
-		SellStrategy ss = new SellStrategy(1, 5, SellStrategy.HU_DAY, 2.5f, 1.5f, true);
-		for (String stockid:stockids){
-			SelectCandidateResult scr = new SelectCandidateResult(stockid, nsb.getStockConfig().getNormalTradeStartTime(sdf.parse("2015-08-14")), 0, 0);
-			BuySellResult bsr = TradeSimulator.trade(scr, ss, nsb.getStockConfig(), cconf);
-			logger.info(bsr);
-		}
-	}
-	
-	@Test
-	public void testGenCloseDropAvgForDay(){
-		String pFile = "client1-v2.properties";
-		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
-		String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test; //not used
-		StockBase nsb = new NasdaqStockBase(pFile, marketId, null, null);
-		nsb.runSpecial("genCloseDropAvg", "2015-11-05");
-		//expectd output
-		//AAPL,2015-11-05,122.570,2
-		//GOOG,2015-11-05,731.250,0
-	}
-	
-	@Test
-	public void testCloseDropAvgWithParams() throws Exception {
-		String pFile = "client1-v2.properties";
-		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
-		String marketId = NasdaqTestStockConfig.MarketId_NASDAQ_Test; //not used
-		StockBase nsb = new NasdaqStockBase(pFile, marketId, sdf.parse("2015-01-01"), sdf.parse("2015-11-07"));
-		nsb.runSpecial("validateAllStrategyByStock", "closedropavg");
-	}
-	
-	private OverTrade getDefaultOverTrade(){
-		OverTrade ot = new OverTrade();
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put(OverTrade.p_aggregation, OverTrade.v_aggregation_sum);
-		params.put(OverTrade.p_direction, OverTrade.v_direction_down);
-		params.put(OverTrade.p_submittime, OverTrade.v_submittime_close);
-		params.put(OverTrade.p_lookupdn, 1);
-		params.put(OverTrade.p_threshold, 0.8);
-		ot.setBaseMarketId("nasdaq");
-		ot.setParams(params);
-		return ot;
-	}
-	//up,down * open,close * sum,avg * 0,1 = 16
-	@Test
-	public void testOverTrade() throws Exception{
-		String pFile = "client1-v2.properties";
-		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
-		Date startDate = sdf.parse("2011-04-01");
-		Date endDate = sdf.parse("2011-05-01");
+		Date startDate = sdf.parse("2011-04-06");
+		Date endDate = sdf.parse("2012-04-07");
 		String sn = "strategy.overtradeone.properties";
 		List<SelectStrategy> ssl = SelectStrategy.gen(new PropertiesConfiguration(sn), sn, "nasdaq");
 		SelectStrategy[] ssa = new SelectStrategy[ssl.size()];
 		ssl.toArray(ssa);
-		List<Object[]> kvl = SelectStrategyByStockTask.getKVL(cconf, ssa, "CETC", startDate, endDate);
+		List<Object[]> kvl = SelectStrategyByStockTask.getKVL(cconf, ssa, "AAPL", startDate, endDate, null);
 		for (Object[] kv:kvl){
 			SelectCandidateResult scr = (SelectCandidateResult) kv[0];
 			SelectStrategy bs = (SelectStrategy) kv[1];
@@ -246,24 +145,55 @@ public class TestStock {
 		}
 	}
 	
-	/*
 	@Test
-	public void testGenCloseDropAvgSelect() throws Exception {
-		String pFile = "cld-stock-cluster.properties";
+	public void testBuyMACD() throws Exception{
+		String pFile = "client1-v2.properties";
 		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
-		String baseMarketId="nasdaq";
-		StockConfig sc = StockUtil.getStockConfig(baseMarketId);
-		String marketId="ALL";
-		OverTrade bs = new OverTrade();
-		bs.setOrderDirection(SelectStrategy.DESC);
-		bs.setParams(new Object[]{7f,0f});
-		Date startDay= sdf.parse("2015-10-03");
-		Date endDay = sdf.parse("2015-11-07");
-		Date day = startDay;
-		while (day.before(endDay)){
-			List<SelectCandidateResult> sl = bs.selectByCurrent(cconf, baseMarketId, marketId, day, 10, null);
-			logger.info(String.format("%s,%s", sdf.format(day), sl));
-			day = StockUtil.getNextOpenDay(day, sc.getHolidays());
+		Date startDate = sdf.parse("2011-09-06");
+		Date endDate = sdf.parse("2011-09-08");
+		String sn = "strategy.macd.properties";
+		List<SelectStrategy> ssl = SelectStrategy.gen(new PropertiesConfiguration(sn), sn, "nasdaq");
+		SelectStrategy[] ssa = new SelectStrategy[ssl.size()];
+		ssl.toArray(ssa);
+		List<Object[]> kvl = SelectStrategyByStockTask.getKVL(cconf, ssa, "AAPL", startDate, endDate, null);
+		for (Object[] kv:kvl){
+			SelectCandidateResult scr = (SelectCandidateResult) kv[0];
+			SelectStrategy bs = (SelectStrategy) kv[1];
+			logger.info(String.format("scr:%s, bs:%s", scr, bs.paramsToString()));
 		}
-	}*/
+	}
+	
+	@Test
+	public void testBuyWShape() throws Exception{
+		String pFile = "client1-v2.properties";
+		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
+		Date startDate = sdf.parse("2011-04-06");
+		Date endDate = sdf.parse("2011-04-07");
+		String sn = "strategy.wshapeone.properties";
+		List<SelectStrategy> ssl = SelectStrategy.gen(new PropertiesConfiguration(sn), sn, "nasdaq");
+		SelectStrategy[] ssa = new SelectStrategy[ssl.size()];
+		ssl.toArray(ssa);
+		List<Object[]> kvl = SelectStrategyByStockTask.getKVL(cconf, ssa, "AAPL", startDate, endDate, null);
+		for (Object[] kv:kvl){
+			SelectCandidateResult scr = (SelectCandidateResult) kv[0];
+			SelectStrategy bs = (SelectStrategy) kv[1];
+			logger.info(String.format("scr:%s, bs:%s", scr, bs.paramsToString()));
+		}
+	}
+	
+	@Test
+	public void testSell() throws Exception{
+		String pFile = "client1-v2.properties";
+		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
+		String marketId = NasdaqStockConfig.MarketId_ALL; //not used
+		StockBase nsb = new NasdaqStockBase(pFile, marketId, null, null);
+		String[] stockids=new String[]{"CETC"};
+		SellStrategy ss = new SellStrategy(1, StrategyConst.V_UNIT_DAY, 3, 9f, 1f, true);
+		for (String stockid:stockids){
+			SelectCandidateResult scr = new SelectCandidateResult(stockid, 
+					nsb.getStockConfig().getNormalTradeStartTime(sdf.parse("2011-04-26")), 0, 9.95f*1.005f);
+			BuySellResult bsr = TradeSimulator.trade(scr, ss, nsb.getStockConfig(), cconf);
+			logger.info(bsr);
+		}
+	}
 }

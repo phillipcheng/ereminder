@@ -144,8 +144,6 @@ public class CrawlConf implements AppConf {
 		}
 		//just for the pluginDir
 		readFixedProperties();
-		logger.info("plugin dir:" + StringUtils.join(this.pluginDir));
-		logger.info("plugin jar:" + StringUtils.join(this.pluginJar));
 		
 		reload();
 		
@@ -181,7 +179,6 @@ public class CrawlConf implements AppConf {
 			String key = its.next();
 			loadProductConf(key);
 		}
-		logger.info("prdConfMap:" + prdConfMap);
 		
 		//
 		Map<String, Object> taskParams = new HashMap<String, Object>();

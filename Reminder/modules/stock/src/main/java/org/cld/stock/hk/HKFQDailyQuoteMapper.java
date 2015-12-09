@@ -21,4 +21,9 @@ public class HKFQDailyQuoteMapper extends YahooFQDailyQuoteMapper{
 		return "HKFqHistory";
 	}
 
+	@Override
+	public boolean oneFetch() {
+		return true;
+	}
+
 }

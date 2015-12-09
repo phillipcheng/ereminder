@@ -41,5 +41,10 @@ public class NasdaqDividendJDBCMapper extends JDBCMapper{
 	public String getTableName() {
 		return "NasdaqDividend";
 	}
+	
+	@Override
+	public boolean oneFetch() {
+		return true;
+	}
 
 }

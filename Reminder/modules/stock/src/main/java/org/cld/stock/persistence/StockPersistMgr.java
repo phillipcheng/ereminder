@@ -20,8 +20,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.hadooputil.HdfsReader;
 import org.cld.stock.CandleQuote;
+import org.cld.stock.HdfsReader;
 import org.cld.stock.StockConfig;
 import org.cld.stock.nasdaq.persistence.NasdaqFQDailyQuoteMapper;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
@@ -146,7 +146,7 @@ public class StockPersistMgr {
 	}
 	
 	//BTD for back testing data, they are ajusted till a certain-day
-	public static List<Object> getBTDByStockDate(CrawlConf cconf, FileDataMapper fdMapper, String stockId, Date sd, Date ed){
+	public static List<? extends Object> getBTDByStockDate(CrawlConf cconf, FileDataMapper fdMapper, String stockId, Date sd, Date ed){
 		List<Object> lo = new ArrayList<Object>();
 		BufferedReader br = null;
 		try{
@@ -186,7 +186,33 @@ public class StockPersistMgr {
 		return lo;
 	}
 	
-	//BTD for back testing data, they are ajusted till a certain-day
+	//get for read all
+	public static List<? extends Object> getDataByStockDate(CrawlConf cconf, DataMapper dataMapper, String stockId, Date sd, Date ed){
+		if (dataMapper instanceof JDBCMapper){
+			JDBCMapper tableMapper = null;
+			tableMapper = (JDBCMapper) dataMapper;
+			Connection con = null;
+			String sql = String.format("select * from %s where stockid='%s' and dt>='%s' and dt<'%s' order by dt asc", 
+					tableMapper.getTableName(), stockId, sdf.format(sd), sdf.format(ed));
+			try{
+				con = SqlUtil.getConnection(cconf.getSmalldbconf());
+				return SqlUtil.getObjectsByParam(sql, new Object[]{}, con, -1, -1, "", tableMapper);
+			}catch(Exception e){
+				logger.error("", e);
+				return null;
+			}finally{
+				SqlUtil.closeResources(con, null);
+			}
+		}else if (dataMapper instanceof FileDataMapper){
+			FileDataMapper fdMapper = (FileDataMapper) dataMapper;
+			return getBTDByStockDate(cconf, fdMapper, stockId, sd, ed);
+		}else{
+			logger.error(String.format("mapper type not supported. %s", dataMapper));
+			return null;
+		}
+	}
+	
+	//init for step by step reading
 	public static HdfsReader getReader(CrawlConf cconf, FileDataMapper fdMapper, String stockId){
 		BufferedReader br = null;
 		try{
@@ -194,13 +220,13 @@ public class StockPersistMgr {
 			FileSystem fs = FileSystem.newInstance(conf);
 			Path fp = new Path(fdMapper.getFileName(stockId));
 			br=new BufferedReader(new InputStreamReader(fs.open(fp)));
-			return new HdfsReader(fs, br);
+			return new HdfsReader(fs, br, fdMapper);
 		}catch(Exception e){
 			logger.error("error when get reader.", e);
 		}
 		return null;
 	}
-	
+	//get for step by step reading
 	public static List<CandleQuote> getBTDDate(BufferedReader reader, FileDataMapper fdMapper, Date sd, Date ed){
 		List<CandleQuote> lo = new ArrayList<CandleQuote>();
 		try{
@@ -228,33 +254,26 @@ public class StockPersistMgr {
 		}
 		return lo;
 	}
-	//
-	public static List<Object> getDataByStockDate(CrawlConf cconf, DataMapper dataMapper, String stockId, Date sd, Date ed){
-		if (dataMapper instanceof JDBCMapper){
-			JDBCMapper tableMapper = null;
-			tableMapper = (JDBCMapper) dataMapper;
-			Connection con = null;
-			String sql = String.format("select * from %s where stockid='%s' and dt>='%s' and dt<'%s' order by dt asc", 
-					tableMapper.getTableName(), stockId, sdf.format(sd), sdf.format(ed));
-			try{
-				con = SqlUtil.getConnection(cconf.getSmalldbconf());
-				List<Object> lo = (List<Object>) SqlUtil.getObjectsByParam(sql, new Object[]{}, 
-						con, -1, -1, "", 
-						tableMapper);
-				return lo;
-			}catch(Exception e){
-				logger.error("", e);
-				return null;
-			}finally{
-				SqlUtil.closeResources(con, null);
-			}
-		}else if (dataMapper instanceof FileDataMapper){
-			FileDataMapper fdMapper = (FileDataMapper) dataMapper;
-			return getBTDByStockDate(cconf, fdMapper, stockId, sd, ed);
-		}else{
-			logger.error(String.format("mapper type not supported. %s", dataMapper));
-			return null;
+	//get for step by step reading
+	public static List<? extends Object> getBTDDate(BufferedReader reader, FileDataMapper fdMapper, int numLines){
+		int lines=0;
+		List<Object> lo = new ArrayList<Object>();
+		try{
+			String line;
+            line=reader.readLine();
+            while (line != null){//in time ascending order
+            	Object cq = fdMapper.getObject(line);
+            	lines++;
+				lo.add(cq);
+				if (lines>numLines){
+					break;
+				}
+				line=reader.readLine();
+            }
+    	}catch(Exception e){
+			logger.error("error when readline.", e);
 		}
+		return lo;
 	}
 	
 	public static Map<String, Date> getStockIPOData(StockConfig sc, DBConnConf dbconf){

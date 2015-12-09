@@ -20,4 +20,9 @@ public class HKExDivSplitMapper extends YahooExDivSplitMapper{
 	public String getTableName() {
 		return "HKExDivSplit";
 	}
+	
+	@Override
+	public boolean oneFetch() {
+		return true;
+	}
 }

@@ -1,15 +1,10 @@
 package org.cld.stock.strategy;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
-
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.logging.log4j.LogManager;
@@ -17,9 +12,7 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.test.CrawlTestUtil;
-import org.cld.hadooputil.HdfsReader;
-import org.cld.stock.CandleQuote;
-import org.cld.stock.StockBase;
+import org.cld.stock.HdfsReader;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.persistence.StockPersistMgr;
@@ -45,10 +38,9 @@ public class SellStrategyByStockReducer extends Reducer<StockIdDatePair, Text, T
 		}
 		if (cconf==null){
 			String propFile = context.getConfiguration().get(CrawlUtil.CRAWL_PROPERTIES);
-			logger.info(String.format("conf file for mapper job is %s", propFile));
 			cconf = CrawlTestUtil.getCConf(propFile);
 		}
-		baseMarketId = context.getConfiguration().get(StockBase.KEY_BASE_MARKET_ID);
+		baseMarketId = context.getConfiguration().get(StockUtil.KEY_BASE_MARKET_ID);
 		//mos = new MultipleOutputs<Text,Text>(context);
 	}
 	
@@ -68,7 +60,6 @@ public class SellStrategyByStockReducer extends Reducer<StockIdDatePair, Text, T
 		StockConfig sc = StockUtil.getStockConfig(baseMarketId);
 		String stockid = key.getStockId().toString();
 		HdfsReader hr = StockPersistMgr.getReader(cconf, sc.getBTFQMinuteQuoteMapper(), stockid);
-		List<CandleQuote> cqCache = new ArrayList<CandleQuote>();
 		try{
 			for (Text v:values){//dt in ascending order
 				String[] vv = v.toString().split(",");
@@ -81,14 +72,14 @@ public class SellStrategyByStockReducer extends Reducer<StockIdDatePair, Text, T
 				
 				SellStrategy[] slss = (SellStrategy[]) sssMap.get(bsName);
 				for (SellStrategy ss:slss){
-					if (ss.getSelectNumber()<rank){
+					if (ss.getSelectNumber()>0 && ss.getSelectNumber()<rank){//0 means select all
 						continue;
 					}
 					SelectCandidateResult scr = new SelectCandidateResult(stockid, dt, 0, buyLimit);
 					List<StockOrder> sol = SellStrategy.makeStockOrders(scr, ss);
 					BuySellInfo bsi = new BuySellInfo(String.format("%s,%s", bsName, bsParams), ss, sol, dt);
 					
-					TradeSimulator.submitStockOrder(bsi, sc, cqCache, hr.getBr());
+					TradeSimulator.submitStockOrder(bsi, sc, hr);
 					
 					List<StockOrder> solist = bsi.getSos();
 					BuySellResult bsr = TradeSimulator.calculateBuySellResult(bsi.getSubmitD(), solist);
@@ -106,13 +97,7 @@ public class SellStrategyByStockReducer extends Reducer<StockIdDatePair, Text, T
 		}catch(Exception e){
 			logger.error("error when process.", e);
 		}finally{
-			cqCache.clear();
-			try{
-				hr.getBr().close();
-				hr.getFs().close();
-			}catch(Exception e){
-				logger.error("error when close.", e);
-			}
+			hr.close();
 		}
 	}
 }

@@ -63,5 +63,10 @@ public class NasdaqEarnJDBCMapper extends EarnJDBCMapper{
 	public boolean cumulativeEps() {
 		return false;
 	}
+	
+	@Override
+	public boolean oneFetch() {
+		return true;
+	}
 
 }

@@ -9,7 +9,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.stock.StockBase;
+import org.cld.stock.StockUtil;
 import org.cld.util.DateTimeUtil;
 
 public class StrategyResultReducer extends Reducer<Text, Text, Text, Text>{
@@ -22,7 +22,7 @@ public class StrategyResultReducer extends Reducer<Text, Text, Text, Text>{
 	@Override
 	public void setup(Context context) throws IOException, InterruptedException {
 		mos = new MultipleOutputs<Text,Text>(context);
-		String strGenDetailFile = context.getConfiguration().get(StockBase.GEN_DETAIL_FILE);
+		String strGenDetailFile = context.getConfiguration().get(StockUtil.GEN_DETAIL_FILE);
 		if (strGenDetailFile!=null){
 			genDetailFile = Boolean.parseBoolean(strGenDetailFile);
 		}
@@ -35,7 +35,7 @@ public class StrategyResultReducer extends Reducer<Text, Text, Text, Text>{
     
 	@Override
 	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-		//input key: bs.name, bs.params, ss.params, :: sample: closedropavg,5.0:0.0,1,2,9.00,1.00
+		//input key: bs.name, bs.params, ss.params, stockId, :: sample: closedropavg,5.0:0.0,1,2,9.00,1.00,AAPL
 		//input value: startDate, stockid, buyTime, buyPrice, sellTime, sellOrderType, sellPrice, percent
 		//the 2nd last is used to sort, set the sort field as the mean of the group
 		//output: key same as input, value: transaction number, average percent for the whole period

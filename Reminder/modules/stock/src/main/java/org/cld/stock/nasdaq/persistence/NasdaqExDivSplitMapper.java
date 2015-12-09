@@ -20,4 +20,9 @@ public class NasdaqExDivSplitMapper extends YahooExDivSplitMapper{
 	public String getTableName() {
 		return "NasdaqExDivSplit";
 	}
+	
+	@Override
+	public boolean oneFetch() {
+		return true;
+	}
 }

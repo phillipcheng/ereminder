@@ -26,7 +26,7 @@ public class StringUtil {
 
 	public static Logger logger = LogManager.getLogger(StringUtil.class);
 	
-	public static String float_step_sep = "-";
+	public static String float_step_sep = "_";
 	public static String string_step_sep = ",";
 	
 	public static Pattern negP = Pattern.compile("\\((.*)\\)");

@@ -7,6 +7,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.MapContext;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
@@ -16,13 +18,18 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.hadoop.CrawlTaskMapper;
+import org.cld.stock.CandleQuote;
 import org.cld.stock.ETLUtil;
+import org.cld.stock.HdfsReader;
+import org.cld.stock.CqIndicators;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
+import org.cld.stock.indicator.Indicator;
 import org.cld.stock.persistence.StockPersistMgr;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.DataMapper;
+import org.cld.util.FileDataMapper;
 
 public class SelectStrategyByStockTask extends Task implements Serializable{
 	private static final long serialVersionUID = 1L;
@@ -30,26 +37,26 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private static SimpleDateFormat msdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 	
-	private SelectStrategy[] scsl;
+	private SelectStrategy[] bsl;
 
 	private String marketBaseId;
 	private String marketId;
 	private String stockId;
-	private Date startDate;
-	private Date endDate;
+	private Date startDt;
+	private Date endDt;
 	private String outputDir;
 	
 	public SelectStrategyByStockTask(){
 	}
 	
-	public SelectStrategyByStockTask(SelectStrategy[] scsl, String marketBaseId, String marketId, String stockId, 
+	public SelectStrategyByStockTask(SelectStrategy[] bsl, String marketBaseId, String marketId, String stockId, 
 			Date startDate, Date endDate, String outputDir){
-		this.scsl = scsl;
+		this.bsl = bsl;
 		this.marketBaseId = marketBaseId;
 		this.setMarketId(marketId);
 		this.stockId = stockId;
-		this.startDate = startDate;
-		this.endDate = endDate;
+		this.startDt = startDate;
+		this.endDt = endDate;
 		this.setOutputDir(outputDir);
 		genId();
 	}
@@ -57,37 +64,101 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	@Override
 	public String genId(){
 		String id = String.format("%s_%s_%s_%s", SelectStrategyByStockTask.class.getSimpleName(), stockId, 
-				sdf.format(startDate), sdf.format(endDate));
+				sdf.format(startDt), sdf.format(endDt));
 		this.setId(id);
 		return this.getId();
 	}
 	
-	public static List<Object[]> getKVL(CrawlConf cconf, SelectStrategy[] bsl, String stockId, Date startDate, Date endDate){
+	private static List<Object[]> getKV(SelectStrategy bs, Map<DataMapper, List<? extends Object>> resultMap, String stockId, 
+			MapContext<Object, Text, Text, Text> context) throws Exception{
+		List<Object[]> kvl = new ArrayList<Object[]>();
+		List<SelectCandidateResult> scrl = bs.selectByHistory(resultMap);
+		if (scrl!=null){
+			for (SelectCandidateResult scr:scrl){
+				if (context!=null){
+					String key = String.format("%s,%s,%s,%s", bs.getName(), msdf.format(scr.getDt()), 
+							bs.getOrderDirection(), bs.paramsToString());
+					String value = String.format("%s,%.4f,%.3f", stockId, scr.getValue(), scr.getBuyPrice());
+					context.write(new Text(key), new Text(value));
+				}else{
+					Object[] kv = new Object[]{scr, bs};
+					kvl.add(kv);
+				}
+			}
+		}
+		return kvl;
+	}
+	
+	//
+	public static List<Object[]> getKVL(CrawlConf cconf, SelectStrategy[] bsl, String stockId, Date startDate, Date endDate,
+			MapContext<Object, Text, Text, Text> context){
 		try{
-			Map<DataMapper, List<Object>> tableResults = new HashMap<DataMapper, List<Object>>();
+			List<Object[]> kvl = new ArrayList<Object[]>(); //key value result returned if not in mapreduce
+			Map<DataMapper, List<? extends Object>> resultMap = new HashMap<DataMapper, List<? extends Object>>();//shared for all bs
+			List<CandleQuote> cqlist = null;
+			FileDataMapper cqMapper = null;
+			List<CqIndicators> cqilist = null;
 			for (SelectStrategy bs:bsl){
 				bs.init();
-				for (DataMapper jmap:bs.getDataMappers()){
-					tableResults.put(jmap, null);
+				for (DataMapper dm: bs.getDataMappers()){
+					if (dm.oneFetch() && !resultMap.containsKey(dm)){
+						List<? extends Object> lo = StockPersistMgr.getDataByStockDate(cconf, dm, stockId, startDate, endDate);
+						if (dm instanceof FileDataMapper && ((FileDataMapper)dm).isCqMapper()){
+							cqlist = (List<CandleQuote>) lo;
+							cqMapper = (FileDataMapper)dm;
+						}else{
+							resultMap.put(dm, lo);
+						}
+					}
 				}
 			}
-			for (DataMapper jmap:tableResults.keySet()){
-				List<Object> lo = StockPersistMgr.getDataByStockDate(cconf, jmap, stockId, startDate, endDate);
-				tableResults.put(jmap, lo);
-			}
-			List<Object[]> kvl = new ArrayList<Object[]>();
+			List<SelectStrategy> sbsFetchBsl = new ArrayList<SelectStrategy>();//step by step
 			for (SelectStrategy bs:bsl){
-				Map<DataMapper, List<Object>> resultMap = new HashMap<DataMapper, List<Object>>();
-				for (DataMapper jmap:bs.getDataMappers()){
-					List<Object> lo = tableResults.get(jmap);
-					resultMap.put(jmap, lo);
+				if (bs.allOneFetch()){
+					cqilist = CqIndicators.addIndicators(null, null, cqlist, bs);
+					resultMap.put(cqMapper, cqilist);
+					bs.initData(resultMap);
+					List<Object[]> skvl = getKV(bs, null, stockId, context);
+					kvl.addAll(skvl);
+				}else{
+					sbsFetchBsl.add(bs);
+					for (DataMapper dm:bs.getDataMappers()){
+						if (!dm.oneFetch()){
+							cqMapper = (FileDataMapper) dm;
+							break;
+						}
+					}
 				}
-				List<SelectCandidateResult> scrl = bs.selectByHistory(resultMap);
-				for (SelectCandidateResult scr:scrl){
-					Object[] scrss= new Object[2];
-					scrss[0] = scr;
-					scrss[1] = bs;
-					kvl.add(scrss);
+			}
+			int fetchSize=600;//fetch interval size, larger then all indicators' periods
+			HdfsReader sbsCqReader = null;
+			Map<DataMapper, List<? extends Object>> sbsResults = new HashMap<DataMapper, List<? extends Object>>();
+			Date lastDt = startDate;
+			if (sbsFetchBsl.size()>0){
+				try {
+					sbsCqReader = StockPersistMgr.getReader(cconf, cqMapper, stockId);
+					StockPersistMgr.getBTDDate(sbsCqReader.getBr(), cqMapper, startDate, startDate);
+					List<CandleQuote> prevCqlist = null;
+					Map<SelectStrategy, CqIndicators> prevCqiMap = new HashMap<SelectStrategy, CqIndicators>();
+					while (lastDt.before(endDate)){
+						cqlist = (List<CandleQuote>) StockPersistMgr.getBTDDate(sbsCqReader.getBr(), cqMapper, fetchSize);
+						if (cqlist.size()>0){
+							lastDt = ((CandleQuote)cqlist.get(cqlist.size()-1)).getStartTime();
+							for (SelectStrategy bs: sbsFetchBsl){
+								cqilist = CqIndicators.addIndicators(prevCqiMap.get(bs), prevCqlist, cqlist, bs);
+								CqIndicators pCqi = cqilist.get(cqilist.size()-1);
+								prevCqiMap.put(bs, pCqi);
+								sbsResults.put(cqMapper, cqilist);
+								List<Object[]> skvl = getKV(bs, sbsResults, stockId, context);
+								kvl.addAll(skvl);
+							}
+						}else{
+							break;
+						}
+						prevCqlist = cqlist;
+					}
+				}finally{
+					sbsCqReader.close();
 				}
 			}
 			return kvl;
@@ -104,20 +175,8 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	@Override
 	public void runMyselfAndOutput(Map<String, Object> params, 
 			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
-		try{
-			CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
-			List<Object[]> kvl = getKVL(cconf, this.scsl, stockId, startDate, endDate);
-			for (Object[] kv:kvl){
-				SelectCandidateResult scr = (SelectCandidateResult) kv[0];
-				SelectStrategy ss = (SelectStrategy) kv[1];
-				String key = String.format("%s,%s,%s,%s", ss.getName(), msdf.format(scr.getDt()), 
-						ss.getOrderDirection(), ss.paramsToString());
-				String value = String.format("%s,%.4f,%.3f", stockId, scr.getValue(), scr.getBuyPrice());
-				context.write(new Text(key), new Text(value));
-			}
-		}catch(Exception e){
-			logger.error("", e);
-		}
+		CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
+		getKVL(cconf, bsl, stockId, startDt, endDt, context);
 	}
 	
 	private static String submitTasks(String taskName, String propfile, List<Task> tl, CrawlConf cconf, int mbMem, int maxSelectNumber){
@@ -170,10 +229,10 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	}
 	//
 	public Date getStartDate() {
-		return startDate;
+		return startDt;
 	}
 	public void setStartDate(Date startDate) {
-		this.startDate = startDate;
+		this.startDt = startDate;
 	}
 	public String getMarketBaseId() {
 		return marketBaseId;
@@ -207,18 +266,18 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	}
 
 	public Date getEndDate() {
-		return endDate;
+		return endDt;
 	}
 
 	public void setEndDate(Date endDate) {
-		this.endDate = endDate;
+		this.endDt = endDate;
 	}
 
 	public SelectStrategy[] getScsl() {
-		return scsl;
+		return bsl;
 	}
 
 	public void setScsl(SelectStrategy[] scsl) {
-		this.scsl = scsl;
+		this.bsl = scsl;
 	}
 }

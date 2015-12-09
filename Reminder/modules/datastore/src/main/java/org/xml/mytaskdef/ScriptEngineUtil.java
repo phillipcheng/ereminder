@@ -17,6 +17,9 @@ public class ScriptEngineUtil {
 	private static Logger logger =  LogManager.getLogger(ScriptEngineUtil.class);
 	
 	public static Object eval(String exp, VarType toType, Map<String,Object> variables){
+		return eval(exp, toType, variables, true);
+	}
+	public static Object eval(String exp, VarType toType, Map<String,Object> variables, boolean logError){
 		ScriptEngine jsEngine = manager.getEngineByName("JavaScript");
 		if (variables!=null){
 			for (String key: variables.keySet()){
@@ -64,7 +67,9 @@ public class ScriptEngineUtil {
 			}
 			return ret;
 		} catch (ScriptException e) {
-			logger.error(String.format("error msg: %s while eval %s, var map is %s", e.getMessage(), exp, variables));
+			if (logError){
+				logger.error(String.format("error msg: %s while eval %s, var map is %s", e.getMessage(), exp, variables));
+			}
 			return null;
 		}
 	}

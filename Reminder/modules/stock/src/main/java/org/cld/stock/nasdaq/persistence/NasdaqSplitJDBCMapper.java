@@ -41,5 +41,10 @@ public class NasdaqSplitJDBCMapper extends JDBCMapper{
 	public String getTableName() {
 		return "NasdaqSplit";
 	}
+	
+	@Override
+	public boolean oneFetch() {
+		return true;
+	}
 
 }

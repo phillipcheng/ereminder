@@ -52,7 +52,7 @@ public class SelectStrategyByStockReducer extends Reducer<Text, Text, Text, Text
 			sl.add(v.toString());
 		}
 		Iterator<Float> kl = null;
-		if (orderDir.equals(SelectStrategy.ASC)){
+		if (orderDir.equals(StrategyConst.V_ASC)){
 			kl = map.keySet().iterator();
 		}else{
 			kl = map.descendingKeySet().iterator();
@@ -62,7 +62,7 @@ public class SelectStrategyByStockReducer extends Reducer<Text, Text, Text, Text
 			float f = kl.next();
 			List<String> sl = map.get(f);
 			for (String vstr:sl){
-				if (cnt<=maxSelectNumber){
+				if (maxSelectNumber == 0 || cnt<=maxSelectNumber){
 					String k = String.format("%s,%s,%d", vstr, dt, cnt);
 					String v = String.format("%s,%s", bsName, bsParams);
 					context.write(new Text(k), new Text(v));

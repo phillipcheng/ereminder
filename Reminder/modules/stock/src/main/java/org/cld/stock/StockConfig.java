@@ -14,6 +14,7 @@ import java.util.TimeZone;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.strategy.SellStrategy;
+import org.cld.stock.strategy.StrategyConst;
 import org.cld.util.FileDataMapper;
 import org.cld.util.jdbc.JDBCMapper;
 
@@ -93,8 +94,8 @@ public abstract class StockConfig {
 		}
 		return sd;
 	}
-	public Date getCloseTime(Date d, int holdDuration, int unit){
-		if (unit == SellStrategy.HU_DAY){
+	public Date getCloseTime(Date d, int holdDuration, String unit){
+		if (unit.equals(StrategyConst.V_UNIT_DAY)){
 			Date sd = d;
 			if (holdDuration>1){
 				sd = StockUtil.getNextOpenDay(d, this.getHolidays(), holdDuration-1);
@@ -106,7 +107,7 @@ public abstract class StockConfig {
 			}catch(Exception e){
 				logger.error("", e);
 			}
-		}else if (unit==SellStrategy.HU_MIN){
+		}else if (unit.equals(StrategyConst.V_UNIT_MINUTE)){
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(d);
 			cal.add(Calendar.MINUTE, holdDuration);

@@ -1,9 +1,7 @@
 package org.cld.stock.trade;
 
-import java.io.BufferedReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -14,13 +12,14 @@ import java.util.TreeMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.hadooputil.HdfsReader;
 import org.cld.stock.CandleQuote;
+import org.cld.stock.HdfsReader;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.persistence.StockPersistMgr;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SellStrategy;
+import org.cld.stock.strategy.StrategyConst;
 import org.cld.stock.trade.StockOrder.*;
 
 //this simulator is validated against minute data
@@ -63,7 +62,7 @@ public class TradeSimulator {
 								exeNum++;
 							}else{
 								if (so.getTif()==TimeInForceType.DayOrder){
-									Date closeTime = sc.getCloseTime(so.getSubmitTime(), 0, SellStrategy.HU_DAY);
+									Date closeTime = sc.getCloseTime(so.getSubmitTime(), 0, StrategyConst.V_UNIT_DAY);
 									if (cq.getStartTime().after(closeTime)){
 										//fail to buy
 										return null;
@@ -188,41 +187,12 @@ public class TradeSimulator {
 		}
 		return qlist;
 	}
-	
-	public static List<CandleQuote> getFromCache(List<CandleQuote> cacheQuote, Date start, Date end){
-		List<CandleQuote> cql = new ArrayList<CandleQuote>();
-		for (CandleQuote cq: cacheQuote){
-			if (!cq.getStartTime().before(start)){//[start
-				if (cq.getStartTime().before(end)){//,end)
-					cql.add(cq);
-				}else{
-					break;
-				}
-			}
-		}
-		return cql;
-	}
-	
-	public static void optiCache(List<CandleQuote> cacheQuote, Date start){
-		int numberToRemove=0;
-		for (int i=0; i<cacheQuote.size(); i++){
-			CandleQuote cq = cacheQuote.get(i);
-			if (!cq.getStartTime().before(start)){
-				numberToRemove = i;
-				break;
-			}
-		}
-		logger.debug(String.format("number of items to remove from cache:%d", numberToRemove));
-		for (int i=0; i<numberToRemove; i++){
-			cacheQuote.remove(0);
-		}
-	}
 	/**
 	 * 
 	 * @param dsoMap: for each day(submit day), given stockid, submit order to execute
 	 * @param cq
 	 */
-	public static void submitStockOrder(BuySellInfo bsi, StockConfig sc, List<CandleQuote> cqCache, BufferedReader br){
+	public static void submitStockOrder(BuySellInfo bsi, StockConfig sc, HdfsReader hr){
 		logger.debug(bsi.toString());
 		Map<String, StockOrder> executedOrder = new HashMap<String, StockOrder>(); //
 		List<StockOrder> sol = bsi.getSos();
@@ -237,20 +207,7 @@ public class TradeSimulator {
 		}
 		int holdDays = bsi.getSs().getHoldDuration();
 		Date ed = StockUtil.getNextOpenDay(bsi.getSubmitD(), sc.getHolidays(), holdDays);
-		List<CandleQuote> moreCq = null;
-		if (cqCache.size()==0){
-			moreCq = StockPersistMgr.getBTDDate(br, sc.getBTFQMinuteQuoteMapper(), bsi.getSubmitD(), ed);
-			cqCache.addAll(moreCq);
-			logger.debug(String.format("number of items to add to cache:%d", moreCq.size()));
-		}else{
-			if (ed.after(cqCache.get(cqCache.size()-1).getStartTime())){
-				moreCq = StockPersistMgr.getBTDDate(br, sc.getBTFQMinuteQuoteMapper(), null, ed);//from current mark to ed
-				cqCache.addAll(moreCq);
-				logger.debug(String.format("number of items to add to cache:%d", moreCq.size()));
-			}
-		}
-		List<CandleQuote> myCq = getFromCache(cqCache, bsi.getSubmitD(), ed);
-		optiCache(cqCache, bsi.getSubmitD());
+		List<CandleQuote> myCq = hr.getData(bsi.getSubmitD(), ed);
 		Iterator<CandleQuote> cqi = myCq.iterator();
 		Iterator<CandleQuote> afterBuyCQI = tryExecuteOrder(buySOs, cqi, executedOrder, sc);
 		StockOrder buySO = buySOs.get(0);
@@ -331,19 +288,13 @@ public class TradeSimulator {
 			List<StockOrder> sol = SellStrategy.makeStockOrders(scr, ss);
 			BuySellInfo bsi = new BuySellInfo("any", ss, sol, scr.getDt());
 			hr = StockPersistMgr.getReader(cconf, sc.getBTFQMinuteQuoteMapper(), stockid);
-			List<CandleQuote> cqCache = new ArrayList<CandleQuote>();
-			TradeSimulator.submitStockOrder(bsi, sc, cqCache, hr.getBr());
+			TradeSimulator.submitStockOrder(bsi, sc, hr);
 			return TradeSimulator.calculateBuySellResult(scr.getDt(), sol);
 		}catch(Exception e){
 			logger.error("", e);
 			return null;
 		}finally{
-			try {
-				hr.getBr().close();
-				hr.getFs().close();
-			}catch(Exception e){
-				logger.error("", e);
-			}
+			hr.close();
 		}
 	}
 }

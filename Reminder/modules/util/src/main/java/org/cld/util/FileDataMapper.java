@@ -16,6 +16,10 @@ public abstract class FileDataMapper implements DataMapper{
 		}
 	}
 	
+	public boolean isCqMapper(){
+		return true;
+	}
+	
 	@Override
 	public int hashCode(){
 		return getFileName("").hashCode();
