@@ -3,29 +3,27 @@ package org.cld.trade.test;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.stock.StockCrawlScheduler;
-import org.cld.stock.strategy.SelectStrategy;
-import org.cld.stock.strategy.SellStrategy;
 import org.cld.stock.trade.StockOrder;
 import org.cld.stock.trade.StockOrder.ActionType;
 import org.cld.stock.trade.StockOrder.OrderType;
 import org.cld.stock.trade.StockOrder.TimeInForceType;
-import org.cld.trade.MarketOpenTrdMsg;
-import org.cld.trade.TradeMgr;
+import org.cld.trade.TradeKingConnector;
+import org.cld.trade.evt.MarketCloseTrdMsg;
 import org.cld.trade.AutoTrader;
-import org.cld.trade.MarketCloseTrdMsg;
 import org.cld.trade.response.Balance;
 import org.cld.trade.response.Holding;
 import org.cld.trade.response.OrderResponse;
 import org.cld.trade.response.OrderStatus;
 import org.cld.trade.response.Quote;
+import org.junit.Before;
 import org.junit.Test;
 
-public class TestTradeMgr {
-	private static Logger logger =  LogManager.getLogger(TestTradeMgr.class);
-	TradeMgr tm = new TradeMgr("tradeking.properties");
+public class TestTradeConnector {
+	private static Logger logger =  LogManager.getLogger(TestTradeConnector.class);
+	TradeKingConnector tm = new TradeKingConnector("tradeking.properties");
 	
 	@Test
 	public void testPreviewOrder(){
@@ -112,12 +110,6 @@ public class TestTradeMgr {
 	}
 	
 	@Test
-	public void testGetAllQuotes(){
-		List<Quote> ql = tm.getMarketAllQuotes("nasdaq", "ALL");
-		logger.info("ql:" + ql);
-	}
-	
-	@Test
 	public void testCancelOrder(){
 		OrderResponse or = tm.cancelOrder("SVI-6007515427", ActionType.sell, "CLVS", 36);
 		logger.info(or);
@@ -127,22 +119,6 @@ public class TestTradeMgr {
 	public void testGetOrderStatus(){
 		Map<String, OrderStatus> map = tm.getOrderStatus();
 		logger.info(map);
-	}
-	///
-	@Test
-	public void testTryBuy(){
-		AutoTrader ta = new AutoTrader();
-		ta.getBs().setParams(new Object[]{3f, 0f});
-		boolean useLast=true;
-		ta.tryBuyNow(false,useLast);
-	}
-	
-	//not with open, missed or completed the open hour transaction, want to try mid-day luck (to be verified)
-	@Test
-	public void testStartWithOpenMsg(){
-		AutoTrader ta = new AutoTrader();
-		MarketOpenTrdMsg mos = new MarketOpenTrdMsg(false, true, ta.getBs(), ta.getSs());
-		ta.start(mos);
 	}
 	
 	@Test

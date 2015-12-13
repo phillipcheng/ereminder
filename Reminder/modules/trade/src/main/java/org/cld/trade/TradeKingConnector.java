@@ -61,27 +61,16 @@ import org.cld.trade.response.OrderStatus;
 import org.cld.trade.response.Quote;
 
 
-public class TradeMgr {
-	private static Logger logger =  LogManager.getLogger(TradeMgr.class);
+public class TradeKingConnector {
+	private static Logger logger =  LogManager.getLogger(TradeKingConnector.class);
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
-	
-	private static final String CRAWLCONF_KEY="crawl.conf";
 	private static final String CONSUMER_KEY = "consumer.key";
 	private static final String CONSUMER_SECRET = "consumer.secret";
 	private static final String OAUTH_TOKEN = "oauth.token";
 	private static final String OAUTH_TOKEN_SECRET = "oauth.token.secret";
 	private static final String ACCOUNT_ID= "account.id";
-	private static final String USE_AMOUNT="use.amount";
-	private static final String BASE_MARKET="base.market";
-	private static final String MARKET_ID="market.id";
-	private static final String MARKET_OPEN_CRON="market.open.cron";
-	private static final String MARKET_CLOSE_CRON="market.close.cron";
-	private static final String IS_PREVIEW="is.preview";
-	private static final String USE_LAST="use.last";
 	
-	
-	private static final String PROFILE_URL = "https://api.tradeking.com/v1/member/profile.json";
 	private static final String PREVIEW_ORDER_URL="https://api.tradeking.com/v1/accounts/%s/orders/preview.json";
 	private static final String MAKE_ORDER_URL="https://api.tradeking.com/v1/accounts/%s/orders.json";
 	private static final String ACCOUNTS_URL = "https://api.tradeking.com/v1/accounts.json";
@@ -104,47 +93,32 @@ public class TradeMgr {
 	public static final String ORDER="order";
 	public static final String FIXMLMSG="fixmlmessage";
 	
-	private String cconffile;
+	
 	private String consumerKey;
 	private String consumerSecret;
 	private String oauthToken;
 	private String oauthTokenSecret;
 	private String accountId;
-	private CrawlConf cconf;
-	private int useAmount;
-	private String baseMarketId;
-	private String marketId;
-	
+
 	private OAuthService service;
 	private Token accessToken;
-	private String marketOpenCron="0 26 9 ? * 2-6";
-	private String marketCloseCron="0 55 15 ? * 2-6";
-	private boolean isPreview=true;
-	private boolean useLast=false;
+
 	
-	public TradeMgr(String properFile){//1 proper file 1 account
+	
+	public TradeKingConnector(String propFile){//1 proper file 1 account
 		try{
-			PropertiesConfiguration pc = new PropertiesConfiguration(properFile);
-			cconffile = pc.getString(CRAWLCONF_KEY);
+			PropertiesConfiguration pc = new PropertiesConfiguration(propFile);
 			consumerKey = pc.getString(CONSUMER_KEY);
 			consumerSecret = pc.getString(CONSUMER_SECRET);
 			oauthToken = pc.getString(OAUTH_TOKEN);
 			oauthTokenSecret = pc.getString(OAUTH_TOKEN_SECRET);
 			accountId = pc.getString(ACCOUNT_ID);
-			setUseAmount(pc.getInt(USE_AMOUNT));
 			service = new ServiceBuilder()
 	                .provider(TradeKingAuthApi.class)
 	                .apiKey(consumerKey)
 	                .apiSecret(consumerSecret)
 	                .build();
 			accessToken = new Token(oauthToken, oauthTokenSecret);
-			cconf = CrawlTestUtil.getCConf(cconffile);
-			setBaseMarketId(pc.getString(BASE_MARKET));
-			setMarketId(pc.getString(MARKET_ID));
-			marketOpenCron = pc.getString(MARKET_OPEN_CRON);
-			marketCloseCron = pc.getString(MARKET_CLOSE_CRON);
-			isPreview = pc.getBoolean(IS_PREVIEW);
-			setUseLast(pc.getBoolean(USE_LAST));
 		}catch(Exception e){
 			logger.error("", e);
 		}
@@ -458,134 +432,34 @@ public class TradeMgr {
 		return null;
 	}
 	
-	private static final int BATCH_LIMIT=2000;
-	private List<Quote> getBatchQuote(List<String> allStockIds, int startIdx, int endIdx){
-		String[] stockIdArray = new String[endIdx-startIdx];
-		List<String> subList = allStockIds.subList(startIdx, endIdx);
-		stockIdArray = subList.toArray(stockIdArray);
-		return getQuotes(stockIdArray);
-	}
-	private List<Quote> getMarketAllQuotes(DBConnConf dbconf, String baseMarketId, String marketId){
-		StockConfig sc = StockUtil.getStockConfig(baseMarketId);
-		List<String> stockIds = StockPersistMgr.getStockIds(dbconf, sc);
-		List<Quote> ql = new ArrayList<Quote>();
-		int total = stockIds.size();
-		int fullBatch = total/BATCH_LIMIT;
-		for (int i=0; i<fullBatch; i++){
-			int startIdx= i*BATCH_LIMIT;
-			int endIdx = startIdx+BATCH_LIMIT;
-			ql.addAll(getBatchQuote(stockIds, startIdx, endIdx));
-		}
-		int startIdx = fullBatch * BATCH_LIMIT;
-		int endIdx = total;
-		if (endIdx>startIdx){
-			ql.addAll(getBatchQuote(stockIds, startIdx, endIdx));
-		}
-		return ql;
-	}
-	
-	public List<Quote> getMarketAllQuotes(String baseMarketId, String marketId){
-		return getMarketAllQuotes(cconf.getSmalldbconf(), baseMarketId, marketId);
-	}
-	
-	//used by test
-	public SelectCandidateResult applySelectStrategyNow(String baseMarketId, String marketId, boolean useLast, SelectStrategy bs){
-		List<Quote> ql = getMarketAllQuotes(cconf.getSmalldbconf(), baseMarketId, marketId);
-		return applySelectStrategy(ql, baseMarketId, marketId, useLast, bs);
-	}
-	/*return the buy order
-	 *simulate true: use last price and preview the order
-	*/
-	public SelectCandidateResult applySelectStrategy(List<Quote> ql, String baseMarketId, String marketId, boolean useLast, SelectStrategy bs){
-		Map<String, Float> newQuotes = new HashMap<String, Float>();
-		for (Quote q:ql){
-			if (useLast){
-				if (q.getLast()>0f){
-					newQuotes.put(q.getSymbol(), q.getLast());
-				}
+	public OrderResponse trySubmit(StockOrder sobuy, boolean submit){
+		if (sobuy!=null){
+			if (!submit){
+				logger.info(String.format("preview order: %s",sobuy));
+				return previewOrder(sobuy);
 			}else{
-				if (q.getOpen()>0f){
-					newQuotes.put(q.getSymbol(), q.getOpen());
-				}
+				logger.info(String.format("make order: %s",sobuy));
+				return makeOrder(sobuy);
 			}
-		}
-		Date submitDay = null;
-		try{
-			submitDay = sdf.parse(sdf.format(new Date()));
-		}catch(ParseException e){
-			logger.error("", e);
-		}
-		List<SelectCandidateResult> scrl = bs.selectByCurrent(cconf, baseMarketId, marketId, submitDay, 3, newQuotes);
-		if (scrl.size()>0){
-			SelectCandidateResult scr = scrl.get(0);
-			return scr;
 		}else{
-			logger.warn("no candidate found.");
+			logger.info(String.format("no order to submit."));
 			return null;
 		}
 	}
 
-	public CrawlConf getCconf() {
-		return cconf;
+	public String getConsumerKey() {
+		return consumerKey;
 	}
 
-	public void setCconf(CrawlConf cconf) {
-		this.cconf = cconf;
+	public String getConsumerSecret() {
+		return consumerSecret;
 	}
 
-	public int getUseAmount() {
-		return useAmount;
+	public String getOauthToken() {
+		return oauthToken;
 	}
 
-	public void setUseAmount(int useAmount) {
-		this.useAmount = useAmount;
-	}
-
-	public String getMarketId() {
-		return marketId;
-	}
-
-	public void setMarketId(String marketId) {
-		this.marketId = marketId;
-	}
-
-	public String getBaseMarketId() {
-		return baseMarketId;
-	}
-
-	public void setBaseMarketId(String baseMarketId) {
-		this.baseMarketId = baseMarketId;
-	}
-
-	public String getMarketOpenCron() {
-		return marketOpenCron;
-	}
-
-	public void setMarketOpenCron(String marketOpenCron) {
-		this.marketOpenCron = marketOpenCron;
-	}
-
-	public String getMarketCloseCron() {
-		return marketCloseCron;
-	}
-
-	public void setMarketCloseCron(String marketCloseCron) {
-		this.marketCloseCron = marketCloseCron;
-	}
-
-	public boolean isPreview() {
-		return isPreview;
-	}
-
-	public void setPreview(boolean isPreview) {
-		this.isPreview = isPreview;
-	}
-
-	public boolean isUseLast() {
-		return useLast;
-	}
-
-	public void setUseLast(boolean useLast) {
-		this.useLast = useLast;
+	public String getOauthTokenSecret() {
+		return oauthTokenSecret;
 	}
 }

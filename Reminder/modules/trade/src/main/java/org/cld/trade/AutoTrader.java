@@ -1,27 +1,34 @@
 package org.cld.trade;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.TreeMap;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.datacrawl.CrawlConf;
+import org.cld.datacrawl.test.CrawlTestUtil;
+import org.cld.stock.StockConfig;
+import org.cld.stock.StockUtil;
+import org.cld.stock.strategy.IntervalUnit;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.strategy.SellStrategy;
+import org.cld.stock.strategy.TradeStrategy;
 import org.cld.stock.trade.StockOrder;
 import org.cld.stock.trade.StockOrder.ActionType;
 import org.cld.stock.trade.StockOrder.OrderType;
 import org.cld.stock.trade.StockOrder.TimeInForceType;
 import org.cld.trade.persist.StockPosition;
-import org.cld.trade.persist.TradePersistMgr;
-import org.cld.trade.response.OrderResponse;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
@@ -31,26 +38,84 @@ import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
 
-public class AutoTrader {
+public class AutoTrader implements Runnable {
 	private static Logger logger =  LogManager.getLogger(AutoTrader.class);
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	private TradeMgr tm;
-	private SelectStrategy bs;
-	private SellStrategy ss;
+	
+	//external configures
+	private static final String TRADE_CONNECTOR="trade.connector";
+	private static final String HISTORY_DUMP="history.dump";
+	private static final String STRATEGIES="strategies";
+	private static final String SYMBOLS="symbols";
+	
+	//at configures
+	private static final String CRAWLCONF_KEY="crawl.conf";
+	private static final String USE_AMOUNT="use.amount";
+	private static final String BASE_MARKET="base.market";
+	private static final String MARKET_ID="market.id";
+	private static final String MARKET_OPEN_CRON="market.open.cron";
+	private static final String MARKET_CLOSE_CRON="market.close.cron";
+	private static final String IS_PREVIEW="is.preview";
+	private static final String USE_LAST="use.last";
+	
+	//
+	private TradeKingConnector tradeConnector;
+	private TreeMap<IntervalUnit, List<TradeStrategy>> tsMap = new TreeMap<IntervalUnit, List<TradeStrategy>>();//order by declaration from small to big
+	private List<String> symbols = new ArrayList<String>();
+	private String historyDumpProperties;
+	
+	private String cconffile;
+	private CrawlConf cconf;
+	private int useAmount;
+	private String baseMarketId;
+	private String marketId;
+	private String marketOpenCron="0 26 9 ? * 2-6";
+	private String marketCloseCron="0 55 15 ? * 2-6";
+	private boolean isPreview=true;
+	private boolean useLast=false;
 	private Map<String, TradeMsg> msgMap = new HashMap<String, TradeMsg>();
 	
 	public AutoTrader(){
-		tm = new TradeMgr("tradeking.properties");
 		try{
-			PropertiesConfiguration props = new PropertiesConfiguration("strategy.properties");
-			List<SelectStrategy> bsl = SelectStrategy.gen(props, "TheStrategy");
-			SellStrategy[] ssl = SellStrategy.gen(props);
-			if (bsl.size()==1 && ssl.length==1){
-				bs = bsl.get(0);
-				ss = ssl[0];
-			}else{
-				logger.error("wrong strategy configuration.");
+			PropertiesConfiguration pc = new PropertiesConfiguration("at.properties");
+			cconffile = pc.getString(CRAWLCONF_KEY);
+			cconf = CrawlTestUtil.getCConf(cconffile);
+			setUseAmount(pc.getInt(USE_AMOUNT));
+			setBaseMarketId(pc.getString(BASE_MARKET));
+			setMarketId(pc.getString(MARKET_ID));
+			marketOpenCron = pc.getString(MARKET_OPEN_CRON);
+			marketCloseCron = pc.getString(MARKET_CLOSE_CRON);
+			isPreview = pc.getBoolean(IS_PREVIEW);
+			setUseLast(pc.getBoolean(USE_LAST));
+			this.historyDumpProperties= pc.getString(HISTORY_DUMP);
+			//setup trade connctor
+			tradeConnector = new TradeKingConnector(pc.getString(TRADE_CONNECTOR));
+			//setup strategy
+			List<Object> strategyFiles = pc.getList(STRATEGIES);
+			for (int i=0; i<strategyFiles.size(); i++){
+				String str = (String)strategyFiles.get(i);
+				PropertiesConfiguration props = new PropertiesConfiguration(str);
+				List<SelectStrategy> bsl = SelectStrategy.gen(props, "TheStrategy", getBaseMarketId());
+				SellStrategy[] ssl = SellStrategy.gen(props);
+				SelectStrategy bs = bsl.get(0);
+				bs.init();
+				TradeStrategy ts = new TradeStrategy(bs, ssl[0]);
+				List<TradeStrategy> tsl = tsMap.get(bs.getLookupUnit());
+				if (tsl==null){
+					tsl = new ArrayList<TradeStrategy>();
+					tsMap.put(bs.getLookupUnit(), tsl);
+				}
+				tsl.add(ts);
 			}
+			//setup symbol list
+			String symbolFile = pc.getString(SYMBOLS);
+			InputStream in = this.getClass().getClassLoader().getResourceAsStream(symbolFile);
+			BufferedReader br = new BufferedReader(new InputStreamReader(in));
+			String line = null;
+			while ((line=br.readLine())!=null){
+				symbols.add(line.trim());
+			}
+			br.close();
 		}catch(Exception e){
 			logger.error("", e);
 		}
@@ -90,34 +155,6 @@ public class AutoTrader {
 		List<StockOrder> sellsos= SellStrategy.makeSellOrders(buyso.getStockid(), buyso.getSubmitTime(), buyso.getQuantity(), buyso.getLimitPrice(), ss);
 		sellsos.add(buyso);
 		return makeMap(sellsos);
-	}
-	
-	//
-	public static OrderResponse trySubmit(TradeMgr tm, StockOrder sobuy, boolean submit){
-		if (sobuy!=null){
-			if (!submit){
-				logger.info(String.format("preview order: %s",sobuy));
-				return tm.previewOrder(sobuy);
-			}else{
-				logger.info(String.format("make order: %s",sobuy));
-				return tm.makeOrder(sobuy);
-			}
-		}else{
-			logger.info(String.format("no order to submit."));
-			return null;
-		}
-		
-	}
-	
-	//useLast price or use Open price
-	//used by test
-	public OrderResponse tryBuyNow(boolean submit, boolean useLast){
-		SelectCandidateResult scr = tm.applySelectStrategyNow(tm.getBaseMarketId(), tm.getMarketId(), useLast, bs);
-		if (scr!=null){
-			StockOrder sobuy =SellStrategy.makeBuyOrder(scr, ss, tm.getUseAmount());
-			return trySubmit(tm, sobuy, submit);
-		}
-		return null;
 	}
 
 	public void addMsg(TradeMsg tmsg){
@@ -172,6 +209,7 @@ public class AutoTrader {
 	 * 				|__ duration not met: do nothing (open sell order, [monitor stop trailing order, monitor price cross])
 	 *      |__ no position, do nothing
 	 */
+	@Override
 	public void run() {
 		while (true){
 			if (getMsgMap().size()>0){
@@ -182,7 +220,7 @@ public class AutoTrader {
 					TradeMsg msg = getMsg(key);
 					if (msg!=null){
 						logger.info(String.format("process msg: %s",msg));
-						TradeMsgPR tmpr = msg.process(tm);
+						TradeMsgPR tmpr = msg.process(this);
 						tmpr.setMsgId(msg.getMsgId());
 						tmprlist.add(tmpr);
 					}else{
@@ -216,63 +254,55 @@ public class AutoTrader {
 		}
 	}
 	
-	//generate monitor buy order msgs
-	public List<TradeMsg> processOpenPosition(){
-		List<TradeMsg> tml = new ArrayList<TradeMsg>();
-		Date dt= new Date();
-		List<StockPosition> lp = TradePersistMgr.getOpenPosition(tm.getCconf().getSmalldbconf(), dt);
-		if (lp.size()>0){
-			for (StockPosition sp: lp){
-				Map<StockOrderType, StockOrder> somap = AutoTrader.genSellOrderMap(sp, ss);
-				TradeMsg tmsg;
-				if (sp.getOrderId()!=null && !"".equals(sp.getOrderId())){
-					tmsg = new MonitorBuyOrderTrdMsg(StockOrderType.buy, sp.getOrderId(), somap);
-				}else{//has an open position which is opened day before so the order id is not working.
-					tmsg = new BuyOrderFilledTrdMsg(somap);
-				}
-				tml.add(tmsg);
-			}
-		}else{
-			logger.info(String.format("no open position for day:%s", sdf.format(dt)));
-		}
-		return tml;
-	}
-	
 	public void start(TradeMsg tmsg){
 		msgMap.put(tmsg.getMsgId(), tmsg);
 		run();
 	}
 	
 	public static final String JDM_KEY_AT="AutoTrader";
-	public static void main(String[] args){
+	public void startScheduler(){
 		try{
-			AutoTrader at = new AutoTrader();
 			//Create & start the scheduler.
 	        StdSchedulerFactory factory = new StdSchedulerFactory();
 	        factory.initialize("quartz.properties");
 	        Scheduler scheduler = factory.getScheduler();
 	        JobDataMap jdm = new JobDataMap();
-	        jdm.put(JDM_KEY_AT, at);
+	        jdm.put(JDM_KEY_AT, this);
 	        JobDetail genMarketMsgJob = JobBuilder.newJob(GenMsgQuartzJob.class).
 	        		withIdentity("genMarketMsg", "genMarketMsg").storeDurably().usingJobData(jdm).build();
 	        
 	        //scheduler to send market open msg
 	        Trigger marketOpenTrigger = TriggerBuilder.newTrigger().
 	        		withIdentity(TradeMsgType.marketOpenSoon.toString(), TradeMsgType.marketOpenSoon.toString()).forJob(genMarketMsgJob).
-	        		withSchedule(CronScheduleBuilder.cronSchedule(at.getTm().getMarketOpenCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
+	        		withSchedule(CronScheduleBuilder.cronSchedule(getMarketOpenCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
 	        		build();
 	        //scheduler to send market close msg
 	        Trigger marketCloseTrigger = TriggerBuilder.newTrigger().
 	        		withIdentity(TradeMsgType.marketCloseSoon.toString(), TradeMsgType.marketCloseSoon.toString()).forJob(genMarketMsgJob).
-	        		withSchedule(CronScheduleBuilder.cronSchedule(at.getTm().getMarketCloseCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
+	        		withSchedule(CronScheduleBuilder.cronSchedule(getMarketCloseCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
 	        		build();
 	        scheduler.addJob(genMarketMsgJob, true);
 	        scheduler.scheduleJob(marketOpenTrigger);
 	        scheduler.scheduleJob(marketCloseTrigger);
 	        scheduler.start();
-	        List<TradeMsg> tml = at.processOpenPosition();
-	        at.addMsgs(tml);
-	        at.run();
+		}catch(Exception e){
+			logger.error("", e);
+		}
+	}
+	public static void main(String[] args){
+		try{
+			AutoTrader at = new AutoTrader();
+			at.startScheduler();
+			new Thread(at).start();
+			//
+			StockConfig sc = StockUtil.getStockConfig(at.getBaseMarketId());
+	        TradeDataMgr tradeDataMgr = new TradeDataMgr(at, sc);
+	        StreamMgr streamMgr = new StreamMgr(at.symbols, at.getTm(), tradeDataMgr);
+	        new Thread(streamMgr).start();
+	        //
+	        HistoryDumpMgr hdm = new HistoryDumpMgr(at.getHistoryDumpProperties(), tradeDataMgr, sc);
+	        new Thread(hdm).start();
+	        
 	        while(true){
 	        	Thread.sleep(10000);
 	        }
@@ -282,17 +312,59 @@ public class AutoTrader {
 	}
 	
 	//setter and getter
-	public SellStrategy getSs() {
-		return ss;
+	public CrawlConf getCconf() {
+		return cconf;
 	}
-	public void setSs(SellStrategy ss) {
-		this.ss = ss;
+	public void setCconf(CrawlConf cconf) {
+		this.cconf = cconf;
 	}
-	public TradeMgr getTm() {
-		return tm;
+	public int getUseAmount() {
+		return useAmount;
 	}
-	public void setTm(TradeMgr tm) {
-		this.tm = tm;
+	public void setUseAmount(int useAmount) {
+		this.useAmount = useAmount;
+	}
+	public String getMarketId() {
+		return marketId;
+	}
+	public void setMarketId(String marketId) {
+		this.marketId = marketId;
+	}
+	public String getBaseMarketId() {
+		return baseMarketId;
+	}
+	public void setBaseMarketId(String baseMarketId) {
+		this.baseMarketId = baseMarketId;
+	}
+	public String getMarketOpenCron() {
+		return marketOpenCron;
+	}
+	public void setMarketOpenCron(String marketOpenCron) {
+		this.marketOpenCron = marketOpenCron;
+	}
+	public String getMarketCloseCron() {
+		return marketCloseCron;
+	}
+	public void setMarketCloseCron(String marketCloseCron) {
+		this.marketCloseCron = marketCloseCron;
+	}
+	public boolean isPreview() {
+		return isPreview;
+	}
+	public void setPreview(boolean isPreview) {
+		this.isPreview = isPreview;
+	}
+	public boolean isUseLast() {
+		return useLast;
+	}
+	public void setUseLast(boolean useLast) {
+		this.useLast = useLast;
+	}
+	public TradeKingConnector getTm() {
+		return tradeConnector;
+	}
+	public void setTm(TradeKingConnector tm) {
+		this.tradeConnector = tm;
 	}
 	public Map<String, TradeMsg> getMsgMap() {
 		return msgMap;
@@ -300,10 +372,10 @@ public class AutoTrader {
 	public void setMsgMap(Map<String, TradeMsg> msgMap) {
 		this.msgMap = msgMap;
 	}
-	public SelectStrategy getBs() {
-		return bs;
+	public TreeMap<IntervalUnit, List<TradeStrategy>> getTsMap(){
+		return tsMap;
 	}
-	public void setBs(SelectStrategy bs) {
-		this.bs = bs;
+	public String getHistoryDumpProperties() {
+		return historyDumpProperties;
 	}
 }

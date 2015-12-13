@@ -15,6 +15,7 @@ import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.DBConf;
+import org.cld.util.PropertiesUtil;
 
 
 public class NodeConf implements Serializable, FileAlterationListener{
@@ -77,13 +78,7 @@ public class NodeConf implements Serializable, FileAlterationListener{
 	public NodeConf(String conf){
 		//
 		this.confFile = conf;
-		try {
-			URL url = Thread.currentThread().getContextClassLoader().getResource(conf);
-			masterConf = new PropertiesConfiguration(url);
-		} catch (ConfigurationException e) {
-			logger.error("", e);
-		}
-
+		masterConf = PropertiesUtil.getPC(conf);
 		//monitorConfChange();
 		
 		reload();

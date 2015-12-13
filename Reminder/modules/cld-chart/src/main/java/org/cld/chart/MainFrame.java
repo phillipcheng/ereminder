@@ -6,16 +6,11 @@ import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 
 import java.awt.Dimension;
-import java.awt.GridBagLayout;
-
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
@@ -23,36 +18,42 @@ import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.stock.CqIndicators;
 import org.cld.stock.StockDataConfig;
 import org.cld.stock.StockUtil;
+import org.cld.stock.TradeHour;
+import org.cld.stock.strategy.IntervalUnit;
+import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
+import org.cld.stock.strategy.SelectStrategyByStockTask;
+import org.cld.util.PropertiesUtil;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 
-public class MainFrame extends JFrame implements ActionListener, ListSelectionListener{
+public class MainFrame extends JFrame {
 	
 	private static final long serialVersionUID = 1L;
 	private static Logger logger = Logger.getLogger(MainFrame.class);
-
-	private JSplitPane lrSplitPane = null;
-	private CandlestickChart csChart = null;
-	private TimeSeriesChart tsChart = null;
-	private HistogramChart hsChart = null;
+	private static final String KEY_CCONF="cconf.properties";
+	private static final String KEY_STRATEGY="strategy.properties";
 	
-	private String pFile = "client1-v2.properties";
-	private String strategyFile = "strategy.macd.properties";
+	private JSplitPane lrSplitPane = null;
+	private String chartPropertiesFile = "chart.properties";
 	private CrawlConf cconf;
 	private SelectStrategy bs = null;
 	private String baseMarketId="nasdaq";
 	
-	/**
-	 * This is the default constructor
-	 */
+	private int indPanelNum=2;
+	List<DataChart> dclist = new ArrayList<DataChart>();
+	
 	public MainFrame() {
 		super();
 		initialize();
-		cconf = CrawlTestUtil.getCConf(pFile);
 		try {
-			PropertiesConfiguration pc = new PropertiesConfiguration(strategyFile);
-			List<SelectStrategy> bsl = SelectStrategy.gen(pc, strategyFile, baseMarketId);
+			PropertiesConfiguration pc = new PropertiesConfiguration(chartPropertiesFile);
+			String pFile = pc.getString(KEY_CCONF);
+			String strategyFile = pc.getString(KEY_STRATEGY);
+			cconf = CrawlTestUtil.getCConf(pFile);
+			PropertiesConfiguration strategyPC = PropertiesUtil.getPC(strategyFile);
+			List<SelectStrategy> bsl = SelectStrategy.gen(strategyPC, strategyFile, baseMarketId);
 			if (bsl.size()>0){
 				bs = bsl.get(0);
 			}
@@ -61,51 +62,11 @@ public class MainFrame extends JFrame implements ActionListener, ListSelectionLi
 		}
 	}
 
-	/**
-	 * This method initializes this
-	 * 
-	 * @return void
-	 * @throws Exception 
-	 */
 	private void initialize() {
-		
 		this.setSize(1071, 1021);
 		this.setContentPane(getJSplitPane());
 		this.setTitle("tt@cy");
-		
 		this.setExtendedState(getExtendedState()|JFrame.MAXIMIZED_BOTH);
-		
-	}
-
-	/**
-	 * This method initializes pRight	
-	 * 	
-	 * @return javax.swing.JPanel	
-	 */
-	private JPanel getCandleStickChart() {
-		if (csChart == null) {
-			csChart = CandlestickChart.createCandlestickChart();
-			//csChart.setLayout(new GridBagLayout());
-			csChart.setName("rightPanel");
-			csChart.setPreferredSize(new Dimension(500, 600));
-		}
-		return csChart;
-	}
-	
-	private JPanel getTimeSeriesChart(){
-		if (tsChart == null){
-			tsChart = TimeSeriesChart.createTimeSeriesChart();
-			tsChart.setPreferredSize(new Dimension(500, 250));
-		}
-		return tsChart;
-	}
-	
-	private JPanel getHistogramChart(){
-		if (hsChart == null){
-			hsChart = HistogramChart.createHistogramChart();
-			hsChart.setPreferredSize(new Dimension(500, 80));
-		}
-		return hsChart;
 	}
 	
 	/**
@@ -127,27 +88,49 @@ public class MainFrame extends JFrame implements ActionListener, ListSelectionLi
 			btnOk.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					StockDataConfig sdcfg = dataConfigPanel.getData();
-					List<CqIndicators> cqlist = StockUtil.getData(cconf, sdcfg, bs);
-					int maxPeriods = bs.getMaxPeriod();
-					cqlist = cqlist.subList(maxPeriods, cqlist.size());
-					csChart.setData(cqlist);
-					tsChart.setData(cqlist, bs);
-					hsChart.setData(cqlist, bs);
+					List<CqIndicators> cqilist = null;
+					TradeHour th = TradeHour.All;
+					if (sdcfg.getUnit()==IntervalUnit.day){
+						th = TradeHour.All;
+					}else if (sdcfg.getUnit()==IntervalUnit.minute){
+						th = TradeHour.Normal;
+					}
+					cqilist = StockUtil.getData(cconf, sdcfg, bs, th);
+					List<Object[]> kvl = SelectStrategyByStockTask.getBuyOppList(cconf, new SelectStrategy[]{bs}, sdcfg.getStockId(), 
+							sdcfg.getStartDt(), sdcfg.getEndDt(), th, null);
+					List<Date> dl = new ArrayList<Date>();
+					for (Object[] kv:kvl){
+						SelectCandidateResult scr = (SelectCandidateResult) kv[0];
+						dl.add(scr.getDt());
+					}
+					int maxPeriods = ChartUtil.getFirstValid(cqilist);
+					cqilist = cqilist.subList(maxPeriods, cqilist.size());
+					for (DataChart dc: dclist){
+						dc.setData(cqilist, bs, sdcfg.getUnit(), dl);
+					}
 				}
 			});
-			btnOk.setBounds(10, 182, 89, 23);
+			btnOk.setBounds(10, 199, 89, 23);
 			leftPanel.add(btnOk);
 			
 			//right
-			JSplitPane udSplitPane2 = new JSplitPane();
-			udSplitPane2.setOrientation(JSplitPane.VERTICAL_SPLIT);
-			udSplitPane2.setLeftComponent(getTimeSeriesChart());
-			udSplitPane2.setRightComponent(getHistogramChart());
+			JPanel multiPanel = new JPanel();
+			multiPanel.setLayout(new BoxLayout(multiPanel, BoxLayout.Y_AXIS));
+			for (int i=0; i<indPanelNum; i++){
+				TimeSeriesChart ts = TimeSeriesChart.createTimeSeriesChart();
+				ts.setMyName(i+1+"");
+				multiPanel.add(ts);
+				dclist.add(ts);
+			}
 			
 			JSplitPane udSplitPane1 = new JSplitPane();
 			udSplitPane1.setOrientation(JSplitPane.VERTICAL_SPLIT);
-			udSplitPane1.setLeftComponent(getCandleStickChart());
-			udSplitPane1.setRightComponent(udSplitPane2);
+			udSplitPane1.setDividerLocation(0.5);
+			CandlestickChart cc = CandlestickChart.createCandlestickChart();
+			cc.setMyName("0");
+			udSplitPane1.setLeftComponent(cc);
+			dclist.add(cc);
+			udSplitPane1.setRightComponent(multiPanel);
 			
 			lrSplitPane = new JSplitPane();
 			lrSplitPane.setOneTouchExpandable(true);
@@ -158,17 +141,6 @@ public class MainFrame extends JFrame implements ActionListener, ListSelectionLi
 			
 		}
 		return lrSplitPane;
-	}
-
-
-	@Override
-	public void actionPerformed(ActionEvent e) {
-	}
-	
-	@Override
-	public void valueChanged(ListSelectionEvent e) {
-		logger.info(e.getSource().toString());
-		
 	}
 
 	public static void main(String arg[]){

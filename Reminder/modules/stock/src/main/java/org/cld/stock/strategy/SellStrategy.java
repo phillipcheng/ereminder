@@ -29,8 +29,6 @@ public class SellStrategy {
 	public static String KEY_SELLS_STOP_PERCENTAGE="sls.stopPercentage";
 	public static String KEY_SELLS_ISTRAILING="sls.trailing";
 	
-
-	
 	private int selectNumber=1;
 	private int holdDuration=0;
 	private String holdUnit = StrategyConst.V_UNIT_DAY;

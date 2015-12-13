@@ -1,11 +1,15 @@
 package org.cld.stock;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.TreeMap;
 
-public class CandleQuote {
+import org.cld.stock.strategy.IntervalUnit;
+
+public class CandleQuote implements TimedItem{
 	String stockid;
 	Date startTime;
 	//all price are comparable across the dates
@@ -17,7 +21,7 @@ public class CandleQuote {
 	double amount;
 	float fqIdx;//adjclose/close
 	
-	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private static final SimpleDateFormat mdf = new SimpleDateFormat("MM-dd HH:mm");
 	
 	public String toString(){
@@ -52,6 +56,20 @@ public class CandleQuote {
 		this.close = close;
 		this.low = low;
 		this.volume = volume;
+	}
+	
+	public CandleQuote clone(){
+		CandleQuote cq = new CandleQuote(this.stockid, this.startTime, this.open, this.high, this.close, this.low, this.volume, this.amount);
+		return cq;
+	}
+	
+	public CandleQuote(TradeTick tt){
+		this.startTime = tt.getDatetime();
+		this.open = tt.getLast();
+		this.close = tt.getLast();
+		this.high = tt.getLast();
+		this.low = tt.getLast();
+		this.volume = tt.getVl();
 	}
 	
 	public String getStockid() {
@@ -107,5 +125,16 @@ public class CandleQuote {
 	}
 	public void setFqIdx(float fqIdx) {
 		this.fqIdx = fqIdx;
+	}
+
+	@Override
+	public Date getDatetime() {
+		return startTime;
+	}
+
+	@Override
+	public String toCsv(TimeZone tz) {
+		sdf.setTimeZone(tz);
+		return String.format("%s,%.3f,%.3f,%.3f,%.3f,%.2f", sdf.format(startTime), open, high, close, low, volume);
 	}
 }

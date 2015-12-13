@@ -15,6 +15,7 @@ import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.stock.HdfsReader;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
+import org.cld.stock.TradeHour;
 import org.cld.stock.persistence.StockPersistMgr;
 import org.cld.stock.trade.BuySellInfo;
 import org.cld.stock.trade.BuySellResult;
@@ -79,7 +80,7 @@ public class SellStrategyByStockReducer extends Reducer<StockIdDatePair, Text, T
 					List<StockOrder> sol = SellStrategy.makeStockOrders(scr, ss);
 					BuySellInfo bsi = new BuySellInfo(String.format("%s,%s", bsName, bsParams), ss, sol, dt);
 					
-					TradeSimulator.submitStockOrder(bsi, sc, hr);
+					TradeSimulator.submitStockOrder(bsi, sc, hr, TradeHour.Normal);
 					
 					List<StockOrder> solist = bsi.getSos();
 					BuySellResult bsr = TradeSimulator.calculateBuySellResult(bsi.getSubmitD(), solist);

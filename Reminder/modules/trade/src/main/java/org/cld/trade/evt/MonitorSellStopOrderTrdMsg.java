@@ -1,4 +1,4 @@
-package org.cld.trade;
+package org.cld.trade.evt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,6 +7,12 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.trade.StockOrder;
+import org.cld.trade.AutoTrader;
+import org.cld.trade.StockOrderType;
+import org.cld.trade.TradeKingConnector;
+import org.cld.trade.TradeMsg;
+import org.cld.trade.TradeMsgPR;
+import org.cld.trade.TradeMsgType;
 import org.cld.trade.persist.StockPosition;
 import org.cld.trade.persist.TradePersistMgr;
 import org.cld.trade.response.OrderStatus;
@@ -42,8 +48,8 @@ public class MonitorSellStopOrderTrdMsg extends TradeMsg {
 	 *      |__ cancelled.
 	 */
 	@Override
-	public TradeMsgPR process(TradeMgr tm) {
-		Map<String, OrderStatus> map = tm.getOrderStatus();
+	public TradeMsgPR process(AutoTrader at) {
+		Map<String, OrderStatus> map = at.getTm().getOrderStatus();
 		StockOrder sellstorder = getSomap().get(StockOrderType.sellstop);
 		OrderStatus os = map.get(getOrderId());
 		TradeMsgPR tmpr = new TradeMsgPR();
@@ -52,7 +58,7 @@ public class MonitorSellStopOrderTrdMsg extends TradeMsg {
 			if (OrderStatus.FILLED.equals(os.getStat())){
 				logger.info(String.format("sell stop order filled. %s", os));
 				StockPosition trySp = new StockPosition(sellstorder, StockPosition.close, sellstorder.getOrderId());
-				TradePersistMgr.closePosition(tm.getCconf().getSmalldbconf(), trySp);//
+				TradePersistMgr.closePosition(at.getCconf().getSmalldbconf(), trySp);//
 				String mpMsgId = String.format("%s", TradeMsgType.monitorSellLimitPrice);
 				rmMsgList.add(mpMsgId);
 				tmpr.setExecuted(true);

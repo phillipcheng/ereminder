@@ -41,7 +41,7 @@ public class NasdaqStockConfig extends StockConfig{
 	//http://markets.on.nytimes.com/research/markets/holidays/holidays.asp?display=market&exchange=SHH
 	public static Set<Date> USHolidays = new HashSet<Date>();
 	static{
-		//sdf.setTimeZone(TimeZone.getTimeZone("EST"));
+		sdf.setTimeZone(TimeZone.getTimeZone("UTC-5"));
 		try{
 			//
 			USHolidays.add(sdf.parse("2014-01-01"));
@@ -325,7 +325,7 @@ public class NasdaqStockConfig extends StockConfig{
 	}
 	@Override
 	public TimeZone getTimeZone() {
-		return TimeZone.getTimeZone("EST");
+		return TimeZone.getTimeZone("GMT-5:00");
 	}
 	
 	@Override

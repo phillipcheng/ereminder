@@ -23,7 +23,8 @@ import org.cld.datacrawl.CrawlConf;
 import org.cld.stock.CandleQuote;
 import org.cld.stock.HdfsReader;
 import org.cld.stock.StockConfig;
-import org.cld.stock.nasdaq.persistence.NasdaqFQDailyQuoteMapper;
+import org.cld.stock.StockUtil;
+import org.cld.stock.TradeHour;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.DataMapper;
 import org.cld.util.FileDataMapper;
@@ -146,7 +147,7 @@ public class StockPersistMgr {
 	}
 	
 	//BTD for back testing data, they are ajusted till a certain-day
-	public static List<? extends Object> getBTDByStockDate(CrawlConf cconf, FileDataMapper fdMapper, String stockId, Date sd, Date ed){
+	public static List<? extends Object> getBTDByStockDate(CrawlConf cconf, FileDataMapper fdMapper, String stockId, Date sd, Date ed, TradeHour th){
 		List<Object> lo = new ArrayList<Object>();
 		BufferedReader br = null;
 		try{
@@ -161,12 +162,14 @@ public class StockPersistMgr {
 				Object o = fdMapper.getObject(line);
 				if (o instanceof CandleQuote){
 					CandleQuote cq = (CandleQuote)o;
-					cq.setStockid(stockId);
-					if (!cq.getStartTime().before(sd)){
-						if (cq.getStartTime().after(ed)){
-							break;
-						}else{
-							lo.add(o);
+					if (StockUtil.filterByTradeHour(cq, th)){
+						cq.setStockid(stockId);
+						if (!cq.getStartTime().before(sd)){
+							if (cq.getStartTime().after(ed)){
+								break;
+							}else{
+								lo.add(o);
+							}
 						}
 					}
 				}
@@ -187,7 +190,7 @@ public class StockPersistMgr {
 	}
 	
 	//get for read all
-	public static List<? extends Object> getDataByStockDate(CrawlConf cconf, DataMapper dataMapper, String stockId, Date sd, Date ed){
+	public static List<? extends Object> getDataByStockDate(CrawlConf cconf, DataMapper dataMapper, String stockId, Date sd, Date ed, TradeHour th){
 		if (dataMapper instanceof JDBCMapper){
 			JDBCMapper tableMapper = null;
 			tableMapper = (JDBCMapper) dataMapper;
@@ -205,7 +208,7 @@ public class StockPersistMgr {
 			}
 		}else if (dataMapper instanceof FileDataMapper){
 			FileDataMapper fdMapper = (FileDataMapper) dataMapper;
-			return getBTDByStockDate(cconf, fdMapper, stockId, sd, ed);
+			return getBTDByStockDate(cconf, fdMapper, stockId, sd, ed, th);
 		}else{
 			logger.error(String.format("mapper type not supported. %s", dataMapper));
 			return null;
@@ -227,26 +230,28 @@ public class StockPersistMgr {
 		return null;
 	}
 	//get for step by step reading
-	public static List<CandleQuote> getBTDDate(BufferedReader reader, FileDataMapper fdMapper, Date sd, Date ed){
+	public static List<CandleQuote> getBTDDate(BufferedReader reader, FileDataMapper fdMapper, Date sd, Date ed, TradeHour th){
 		List<CandleQuote> lo = new ArrayList<CandleQuote>();
 		try{
 			String line;
             line=reader.readLine();
             while (line != null){//in time ascending order
             	CandleQuote cq = (CandleQuote) fdMapper.getObject(line);
-				if (sd!=null){
-					if (!cq.getStartTime().before(sd)){
+            	if (StockUtil.filterByTradeHour(cq, th)){
+					if (sd!=null){
+						if (!cq.getStartTime().before(sd)){
+							lo.add(cq);
+							if (cq.getStartTime().after(ed)){	
+								break;
+							}
+						}
+					}else{
 						lo.add(cq);
-						if (cq.getStartTime().after(ed)){	
+						if (cq.getStartTime().after(ed)){
 							break;
 						}
 					}
-				}else{
-					lo.add(cq);
-					if (cq.getStartTime().after(ed)){
-						break;
-					}
-				}
+            	}
 				line=reader.readLine();
             }
     	}catch(Exception e){
@@ -255,17 +260,19 @@ public class StockPersistMgr {
 		return lo;
 	}
 	//get for step by step reading
-	public static List<? extends Object> getBTDDate(BufferedReader reader, FileDataMapper fdMapper, int numLines){
+	public static List<? extends Object> getBTDDate(BufferedReader reader, FileDataMapper fdMapper, int numLines, Date endDt, TradeHour th){
 		int lines=0;
 		List<Object> lo = new ArrayList<Object>();
 		try{
 			String line;
             line=reader.readLine();
             while (line != null){//in time ascending order
-            	Object cq = fdMapper.getObject(line);
+            	CandleQuote cq = (CandleQuote) fdMapper.getObject(line);
             	lines++;
-				lo.add(cq);
-				if (lines>numLines){
+            	if (StockUtil.filterByTradeHour(cq, th)){
+            		lo.add(cq);
+            	}
+				if (lines>numLines || cq.getStartTime().after(endDt)){
 					break;
 				}
 				line=reader.readLine();

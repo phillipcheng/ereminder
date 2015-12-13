@@ -24,17 +24,17 @@ public class Expression extends Indicator{
 	@Override
 	public void init(Map<String, String> params) {
 		exp = params.get(p_expression);
+		super.getRmap().put(toKey(), RenderType.line);
 	}
 	
 	@Override
-	public float calculate(CqIndicators prevCqi, List<CqIndicators> cqil, SelectStrategy bs){
+	public Object calculate(CqIndicators cqi, SelectStrategy bs){
 		Map<String,Object> variables = new HashMap<String, Object>();
-		CqIndicators lastCqi = cqil.get(cqil.size()-1);
 		for (String name:bs.getIndMap().keySet()){
 			Indicator ind = bs.getIndMap().get(name);
 			String key = ind.toKey();
-			if (lastCqi.hasIndicator(key)){
-				float v = lastCqi.getIndicator(key);
+			if (cqi.hasIndicator(key)){
+				float v = (float) cqi.getIndicator(key);
 				if (v==Indicator.V_NA){
 					//variables.put(name, null);
 				}else{

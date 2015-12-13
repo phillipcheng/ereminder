@@ -4,6 +4,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.trade.evt.MarketCloseTrdMsg;
+import org.cld.trade.evt.MarketOpenTrdMsg;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -22,7 +24,7 @@ public class GenMsgQuartzJob implements Job {
 		AutoTrader at = (AutoTrader) context.getMergedJobDataMap().get(AutoTrader.JDM_KEY_AT);
 		String triggerName=context.getTrigger().getKey().getName();
 		if (TradeMsgType.marketOpenSoon.toString().equals(triggerName)){
-			MarketOpenTrdMsg motm = new MarketOpenTrdMsg(!at.getTm().isPreview(), at.getTm().isUseLast(), at.getBs(), at.getSs()); //simulate use last
+			MarketOpenTrdMsg motm = new MarketOpenTrdMsg(); //simulate use last
 			at.addMsg(motm);
 			logger.info(String.format("message %s added.", motm));
 		}else if (TradeMsgType.marketCloseSoon.toString().equals(triggerName)){

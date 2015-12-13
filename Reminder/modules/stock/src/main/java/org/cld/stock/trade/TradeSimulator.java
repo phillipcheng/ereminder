@@ -16,6 +16,7 @@ import org.cld.stock.CandleQuote;
 import org.cld.stock.HdfsReader;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
+import org.cld.stock.TradeHour;
 import org.cld.stock.persistence.StockPersistMgr;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SellStrategy;
@@ -192,7 +193,7 @@ public class TradeSimulator {
 	 * @param dsoMap: for each day(submit day), given stockid, submit order to execute
 	 * @param cq
 	 */
-	public static void submitStockOrder(BuySellInfo bsi, StockConfig sc, HdfsReader hr){
+	public static void submitStockOrder(BuySellInfo bsi, StockConfig sc, HdfsReader hr, TradeHour th){
 		logger.debug(bsi.toString());
 		Map<String, StockOrder> executedOrder = new HashMap<String, StockOrder>(); //
 		List<StockOrder> sol = bsi.getSos();
@@ -207,7 +208,7 @@ public class TradeSimulator {
 		}
 		int holdDays = bsi.getSs().getHoldDuration();
 		Date ed = StockUtil.getNextOpenDay(bsi.getSubmitD(), sc.getHolidays(), holdDays);
-		List<CandleQuote> myCq = hr.getData(bsi.getSubmitD(), ed);
+		List<CandleQuote> myCq = hr.getData(bsi.getSubmitD(), ed, th);
 		Iterator<CandleQuote> cqi = myCq.iterator();
 		Iterator<CandleQuote> afterBuyCQI = tryExecuteOrder(buySOs, cqi, executedOrder, sc);
 		StockOrder buySO = buySOs.get(0);
@@ -281,14 +282,14 @@ public class TradeSimulator {
 	}
 	
 	//used by test
-	public static BuySellResult trade(SelectCandidateResult scr, SellStrategy ss, StockConfig sc, CrawlConf cconf){
+	public static BuySellResult trade(SelectCandidateResult scr, SellStrategy ss, StockConfig sc, CrawlConf cconf, TradeHour th){
 		HdfsReader hr =  null;
 		try {
 			String stockid = scr.getStockId();
 			List<StockOrder> sol = SellStrategy.makeStockOrders(scr, ss);
 			BuySellInfo bsi = new BuySellInfo("any", ss, sol, scr.getDt());
 			hr = StockPersistMgr.getReader(cconf, sc.getBTFQMinuteQuoteMapper(), stockid);
-			TradeSimulator.submitStockOrder(bsi, sc, hr);
+			TradeSimulator.submitStockOrder(bsi, sc, hr, th);
 			return TradeSimulator.calculateBuySellResult(scr.getDt(), sol);
 		}catch(Exception e){
 			logger.error("", e);

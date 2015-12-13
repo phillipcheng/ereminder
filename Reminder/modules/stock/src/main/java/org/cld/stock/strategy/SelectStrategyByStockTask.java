@@ -24,6 +24,7 @@ import org.cld.stock.HdfsReader;
 import org.cld.stock.CqIndicators;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
+import org.cld.stock.TradeHour;
 import org.cld.stock.indicator.Indicator;
 import org.cld.stock.persistence.StockPersistMgr;
 import org.cld.taskmgr.TaskMgr;
@@ -45,12 +46,13 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	private Date startDt;
 	private Date endDt;
 	private String outputDir;
+	private TradeHour th;
 	
 	public SelectStrategyByStockTask(){
 	}
 	
 	public SelectStrategyByStockTask(SelectStrategy[] bsl, String marketBaseId, String marketId, String stockId, 
-			Date startDate, Date endDate, String outputDir){
+			Date startDate, Date endDate, String outputDir, TradeHour th){
 		this.bsl = bsl;
 		this.marketBaseId = marketBaseId;
 		this.setMarketId(marketId);
@@ -58,6 +60,7 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 		this.startDt = startDate;
 		this.endDt = endDate;
 		this.setOutputDir(outputDir);
+		this.th = th;
 		genId();
 	}
 	
@@ -69,7 +72,7 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 		return this.getId();
 	}
 	
-	private static List<Object[]> getKV(SelectStrategy bs, Map<DataMapper, List<? extends Object>> resultMap, String stockId, 
+	private static List<Object[]> getKV(SelectStrategy bs, Map<String, List<? extends Object>> resultMap, String stockId, 
 			MapContext<Object, Text, Text, Text> context) throws Exception{
 		List<Object[]> kvl = new ArrayList<Object[]>();
 		List<SelectCandidateResult> scrl = bs.selectByHistory(resultMap);
@@ -90,24 +93,27 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	}
 	
 	//
-	public static List<Object[]> getKVL(CrawlConf cconf, SelectStrategy[] bsl, String stockId, Date startDate, Date endDate,
-			MapContext<Object, Text, Text, Text> context){
+	public static List<Object[]> getBuyOppList(CrawlConf cconf, SelectStrategy[] bsl, String stockId, Date startDate, Date endDate,
+			TradeHour th, MapContext<Object, Text, Text, Text> context){
 		try{
 			List<Object[]> kvl = new ArrayList<Object[]>(); //key value result returned if not in mapreduce
-			Map<DataMapper, List<? extends Object>> resultMap = new HashMap<DataMapper, List<? extends Object>>();//shared for all bs
+			Map<String, List<? extends Object>> resultMap = new HashMap<String, List<? extends Object>>();//shared for all bs
 			List<CandleQuote> cqlist = null;
 			FileDataMapper cqMapper = null;
+			String cqKey = null;
 			List<CqIndicators> cqilist = null;
 			for (SelectStrategy bs:bsl){
 				bs.init();
-				for (DataMapper dm: bs.getDataMappers()){
-					if (dm.oneFetch() && !resultMap.containsKey(dm)){
-						List<? extends Object> lo = StockPersistMgr.getDataByStockDate(cconf, dm, stockId, startDate, endDate);
+				for (String key: bs.getDataMappers().keySet()){
+					DataMapper dm = bs.getDataMappers().get(key);
+					if (dm.oneFetch() && !resultMap.containsKey(key)){
+						List<? extends Object> lo = StockPersistMgr.getDataByStockDate(cconf, dm, stockId, startDate, endDate, th);
 						if (dm instanceof FileDataMapper && ((FileDataMapper)dm).isCqMapper()){
 							cqlist = (List<CandleQuote>) lo;
 							cqMapper = (FileDataMapper)dm;
+							cqKey = key;
 						}else{
-							resultMap.put(dm, lo);
+							resultMap.put(key, lo);
 						}
 					}
 				}
@@ -115,16 +121,18 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 			List<SelectStrategy> sbsFetchBsl = new ArrayList<SelectStrategy>();//step by step
 			for (SelectStrategy bs:bsl){
 				if (bs.allOneFetch()){
-					cqilist = CqIndicators.addIndicators(null, null, cqlist, bs);
-					resultMap.put(cqMapper, cqilist);
-					bs.initData(resultMap);
+					cqilist = CqIndicators.addIndicators(cqlist, bs);
+					resultMap.put(cqKey, cqilist);
+					bs.initHistoryData(resultMap);
 					List<Object[]> skvl = getKV(bs, null, stockId, context);
 					kvl.addAll(skvl);
 				}else{
 					sbsFetchBsl.add(bs);
-					for (DataMapper dm:bs.getDataMappers()){
+					for (String key:bs.getDataMappers().keySet()){
+						DataMapper dm = bs.getDataMappers().get(key);
 						if (!dm.oneFetch()){
 							cqMapper = (FileDataMapper) dm;
+							cqKey = key;
 							break;
 						}
 					}
@@ -132,30 +140,25 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 			}
 			int fetchSize=600;//fetch interval size, larger then all indicators' periods
 			HdfsReader sbsCqReader = null;
-			Map<DataMapper, List<? extends Object>> sbsResults = new HashMap<DataMapper, List<? extends Object>>();
+			Map<String, List<? extends Object>> sbsResults = new HashMap<String, List<? extends Object>>();
 			Date lastDt = startDate;
 			if (sbsFetchBsl.size()>0){
 				try {
 					sbsCqReader = StockPersistMgr.getReader(cconf, cqMapper, stockId);
-					StockPersistMgr.getBTDDate(sbsCqReader.getBr(), cqMapper, startDate, startDate);
-					List<CandleQuote> prevCqlist = null;
-					Map<SelectStrategy, CqIndicators> prevCqiMap = new HashMap<SelectStrategy, CqIndicators>();
+					StockPersistMgr.getBTDDate(sbsCqReader.getBr(), cqMapper, startDate, startDate, th);
 					while (lastDt.before(endDate)){
-						cqlist = (List<CandleQuote>) StockPersistMgr.getBTDDate(sbsCqReader.getBr(), cqMapper, fetchSize);
+						cqlist = (List<CandleQuote>) StockPersistMgr.getBTDDate(sbsCqReader.getBr(), cqMapper, fetchSize, endDate, th);
 						if (cqlist.size()>0){
 							lastDt = ((CandleQuote)cqlist.get(cqlist.size()-1)).getStartTime();
 							for (SelectStrategy bs: sbsFetchBsl){
-								cqilist = CqIndicators.addIndicators(prevCqiMap.get(bs), prevCqlist, cqlist, bs);
-								CqIndicators pCqi = cqilist.get(cqilist.size()-1);
-								prevCqiMap.put(bs, pCqi);
-								sbsResults.put(cqMapper, cqilist);
+								cqilist = CqIndicators.addIndicators(cqlist, bs);
+								sbsResults.put(cqKey, cqilist);
 								List<Object[]> skvl = getKV(bs, sbsResults, stockId, context);
 								kvl.addAll(skvl);
 							}
 						}else{
 							break;
 						}
-						prevCqlist = cqlist;
 					}
 				}finally{
 					sbsCqReader.close();
@@ -176,7 +179,7 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	public void runMyselfAndOutput(Map<String, Object> params, 
 			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
 		CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
-		getKVL(cconf, bsl, stockId, startDt, endDt, context);
+		getBuyOppList(cconf, bsl, stockId, startDt, endDt, th, context);
 	}
 	
 	private static String submitTasks(String taskName, String propfile, List<Task> tl, CrawlConf cconf, int mbMem, int maxSelectNumber){
@@ -193,12 +196,12 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	}
 	
 	public static String[] launch(String propfile, CrawlConf cconf, String marketBaseId, String marketId, String outputDir, 
-			SelectStrategy[] bsl, Date startDate, Date endDate, int maxSelectNumber) {
+			SelectStrategy[] bsl, Date startDate, Date endDate, int maxSelectNumber, TradeHour th) {
 		StockConfig sc = StockUtil.getStockConfig(marketBaseId);
 		List<Task> tl = new ArrayList<Task>();
 		String[] stockids = ETLUtil.getStockIdByMarketId(sc, marketId, cconf, null);
 		for (String stockid: stockids){
-			Task t = new SelectStrategyByStockTask(bsl, marketBaseId, marketId, stockid, startDate, endDate, outputDir);
+			Task t = new SelectStrategyByStockTask(bsl, marketBaseId, marketId, stockid, startDate, endDate, outputDir, th);
 			tl.add(t);
 		}
 		String sb = "";

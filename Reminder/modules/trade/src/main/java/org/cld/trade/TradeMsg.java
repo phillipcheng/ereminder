@@ -31,6 +31,6 @@ public abstract class TradeMsg {
 		this.somap = somap;
 	}
 	
-	public abstract TradeMsgPR process(TradeMgr tm);
+	public abstract TradeMsgPR process(AutoTrader at);
 
 }

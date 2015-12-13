@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.stock.CandleQuote;
+import org.cld.stock.CqIndicators;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.indicator.Expression;
@@ -40,8 +41,10 @@ public abstract class SelectStrategy {
 	public static final String KEY_INIDCATOR_TYPE="type";
 	public static final String KEY_INIDCATOR_PARAM="scs.param.indicator";
 	
+	public static final String KEY_CQ="cq";
+	public static final String KEY_DIVSPLIT="divsplit";
+	public static final String KEY_DIVIDEND="dividend";
 	
-	public static final int MAX_LOOKUP=50;
 	
 	protected StockConfig sc;
 	private String name;
@@ -50,11 +53,41 @@ public abstract class SelectStrategy {
 	protected Map<String, Object> params = new TreeMap<String, Object>();
 	protected List<Indicator> indList = new ArrayList<Indicator>();//order in the properties
 	protected Map<String, Indicator> indMap = new HashMap<String, Indicator>();//name map
-
 	private String baseMarketId;
 	private IntervalUnit lookupUnit = IntervalUnit.day;
-	
+	@JsonIgnore
+	private List<CqIndicators> cqilist = null;//passed in by init
+	@JsonIgnore
+	protected Map<String, DataMapper> dataMap=new HashMap<String, DataMapper>();
+
 	public SelectStrategy(){
+	}
+	
+
+	//streaming
+	public abstract SelectCandidateResult selectByStream(CqIndicators cqi);
+	
+	public Map<String, DataMapper> getDataMappers() {
+		dataMap.put(SelectStrategy.KEY_CQ, quoteMapper());
+		return dataMap;
+	}
+	//back testing
+	public void initHistoryData(Map<String, List<? extends Object>> resultMap){
+		cqilist = (List<CqIndicators>) resultMap.get(SelectStrategy.KEY_CQ);
+	}
+	//back testing, name of data set to data set map
+	public List<SelectCandidateResult> selectByHistory(Map<String, List<? extends Object>> tableResults) {
+		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
+		if (!quoteMapper().oneFetch()){
+			cqilist = (List<CqIndicators>) tableResults.get(SelectStrategy.KEY_CQ);
+		}
+		for (CqIndicators cqi:cqilist){
+			SelectCandidateResult scr = selectByStream(cqi);
+			if (scr!=null){
+				scrl.add(scr);
+			}
+		}
+		return scrl;
 	}
 	
 	@JsonIgnore
@@ -89,12 +122,12 @@ public abstract class SelectStrategy {
 					Indicator indi = (Indicator) Class.forName(indClass).newInstance();
 					Map<String, String> kv = new HashMap<String, String>();
 					Iterator<String> paramKeys = props.getKeys(paramPrefix);
+					String chartParam = KEY_INIDCATOR + "." + indName + "."+ Indicator.KEY_CHART;
+					indi.setChartId(props.getString(chartParam));
 					while (paramKeys.hasNext()){
 						String paramKey = paramKeys.next();
 						String paramValue = (String) params.get(paramKey);
-						if (paramKey.equals(paramPrefix + "." + Indicator.KEY_CHART)){
-							indi.setChartType(paramValue);
-						}else if (paramKey.equals(paramPrefix + "." + Indicator.KEY_PERIODS)){
+						if (paramKey.equals(paramPrefix + "." + Indicator.KEY_PERIODS)){
 							indi.setPeriods((int) Float.parseFloat(paramValue));
 						}else{
 							String stripParam = paramKey.substring(paramPrefix.length()+1);
@@ -130,15 +163,8 @@ public abstract class SelectStrategy {
 		return sb.toString();
 	}
 
-	public abstract int maxLookupNum();//not needed for all datamapper are alldata
-	public abstract void initData(Map<DataMapper, List<? extends Object>> resultMap);
-	public abstract DataMapper[] getDataMappers();
-	public abstract List<SelectCandidateResult> selectByHistory(Map<DataMapper, List<? extends Object>> tableResults);
-	public List<SelectCandidateResult> selectByCurrent(CrawlConf cconf, String baseMarketId, String marketId, Date submitDay, int n, Map<String, Float> newQuotes) {return null;};
-	public String[] prepareData(String baseMarketId, String marketId, CrawlConf cconf, String propfile, Date start, Date end){return null;};
-	
 	public boolean allOneFetch(){
-		for (DataMapper dm: getDataMappers()){
+		for (DataMapper dm: getDataMappers().values()){
 			if (!dm.oneFetch()){
 				return false;
 			}
@@ -213,6 +239,42 @@ public abstract class SelectStrategy {
 			return null;
 		}
 		return lss;
+	}
+	
+	public List<SelectCandidateResult> filterResults(List<SelectCandidateResult> inscrl, int selectNum){
+		TreeMap<Float, List<SelectCandidateResult>> map = new TreeMap<Float, List<SelectCandidateResult>>();
+		for (SelectCandidateResult scr: inscrl){
+			List<SelectCandidateResult> scrl = map.get(scr.getValue());
+			if (scrl==null){
+				scrl = new ArrayList<SelectCandidateResult>();
+				map.put(scr.getValue(), scrl);
+			}
+			map.put(scr.getValue(), scrl);
+		}
+		Iterator<Float> kl = null;
+		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
+		if (this.orderDirection.equals(StrategyConst.V_ASC)){
+			kl = map.keySet().iterator();
+		}else{
+			kl = map.descendingKeySet().iterator();
+		}
+		int cnt=0;
+		while(cnt<selectNum){
+			if (kl.hasNext()){
+				Float f = kl.next();
+				List<SelectCandidateResult> l = map.get(f);
+				int i=0;
+				for (i=0; i<l.size();i++){
+					SelectCandidateResult scr = l.get(i);
+					logger.info(String.format("number %d:%s", i, scr));
+					scrl.add(scr);
+				}
+				cnt+=(i+1);
+			}else{
+				break;
+			}
+		}
+		return scrl;
 	}
 	
 	//

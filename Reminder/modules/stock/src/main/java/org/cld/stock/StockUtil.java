@@ -36,7 +36,6 @@ import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.DateTimeUtil;
 import org.cld.util.FileDataMapper;
 import org.cld.util.JsonUtil;
-import org.cld.util.StringUtil;
 
 
 public class StockUtil {
@@ -48,6 +47,11 @@ public class StockUtil {
 	
 	protected static Logger logger =  LogManager.getLogger(StockUtil.class);
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	public static final SimpleDateFormat msdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+	public static final long DAY_MILLI = 24*60*60*1000L; 
+	
+	public static long normalOpenMinute = 9*60+30;
+	public static long normalCloseMinute = 16*60;
 	
 	public static StockConfig getStockConfig(String stockBase){
 		if (SINA_STOCK_BASE.equals(stockBase)){
@@ -154,7 +158,68 @@ public class StockUtil {
 		return year + "-" + dt;
 	}
 	
-	public static List<CqIndicators> getData(CrawlConf cconf, StockDataConfig sdcfg, SelectStrategy bs){
+	public static boolean filterByTradeHour(CandleQuote cq, TradeHour th){
+		if (th == TradeHour.Normal){
+			int minute = cq.getStartTime().getHours() *60 + cq.getStartTime().getMinutes();
+			if (minute>=normalOpenMinute && minute<=normalCloseMinute){
+				return true;
+			}else{
+				return false;
+			}
+		}else{
+			return true;
+		}
+	}
+	
+	public static Date getPeriodStart(Date dt, IntervalUnit iu, StockConfig sc){
+		Calendar cal = Calendar.getInstance(sc.getTimeZone());
+		if (iu == IntervalUnit.minute){
+			cal.setTime(dt);
+			cal.set(Calendar.SECOND, 0);
+			cal.set(Calendar.MILLISECOND, 0);
+			return cal.getTime();
+		}else if (iu == IntervalUnit.minute5){
+			cal.setTime(dt);
+			int minute = cal.get(Calendar.MINUTE);
+			cal.set(Calendar.SECOND, 0);
+			cal.set(Calendar.MILLISECOND, 0);
+			cal.set(Calendar.MINUTE, minute-minute%5);
+			return cal.getTime();
+		}else if (iu == IntervalUnit.day){
+			cal.setTime(dt);
+			cal.set(Calendar.SECOND, 0);
+			cal.set(Calendar.MILLISECOND, 0);
+			cal.set(Calendar.HOUR_OF_DAY, 9);//TODO use sc
+			cal.set(Calendar.MINUTE, 30);
+			return cal.getTime();
+		}else{
+			logger.error(String.format("unsupported interval unit:%s", iu));
+			return null;
+		}
+	}
+	
+	//aggregate input to this, if new generated returned
+	public static CandleQuote aggregate(CandleQuote curCq, CandleQuote input, IntervalUnit iu, StockConfig sc){
+		Date inputPeriodStart = getPeriodStart(input.getStartTime(), iu, sc);
+		if (curCq!=null && inputPeriodStart.equals(curCq.getStartTime())){
+			if (input.getHigh()>curCq.getHigh()){
+				curCq.setHigh(input.getHigh());
+			}
+			if (input.getLow()<curCq.getLow()){
+				curCq.setLow(input.getLow());
+			}
+			curCq.setClose(input.getClose());
+			curCq.setVolume(input.getVolume()+curCq.getVolume());
+			return null;
+		}else{
+			CandleQuote output = input.clone();
+			output.setStartTime(inputPeriodStart);
+			return output;
+		}
+	}
+		
+	
+	public static List<CqIndicators> getData(CrawlConf cconf, StockDataConfig sdcfg, SelectStrategy bs, TradeHour th){
 		FileDataMapper fdMapper = null;
 		StockConfig sc = StockUtil.getStockConfig(sdcfg.getBaseMarketId());
 		if (sdcfg.getUnit()==IntervalUnit.day){
@@ -165,8 +230,8 @@ public class StockUtil {
 			logger.error(String.format("unit not supported: %s", sdcfg.getUnit()));
 		}
 		List<CandleQuote> cql = (List<CandleQuote>) StockPersistMgr.getBTDByStockDate(cconf, fdMapper, sdcfg.getStockId(), 
-				sdcfg.getStartDt(), sdcfg.getEndDt());
-		return CqIndicators.addIndicators(null, null, cql, bs);
+				sdcfg.getStartDt(), sdcfg.getEndDt(), th);
+		return CqIndicators.addIndicators(cql, bs);
 	}
 	
 	public static final String STRATEGY_PREFIX="strategy.";
@@ -178,7 +243,7 @@ public class StockUtil {
 	public static final int reduceMbMemSellStrategy = 1024;
 	public static final int reduceMbMemStrategyResult = 2048;
 	public static void validateAllStrategyByStock(String propFile, CrawlConf cconf, String baseMarketId, String marketId, Date startDate, Date endDate, 
-			String snParam, String stepParam){
+			String snParam, String stepParam, TradeHour th){
 		String folderName = null;
 		if (snParam!=null){
 			String strParam = snParam.replace(STRATEGY_NAMES_SEP, "_");
@@ -235,7 +300,7 @@ public class StockUtil {
 			if (stepParam==null || "1".equals(stepParam)){
 				allSelectStrategyArray = allSelectStrategy.toArray(allSelectStrategyArray);
 				SelectStrategyByStockTask.launch(propFile, cconf, baseMarketId, marketId, outputDir1, 
-						allSelectStrategyArray, startDate, endDate, maxSelectNumber);
+						allSelectStrategyArray, startDate, endDate, maxSelectNumber, th);
 			}
 			
 			if (stepParam==null || "2".equals(stepParam)){

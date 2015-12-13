@@ -29,7 +29,7 @@ public class SinaStockConfig extends StockConfig {
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	public static Set<Date> CNHolidays = new HashSet<Date>();
 	static{
-		//sdf.setTimeZone(TimeZone.getTimeZone("CTT"));
+		sdf.setTimeZone(TimeZone.getTimeZone("UTC+8"));
 		try{
 			//
 			CNHolidays.add(sdf.parse("2005-01-03"));
@@ -606,7 +606,7 @@ public class SinaStockConfig extends StockConfig {
 
 	@Override
 	public TimeZone getTimeZone() {
-		return TimeZone.getTimeZone("CTT");
+		return TimeZone.getTimeZone("UTC+8");
 	}
 	
 	@Override

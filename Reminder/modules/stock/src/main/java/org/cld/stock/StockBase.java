@@ -409,7 +409,7 @@ public abstract class StockBase extends TestBase{
 		Map<String,String> params = StringUtil.parseMapParams(inparam);
 		String snParam = params.get(STRATEGY_NAMES);
 		String stepParam = params.get(STEP_NAMES);
-		StockUtil.validateAllStrategyByStock(this.propFile, cconf, baseMarketId, marketId, startDate, endDate, snParam, stepParam);
+		StockUtil.validateAllStrategyByStock(this.propFile, cconf, baseMarketId, marketId, startDate, endDate, snParam, stepParam, TradeHour.Normal);
 	}
 
 	//from cmd directly
@@ -663,45 +663,6 @@ public abstract class StockBase extends TestBase{
 		}
 	}
 	
-	public String[] prepareAllData(String sn){
-		try {
-			String strategyName = StockUtil.STRATEGY_PREFIX+sn+StockUtil.STRATEGY_SUFFIX;
-			PropertiesConfiguration props = new PropertiesConfiguration(strategyName);
-			List<SelectStrategy> bsl = SelectStrategy.gen(props, sn, this.getBaseMarketId());
-			if (bsl.size()>0){
-				SelectStrategy bs = bsl.get(0);
-				return bs.prepareData(this.getBaseMarketId(), this.getMarketId(), cconf, this.getPropFile(), this.startDate, this.endDate);
-			}else{
-				return null;
-			}
-		}catch(Exception e){
-			logger.error("", e);
-			return null;
-		}
-	}
-	
-	public String[] prepareOneDayData(String sn){
-		try {
-			String strategyName = StockUtil.STRATEGY_PREFIX+sn+StockUtil.STRATEGY_SUFFIX;
-			PropertiesConfiguration props = new PropertiesConfiguration(strategyName);
-			List<SelectStrategy> bsl = SelectStrategy.gen(props, sn, this.getBaseMarketId());
-			if (bsl.size()>0){
-				String curMarketId = getCurMarketId();
-				SelectStrategy bs = bsl.get(0);
-				//set startDate to be one day before the day, and endDate to be one day after the day
-				Date theDay = StockUtil.getLastOpenDay(DateTimeUtil.yesterday(this.endDate), this.getStockConfig().getHolidays());
-				Date sd = DateTimeUtil.yesterday(theDay);
-				Date ed = DateTimeUtil.tomorrow(theDay);
-				return bs.prepareData(this.getBaseMarketId(), curMarketId, cconf, this.getPropFile(), sd, ed);
-			}else{
-				return null;
-			}
-		}catch(Exception e){
-			logger.error("", e);
-			return null;
-		}
-	}
-	
 	//remove the raw files for this cmd under folders from startDate to endDate
 	public void removeRaw(String cmd){
 		if (startDate == null || endDate==null){
@@ -726,13 +687,13 @@ public abstract class StockBase extends TestBase{
 	
 	private static final int poll_interval=20000;
 	public static final String CMD_NAME="cmd";
-	public static String[] cmds = new String[]{"runAllCmd", "postprocess", "run_merge", "dumpFiles", "loadDataFiles", "postImport", "prepareOneDayData"};
+	public static String[] cmds = new String[]{"runAllCmd", "postprocess", "run_merge", "dumpFiles", "loadDataFiles", "postImport"};
 	public void updateAll(String inparam) throws InterruptedException{
 		Map<String,String> params = StringUtil.parseMapParams(inparam);
 		String cmdParam = params.get(CMD_NAME);
 		String stepParam = params.get(STEP_NAMES);
 		logger.info(String.format("cmd:%s,step:%s", cmdParam, stepParam));
-		String[] cmdParams = new String[]{cmdParam, cmdParam, cmdParam, cmdParam, cmdParam, null, "closedropavg"};
+		String[] cmdParams = new String[]{cmdParam, cmdParam, cmdParam, cmdParam, cmdParam, null};
 		if (inparam !=null){
 			if (CrawlCmdGroupType.nonequote.toString().equals(cmdParam)){//for none trading days
 				cmds = new String[]{"runAllCmd", "run_merge", "dumpFiles", "loadDataFiles", "postImport"};

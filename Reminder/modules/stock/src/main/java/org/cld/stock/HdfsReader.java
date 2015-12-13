@@ -64,15 +64,15 @@ public class HdfsReader {
 		}
 	}
 	
-	public List<CandleQuote> getData(Date startDt, Date endDt){
+	public List<CandleQuote> getData(Date startDt, Date endDt, TradeHour th){
 		List<CandleQuote> moreCq = null;
 		if (cqCache.size()==0){
-			moreCq = StockPersistMgr.getBTDDate(br, fdm, startDt, endDt);
+			moreCq = StockPersistMgr.getBTDDate(br, fdm, startDt, endDt, th);
 			cqCache.addAll(moreCq);
 			logger.debug(String.format("number of items to add to cache:%d", moreCq.size()));
 		}else{
 			if (endDt.after(cqCache.get(cqCache.size()-1).getStartTime())){
-				moreCq = StockPersistMgr.getBTDDate(br, fdm, null, endDt);//from current mark to ed
+				moreCq = StockPersistMgr.getBTDDate(br, fdm, null, endDt, th);//from current mark to ed
 				cqCache.addAll(moreCq);
 				logger.debug(String.format("number of items to add to cache:%d", moreCq.size()));
 			}

@@ -202,11 +202,4 @@ public class TestNasdaqStock {
 		StockBase sb = new NasdaqStockBase(pFile, marketId, null, null);
 		sb.fqReady(new Date());
 	}
-	
-	@Test
-	public void testPrepareOneDayData() throws Exception{
-		String pFile = "client1-v2.properties";
-		StockBase sb = new NasdaqStockBase(pFile, marketId, null, sdf.parse("2015-11-13"));
-		sb.prepareOneDayData("closedropavg");
-	}
 }

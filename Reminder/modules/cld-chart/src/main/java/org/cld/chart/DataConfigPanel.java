@@ -12,8 +12,13 @@ import org.apache.logging.log4j.Logger;
 import org.cld.stock.StockDataConfig;
 
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.DefaultComboBoxModel;
 import org.cld.stock.strategy.IntervalUnit;
+import javax.swing.JButton;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.awt.event.ActionEvent;
 
 public class DataConfigPanel extends JPanel {
 
@@ -30,11 +35,11 @@ public class DataConfigPanel extends JPanel {
 	private JTextField tfStartDt = null;
 	private JLabel lblEnd;
 	private JTextField tfEndDt = null;
-
-	private StockDataConfig dc;  //  @jve:decl-index=0:
 	private JTextField txtBaseMarketId;
 
-
+	private StockDataConfig dc;  //  @jve:decl-index=0:
+	private String strategyFile;
+	
 	/**
 	 * This is the default constructor
 	 */
@@ -70,18 +75,18 @@ public class DataConfigPanel extends JPanel {
 	 */
 	private void initialize() {
 		lblInterval = new JLabel();
-		lblInterval.setBounds(new Rectangle(0, 61, 60, 25));
+		lblInterval.setBounds(new Rectangle(10, 100, 60, 25));
 		lblInterval.setText("Unit:");
 		lblEnd = new JLabel();
-		lblEnd.setBounds(new Rectangle(0, 112, 46, 22));
+		lblEnd.setBounds(new Rectangle(10, 151, 46, 22));
 		lblEnd.setText("EndDt:");
 		lblStart = new JLabel();
-		lblStart.setBounds(new Rectangle(0, 88, 46, 22));
+		lblStart.setBounds(new Rectangle(10, 127, 46, 22));
 		lblStart.setText("StartDt:");
 		lblStockId = new JLabel();
 		lblStockId.setText("StockId:");
-		lblStockId.setBounds(new Rectangle(0, 34, 60, 25));
-		this.setSize(198, 160);
+		lblStockId.setBounds(new Rectangle(10, 73, 60, 25));
+		this.setSize(221, 184);
 		this.setLayout(null);
 		this.add(lblStockId, null);
 		this.add(lblStart, null);
@@ -92,20 +97,44 @@ public class DataConfigPanel extends JPanel {
 		this.add(getCbUnit(), null);
 		
 		txtStockId = new JTextField();
-		txtStockId.setBounds(70, 36, 86, 20);
+		txtStockId.setBounds(91, 73, 86, 20);
 		add(txtStockId);
 		txtStockId.setColumns(10);
 		
 		JLabel lblBaseMarketId = new JLabel();
 		lblBaseMarketId.setText("BaseMarketId:");
 		lblBaseMarketId.setBounds(new Rectangle(0, 34, 60, 25));
-		lblBaseMarketId.setBounds(0, 11, 70, 25);
+		lblBaseMarketId.setBounds(10, 50, 70, 25);
 		add(lblBaseMarketId);
 		
 		txtBaseMarketId = new JTextField();
+		txtBaseMarketId.setText("nasdaq");//init
 		txtBaseMarketId.setColumns(10);
-		txtBaseMarketId.setBounds(70, 13, 86, 20);
+		txtBaseMarketId.setBounds(91, 50, 86, 20);
 		add(txtBaseMarketId);
+		
+		JLabel lblStrategy = new JLabel("Strategy:");
+		lblStrategy.setBounds(10, 25, 60, 14);
+		add(lblStrategy);
+		
+		final JButton btnChooseStrategy = new JButton("Choose");
+		final JFileChooser fc = new JFileChooser();
+		btnChooseStrategy.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (e.getSource() == btnChooseStrategy) {
+			        int returnVal = fc.showOpenDialog(DataConfigPanel.this);
+			        if (returnVal == JFileChooser.APPROVE_OPTION) {
+			            File file = fc.getSelectedFile();
+			            //This is where a real application would open the file.
+			            logger.info("Opening: " + file.getName());
+			        } else {
+			        	logger.info("Open command cancelled by user.");
+			        }
+			   }
+			}
+		});
+		btnChooseStrategy.setBounds(88, 21, 89, 23);
+		add(btnChooseStrategy);
 	}
 
 	/**
@@ -116,7 +145,7 @@ public class DataConfigPanel extends JPanel {
 	private JTextField getTfStartDt() {
 		if (tfStartDt == null) {
 			tfStartDt = new JTextField();
-			tfStartDt.setBounds(new Rectangle(70, 88, 123, 22));
+			tfStartDt.setBounds(new Rectangle(91, 125, 123, 22));
 			tfStartDt.setText("2011-04-06");
 			tfStartDt.setName("tfType");
 		}
@@ -131,7 +160,7 @@ public class DataConfigPanel extends JPanel {
 	private JTextField getTfEndDt() {
 		if (tfEndDt == null) {
 			tfEndDt = new JTextField();
-			tfEndDt.setBounds(new Rectangle(70, 112, 123, 22));
+			tfEndDt.setBounds(new Rectangle(91, 149, 123, 22));
 			tfEndDt.setText("2011-04-07");
 			tfEndDt.setName("tfType");
 		}
@@ -147,8 +176,16 @@ public class DataConfigPanel extends JPanel {
 		if (cbUnit == null) {
 			cbUnit = new JComboBox();
 			cbUnit.setModel(new DefaultComboBoxModel(IntervalUnit.values()));
-			cbUnit.setBounds(new Rectangle(70, 61, 116, 25));
+			cbUnit.setBounds(new Rectangle(91, 98, 116, 25));
 		}
 		return cbUnit;
+	}
+
+	public String getStrategyFile() {
+		return strategyFile;
+	}
+
+	public void setStrategyFile(String strategyFile) {
+		this.strategyFile = strategyFile;
 	}
 }  //  @jve:decl-index=0:visual-constraint="4,5"

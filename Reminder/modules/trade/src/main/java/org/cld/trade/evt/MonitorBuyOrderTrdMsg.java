@@ -1,10 +1,16 @@
-package org.cld.trade;
+package org.cld.trade.evt;
 
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.trade.StockOrder;
+import org.cld.trade.AutoTrader;
+import org.cld.trade.StockOrderType;
+import org.cld.trade.TradeKingConnector;
+import org.cld.trade.TradeMsg;
+import org.cld.trade.TradeMsgPR;
+import org.cld.trade.TradeMsgType;
 import org.cld.trade.response.OrderStatus;
 
 public class MonitorBuyOrderTrdMsg extends TradeMsg {
@@ -48,13 +54,13 @@ public class MonitorBuyOrderTrdMsg extends TradeMsg {
 	 *      |__ cancelled, remove me
 	 */
 	@Override
-	public TradeMsgPR process(TradeMgr tm) {
-		Map<String, OrderStatus> map = tm.getOrderStatus();
+	public TradeMsgPR process(AutoTrader at) {
+		Map<String, OrderStatus> map = at.getTm().getOrderStatus();
 		OrderStatus os = map.get(getOrderId());
 		TradeMsgPR tmpr = new TradeMsgPR();
 		if (os!=null){
 			if (OrderStatus.FILLED.equals(os.getStat())){
-				tmpr = BuyOrderFilledTrdMsg.process(tm, this.getSomap());
+				tmpr = BuyOrderFilledTrdMsg.process(at, this.getSomap());
 			}else if (OrderStatus.CANCELED.equals(os.getStat())){
 				logger.info(String.format("order %s cancelled", os));
 				tmpr.setExecuted(true);
