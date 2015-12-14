@@ -3,7 +3,6 @@ package org.cld.trade.test;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.trade.StockOrder;
@@ -17,8 +16,6 @@ import org.cld.trade.response.Balance;
 import org.cld.trade.response.Holding;
 import org.cld.trade.response.OrderResponse;
 import org.cld.trade.response.OrderStatus;
-import org.cld.trade.response.Quote;
-import org.junit.Before;
 import org.junit.Test;
 
 public class TestTradeConnector {
@@ -106,7 +103,7 @@ public class TestTradeConnector {
 	
 	@Test
 	public void testGetQuotes(){
-		tm.getQuotes(new String[]{"GLUU", "FIT"}, true);
+		tm.getQuotes(new String[]{"GLUU", "FIT"});
 	}
 	
 	@Test
