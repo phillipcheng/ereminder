@@ -10,12 +10,9 @@ import org.cld.stock.trade.StockOrder.ActionType;
 import org.cld.stock.trade.StockOrder.OrderType;
 import org.cld.trade.AutoTrader;
 import org.cld.trade.StockOrderType;
-import org.cld.trade.TradeKingConnector;
 import org.cld.trade.TradeMsg;
 import org.cld.trade.TradeMsgPR;
 import org.cld.trade.TradeMsgType;
-import org.cld.trade.persist.StockPosition;
-import org.cld.trade.persist.TradePersistMgr;
 import org.cld.trade.response.OrderResponse;
 import org.cld.trade.response.Quote;
 
@@ -74,8 +71,7 @@ public class MonitorSellPriceTrdMsg extends TradeMsg {
 				OrderResponse or = at.getTm().trySubmit(selllimit, true);
 				selllimit.setOrderId(or.getClientorderid());
 				if (OrderResponse.SUCCESS.equals(or.getError())){
-					StockPosition trySp = new StockPosition(selllimit, StockPosition.close, selllimit.getOrderId());
-					TradePersistMgr.closePosition(at.getCconf().getSmalldbconf(), trySp);//
+					logger.info(String.format("market sell order %s submitted successfully.", or.getClientorderid()));
 				}else{
 					//TODO error handling
 					logger.error(String.format("sell market order error: sell order: %s, response: %s", selllimit, or));

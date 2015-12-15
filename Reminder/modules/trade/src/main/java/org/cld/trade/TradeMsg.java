@@ -7,7 +7,7 @@ import org.cld.stock.trade.StockOrder;
 
 public abstract class TradeMsg {
 	private TradeMsgType msgType;
-	private Map<StockOrderType, StockOrder> somap; //the somap context
+	protected Map<StockOrderType, StockOrder> somap; //the somap context
 	
 	public TradeMsg(TradeMsgType msgType){
 		this.msgType = msgType;

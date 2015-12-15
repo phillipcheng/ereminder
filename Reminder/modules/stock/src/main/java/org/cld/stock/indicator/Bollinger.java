@@ -95,4 +95,12 @@ public class Bollinger extends Indicator{
 	public String toKey() {
 		return String.format("Bollinger:%d,%.2f", super.getPeriods(), width);
 	}
+
+	public float getWidth() {
+		return width;
+	}
+
+	public void setWidth(float width) {
+		this.width = width;
+	}
 }

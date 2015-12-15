@@ -53,7 +53,7 @@ public class MainFrame extends JFrame {
 			String strategyFile = pc.getString(KEY_STRATEGY);
 			cconf = CrawlTestUtil.getCConf(pFile);
 			PropertiesConfiguration strategyPC = PropertiesUtil.getPC(strategyFile);
-			List<SelectStrategy> bsl = SelectStrategy.gen(strategyPC, strategyFile, baseMarketId);
+			List<SelectStrategy> bsl = SelectStrategy.genList(strategyPC, strategyFile, baseMarketId);
 			if (bsl.size()>0){
 				bs = bsl.get(0);
 			}
@@ -96,7 +96,9 @@ public class MainFrame extends JFrame {
 						th = TradeHour.Normal;
 					}
 					cqilist = StockUtil.getData(cconf, sdcfg, bs, th);
-					List<Object[]> kvl = SelectStrategyByStockTask.getBuyOppList(cconf, new SelectStrategy[]{bs}, sdcfg.getStockId(), 
+					List<SelectStrategy> bsl = new ArrayList<SelectStrategy>();
+					bsl.add(bs);
+					List<Object[]> kvl = SelectStrategyByStockTask.getBuyOppList(cconf, bsl, sdcfg.getStockId(), 
 							sdcfg.getStartDt(), sdcfg.getEndDt(), th, null);
 					List<Date> dl = new ArrayList<Date>();
 					for (Object[] kv:kvl){

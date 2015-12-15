@@ -12,13 +12,14 @@ import org.cld.trade.StreamQuoteRequest;
 import org.cld.trade.TradeDataMgr;
 import org.junit.Test;
 
-public class TestTradeDataMgr {
-	
+public class TestHistoryDump {
 	@Test
 	public void test1() throws Exception {
 		AutoTrader at = new AutoTrader();
 		StockConfig sc = StockUtil.getStockConfig(at.getBaseMarketId());
 		TradeDataMgr tdm = new TradeDataMgr(at, sc);
+		HistoryDumpMgr hdm = new HistoryDumpMgr(at.getHistoryDumpProperties(), tdm, sc);
+		new Thread(hdm).start();
 		BufferedReader br = new BufferedReader(new InputStreamReader(
 				new FileInputStream("C:\\mydoc\\myprojects\\ereminder\\Reminder\\modules\\trade\\input\\AAPL_tick_20151214.txt")));
 		String line = null;
@@ -27,6 +28,6 @@ public class TestTradeDataMgr {
 		}
 		br.close();
 		
-		Thread.sleep(30000);//60 seconds
+		Thread.sleep(30000);//30 seconds
 	}
 }

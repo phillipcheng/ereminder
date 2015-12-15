@@ -1,14 +1,13 @@
 package org.cld.trade;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.TreeMap;
 
@@ -29,6 +28,8 @@ import org.cld.stock.trade.StockOrder.ActionType;
 import org.cld.stock.trade.StockOrder.OrderType;
 import org.cld.stock.trade.StockOrder.TimeInForceType;
 import org.cld.trade.persist.StockPosition;
+import org.mortbay.jetty.client.ContentExchange;
+import org.mortbay.jetty.client.HttpClient;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
@@ -46,7 +47,6 @@ public class AutoTrader implements Runnable {
 	private static final String TRADE_CONNECTOR="trade.connector";
 	private static final String HISTORY_DUMP="history.dump";
 	private static final String STRATEGIES="strategies";
-	private static final String SYMBOLS="symbols";
 	
 	//at configures
 	private static final String CRAWLCONF_KEY="crawl.conf";
@@ -60,8 +60,8 @@ public class AutoTrader implements Runnable {
 	
 	//
 	private TradeKingConnector tradeConnector;
-	private TreeMap<IntervalUnit, List<TradeStrategy>> tsMap = new TreeMap<IntervalUnit, List<TradeStrategy>>();//order by declaration from small to big
-	private List<String> symbols = new ArrayList<String>();
+	private Map<String, TreeMap<IntervalUnit, List<TradeStrategy>>> tsMap = new HashMap<String, TreeMap<IntervalUnit, List<TradeStrategy>>>();//symbol to trade-strategy instance
+	private Set<String> symbols = new HashSet<String>();
 	private String historyDumpProperties;
 	
 	private String cconffile;
@@ -93,32 +93,38 @@ public class AutoTrader implements Runnable {
 			//setup strategy
 			List<Object> strategyFiles = pc.getList(STRATEGIES);
 			for (int i=0; i<strategyFiles.size(); i++){
-				String str = (String)strategyFiles.get(i);
-				PropertiesConfiguration props = new PropertiesConfiguration(str);
-				List<SelectStrategy> bsl = SelectStrategy.gen(props, "TheStrategy", getBaseMarketId());
+				String strategyName = (String)strategyFiles.get(i);
+				PropertiesConfiguration props = new PropertiesConfiguration(strategyName);
+				Map<String, List<SelectStrategy>> bsMap = SelectStrategy.genMap(props, strategyName, getBaseMarketId());
 				SellStrategy[] ssl = SellStrategy.gen(props);
-				SelectStrategy bs = bsl.get(0);
-				bs.init();
-				TradeStrategy ts = new TradeStrategy(bs, ssl[0]);
-				List<TradeStrategy> tsl = tsMap.get(bs.getLookupUnit());
-				if (tsl==null){
-					tsl = new ArrayList<TradeStrategy>();
-					tsMap.put(bs.getLookupUnit(), tsl);
+				for (String symbol:bsMap.keySet()){
+					symbols.add(symbol);
+					TreeMap<IntervalUnit, List<TradeStrategy>> tslMap = tsMap.get(symbol);
+					if (tslMap==null){
+						tslMap = new TreeMap<IntervalUnit, List<TradeStrategy>>();
+						tsMap.put(symbol, tslMap);
+					}
+					SelectStrategy bs = bsMap.get(symbol).get(0);//only 1 bs for each strategy file
+					List<TradeStrategy> tsl = tslMap.get(bs.getLookupUnit());
+					if (tsl==null){
+						tsl = new ArrayList<TradeStrategy>();
+						tslMap.put(bs.getLookupUnit(), tsl);
+					}
+					tsl.add(new TradeStrategy(bs, ssl[0]));
 				}
-				tsl.add(ts);
 			}
-			//setup symbol list
-			String symbolFile = pc.getString(SYMBOLS);
-			InputStream in = this.getClass().getClassLoader().getResourceAsStream(symbolFile);
-			BufferedReader br = new BufferedReader(new InputStreamReader(in));
-			String line = null;
-			while ((line=br.readLine())!=null){
-				symbols.add(line.trim());
-			}
-			br.close();
+			logger.debug(String.format("interval-stock-ts map: %s", tsMap));
 		}catch(Exception e){
 			logger.error("", e);
 		}
+	}
+	
+	public List<TradeStrategy> getTsl(String symbol, IntervalUnit iu){
+		TreeMap<IntervalUnit, List<TradeStrategy>> map = tsMap.get(symbol);
+		if (map!=null){
+			return map.get(iu);
+		}
+		return null;
 	}
 	
 	private static Map<StockOrderType, StockOrder> makeMap(List<StockOrder> sol){
@@ -221,8 +227,10 @@ public class AutoTrader implements Runnable {
 					if (msg!=null){
 						logger.info(String.format("process msg: %s",msg));
 						TradeMsgPR tmpr = msg.process(this);
-						tmpr.setMsgId(msg.getMsgId());
-						tmprlist.add(tmpr);
+						if (tmpr!=null){
+							tmpr.setMsgId(msg.getMsgId());
+							tmprlist.add(tmpr);
+						}
 					}else{
 						logger.error(String.format("msg for key:%s not found.", key));
 					}
@@ -297,8 +305,18 @@ public class AutoTrader implements Runnable {
 			//
 			StockConfig sc = StockUtil.getStockConfig(at.getBaseMarketId());
 	        TradeDataMgr tradeDataMgr = new TradeDataMgr(at, sc);
-	        StreamMgr streamMgr = new StreamMgr(at.symbols, at.getTm(), tradeDataMgr);
-	        new Thread(streamMgr).start();
+	        List<String> symbolList = new ArrayList<String>();
+	        symbolList.addAll(at.symbols);
+	        int total=0;
+			HttpClient client = new HttpClient();
+			client.start();
+			while (total<symbolList.size()){
+				int end = Math.min(total+StreamMgr.REQUEST_MAX_SYMBOLS, symbolList.size());
+				List<String> sl = symbolList.subList(total, end);
+				StreamMgr streamMgr = new StreamMgr(sl, at.getTm(), tradeDataMgr);
+				new Thread(streamMgr).start();
+				total=end;
+			}
 	        //
 	        HistoryDumpMgr hdm = new HistoryDumpMgr(at.getHistoryDumpProperties(), tradeDataMgr, sc);
 	        new Thread(hdm).start();
@@ -371,9 +389,6 @@ public class AutoTrader implements Runnable {
 	}
 	public void setMsgMap(Map<String, TradeMsg> msgMap) {
 		this.msgMap = msgMap;
-	}
-	public TreeMap<IntervalUnit, List<TradeStrategy>> getTsMap(){
-		return tsMap;
 	}
 	public String getHistoryDumpProperties() {
 		return historyDumpProperties;

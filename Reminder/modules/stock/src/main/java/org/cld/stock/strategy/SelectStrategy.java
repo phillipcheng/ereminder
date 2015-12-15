@@ -1,18 +1,16 @@
 package org.cld.stock.strategy;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlConf;
 import org.cld.stock.CandleQuote;
 import org.cld.stock.CqIndicators;
 import org.cld.stock.StockConfig;
@@ -21,6 +19,7 @@ import org.cld.stock.indicator.Expression;
 import org.cld.stock.indicator.Indicator;
 import org.cld.util.CombPermUtil;
 import org.cld.util.DataMapper;
+import org.cld.util.JsonUtil;
 import org.cld.util.StringUtil;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -34,6 +33,7 @@ public abstract class SelectStrategy {
 	public static final String KEY_SELECTS_TYPE="scs.type";
 	public static final String KEY_SELECTS_LIMIT="scs.limit";
 	public static final String KEY_ORDERDIR="scs.orderDirection";
+	public static final String PROP_SYMBOLS="scs.symbols";
 	
 	public static final String KEY_PARAM="scs.param";
 	public static final String KEY_LU_UNIT="scs.param.luunit";
@@ -51,22 +51,19 @@ public abstract class SelectStrategy {
 	private int mbMemory=512;
 	private String orderDirection;
 	protected Map<String, Object> params = new TreeMap<String, Object>();
-	protected List<Indicator> indList = new ArrayList<Indicator>();//order in the properties
-	protected Map<String, Indicator> indMap = new HashMap<String, Indicator>();//name map
+	protected Map<String, Indicator> indMap = new LinkedHashMap<String, Indicator>();//name map, keep insertion order
 	private String baseMarketId;
 	private IntervalUnit lookupUnit = IntervalUnit.day;
-	@JsonIgnore
 	private List<CqIndicators> cqilist = null;//passed in by init
-	@JsonIgnore
 	protected Map<String, DataMapper> dataMap=new HashMap<String, DataMapper>();
 
 	public SelectStrategy(){
 	}
 	
-
 	//streaming
 	public abstract SelectCandidateResult selectByStream(CqIndicators cqi);
 	
+	@JsonIgnore
 	public Map<String, DataMapper> getDataMappers() {
 		dataMap.put(SelectStrategy.KEY_CQ, quoteMapper());
 		return dataMap;
@@ -93,7 +90,7 @@ public abstract class SelectStrategy {
 	@JsonIgnore
 	public int getMaxPeriod(){
 		int maxPeriods=0;
-		for (Indicator ind: indList){
+		for (Indicator ind: indMap.values()){
 			if (maxPeriods<ind.getPeriods()){
 				maxPeriods = ind.getPeriods();
 			}
@@ -101,13 +98,18 @@ public abstract class SelectStrategy {
 		return maxPeriods;
 	}
 	
+	//init from properties file to paramMap, and paramMap can be serialized
 	public void initProp(PropertiesConfiguration props){
 		orderDirection = props.getString(KEY_ORDERDIR);//only this one not in param map
 		String unit = (String) params.get(KEY_LU_UNIT);
 		if (StrategyConst.V_UNIT_DAY.equals(unit)){
 			setLookupUnit(IntervalUnit.day);
+		}else if (StrategyConst.V_UNIT_MINUTE5.equals(unit)){
+			setLookupUnit(IntervalUnit.minute5);
 		}else if (StrategyConst.V_UNIT_MINUTE.equals(unit)){
 			setLookupUnit(IntervalUnit.minute);
+		}else if (StrategyConst.V_UNIT_TICK.equals(unit)){
+			setLookupUnit(IntervalUnit.tick);
 		}else {
 			setLookupUnit(IntervalUnit.unspecified);
 		}
@@ -135,7 +137,6 @@ public abstract class SelectStrategy {
 						}
 					}
 					indi.init(kv);
-					indList.add(indi);
 					indMap.put(indName, indi);
 				}catch(Exception e){
 					logger.error("", e);
@@ -143,12 +144,28 @@ public abstract class SelectStrategy {
 			}
 		}
 	}
-	
+	//called after initProp, before init
+	protected Map<String, SelectStrategy> genBsMap(PropertiesConfiguration pc){
+		//this is the seed SelectStrategy
+		if (pc.containsKey(PROP_SYMBOLS)){
+			String symbolFile = pc.getString(PROP_SYMBOLS);
+			List<String> symbolList = StockUtil.getSymbols(symbolFile);
+			Map<String, SelectStrategy> bsMap = new HashMap<String, SelectStrategy>();
+			for (String symbol:symbolList){
+				SelectStrategy bs = (SelectStrategy) JsonUtil.deepClone(this);
+				bsMap.put(symbol, bs);
+			}
+			return bsMap;
+		}else{
+			//need to be populated by sub class
+			return null;
+		}
+	}
+	//init from paramMap to attributes, attributes may not be serializable
 	public void init(){
 		sc = StockUtil.getStockConfig(this.getBaseMarketId());
-		
 	}
-	
+
 	public String paramsToString(){
 		StringBuffer sb = new StringBuffer();
 		for (String key:params.keySet()){
@@ -207,8 +224,37 @@ public abstract class SelectStrategy {
 		}
 	}
 	
-	public static List<SelectStrategy> gen(PropertiesConfiguration props, String simpleStrategyName, String baseMarketId){
-		List<SelectStrategy> lss =new ArrayList<SelectStrategy>();
+	private static SelectStrategy initBs(Class selectClass, Map<String, Object> pm, String baseMarketId, PropertiesConfiguration props, String strategyName, 
+			Map<String, List<SelectStrategy>> bsMap ){
+		try{
+			SelectStrategy bs = (SelectStrategy) selectClass.newInstance();
+			bs.setBaseMarketId(baseMarketId);
+			bs.setParams(pm);
+			bs.initProp(props);
+			bs.setName(strategyName);
+			bs.init();
+			if (bsMap!=null){
+				Map<String, SelectStrategy> map = bs.genBsMap(props);
+				for (String symbol:map.keySet()){
+					List<SelectStrategy> bsl = bsMap.get(symbol);
+					if (bsl==null){
+						bsl = new ArrayList<SelectStrategy>();
+						bsMap.put(symbol, bsl);
+					}
+					SelectStrategy newBs = map.get(symbol);
+					newBs.init();
+					bsl.add(newBs);
+				}
+			}
+			return bs;
+		}catch(Exception e){
+			logger.error("", e);
+			return null;
+		}
+	}
+	
+	public static Map<String, List<SelectStrategy>> genMap(PropertiesConfiguration props, String simpleStrategyName, String baseMarketId){
+		Map<String, List<SelectStrategy>> bsMap =new HashMap<String, List<SelectStrategy>>();
 		Map<String, Object[]> paramMap = new HashMap<String,Object[]>();
 		Iterator<String> paramKeyIt = props.getKeys(KEY_PARAM);
 		while (paramKeyIt.hasNext()){
@@ -220,25 +266,41 @@ public abstract class SelectStrategy {
 			List<Map<String,Object>> paramsMapList = CombPermUtil.eachOne(paramMap);
 			if (paramsMapList.size()>0){
 				for (Map<String,Object> pm:paramsMapList){
-					SelectStrategy bs = (SelectStrategy) selectClass.newInstance();
-					bs.setBaseMarketId(baseMarketId);
-					bs.setParams(pm);
-					bs.initProp(props);
-					bs.setName(simpleStrategyName);
-					lss.add(bs);
+					initBs(selectClass, pm, baseMarketId, props, simpleStrategyName, bsMap);
 				}
 			}else{//no param at all
-				SelectStrategy bs = (SelectStrategy) selectClass.newInstance();
-				bs.setBaseMarketId(baseMarketId);
-				bs.setName(simpleStrategyName);
-				bs.initProp(props);
-				lss.add(bs);
+				initBs(selectClass, null, baseMarketId, props, simpleStrategyName, bsMap);
 			}
 		}catch(Exception e){
 			logger.error("", e);
 			return null;
 		}
-		return lss;
+		return bsMap;
+	}
+	
+	public static List<SelectStrategy> genList(PropertiesConfiguration props, String simpleStrategyName, String baseMarketId){
+		List<SelectStrategy> bsList=new ArrayList<SelectStrategy>();
+		Map<String, Object[]> paramMap = new HashMap<String,Object[]>();
+		Iterator<String> paramKeyIt = props.getKeys(KEY_PARAM);
+		while (paramKeyIt.hasNext()){
+			String pk = paramKeyIt.next();
+			paramMap.put(pk, StringUtil.parseSteps(props.getString(pk)));
+		}
+		try{
+			Class selectClass = Class.forName(props.getString(KEY_SELECTS_TYPE));
+			List<Map<String,Object>> paramsMapList = CombPermUtil.eachOne(paramMap);
+			if (paramsMapList.size()>0){
+				for (Map<String,Object> pm:paramsMapList){
+					bsList.add(initBs(selectClass, pm, baseMarketId, props, simpleStrategyName, null));
+				}
+			}else{//no param at all
+				bsList.add(initBs(selectClass, null, baseMarketId, props, simpleStrategyName, null));
+			}
+		}catch(Exception e){
+			logger.error("", e);
+			return null;
+		}
+		return bsList;
 	}
 	
 	public List<SelectCandidateResult> filterResults(List<SelectCandidateResult> inscrl, int selectNum){
@@ -317,13 +379,10 @@ public abstract class SelectStrategy {
 	public void setLookupUnit(IntervalUnit lookupUnit) {
 		this.lookupUnit = lookupUnit;
 	}
-	public List<Indicator> getIndList() {
-		return indList;
-	}
-	public void setIndList(List<Indicator> indList) {
-		this.indList = indList;
-	}
 	public Map<String, Indicator> getIndMap() {
 		return indMap;
+	}
+	public void setIndMap(Map<String, Indicator> map) {
+		indMap = map;
 	}
 }

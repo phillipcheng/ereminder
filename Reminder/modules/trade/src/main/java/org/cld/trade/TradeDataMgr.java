@@ -1,13 +1,14 @@
 package org.cld.trade;
 
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
+import java.util.concurrent.ConcurrentLinkedDeque;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.cld.stock.CandleQuote;
 import org.cld.stock.CqIndicators;
 import org.cld.stock.StockConfig;
@@ -20,10 +21,12 @@ import org.cld.trade.evt.BuyOppTrdMsg;
 
 //this class will be shared in multiple threads
 public class TradeDataMgr {
+	private static Logger logger =  LogManager.getLogger(TradeDataMgr.class);
+	
 	Map<IntervalUnit, Map<String, CandleQuote>> currentCqMap;
 	
-	Map<String, Queue<TradeTick>> historyTickMap = new ConcurrentHashMap<String, Queue<TradeTick>>();
-	Map<IntervalUnit, Map<String, Queue<CandleQuote>>> historyCqMap = new HashMap<IntervalUnit, Map<String, Queue<CandleQuote>>>();
+	Map<String, Deque<TradeTick>> historyTickMap = new ConcurrentHashMap<String, Deque<TradeTick>>();
+	Map<IntervalUnit, Map<String, Deque<CandleQuote>>> historyCqMap = new ConcurrentHashMap<IntervalUnit, Map<String, Deque<CandleQuote>>>();
 
 	AutoTrader at;
 	StockConfig sc;
@@ -37,81 +40,75 @@ public class TradeDataMgr {
 			iu = iu.next();
 			if (iu==IntervalUnit.unspecified)
 				break;
-			Map<String, CandleQuote> scq = new HashMap<String, CandleQuote>();
+			Map<String, CandleQuote> scq = new ConcurrentHashMap<String, CandleQuote>();
 			currentCqMap.put(iu, scq);
 		}
 	}
 	
-	public Map<String, Queue<TradeTick>> getHistoryTickMap() {
+	public Map<String, Deque<TradeTick>> getHistoryTickMap() {
 		return historyTickMap;
 	}
-	public Map<IntervalUnit, Map<String, Queue<CandleQuote>>> getHistoryCqMap() {
+	public Map<IntervalUnit, Map<String, Deque<CandleQuote>>> getHistoryCqMap() {
 		return historyCqMap;
 	}
 	private void addHistoryCq(CandleQuote cq, IntervalUnit iu, String symbol){
-		Map<String, Queue<CandleQuote>> hcqMap = historyCqMap.get(iu);
+		Map<String, Deque<CandleQuote>> hcqMap = historyCqMap.get(iu);
 		if (hcqMap==null){
-			hcqMap = new HashMap<String, Queue<CandleQuote>>();
+			hcqMap = new HashMap<String, Deque<CandleQuote>>();
 			historyCqMap.put(iu, hcqMap);
 		}
-		Queue<CandleQuote> cqq = hcqMap.get(symbol);
+		Deque<CandleQuote> cqq = hcqMap.get(symbol);
 		if (cqq==null){
-			cqq = new ConcurrentLinkedQueue<CandleQuote>();
+			cqq = new ConcurrentLinkedDeque<CandleQuote>();
 			hcqMap.put(symbol, cqq);
 		}
 		cqq.add(cq);
 	}
 	
+	private void applyStrategy(List<TradeStrategy> atsl, CandleQuote newCq){
+		if (atsl!=null){
+			for (TradeStrategy ts: atsl){
+				CqIndicators cqi = CqIndicators.addIndicators(newCq, ts.getBs());
+				SelectCandidateResult scr = ts.getBs().selectByStream(cqi);
+				if (scr!=null){
+					BuyOppTrdMsg trdmsg = new BuyOppTrdMsg(ts, scr);
+					at.addMsg(trdmsg);
+					logger.debug(String.format("opp found:%s", trdmsg));
+				}
+			}
+		}
+	}
 	//generate msg to at if the tt triggers minute data/day data to generate opptunity
 	public void accept(String symbol, TradeTick tt){
 		//add tt to historyTickMap
-		Queue<TradeTick> ttq = historyTickMap.get(symbol);
+		Deque<TradeTick> ttq = historyTickMap.get(symbol);
 		if (ttq==null){
-			ttq = new ConcurrentLinkedQueue<TradeTick>();
+			ttq = new ConcurrentLinkedDeque<TradeTick>();
 			historyTickMap.put(symbol, ttq);
 		}
 		ttq.add(tt);
 		CandleQuote cq = new CandleQuote(tt);
 		//try buy strategy requires tick
-		List<TradeStrategy> tsl = at.getTsMap().get(IntervalUnit.tick);
+		List<TradeStrategy> tsl = at.getTsl(symbol, IntervalUnit.tick);
 		if (tsl!=null){
-			for (TradeStrategy ts: tsl){
-				CqIndicators cqi = CqIndicators.addIndicators(cq, ts.getBs());
-				SelectCandidateResult scr = ts.getBs().selectByStream(cqi);
-				BuyOppTrdMsg trdmsg = new BuyOppTrdMsg(ts, scr);
-				at.addMsg(trdmsg);
-			}
+			applyStrategy(tsl, cq);
 		}
+		
 		for (IntervalUnit iu: currentCqMap.keySet()){
-			List<TradeStrategy> atsl = at.getTsMap().get(iu);
 			Map<String, CandleQuote> ccqMap = currentCqMap.get(iu);
-			if (ccqMap==null){
-				ccqMap = new HashMap<String, CandleQuote>();
-				currentCqMap.put(iu, ccqMap);
-			}
 			CandleQuote currentCq = ccqMap.get(symbol);
 			if (currentCq==null){//1st cq
 				CandleQuote newCq = StockUtil.aggregate(currentCq, cq, iu, sc);
 				ccqMap.put(symbol, newCq);
 			}else{
+				List<TradeStrategy> atsl = at.getTsl(symbol, iu);
 				CandleQuote newCq = StockUtil.aggregate(currentCq, cq, iu, sc);
 				if (newCq!=null){
-					if (atsl!=null){
-						for (TradeStrategy ts: atsl){
-							CqIndicators cqi = CqIndicators.addIndicators(newCq, ts.getBs());
-							SelectCandidateResult scr = ts.getBs().selectByStream(cqi);
-							BuyOppTrdMsg trdmsg = new BuyOppTrdMsg(ts, scr);
-							at.addMsg(trdmsg);
-						}
-					}
+					applyStrategy(atsl, newCq);
 					ccqMap.put(symbol, newCq);
 					addHistoryCq(currentCq, iu, symbol);
 				}
 			}
 		}
-	}
-	
-	public void historyDump(){
-		
 	}
 }

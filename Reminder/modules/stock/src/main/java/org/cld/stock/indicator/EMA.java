@@ -16,6 +16,7 @@ public class EMA extends Indicator{
 	
 	float prevEMA=Indicator.V_NA;
 	List<Float> values = new ArrayList<Float>();//of size periods
+	
 	float multiplier;
 	
 	public EMA(){
@@ -68,5 +69,12 @@ public class EMA extends Indicator{
 	@Override
 	public String toKey() {
 		return String.format("SMA:%d", super.getPeriods());
+	}
+
+	public float getMultiplier() {
+		return multiplier;
+	}
+	public void setMultiplier(float multiplier) {
+		this.multiplier = multiplier;
 	}
 }

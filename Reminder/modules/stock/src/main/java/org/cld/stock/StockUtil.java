@@ -1,5 +1,8 @@
 package org.cld.stock;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -36,7 +39,6 @@ import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.DateTimeUtil;
 import org.cld.util.FileDataMapper;
 import org.cld.util.JsonUtil;
-
 
 public class StockUtil {
 	public static final String SINA_STOCK_BASE="sina";
@@ -267,13 +269,20 @@ public class StockUtil {
 				strategyNames = snParam.split(STRATEGY_NAMES_SEP);
 			}
 			int totalSS = 0;
-			List<SelectStrategy> allSelectStrategy = new ArrayList<SelectStrategy>();
+			Map<String, List<SelectStrategy>> allSelectStrategy = new HashMap<String, List<SelectStrategy>>();
 			int maxSelectNumber=0;
 			for (String sn:strategyNames){
 				String strategyName = STRATEGY_PREFIX+sn+STRATEGY_SUFFIX;
 				PropertiesConfiguration props = new PropertiesConfiguration(strategyName);
-				List<SelectStrategy> scsl = SelectStrategy.gen(props, sn, baseMarketId);
-				allSelectStrategy.addAll(scsl);
+				Map<String, List<SelectStrategy>> scsl = SelectStrategy.genMap(props, sn, baseMarketId);
+				for (String symbol:scsl.keySet()){
+					List<SelectStrategy> bsl = allSelectStrategy.get(symbol);
+					if (bsl==null){
+						bsl = new ArrayList<SelectStrategy>();
+						allSelectStrategy.put(symbol, bsl);
+					}
+					bsl.addAll(scsl.get(symbol));
+				}
 				SellStrategy[] slsl = SellStrategy.gen(props);
 				for (SellStrategy ss: slsl){
 					if (ss.getSelectNumber()>maxSelectNumber){
@@ -298,9 +307,8 @@ public class StockUtil {
 			logger.info(String.format("total files: %d, select strategy:%d, sell strategy:%d", totalFiles, totalBS, totalSS));
 			Map<String, String> hadoopParams = new HashMap<String, String>();
 			if (stepParam==null || "1".equals(stepParam)){
-				allSelectStrategyArray = allSelectStrategy.toArray(allSelectStrategyArray);
 				SelectStrategyByStockTask.launch(propFile, cconf, baseMarketId, marketId, outputDir1, 
-						allSelectStrategyArray, startDate, endDate, maxSelectNumber, th);
+						allSelectStrategy, startDate, endDate, maxSelectNumber, th);
 			}
 			
 			if (stepParam==null || "2".equals(stepParam)){
@@ -348,4 +356,36 @@ public class StockUtil {
 		}
 	}
 
+	public static List<String> getSymbols(String symbolFile){
+		List<String> symbols = new ArrayList<String>();
+		try {
+			InputStream in = StockUtil.class.getClassLoader().getResourceAsStream(symbolFile);
+			BufferedReader br = new BufferedReader(new InputStreamReader(in));
+			String line = null;
+			while ((line=br.readLine())!=null){
+				symbols.add(line.trim());
+			}
+			br.close();
+		}catch(Exception e){
+			logger.error("", e);
+		}
+		return symbols;
+	}
+	
+	public static List<String[]> getTableData(String dataFile){
+		List<String[]> data = new ArrayList<String[]>();
+		try {
+			InputStream in = StockUtil.class.getClassLoader().getResourceAsStream(dataFile);
+			BufferedReader br = new BufferedReader(new InputStreamReader(in));
+			String line = null;
+			while ((line=br.readLine())!=null){
+				String[] d = line.split(",");
+				data.add(d);
+			}
+			br.close();
+		}catch(Exception e){
+			logger.error("", e);
+		}
+		return data;
+	}
 }

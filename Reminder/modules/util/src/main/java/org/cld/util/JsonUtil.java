@@ -139,4 +139,8 @@ public class JsonUtil {
 		}
 	}
 	
+	public static Object deepClone(Object obj){
+		return objFromJson(ObjToJson(obj), obj.getClass());
+	}
+	
 }

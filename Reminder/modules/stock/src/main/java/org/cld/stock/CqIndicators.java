@@ -1,12 +1,9 @@
 package org.cld.stock;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.indicator.Indicator;
@@ -27,7 +24,7 @@ public class CqIndicators {
 
 	public static CqIndicators addIndicators(CandleQuote cq, SelectStrategy bs){
 		CqIndicators cqi = new CqIndicators(cq);
-		for (Indicator ind:bs.getIndList()){
+		for (Indicator ind:bs.getIndMap().values()){
 			Object v = Indicator.V_NA;
 			v = ind.calculate(cqi, bs);
 			cqi.putIndicator(ind.toKey(), v);

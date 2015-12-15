@@ -59,4 +59,20 @@ public class RSI extends Indicator{
 	public String toKey() {
 		return String.format("RSI:%d", getPeriods());
 	}
+
+	public EMA getGainEMA() {
+		return gainEMA;
+	}
+
+	public void setGainEMA(EMA gainEMA) {
+		this.gainEMA = gainEMA;
+	}
+
+	public EMA getLossEMA() {
+		return lossEMA;
+	}
+
+	public void setLossEMA(EMA lossEMA) {
+		this.lossEMA = lossEMA;
+	}
 }

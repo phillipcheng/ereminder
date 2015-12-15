@@ -142,7 +142,7 @@ public class SellStrategy {
 		limitSellOrder.setOrderType(OrderType.limit);
 		limitSellOrder.setQuantity(qty);
 		limitSellOrder.setLimitPrice((float) (buyPrice*(1+ss.getLimitPercentage()*0.01)));
-		limitSellOrder.setTif(TimeInForceType.DayOrder);
+		limitSellOrder.setTif(TimeInForceType.GTC);
 		sol.add(limitSellOrder);
 		
 		StockOrder stopSellOrder = new StockOrder();
@@ -158,7 +158,7 @@ public class SellStrategy {
 			stopSellOrder.setStopPrice(buyPrice * (float)(1-ss.getStopPercentage()*0.01));
 		}
 		stopSellOrder.setQuantity(qty);
-		stopSellOrder.setTif(TimeInForceType.DayOrder);
+		stopSellOrder.setTif(TimeInForceType.GTC);
 		sol.add(stopSellOrder);
 		sol.add(makeForceSellOrder(stockid, qty));
 		

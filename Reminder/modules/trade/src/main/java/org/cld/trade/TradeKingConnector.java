@@ -4,10 +4,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,16 +36,6 @@ import org.xml.fixml.OrderQtyDataBlockT;
 import org.xml.fixml.PegInstructionsBlockT;
 
 import org.cld.util.JsonUtil;
-import org.cld.util.jdbc.DBConnConf;
-
-import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.test.CrawlTestUtil;
-
-import org.cld.stock.StockConfig;
-import org.cld.stock.StockUtil;
-import org.cld.stock.persistence.StockPersistMgr;
-import org.cld.stock.strategy.SelectCandidateResult;
-import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.trade.StockOrder;
 import org.cld.stock.trade.StockOrder.ActionType;
 import org.cld.stock.trade.StockOrder.OrderType;
@@ -60,11 +47,8 @@ import org.cld.trade.response.OrderResponse;
 import org.cld.trade.response.OrderStatus;
 import org.cld.trade.response.Quote;
 
-
 public class TradeKingConnector {
 	private static Logger logger =  LogManager.getLogger(TradeKingConnector.class);
-	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	
 	private static final String CONSUMER_KEY = "consumer.key";
 	private static final String CONSUMER_SECRET = "consumer.secret";
 	private static final String OAUTH_TOKEN = "oauth.token";
@@ -209,12 +193,18 @@ public class TradeKingConnector {
 			Response response = request.send();
 			logger.info(response.getBody());
 			Map<String, Object> map =  JsonUtil.fromJsonStringToMap(response.getBody());
-			map = (Map<String, Object>) map.get(RESPONSE);
-			return new OrderResponse(map);
+			if (map!=null){
+				map = (Map<String, Object>) map.get(RESPONSE);
+				if (map!=null){
+					return new OrderResponse(map);
+				}else{
+					logger.error(String.format("%s not found in response.", RESPONSE));
+				}
+			}
 		}catch(Exception e){
 			logger.error("", e);
-			return null;
 		}
+		return null;
 	}
 	
 	public void getAccount(){
@@ -250,9 +240,14 @@ public class TradeKingConnector {
 			Response response = request.send();
 			logger.info(response.getBody());
 			Map<String, Object> map =  JsonUtil.fromJsonStringToMap(response.getBody());
-			map = (Map<String, Object>) map.get(RESPONSE);
-			OrderResponse or = new OrderResponse(map);
-			return or;
+			if (map!=null){
+				map = (Map<String, Object>) map.get(RESPONSE);
+				if (map!=null){
+					return new OrderResponse(map);
+				}else{
+					logger.error(String.format("%s not found in response.", RESPONSE));
+				}
+			}
 		}catch(Exception e){
 			logger.error("", e);
 		}
@@ -300,12 +295,18 @@ public class TradeKingConnector {
 			Response response = request.send();
 			logger.info(response.getBody());
 			Map<String, Object> map =  JsonUtil.fromJsonStringToMap(response.getBody());
-			map = (Map<String, Object>) map.get(RESPONSE);
-			return new OrderResponse(map);
+			if (map!=null){
+				map = (Map<String, Object>) map.get(RESPONSE);
+				if (map!=null){
+					return new OrderResponse(map);
+				}else{
+					logger.error(String.format("%s not found in response.", RESPONSE));
+				}
+			}
 		}catch(Exception e){
 			logger.error("", e);
-			return null;
 		}
+		return null;
 	}
 	
 	public Balance getBalance(){
@@ -314,25 +315,44 @@ public class TradeKingConnector {
 		Response response = request.send();
 		logger.info(response.getBody());
 		Map<String, Object> map =  JsonUtil.fromJsonStringToMap(response.getBody());
-		map = (Map<String, Object>) map.get(RESPONSE);
-		map = (Map<String, Object>) map.get(ACCOUNTBALANCE);
-		return new Balance(map);
+		if (map!=null){
+			map = (Map<String, Object>) map.get(RESPONSE);
+			if (map!=null){
+				map = (Map<String, Object>) map.get(ACCOUNTBALANCE);
+				if (map!=null){
+					return new Balance(map);
+				}else{
+					logger.error(String.format("%s not found.", ACCOUNTBALANCE));
+				}
+			}else{
+				logger.error(String.format("%s not found.", RESPONSE));
+			}
+		}
+		return null;
 	}
 	
 	public List<Holding> getHolding(){
+		List<Holding> hlist = new ArrayList<Holding>();
 		OAuthRequest request = new OAuthRequest(Verb.GET, String.format(HOLDING_URL,accountId));
 		service.signRequest(accessToken, request);
 		Response response = request.send();
 		logger.info(response.getBody());
 		Map<String, Object> map =  JsonUtil.fromJsonStringToMap(response.getBody());
-		map = (Map<String, Object>) map.get(RESPONSE);
-		map = (Map<String, Object>) map.get(ACCOUNTHOLDINGS);
-		List hl = (List) map.get(HOLDING);
-		List<Holding> hlist = new ArrayList<Holding>();
-		for (Object o:hl){
-			Map<String, Object> hmap = (Map<String, Object>)o;
-			Holding h = new Holding(hmap);
-			hlist.add(h);
+		if (map!=null){
+			map = (Map<String, Object>) map.get(RESPONSE);
+			if (map!=null){
+				map = (Map<String, Object>) map.get(ACCOUNTHOLDINGS);
+				if (map!=null){
+					List hl = (List) map.get(HOLDING);
+					if (hl!=null){
+						for (Object o:hl){
+							Map<String, Object> hmap = (Map<String, Object>)o;
+							Holding h = new Holding(hmap);
+							hlist.add(h);
+						}
+					}
+				}
+			}
 		}
 		return hlist;
 	}
@@ -341,45 +361,60 @@ public class TradeKingConnector {
 		OAuthRequest request = new OAuthRequest(Verb.GET, String.format(ORDERSTATUS_URL,accountId));
 		service.signRequest(accessToken, request);
 		Response response = request.send();
-		//logger.info(response.getBody());
+		List<Map<String, Object>> fml = null;
 		Map<String, Object> map =  JsonUtil.fromJsonStringToMap(response.getBody());
-		map = (Map<String, Object>) map.get(RESPONSE);
-		map = (Map<String, Object>) map.get(ORDERSTATUS);
-		List<Map<String, Object>> fml;
-		Object orders = map.get(ORDER);
-		if (orders instanceof List){
-			fml = (List) orders;
-		}else{
-			fml = new ArrayList<Map<String, Object>>();
-			fml.add((Map<String, Object>)orders);
+		if (map!=null){
+			map = (Map<String, Object>) map.get(RESPONSE);
+			if (map!=null){
+				map = (Map<String, Object>) map.get(ORDERSTATUS);
+				if (map!=null){
+					Object orders = map.get(ORDER);
+					if (orders!=null){
+						if (orders instanceof List){
+							fml = (List) orders;
+						}else{
+							fml = new ArrayList<Map<String, Object>>();
+							fml.add((Map<String, Object>)orders);
+						}
+					}else{
+						logger.error(String.format("%s not found.", ORDER));
+					}
+				}else{
+					logger.error(String.format("%s not found.", ORDERSTATUS));
+				}
+			}else{
+				logger.error(String.format("%s not found.", RESPONSE));
+			}
 		}
 		Map<String, OrderStatus> om = new HashMap<String, OrderStatus>();
 		try{
 			JAXBContext jaxbContext = JAXBContext.newInstance("org.xml.fixml");
 			Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-			for (Object fm:fml){
-				Map<String, Object> fmm = (Map<String, Object>) fm;
-				String fixmm = (String) fmm.get(FIXMLMSG);
-				StringReader sr = new StringReader(fixmm);
-				FIXML fixml = (FIXML) jaxbUnmarshaller.unmarshal(sr);
-				JAXBElement<ExecutionReportMessageT> me = (JAXBElement<ExecutionReportMessageT>) fixml.getMessage();
-				ExecutionReportMessageT erm = me.getValue();
-				String orderId = erm.getOrdID();
-				//String symbol = erm.getInstrmt().getSym();
-				float avgPrice = 0;
-				if (erm.getAvgPx()!=null){
-					avgPrice = erm.getAvgPx().floatValue();
-				}
-				//int ordQty = erm.getOrdQty().getQty().intValue();
-				int cumQty = 0;
-				if (erm.getCumQty()!=null){
-					cumQty = erm.getCumQty().intValue();
-				}
-				String stat = erm.getStat();
-				om.put(orderId, new OrderStatus(orderId, cumQty, avgPrice, stat));
-				String linkId = erm.getLnkID();
-				if (linkId!=null && !"".equals(linkId)){
-					om.put(linkId, new OrderStatus(linkId, cumQty, avgPrice, stat));
+			if (fml!=null){
+				for (Object fm:fml){
+					Map<String, Object> fmm = (Map<String, Object>) fm;
+					String fixmm = (String) fmm.get(FIXMLMSG);
+					StringReader sr = new StringReader(fixmm);
+					FIXML fixml = (FIXML) jaxbUnmarshaller.unmarshal(sr);
+					JAXBElement<ExecutionReportMessageT> me = (JAXBElement<ExecutionReportMessageT>) fixml.getMessage();
+					ExecutionReportMessageT erm = me.getValue();
+					String orderId = erm.getOrdID();
+					//String symbol = erm.getInstrmt().getSym();
+					float avgPrice = 0;
+					if (erm.getAvgPx()!=null){
+						avgPrice = erm.getAvgPx().floatValue();
+					}
+					//int ordQty = erm.getOrdQty().getQty().intValue();
+					int cumQty = 0;
+					if (erm.getCumQty()!=null){
+						cumQty = erm.getCumQty().intValue();
+					}
+					String stat = erm.getStat();
+					om.put(orderId, new OrderStatus(orderId, cumQty, avgPrice, stat));
+					String linkId = erm.getLnkID();
+					if (linkId!=null && !"".equals(linkId)){
+						om.put(linkId, new OrderStatus(linkId, cumQty, avgPrice, stat));
+					}
 				}
 			}
 		}catch(Exception e){
@@ -406,23 +441,35 @@ public class TradeKingConnector {
 			Response response = request.send();
 			logger.info(response.getBody());
 			Map<String, Object> map =  JsonUtil.fromJsonStringToMap(response.getBody());
-			map = (Map<String, Object>) map.get(RESPONSE);
-			map = (Map<String, Object>) map.get(QUOTES);
 			List<Quote> retql = new ArrayList<Quote>();
 			if (map!=null){
-				Object oq = map.get(QUOTE);
-				if (oq instanceof List){
-					List ql = (List) map.get(QUOTE);
-					for (Object o : ql){
-						map = (Map<String, Object>)o;
-						Quote q = new Quote(map);
-						retql.add(q);
+				map = (Map<String, Object>) map.get(RESPONSE);
+				if (map!=null){
+					map = (Map<String, Object>) map.get(QUOTES);
+					if (map!=null){
+						Object oq = map.get(QUOTE);
+						if (oq!=null){
+							if (oq instanceof List){
+								List ql = (List) map.get(QUOTE);
+								for (Object o : ql){
+									map = (Map<String, Object>)o;
+									Quote q = new Quote(map);
+									retql.add(q);
+								}
+							}else{
+								//single symbol quote is a map
+								map = (Map<String, Object>)oq;
+								Quote q = new Quote(map);
+								retql.add(q);
+							}
+						}else{
+							logger.error(String.format("%s not found.", QUOTE));
+						}
+					}else{
+						logger.error(String.format("%s not found.", QUOTES));
 					}
 				}else{
-					//single symbol quote is a map
-					map = (Map<String, Object>)oq;
-					Quote q = new Quote(map);
-					retql.add(q);
+					logger.error(String.format("%s not found.", RESPONSE));
 				}
 			}
 			return retql;

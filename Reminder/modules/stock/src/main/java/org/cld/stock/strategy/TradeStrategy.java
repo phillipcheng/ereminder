@@ -1,5 +1,6 @@
 package org.cld.stock.strategy;
 
+
 public class TradeStrategy {
 	
 	private SelectStrategy bs;
@@ -9,7 +10,11 @@ public class TradeStrategy {
 		this.setBs(bs);
 		this.setSs(ss);
 	}
-
+	
+	public String toString(){
+		return String.format("bs:%s,ss:%s", bs, ss);
+	}
+	
 	public SelectStrategy getBs() {
 		return bs;
 	}

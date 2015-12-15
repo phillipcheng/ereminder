@@ -65,4 +65,42 @@ public class MACD extends Indicator{
 	public String toKey() {
 		return String.format("EMAMacd:%d", getPeriods());
 	}
+
+	//
+	public int getUpperiods() {
+		return upperiods;
+	}
+	public void setUpperiods(int upperiods) {
+		this.upperiods = upperiods;
+	}
+	public int getDownperiods() {
+		return downperiods;
+	}
+	public void setDownperiods(int downperiods) {
+		this.downperiods = downperiods;
+	}
+	public int getSignalperiods() {
+		return signalperiods;
+	}
+	public void setSignalperiods(int signalperiods) {
+		this.signalperiods = signalperiods;
+	}
+	public EMA getUpEMA() {
+		return upEMA;
+	}
+	public void setUpEMA(EMA upEMA) {
+		this.upEMA = upEMA;
+	}
+	public EMA getDownEMA() {
+		return downEMA;
+	}
+	public void setDownEMA(EMA downEMA) {
+		this.downEMA = downEMA;
+	}
+	public EMA getSignalEMA() {
+		return signalEMA;
+	}
+	public void setSignalEMA(EMA signalEMA) {
+		this.signalEMA = signalEMA;
+	}
 }

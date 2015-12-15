@@ -8,76 +8,10 @@
 	<packaging>pom</packaging>
 
 	<properties>
-		<jboss.deploy>false</jboss.deploy> <!-- deploy to jboss or not -->
-		<maven.compiler.target>1.7</maven.compiler.target>
-      	<maven.compiler.source>1.7</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+      	<maven.compiler.source>1.8</maven.compiler.source>
       	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
-	
-	<build>
-		<pluginManagement>
-			<plugins>
-			</plugins>
-		</pluginManagement>
-		<plugins>
-			<plugin>
-				<groupId>org.codehaus.groovy.maven</groupId>
-				<artifactId>gmaven-plugin</artifactId>
-				<version>1.0</version>
-				<executions>
-					<execution>
-						<id>default-cli</id>
-						<goals>
-							<goal>execute</goal>
-						</goals>
-						<phase>install</phase>
-						<configuration>
-							<source>
-								if ('true'.equals('${jboss.deploy}')) {
-									File jbossDeployment = new File('${jboss.deploy.dir}' + '/deploy');
-									if (!'null'.equals('${jboss.deploy.name}') || !''.equals('${jboss.deploy.name}')) {
-										jbossDeployment = new File('${jboss.deploy.dir}' + '/deploy/' + '${jboss.deploy.name}');
-									}
-									File target = new File(project.basedir, 'target');
-									if (target.exists()) {
-										ant.copy(todir: jbossDeployment) {
-											fileset(dir: target) {
-												filename(name: '*.jar');
-											}
-										}
-									}
-									File sourceConfig = new File(project.basedir, 'src/main/configurations');
-									if (sourceConfig.exists()) {
-										ant.copy(todir: jbossDeployment) {
-											fileset(dir: sourceConfig) {
-											}
-										}
-									}
-								}
-                    		</source>
-						</configuration>
-					</execution>
-					<execution>
-						<id>default-clean</id>
-						<goals>
-							<goal>execute</goal>
-						</goals>
-						<phase>clean</phase>
-						<configuration>
-							<source>
-								if ('true'.equals('${jboss.deploy}')) {
-									if (!'null'.equals('${jboss.deploy.name}') || !''.equals('${jboss.deploy.name}')) {
-										File jbossDeployment = new File('${jboss.deploy.dir}' + '/deploy/' + '${jboss.deploy.name}');
-										ant.delete(dir: jbossDeployment);
-									}
-								}
-							</source>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
 	
 	<dependencyManagement>
 		<dependencies>		

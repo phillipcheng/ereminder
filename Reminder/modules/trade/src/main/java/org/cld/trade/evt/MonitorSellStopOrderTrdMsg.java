@@ -9,12 +9,9 @@ import org.apache.logging.log4j.Logger;
 import org.cld.stock.trade.StockOrder;
 import org.cld.trade.AutoTrader;
 import org.cld.trade.StockOrderType;
-import org.cld.trade.TradeKingConnector;
 import org.cld.trade.TradeMsg;
 import org.cld.trade.TradeMsgPR;
 import org.cld.trade.TradeMsgType;
-import org.cld.trade.persist.StockPosition;
-import org.cld.trade.persist.TradePersistMgr;
 import org.cld.trade.response.OrderStatus;
 
 public class MonitorSellStopOrderTrdMsg extends TradeMsg {
@@ -57,8 +54,6 @@ public class MonitorSellStopOrderTrdMsg extends TradeMsg {
 			List<String> rmMsgList = new ArrayList<String>();
 			if (OrderStatus.FILLED.equals(os.getStat())){
 				logger.info(String.format("sell stop order filled. %s", os));
-				StockPosition trySp = new StockPosition(sellstorder, StockPosition.close, sellstorder.getOrderId());
-				TradePersistMgr.closePosition(at.getCconf().getSmalldbconf(), trySp);//
 				String mpMsgId = String.format("%s", TradeMsgType.monitorSellLimitPrice);
 				rmMsgList.add(mpMsgId);
 				tmpr.setExecuted(true);

@@ -69,10 +69,4 @@
 	      <artifactId>hadoop-hdfs</artifactId>
 	    </dependency>
 	</dependencies>
-	
-	<properties>
-		<jboss.deploy.name>taskmgr.sar</jboss.deploy.name>
-	</properties>
-	
-
 </project>

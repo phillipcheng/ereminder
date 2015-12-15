@@ -1,5 +1,7 @@
 package org.cld.trade.evt;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -50,7 +52,7 @@ public class MonitorBuyOrderTrdMsg extends TradeMsg {
 	
 	/**
 	 * [monitor buy order]
-	 * 		|__ executed. 1 sell stop trailing order submitted (GTC), 2 msg added (monitor stop trailing order, monitor price cross). <open position>
+	 * 		|__ executed. 1 buy order filled msg generated
 	 *      |__ cancelled, remove me
 	 */
 	@Override
@@ -58,9 +60,14 @@ public class MonitorBuyOrderTrdMsg extends TradeMsg {
 		Map<String, OrderStatus> map = at.getTm().getOrderStatus();
 		OrderStatus os = map.get(getOrderId());
 		TradeMsgPR tmpr = new TradeMsgPR();
+		List<TradeMsg> tml = new ArrayList<TradeMsg>();
 		if (os!=null){
 			if (OrderStatus.FILLED.equals(os.getStat())){
-				tmpr = BuyOrderFilledTrdMsg.process(at, this.getSomap());
+				BuyOrderFilledTrdMsg bof = new BuyOrderFilledTrdMsg(this.getSomap());
+				tml.add(bof);
+				tmpr.setNewMsgs(tml);
+				tmpr.setExecuted(true);
+				return tmpr;
 			}else if (OrderStatus.CANCELED.equals(os.getStat())){
 				logger.info(String.format("order %s cancelled", os));
 				tmpr.setExecuted(true);

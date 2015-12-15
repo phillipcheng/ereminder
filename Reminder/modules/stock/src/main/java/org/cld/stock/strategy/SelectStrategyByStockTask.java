@@ -7,8 +7,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
-
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.MapContext;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
@@ -25,7 +23,6 @@ import org.cld.stock.CqIndicators;
 import org.cld.stock.StockConfig;
 import org.cld.stock.StockUtil;
 import org.cld.stock.TradeHour;
-import org.cld.stock.indicator.Indicator;
 import org.cld.stock.persistence.StockPersistMgr;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
@@ -38,7 +35,7 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	private static SimpleDateFormat msdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 	
-	private SelectStrategy[] bsl;
+	private List<SelectStrategy> bsl;
 
 	private String marketBaseId;
 	private String marketId;
@@ -51,7 +48,7 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	public SelectStrategyByStockTask(){
 	}
 	
-	public SelectStrategyByStockTask(SelectStrategy[] bsl, String marketBaseId, String marketId, String stockId, 
+	public SelectStrategyByStockTask(List<SelectStrategy> bsl, String marketBaseId, String marketId, String stockId, 
 			Date startDate, Date endDate, String outputDir, TradeHour th){
 		this.bsl = bsl;
 		this.marketBaseId = marketBaseId;
@@ -93,7 +90,7 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	}
 	
 	//
-	public static List<Object[]> getBuyOppList(CrawlConf cconf, SelectStrategy[] bsl, String stockId, Date startDate, Date endDate,
+	public static List<Object[]> getBuyOppList(CrawlConf cconf, List<SelectStrategy> bsl, String stockId, Date startDate, Date endDate,
 			TradeHour th, MapContext<Object, Text, Text, Text> context){
 		try{
 			List<Object[]> kvl = new ArrayList<Object[]>(); //key value result returned if not in mapreduce
@@ -196,16 +193,19 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	}
 	
 	public static String[] launch(String propfile, CrawlConf cconf, String marketBaseId, String marketId, String outputDir, 
-			SelectStrategy[] bsl, Date startDate, Date endDate, int maxSelectNumber, TradeHour th) {
+			Map<String, List<SelectStrategy>> strategyMap, Date startDate, Date endDate, int maxSelectNumber, TradeHour th) {
 		StockConfig sc = StockUtil.getStockConfig(marketBaseId);
 		List<Task> tl = new ArrayList<Task>();
 		String[] stockids = ETLUtil.getStockIdByMarketId(sc, marketId, cconf, null);
 		for (String stockid: stockids){
-			Task t = new SelectStrategyByStockTask(bsl, marketBaseId, marketId, stockid, startDate, endDate, outputDir, th);
-			tl.add(t);
+			List<SelectStrategy> bsl = strategyMap.get(stockids);
+			if (bsl!=null){
+				Task t = new SelectStrategyByStockTask(bsl, marketBaseId, marketId, stockid, startDate, endDate, outputDir, th);
+				tl.add(t);
+			}
 		}
 		String sb = "";
-		for (SelectStrategy bs:bsl){
+		for (SelectStrategy bs:strategyMap.values().iterator().next()){//first select strategy list
 			if (!sb.contains(bs.getName())){
 				sb+=bs.getName();
 				sb+=("_");	
@@ -274,13 +274,5 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 
 	public void setEndDate(Date endDate) {
 		this.endDt = endDate;
-	}
-
-	public SelectStrategy[] getScsl() {
-		return bsl;
-	}
-
-	public void setScsl(SelectStrategy[] scsl) {
-		this.bsl = scsl;
 	}
 }

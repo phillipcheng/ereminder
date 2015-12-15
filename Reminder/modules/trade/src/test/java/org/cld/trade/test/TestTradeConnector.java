@@ -124,9 +124,5 @@ public class TestTradeConnector {
 		MarketCloseTrdMsg mc = new MarketCloseTrdMsg();
 		ta.start(mc);
 	}
-	
-	@Test
-	public void TAMain(){
-		AutoTrader.main(null);
-	}
+
 }

@@ -22,6 +22,7 @@ import org.cld.stock.strategy.StrategyConst;
 import org.cld.stock.task.LoadDBDataTask;
 import org.cld.stock.trade.BuySellResult;
 import org.cld.stock.trade.TradeSimulator;
+import org.cld.util.JsonUtil;
 import org.junit.Test;
 
 public class TestStock {
@@ -35,6 +36,16 @@ public class TestStock {
 		CrawlConf cconf = CrawlTestUtil.getCConf(pFile);
 		LoadDBDataTask.launch("sina", "hs_a", cconf.getSmalldbconf(), 5, "C:\\mydoc\\mydata\\stock\\merge\\sina-stock-stock-structure", 
 				new String[]{}, new String[]{});
+	}
+	
+	@Test
+	public void testClone() throws Exception{
+		String sn = "strategy.simple.properties";
+		List<SelectStrategy> ssl = SelectStrategy.genList(new PropertiesConfiguration(sn), sn, "nasdaq");
+		SelectStrategy bs = ssl.get(0);
+		logger.info(JsonUtil.ObjToJson(bs));
+		SelectStrategy abs = (SelectStrategy) JsonUtil.deepClone(bs);
+		logger.info(JsonUtil.ObjToJson(abs));
 	}
 	
 	@Test
@@ -56,10 +67,8 @@ public class TestStock {
 		Date startDate = sdf.parse("2011-04-06");
 		Date endDate = sdf.parse("2012-04-07");
 		String sn = "strategy.overtradeone.properties";
-		List<SelectStrategy> ssl = SelectStrategy.gen(new PropertiesConfiguration(sn), sn, "nasdaq");
-		SelectStrategy[] ssa = new SelectStrategy[ssl.size()];
-		ssl.toArray(ssa);
-		List<Object[]> kvl = SelectStrategyByStockTask.getBuyOppList(cconf, ssa, "AAPL", startDate, endDate, TradeHour.Normal, null);
+		List<SelectStrategy> ssl = SelectStrategy.genList(new PropertiesConfiguration(sn), sn, "nasdaq");
+		List<Object[]> kvl = SelectStrategyByStockTask.getBuyOppList(cconf, ssl, "AAPL", startDate, endDate, TradeHour.Normal, null);
 		for (Object[] kv:kvl){
 			SelectCandidateResult scr = (SelectCandidateResult) kv[0];
 			SelectStrategy bs = (SelectStrategy) kv[1];
@@ -74,10 +83,8 @@ public class TestStock {
 		Date startDate = msdf.parse("2014-08-14 09:40");
 		Date endDate = msdf.parse("2014-08-14 16:00");
 		String sn = "strategy.simple.properties";
-		List<SelectStrategy> ssl = SelectStrategy.gen(new PropertiesConfiguration(sn), sn, "nasdaq");
-		SelectStrategy[] ssa = new SelectStrategy[ssl.size()];
-		ssl.toArray(ssa);
-		List<Object[]> kvl = SelectStrategyByStockTask.getBuyOppList(cconf, ssa, "GPRO", startDate, endDate, TradeHour.Normal, null);
+		List<SelectStrategy> ssl = SelectStrategy.genList(new PropertiesConfiguration(sn), sn, "nasdaq");
+		List<Object[]> kvl = SelectStrategyByStockTask.getBuyOppList(cconf, ssl, "GPRO", startDate, endDate, TradeHour.Normal, null);
 		for (Object[] kv:kvl){
 			SelectCandidateResult scr = (SelectCandidateResult) kv[0];
 			SelectStrategy bs = (SelectStrategy) kv[1];
@@ -92,10 +99,8 @@ public class TestStock {
 		Date startDate = sdf.parse("2011-04-06");
 		Date endDate = sdf.parse("2011-04-07");
 		String sn = "strategy.wshapeone.properties";
-		List<SelectStrategy> ssl = SelectStrategy.gen(new PropertiesConfiguration(sn), sn, "nasdaq");
-		SelectStrategy[] ssa = new SelectStrategy[ssl.size()];
-		ssl.toArray(ssa);
-		List<Object[]> kvl = SelectStrategyByStockTask.getBuyOppList(cconf, ssa, "AAPL", startDate, endDate, TradeHour.Normal, null);
+		List<SelectStrategy> ssl = SelectStrategy.genList(new PropertiesConfiguration(sn), sn, "nasdaq");
+		List<Object[]> kvl = SelectStrategyByStockTask.getBuyOppList(cconf, ssl, "AAPL", startDate, endDate, TradeHour.Normal, null);
 		for (Object[] kv:kvl){
 			SelectCandidateResult scr = (SelectCandidateResult) kv[0];
 			SelectStrategy bs = (SelectStrategy) kv[1];
