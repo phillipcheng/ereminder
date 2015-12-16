@@ -113,26 +113,26 @@ public class TradeKingConnector {
 		nosm.setAcct(accountId);
 		//set tif
 		if (so.getTif()==TimeInForceType.DayOrder){
-			nosm.setTmInForce("0");	
+			nosm.setTmInForce(FixmlConst.TIF_Day);	
 		}else if (so.getTif()==TimeInForceType.GTC){
-			nosm.setTmInForce("1");
+			nosm.setTmInForce(FixmlConst.TIF_GTC);
 		}else if (so.getTif()==TimeInForceType.MarktOnClose){
-			nosm.setTmInForce("7");
+			nosm.setTmInForce(FixmlConst.TIF_MarketOnClose);
 		}else{
 			logger.error(String.format("tif not set in so.", ""));
 		}
 		//
 		if (so.getOrderType()==OrderType.market){
-			nosm.setTyp("1");
+			nosm.setTyp(FixmlConst.Typ_Market);
 		}else if (so.getOrderType()==OrderType.limit){
-			nosm.setTyp("2");
+			nosm.setTyp(FixmlConst.Typ_Limit);
 		}else if (so.getOrderType()==OrderType.stop){
-			nosm.setTyp("3");
+			nosm.setTyp(FixmlConst.Typ_Stop);
 		}else if (so.getOrderType()==OrderType.stoplimit){
 			nosm.setStopPx(new BigDecimal(String.format("%.2f", so.getStopPrice())));
-			nosm.setTyp("4");
+			nosm.setTyp(FixmlConst.Typ_StopLimit);
 		}else if (so.getOrderType()==OrderType.stoptrailingdollar || so.getOrderType()==OrderType.stoptrailingpercentage){
-			nosm.setTyp("P");
+			nosm.setTyp(FixmlConst.Typ_StopTrailing);
 			PegInstructionsBlockT pegIns = new PegInstructionsBlockT();
 			if (so.getOrderType()==OrderType.stoptrailingdollar){
 				pegIns.setOfstTyp(BigInteger.ZERO);
@@ -148,16 +148,16 @@ public class TradeKingConnector {
 		}
 		
 		if (so.getAction()==ActionType.buy || so.getAction()==ActionType.buycover){
-			nosm.setSide("1");
+			nosm.setSide(FixmlConst.Side_Buy);
 		}else if (so.getAction()==ActionType.sell){
-			nosm.setSide("2");
+			nosm.setSide(FixmlConst.Side_Sell);
 		}else if (so.getAction()==ActionType.sellshort){
-			nosm.setSide("5");
+			nosm.setSide(FixmlConst.Side_SellShort);
 		}else{
 			logger.error(String.format("unsupported action type:", so.getAction()));
 		}
 		InstrumentBlockT instr = new InstrumentBlockT();
-		instr.setSym(so.getStockid());
+		instr.setSym(so.getSymbol());
 		instr.setSecTyp("CS");
 		nosm.setInstrmt(instr);
 		
@@ -262,11 +262,11 @@ public class TradeKingConnector {
 		nosm.setAcct(accountId);
 		nosm.setOrigID(clientOrderId);
 		if (at==ActionType.buy || at==ActionType.buycover){
-			nosm.setSide("1");
+			nosm.setSide(FixmlConst.Side_Buy);
 		}else if (at==ActionType.sell){
-			nosm.setSide("2");
+			nosm.setSide(FixmlConst.Side_Sell);
 		}else if (at==ActionType.sellshort){
-			nosm.setSide("5");
+			nosm.setSide(FixmlConst.Side_SellShort);
 		}
 		InstrumentBlockT instr = new InstrumentBlockT();
 		instr.setSecTyp("CS");
@@ -362,6 +362,7 @@ public class TradeKingConnector {
 		service.signRequest(accessToken, request);
 		Response response = request.send();
 		List<Map<String, Object>> fml = null;
+		logger.info(response.getBody());
 		Map<String, Object> map =  JsonUtil.fromJsonStringToMap(response.getBody());
 		if (map!=null){
 			map = (Map<String, Object>) map.get(RESPONSE);
@@ -399,21 +400,22 @@ public class TradeKingConnector {
 					JAXBElement<ExecutionReportMessageT> me = (JAXBElement<ExecutionReportMessageT>) fixml.getMessage();
 					ExecutionReportMessageT erm = me.getValue();
 					String orderId = erm.getOrdID();
-					//String symbol = erm.getInstrmt().getSym();
-					float avgPrice = 0;
-					if (erm.getAvgPx()!=null){
-						avgPrice = erm.getAvgPx().floatValue();
+					String symbol = null;
+					if (erm.getInstrmt()!=null){
+						symbol = erm.getInstrmt().getSym();
 					}
-					//int ordQty = erm.getOrdQty().getQty().intValue();
-					int cumQty = 0;
-					if (erm.getCumQty()!=null){
-						cumQty = erm.getCumQty().intValue();
+					float price =0f;
+					if (erm.getPx()!=null){
+						price = erm.getPx().floatValue();
 					}
+					int qty = erm.getLeavesQty().intValue();
+					String side = erm.getSide();
+					String typ = erm.getTyp();
 					String stat = erm.getStat();
-					om.put(orderId, new OrderStatus(orderId, cumQty, avgPrice, stat));
+					om.put(orderId, new OrderStatus(orderId, qty, price, stat, side, typ));
 					String linkId = erm.getLnkID();
 					if (linkId!=null && !"".equals(linkId)){
-						om.put(linkId, new OrderStatus(linkId, cumQty, avgPrice, stat));
+						om.put(linkId, new OrderStatus(linkId, qty, price, stat, side, typ));
 					}
 				}
 			}
@@ -439,7 +441,7 @@ public class TradeKingConnector {
 			}
 			service.signRequest(accessToken, request);
 			Response response = request.send();
-			logger.info(response.getBody());
+			logger.debug(response.getBody());
 			Map<String, Object> map =  JsonUtil.fromJsonStringToMap(response.getBody());
 			List<Quote> retql = new ArrayList<Quote>();
 			if (map!=null){

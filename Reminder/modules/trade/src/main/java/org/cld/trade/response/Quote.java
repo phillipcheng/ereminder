@@ -1,39 +1,57 @@
 package org.cld.trade.response;
 
+import java.util.Date;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.cld.stock.TradeTick;
+import org.cld.util.SafeSimpleDateFormat;
+
 public class Quote {
+	private static Logger logger =  LogManager.getLogger(Quote.class);
+	private static final SafeSimpleDateFormat sdf = new SafeSimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 	public static final String LAST="last";
 	public static final String SYMBOL="symbol";
-	public static final String ASK="ask";
-	public static final String BID="bid";
-	public static final String VL="vl";
-	public static final String OPEN="opn";
+	public static final String VL="incr_vl";//volume of last trade
+	public static final String CVL="vl";//Cumulative volume
+	public static final String DATETIME="datetime";
 	
+	private Date dt;
 	private String symbol;
 	private float last;
-	private float ask;
-	private float bid;
-	private double volume;
-	private float open;
+	private long volume;
+	private long cumuVol;
 	
 	public static String[] getAllFields(){
-		return new String[]{LAST, SYMBOL, ASK, BID, VL, OPEN};
+		return new String[]{LAST, SYMBOL, VL, DATETIME, CVL};
 	}
 	public Quote(){
 	}
 	
+	public TradeTick toTradeTick(){
+		return new TradeTick(dt, last, volume);
+	}
+	
 	public Quote(Map<String, Object> map){
 		setSymbol((String) map.get(SYMBOL));
+		try {
+			this.dt = sdf.parse((String) map.get(DATETIME));
+		}catch(Exception e){
+			this.dt = new Date();
+		}	
 		setLast(Float.parseFloat((String) map.get(LAST)));
-		ask = Float.parseFloat((String) map.get(ASK));
-		bid = Float.parseFloat((String) map.get(BID));
-		volume = Float.parseFloat((String) map.get(VL));	
-		setOpen(Float.parseFloat((String) map.get(OPEN)));
+		try{
+			volume = Long.parseLong((String) map.get(VL));
+			setCumuVol(Long.parseLong((String)map.get(CVL)));
+		}catch(Exception e){
+			volume = 0;
+			setCumuVol(0);
+		}
 	}
 	
 	public String toString(){
-		return String.format("Q:%s,%.3f,%.3f,%.3f,%.3f,%.3f", symbol, open, last, ask, bid, volume);
+		return String.format("Q:%s,%s,%.3f,%d", symbol, sdf.format(dt), last, volume);
 	}
 	//
 	public String getSymbol() {
@@ -48,28 +66,22 @@ public class Quote {
 	public void setLast(float last) {
 		this.last = last;
 	}
-	public float getAsk() {
-		return ask;
-	}
-	public void setAsk(float ask) {
-		this.ask = ask;
-	}
-	public float getBid() {
-		return bid;
-	}
-	public void setBid(float bid) {
-		this.bid = bid;
-	}
 	public double getVolume() {
 		return volume;
 	}
-	public void setVolume(double volume) {
+	public void setVolume(long volume) {
 		this.volume = volume;
 	}
-	public float getOpen() {
-		return open;
+	public Date getDt() {
+		return dt;
 	}
-	public void setOpen(float open) {
-		this.open = open;
+	public void setDt(Date dt) {
+		this.dt = dt;
+	}
+	public long getCumuVol() {
+		return cumuVol;
+	}
+	public void setCumuVol(long cumuVol) {
+		this.cumuVol = cumuVol;
 	}	
 }

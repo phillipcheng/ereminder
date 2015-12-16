@@ -1,16 +1,9 @@
 package org.cld.trade.test;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.Buffer;
 
-import org.cld.stock.StockConfig;
-import org.cld.stock.StockUtil;
 import org.cld.trade.AutoTrader;
-import org.cld.trade.StreamQuoteRequest;
-import org.cld.trade.TradeDataMgr;
 import org.junit.Test;
 
 import org.mortbay.jetty.client.ContentExchange;
@@ -19,23 +12,7 @@ import org.mortbay.jetty.client.HttpClient;
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.jetty.JettyOAuthConsumer;
 
-public class TestTradeDataMgr {
-	
-	@Test
-	public void test1() throws Exception {
-		AutoTrader at = new AutoTrader();
-		StockConfig sc = StockUtil.getStockConfig(at.getBaseMarketId());
-		TradeDataMgr tdm = new TradeDataMgr(at, sc);
-		BufferedReader br = new BufferedReader(new InputStreamReader(
-				new FileInputStream("C:\\mydoc\\myprojects\\ereminder\\Reminder\\modules\\trade\\input\\AAPL_tick_20151214.txt")));
-		String line = null;
-		while ((line=br.readLine())!=null){
-			StreamQuoteRequest.processCsvData("AAPL", line, tdm);
-		}
-		br.close();
-		
-		Thread.sleep(30000);//60 seconds
-	}
+public class TestTradekingStream {
 	
 	@Test
 	public void testStream() throws Exception {

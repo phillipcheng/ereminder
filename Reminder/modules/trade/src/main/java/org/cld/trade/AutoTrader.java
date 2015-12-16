@@ -1,6 +1,5 @@
 package org.cld.trade;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,8 +26,11 @@ import org.cld.stock.trade.StockOrder;
 import org.cld.stock.trade.StockOrder.ActionType;
 import org.cld.stock.trade.StockOrder.OrderType;
 import org.cld.stock.trade.StockOrder.TimeInForceType;
+import org.cld.trade.evt.MonitorBuyOrderTrdMsg;
+import org.cld.trade.evt.MonitorSellPriceTrdMsg;
 import org.cld.trade.persist.StockPosition;
-import org.mortbay.jetty.client.ContentExchange;
+import org.cld.trade.persist.TradePersistMgr;
+import org.cld.trade.response.OrderStatus;
 import org.mortbay.jetty.client.HttpClient;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
@@ -41,34 +43,31 @@ import org.quartz.impl.StdSchedulerFactory;
 
 public class AutoTrader implements Runnable {
 	private static Logger logger =  LogManager.getLogger(AutoTrader.class);
-	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	
 	//external configures
 	private static final String TRADE_CONNECTOR="trade.connector";
 	private static final String HISTORY_DUMP="history.dump";
 	private static final String STRATEGIES="strategies";
 	
 	//at configures
+	private static final String USESTREAM_KEY="use.stream";
 	private static final String CRAWLCONF_KEY="crawl.conf";
 	private static final String USE_AMOUNT="use.amount";
 	private static final String BASE_MARKET="base.market";
-	private static final String MARKET_ID="market.id";
 	private static final String MARKET_OPEN_CRON="market.open.cron";
 	private static final String MARKET_CLOSE_CRON="market.close.cron";
 	private static final String IS_PREVIEW="is.preview";
-	private static final String USE_LAST="use.last";
 	
 	//
 	private TradeKingConnector tradeConnector;
 	private Map<String, TreeMap<IntervalUnit, List<TradeStrategy>>> tsMap = new HashMap<String, TreeMap<IntervalUnit, List<TradeStrategy>>>();//symbol to trade-strategy instance
 	private Set<String> symbols = new HashSet<String>();
 	private String historyDumpProperties;
-	
+
+	private boolean useStream=true;
 	private String cconffile;
 	private CrawlConf cconf;
 	private int useAmount;
 	private String baseMarketId;
-	private String marketId;
 	private String marketOpenCron="0 26 9 ? * 2-6";
 	private String marketCloseCron="0 55 15 ? * 2-6";
 	private boolean isPreview=true;
@@ -78,15 +77,14 @@ public class AutoTrader implements Runnable {
 	public AutoTrader(){
 		try{
 			PropertiesConfiguration pc = new PropertiesConfiguration("at.properties");
+			useStream = pc.getBoolean(USESTREAM_KEY);
 			cconffile = pc.getString(CRAWLCONF_KEY);
 			cconf = CrawlTestUtil.getCConf(cconffile);
 			setUseAmount(pc.getInt(USE_AMOUNT));
 			setBaseMarketId(pc.getString(BASE_MARKET));
-			setMarketId(pc.getString(MARKET_ID));
 			marketOpenCron = pc.getString(MARKET_OPEN_CRON);
 			marketCloseCron = pc.getString(MARKET_CLOSE_CRON);
 			isPreview = pc.getBoolean(IS_PREVIEW);
-			setUseLast(pc.getBoolean(USE_LAST));
 			this.historyDumpProperties= pc.getString(HISTORY_DUMP);
 			//setup trade connctor
 			tradeConnector = new TradeKingConnector(pc.getString(TRADE_CONNECTOR));
@@ -151,14 +149,9 @@ public class AutoTrader implements Runnable {
 		return map;
 	}
 	
-	public static Map<StockOrderType, StockOrder> genSellOrderMap(StockPosition sp, SellStrategy ss){
-		List<StockOrder> sellsos= SellStrategy.makeSellOrders(sp.getSymbol(), sp.getDt(), sp.getOrderQty(), sp.getOrderPrice(), ss);
-		return makeMap(sellsos);
-	}
-	
 	public static Map<StockOrderType, StockOrder> genStockOrderMap(SelectCandidateResult scr, SellStrategy ss, int cashAmount){
 		StockOrder buyso = SellStrategy.makeBuyOrder(scr, ss, cashAmount);
-		List<StockOrder> sellsos= SellStrategy.makeSellOrders(buyso.getStockid(), buyso.getSubmitTime(), buyso.getQuantity(), buyso.getLimitPrice(), ss);
+		List<StockOrder> sellsos= SellStrategy.makeSellOrders(buyso.getSymbol(), buyso.getSubmitTime(), buyso.getQuantity(), buyso.getLimitPrice(), ss);
 		sellsos.add(buyso);
 		return makeMap(sellsos);
 	}
@@ -196,6 +189,39 @@ public class AutoTrader implements Runnable {
 		}
 	}
 	
+	public void initEngine(){
+		Map<String, OrderStatus> osmap = tradeConnector.getOrderStatus();
+		for (String id:osmap.keySet()){
+			OrderStatus os = osmap.get(id);
+			if (os.getSide().equals(FixmlConst.Side_Buy) &&
+					os.getStat().equals(OrderStatus.PENDING)){
+				//for all buy order submitted in pending state, add the MonitorBuyOrderTrdMsg
+				StockPosition sp = TradePersistMgr.getStockPositionByOrderId(this.getCconf().getSmalldbconf(), os.getOrderId());
+				if (sp!=null){
+					TradeMsg mboMsg = new MonitorBuyOrderTrdMsg(os.getOrderId(), sp.getSoMap());
+					addMsg(mboMsg);
+				}else{
+					logger.error(String.format("stock position for %s not found.", os.getOrderId()));
+				}
+			}else if (os.getSide().equals(FixmlConst.Side_Sell) &&
+					os.getStat().equals(OrderStatus.PENDING) &&
+					os.getTyp().equals(FixmlConst.Typ_StopLimit) || os.getTyp().equals(FixmlConst.Typ_StopTrailing) || os.getTyp().equals(FixmlConst.Typ_Stop)){
+				//for all stop sell order submitted, add the MonitorSellPriceTrdMsg
+				StockPosition sp = TradePersistMgr.getStockPositionByOrderId(this.getCconf().getSmalldbconf(), os.getOrderId());
+				if (sp!=null){
+					StockOrder limitSellOrder = sp.getSoMap().get(StockOrderType.selllimit);
+					if (limitSellOrder!=null){
+						TradeMsg msoMsg = new MonitorSellPriceTrdMsg(limitSellOrder.getSymbol(), limitSellOrder.getLimitPrice(), sp.getSoMap());
+						addMsg(msoMsg);
+					}else{
+						logger.error(String.format("limit sell order not found in somap:%s", sp.getSoMap()));
+					}
+				}else{
+					logger.error(String.format("stock position for %s not found.", os.getOrderId()));
+				}
+			}
+		}
+	}
 	/**
 	 * start: Msgs: [market will open]|[market will close]
 	 *  [market will open]
@@ -268,26 +294,26 @@ public class AutoTrader implements Runnable {
 	}
 	
 	public static final String JDM_KEY_AT="AutoTrader";
-	public void startScheduler(){
+	public static void startScheduler(AutoTrader at){
 		try{
 			//Create & start the scheduler.
 	        StdSchedulerFactory factory = new StdSchedulerFactory();
 	        factory.initialize("quartz.properties");
 	        Scheduler scheduler = factory.getScheduler();
 	        JobDataMap jdm = new JobDataMap();
-	        jdm.put(JDM_KEY_AT, this);
+	        jdm.put(JDM_KEY_AT, at);
 	        JobDetail genMarketMsgJob = JobBuilder.newJob(GenMsgQuartzJob.class).
 	        		withIdentity("genMarketMsg", "genMarketMsg").storeDurably().usingJobData(jdm).build();
 	        
 	        //scheduler to send market open msg
 	        Trigger marketOpenTrigger = TriggerBuilder.newTrigger().
 	        		withIdentity(TradeMsgType.marketOpenSoon.toString(), TradeMsgType.marketOpenSoon.toString()).forJob(genMarketMsgJob).
-	        		withSchedule(CronScheduleBuilder.cronSchedule(getMarketOpenCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
+	        		withSchedule(CronScheduleBuilder.cronSchedule(at.getMarketOpenCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
 	        		build();
 	        //scheduler to send market close msg
 	        Trigger marketCloseTrigger = TriggerBuilder.newTrigger().
 	        		withIdentity(TradeMsgType.marketCloseSoon.toString(), TradeMsgType.marketCloseSoon.toString()).forJob(genMarketMsgJob).
-	        		withSchedule(CronScheduleBuilder.cronSchedule(getMarketCloseCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
+	        		withSchedule(CronScheduleBuilder.cronSchedule(at.getMarketCloseCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
 	        		build();
 	        scheduler.addJob(genMarketMsgJob, true);
 	        scheduler.scheduleJob(marketOpenTrigger);
@@ -300,7 +326,8 @@ public class AutoTrader implements Runnable {
 	public static void main(String[] args){
 		try{
 			AutoTrader at = new AutoTrader();
-			at.startScheduler();
+			//
+			at.initEngine();
 			new Thread(at).start();
 			//
 			StockConfig sc = StockUtil.getStockConfig(at.getBaseMarketId());
@@ -310,17 +337,25 @@ public class AutoTrader implements Runnable {
 	        int total=0;
 			HttpClient client = new HttpClient();
 			client.start();
+			int totalDataThread = symbolList.size()/StreamMgr.REQUEST_MAX_SYMBOLS + 1;
 			while (total<symbolList.size()){
 				int end = Math.min(total+StreamMgr.REQUEST_MAX_SYMBOLS, symbolList.size());
 				List<String> sl = symbolList.subList(total, end);
-				StreamMgr streamMgr = new StreamMgr(sl, at.getTm(), tradeDataMgr);
+				Runnable streamMgr = null;
+				if (at.useStream){
+					streamMgr = new StreamMgr(sl, at.getTm(), tradeDataMgr, at.getCconf());
+				}else{
+					streamMgr = new StreamSimulator(sl, at.getTm(), tradeDataMgr, at.getCconf(), totalDataThread);
+				}
 				new Thread(streamMgr).start();
 				total=end;
 			}
 	        //
 	        HistoryDumpMgr hdm = new HistoryDumpMgr(at.getHistoryDumpProperties(), tradeDataMgr, sc);
 	        new Thread(hdm).start();
-	        
+	        //
+	        AutoTrader.startScheduler(at);
+	        //
 	        while(true){
 	        	Thread.sleep(10000);
 	        }
@@ -341,12 +376,6 @@ public class AutoTrader implements Runnable {
 	}
 	public void setUseAmount(int useAmount) {
 		this.useAmount = useAmount;
-	}
-	public String getMarketId() {
-		return marketId;
-	}
-	public void setMarketId(String marketId) {
-		this.marketId = marketId;
 	}
 	public String getBaseMarketId() {
 		return baseMarketId;

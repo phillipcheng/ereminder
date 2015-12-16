@@ -13,6 +13,8 @@ import org.cld.trade.StockOrderType;
 import org.cld.trade.TradeMsg;
 import org.cld.trade.TradeMsgPR;
 import org.cld.trade.TradeMsgType;
+import org.cld.trade.persist.StockPosition;
+import org.cld.trade.persist.TradePersistMgr;
 import org.cld.trade.response.OrderResponse;
 import org.cld.trade.response.Quote;
 
@@ -64,14 +66,19 @@ public class MonitorSellPriceTrdMsg extends TradeMsg {
 				//send 1 cancel order (succeeded), send 1 market order
 				logger.info(String.format("price %s crossed sell limit %s.", q, this));
 				StockOrder sellstop = getSomap().get(StockOrderType.sellstop);
-				at.getTm().cancelOrder(sellstop.getOrderId(), ActionType.sell, sellstop.getStockid(), sellstop.getQuantity());//send cancel order
+				at.getTm().cancelOrder(sellstop.getOrderId(), ActionType.sell, sellstop.getSymbol(), sellstop.getQuantity());//send cancel order
 				StockOrder selllimit = getSomap().get(StockOrderType.selllimit);
 				//change this into a market order
 				selllimit.setOrderType(OrderType.market);
 				OrderResponse or = at.getTm().trySubmit(selllimit, true);
 				selllimit.setOrderId(or.getClientorderid());
 				if (OrderResponse.SUCCESS.equals(or.getError())){
-					logger.info(String.format("market sell order %s submitted successfully.", or.getClientorderid()));
+					StockPosition sp = TradePersistMgr.getStockPositionByOrderId(at.getCconf().getSmalldbconf(), sellstop.getOrderId());
+					logger.info(String.format("limit sell order %s submitted successfully.", or.getClientorderid()));
+					if (sp!=null){
+						sp.setLimitSellOrderId(or.getClientorderid());
+						TradePersistMgr.updatePosition(at.getCconf().getSmalldbconf(), sp);
+					}
 				}else{
 					//TODO error handling
 					logger.error(String.format("sell market order error: sell order: %s, response: %s", selllimit, or));

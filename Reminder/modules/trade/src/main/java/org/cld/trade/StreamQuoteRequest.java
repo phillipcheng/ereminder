@@ -19,7 +19,7 @@ public class StreamQuoteRequest extends ContentExchange {
 
 	public static final String STREAM_URL="https://stream.tradeking.com/v1/market/quotes.json?symbols=%s";
 	private static Logger logger =  LogManager.getLogger(StreamQuoteRequest.class);
-	private static final SafeSimpleDateFormat sdf = new SafeSimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.XXX");
+	private static final SafeSimpleDateFormat sdf = new SafeSimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 	private static final SimpleDateFormat csvsdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	public static final String TRADE="trade";

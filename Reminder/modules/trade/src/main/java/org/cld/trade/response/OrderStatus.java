@@ -8,16 +8,21 @@ public class OrderStatus {
 	public static final String OPEN="0";
 	public static final String PENDING="A";
 	
+	
 	String orderId;
 	int cumQty;
 	float avgPrice;
 	String stat;
+	String side;
+	String typ;
 	
-	public OrderStatus(String orderId, int cumQty, float avgPrice, String stat){
+	public OrderStatus(String orderId, int cumQty, float avgPrice, String stat, String side, String typ){
 		this.orderId = orderId;
 		this.cumQty = cumQty;
 		this.avgPrice = avgPrice;
 		this.stat = stat;
+		this.side = side;
+		this.typ = typ;
 	}
 	
 	public String toString(){
@@ -27,33 +32,38 @@ public class OrderStatus {
 	public int getCumQty() {
 		return cumQty;
 	}
-
 	public void setCumQty(int cumQty) {
 		this.cumQty = cumQty;
 	}
-
 	public float getAvgPrice() {
 		return avgPrice;
 	}
-
 	public void setAvgPrice(float avgPrice) {
 		this.avgPrice = avgPrice;
 	}
-
 	public String getOrderId() {
 		return orderId;
 	}
-
 	public void setOrderId(String orderId) {
 		this.orderId = orderId;
 	}
-
 	public String getStat() {
 		return stat;
 	}
-
 	public void setStat(String stat) {
 		this.stat = stat;
+	}
+	public String getSide() {
+		return side;
+	}
+	public void setSide(String side) {
+		this.side = side;
+	}
+	public String getTyp() {
+		return typ;
+	}
+	public void setTyp(String typ) {
+		this.typ = typ;
 	}
 
 }

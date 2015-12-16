@@ -4,32 +4,21 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class SelectCandidateResult {
-	private String stockId;
+	private String symbol;
 	private Date dt;//the submit time
 	private float value;
 	private float buyPrice;
 	
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 	
-	public SelectCandidateResult(Date dt, float value){
-		this.dt = dt;
-		this.value = value;
-	}
-	
-	public SelectCandidateResult(Date dt, float value, float buyPrice){
-		this.dt = dt;
-		this.value = value;
-		this.setBuyPrice(buyPrice);
-	}
-	
 	public SelectCandidateResult(String stockid, Date dt, float value, float buyPrice){
-		this.setStockId(stockid);
+		this.setSymbol(stockid);
 		this.dt = dt;
 		this.value = value;
 		this.setBuyPrice(buyPrice);
 	}
 	public String toString(){
-		return String.format("%s,%s,%.4f,%.3f", stockId, sdf.format(dt), value, buyPrice);
+		return String.format("%s,%s,%.4f,%.3f", symbol, sdf.format(dt), value, buyPrice);
 	}
 	
 	public Date getDt() {
@@ -50,11 +39,11 @@ public class SelectCandidateResult {
 	public void setBuyPrice(float buyPrice) {
 		this.buyPrice = buyPrice;
 	}
-	public String getStockId() {
-		return stockId;
+	public String getSymbol() {
+		return symbol;
 	}
-	public void setStockId(String stockId) {
-		this.stockId = stockId;
+	public void setSymbol(String symbol) {
+		this.symbol = symbol;
 	}
 
 }

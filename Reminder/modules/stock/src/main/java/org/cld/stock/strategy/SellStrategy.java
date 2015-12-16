@@ -104,9 +104,9 @@ public class SellStrategy {
 	//used by real
 	public static StockOrder makeBuyOrder(SelectCandidateResult scr, SellStrategy ss, int cashAmount){
 		StockOrder buyOrder = new StockOrder();
-		String stockid = scr.getStockId();
+		String stockid = scr.getSymbol();
 		float buyLimit = scr.getBuyPrice();
-		buyOrder.setStockid(stockid);
+		buyOrder.setSymbol(stockid);
 		buyOrder.setAction(ActionType.buy);
 		buyOrder.setSubmitTime(scr.getDt());
 		buyOrder.setTif(TimeInForceType.DayOrder);
@@ -125,7 +125,7 @@ public class SellStrategy {
 	public static StockOrder makeForceSellOrder(String stockid, int qty){
 		StockOrder forceCleanSellOrder = new StockOrder();
 		forceCleanSellOrder.setTif(TimeInForceType.MarktOnClose);//of the last day
-		forceCleanSellOrder.setStockid(stockid);
+		forceCleanSellOrder.setSymbol(stockid);
 		forceCleanSellOrder.setAction(ActionType.sell);
 		forceCleanSellOrder.setOrderType(OrderType.market);
 		forceCleanSellOrder.setQuantity(qty);
@@ -137,7 +137,7 @@ public class SellStrategy {
 		
 		StockOrder limitSellOrder = new StockOrder();
 		limitSellOrder.setSubmitTime(buyDate);
-		limitSellOrder.setStockid(stockid);
+		limitSellOrder.setSymbol(stockid);
 		limitSellOrder.setAction(ActionType.sell);
 		limitSellOrder.setOrderType(OrderType.limit);
 		limitSellOrder.setQuantity(qty);
@@ -147,7 +147,7 @@ public class SellStrategy {
 		
 		StockOrder stopSellOrder = new StockOrder();
 		stopSellOrder.setSubmitTime(buyDate);
-		stopSellOrder.setStockid(stockid);
+		stopSellOrder.setSymbol(stockid);
 		stopSellOrder.setAction(ActionType.sell);
 		if (ss.isTrailing()){
 			stopSellOrder.setOrderType(OrderType.stoptrailingpercentage);
@@ -169,9 +169,9 @@ public class SellStrategy {
 	public static List<StockOrder> makeStockOrders(SelectCandidateResult scr, SellStrategy ss){
 		ArrayList<StockOrder> sol = new ArrayList<StockOrder>();
 		StockOrder buyOrder = new StockOrder();
-		String stockid = scr.getStockId();
+		String stockid = scr.getSymbol();
 		float buyLimit = scr.getBuyPrice();
-		buyOrder.setStockid(stockid);
+		buyOrder.setSymbol(stockid);
 		buyOrder.setAction(ActionType.buy);
 		buyOrder.setSubmitTime(scr.getDt());
 		buyOrder.setTif(TimeInForceType.DayOrder);
@@ -187,7 +187,7 @@ public class SellStrategy {
 		
 		StockOrder limitSellOrder = new StockOrder();
 		limitSellOrder.setSubmitTime(null);//this submit time will be set after buyOrder executed.
-		limitSellOrder.setStockid(stockid);
+		limitSellOrder.setSymbol(stockid);
 		limitSellOrder.setAction(ActionType.sell);
 		limitSellOrder.setOrderType(OrderType.limit);
 		limitSellOrder.setLimitPercentage(ss.getLimitPercentage());
@@ -196,7 +196,7 @@ public class SellStrategy {
 		
 		StockOrder stopSellOrder = new StockOrder();
 		stopSellOrder.setSubmitTime(null);
-		stopSellOrder.setStockid(stockid);
+		stopSellOrder.setSymbol(stockid);
 		stopSellOrder.setAction(ActionType.sell);
 		stopSellOrder.setTif(TimeInForceType.GTC);
 		stopSellOrder.setPairOrderId(buyOrder.getOrderId());
@@ -214,7 +214,7 @@ public class SellStrategy {
 		StockOrder forceCleanSellOrder = new StockOrder();
 		forceCleanSellOrder.setTif(TimeInForceType.MarktOnClose);//of the last day
 		forceCleanSellOrder.setSubmitTime(null);
-		forceCleanSellOrder.setStockid(stockid);
+		forceCleanSellOrder.setSymbol(stockid);
 		forceCleanSellOrder.setAction(ActionType.sell);
 		forceCleanSellOrder.setPairOrderId(buyOrder.getOrderId());
 		sol.add(forceCleanSellOrder);

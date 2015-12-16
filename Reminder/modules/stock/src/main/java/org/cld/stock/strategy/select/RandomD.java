@@ -17,7 +17,8 @@ public class RandomD extends SelectStrategy {
 		Random r = new Random();
 		//emit a random value for stock on trading day dt
 		if (checkValid(cqi.getCq())){
-			scr = new SelectCandidateResult(sc.getNormalTradeStartTime(cqi.getCq().getStartTime()), r.nextFloat());
+			scr = new SelectCandidateResult(cqi.getCq().getSymbol(), sc.getNormalTradeStartTime(cqi.getCq().getStartTime()), 
+					r.nextFloat(), cqi.getCq().getClose());
 		}
 		return scr;
 	}

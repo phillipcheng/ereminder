@@ -1,6 +1,7 @@
 package org.cld.trade.evt;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -14,6 +15,9 @@ import org.cld.trade.StockOrderType;
 import org.cld.trade.TradeMsg;
 import org.cld.trade.TradeMsgPR;
 import org.cld.trade.TradeMsgType;
+import org.cld.trade.persist.StockPosition;
+import org.cld.trade.persist.TradePersistMgr;
+import org.cld.trade.response.Balance;
 import org.cld.trade.response.OrderResponse;
 
 /*
@@ -58,14 +62,21 @@ public class BuyOppTrdMsg extends TradeMsg {
 		List<TradeMsg> tml = new ArrayList<TradeMsg>();
 		for (SelectCandidateResult scr: trySCRL){
 			if (scr!=null){
-				Map<StockOrderType, StockOrder> somap = AutoTrader.genStockOrderMap(scr, ts.getSs(), at.getUseAmount());
-				StockOrder buyOrder = somap.get(StockOrderType.buy);
-				OrderResponse or = at.getTm().trySubmit(buyOrder, at.isPreview());
-				if (OrderResponse.SUCCESS.equals(or.getError())){
-					TradeMsg mbo = new MonitorBuyOrderTrdMsg(StockOrderType.buy, or.getClientorderid(), somap);
-					tml.add(mbo);//buy order submitted, monitor buy order msg generated
-				}else{
-					logger.error(String.format("buy error: buy order: %s, response: %s", buyOrder, or));
+				Balance balance = at.getTm().getBalance();
+				float cash = balance.getCash();
+				if (cash>at.getUseAmount()){
+					Map<StockOrderType, StockOrder> somap = AutoTrader.genStockOrderMap(scr, ts.getSs(), at.getUseAmount());
+					StockOrder buyOrder = somap.get(StockOrderType.buy);
+					OrderResponse or = at.getTm().trySubmit(buyOrder, at.isPreview());
+					if (OrderResponse.SUCCESS.equals(or.getError())){
+						StockPosition sp = new StockPosition(scr.getSymbol(), buyOrder.getQuantity(), buyOrder.getLimitPrice(), 
+								new Date(), or.getClientorderid(), null, null, somap);
+						TradePersistMgr.createStockPosition(at.getCconf().getSmalldbconf(), sp);
+						TradeMsg mbo = new MonitorBuyOrderTrdMsg(or.getClientorderid(), somap);
+						tml.add(mbo);//buy order submitted, monitor buy order msg generated
+					}else{
+						logger.error(String.format("buy error: buy order: %s, response: %s", buyOrder, or));
+					}
 				}
 			}
 		}

@@ -12,19 +12,23 @@ import org.cld.trade.StockOrderType;
 import org.cld.trade.TradeMsg;
 import org.cld.trade.TradeMsgPR;
 import org.cld.trade.TradeMsgType;
+import org.cld.trade.persist.StockPosition;
+import org.cld.trade.persist.TradePersistMgr;
 import org.cld.trade.response.OrderResponse;
 
 public class BuyOrderFilledTrdMsg extends TradeMsg {
 	private static Logger logger =  LogManager.getLogger(BuyOrderFilledTrdMsg.class);
 	
+	String buyOrderId;
 	
 	public BuyOrderFilledTrdMsg(){
 		super(TradeMsgType.buyOrderFilled);
 	}
 	
-	public BuyOrderFilledTrdMsg(Map<StockOrderType, StockOrder> somap){
+	public BuyOrderFilledTrdMsg(Map<StockOrderType, StockOrder> somap, String buyOrderId){
 		this();
 		this.setSomap(somap);
+		this.buyOrderId = buyOrderId;
 	}
 	
 	public String toString(){
@@ -46,10 +50,15 @@ public class BuyOrderFilledTrdMsg extends TradeMsg {
 		OrderResponse or = at.getTm().trySubmit(sellstop, true); //submit stop order
 		if (OrderResponse.SUCCESS.equals(or.getError())){
 			logger.info(String.format("sellstop order filled. %s", sellstop));
+			StockPosition sp = TradePersistMgr.getStockPositionByOrderId(at.getCconf().getSmalldbconf(), buyOrderId);
+			if (sp!=null){
+				sp.setStopSellOrderId(or.getClientorderid());
+				TradePersistMgr.updatePosition(at.getCconf().getSmalldbconf(), sp);
+			}
 			MonitorSellStopOrderTrdMsg msso = new MonitorSellStopOrderTrdMsg(or.getClientorderid(), somap);
 			sellstop.setOrderId(or.getClientorderid());//set this client id into the stock order context
 			tml.add(msso);//
-			MonitorSellPriceTrdMsg msp = new MonitorSellPriceTrdMsg(sellstop.getStockid(), selllimit.getLimitPrice(), somap);
+			MonitorSellPriceTrdMsg msp = new MonitorSellPriceTrdMsg(sellstop.getSymbol(), selllimit.getLimitPrice(), somap);
 			tml.add(msp);//
 			tmpr.setExecuted(true);
 			tmpr.setNewMsgs(tml);

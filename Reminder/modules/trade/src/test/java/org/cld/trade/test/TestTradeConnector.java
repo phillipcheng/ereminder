@@ -27,7 +27,7 @@ public class TestTradeConnector {
 		StockOrder so = new StockOrder();
 		so.setAction(ActionType.buy);
 		so.setQuantity(100);
-		so.setStockid("GLUU");
+		so.setSymbol("GLUU");
 		so.setTif(TimeInForceType.DayOrder);
 		so.setOrderType(OrderType.limit);
 		so.setLimitPrice(3);
@@ -39,7 +39,7 @@ public class TestTradeConnector {
 		StockOrder so = new StockOrder();
 		so.setAction(ActionType.buy);
 		so.setQuantity(100);
-		so.setStockid("GLUU");
+		so.setSymbol("GLUU");
 		so.setTif(TimeInForceType.DayOrder);
 		so.setOrderType(OrderType.limit);
 		so.setLimitPrice(3);
@@ -51,7 +51,7 @@ public class TestTradeConnector {
 		StockOrder so = new StockOrder();
 		so.setAction(ActionType.sell);
 		so.setQuantity(10);
-		so.setStockid("AAPL");
+		so.setSymbol("AAPL");
 		so.setTif(TimeInForceType.GTC);
 		so.setOrderType(OrderType.limit);
 		so.setLimitPrice(130f);
@@ -63,7 +63,7 @@ public class TestTradeConnector {
 		StockOrder so = new StockOrder();
 		so.setAction(ActionType.sell);
 		so.setQuantity(2000);
-		so.setStockid("GLUU");
+		so.setSymbol("GLUU");
 		so.setTif(TimeInForceType.MarktOnClose);
 		so.setOrderType(OrderType.limit);
 		so.setLimitPrice(3.29f);
@@ -75,7 +75,7 @@ public class TestTradeConnector {
 		StockOrder so = new StockOrder();
 		so.setAction(ActionType.sell);
 		so.setQuantity(2000);
-		so.setStockid("GLUU");
+		so.setSymbol("GLUU");
 		so.setTif(TimeInForceType.DayOrder);
 		so.setOrderType(OrderType.stoptrailingpercentage);
 		so.setIncrementPercent(3);//FOR SELL 3 PERCENT MEANS BELOW 3% OF LAST PRICE
@@ -102,8 +102,14 @@ public class TestTradeConnector {
 	}
 	
 	@Test
+	public void testGetHistory(){
+		List<Holding> hl = tm.getHolding();
+		logger.info("hl:" + hl);
+	}
+	
+	@Test
 	public void testGetQuotes(){
-		tm.getQuotes(new String[]{"GLUU", "FIT"});
+		tm.getQuotes(new String[]{"GLUU", "FIT"}, true);
 	}
 	
 	@Test

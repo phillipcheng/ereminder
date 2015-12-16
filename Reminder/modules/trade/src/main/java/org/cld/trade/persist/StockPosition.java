@@ -2,82 +2,114 @@ package org.cld.trade.persist;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 
 import org.cld.stock.trade.StockOrder;
+import org.cld.trade.StockOrderType;
+import org.cld.util.JsonUtil;
 
 public class StockPosition {
+	String symbol;
 	int orderQty;
 	float orderPrice;
-	Date dt;//update time
-	String symbol;
-	int isOpenPos;//1 for open position, 2 for closed position, 0 for intention to open (select candidate)
-	String orderId;//the order to monitor for future changes, buyOrder for try, sell stop trailling order for open, 
-					//real sell order (can be the previous stop trailling) for close or market sell order for limit sell or market on close sell order
+	Date buySubmitDt;//buy submit datetime
+	String buyOrderId;
+	String stopSellOrderId;
+	String limitSellOrderId;
+	Map<StockOrderType, StockOrder> soMap;
 	
-	public static final int tryOpen=0;
-	public static final int open=1;
-	public static final int close=2;
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
-	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	
-	public StockPosition(StockOrder so, int isOpenPos, String orderId){
-		this.dt = so.getSubmitTime();
-		this.orderQty=so.getQuantity();
-		this.orderPrice=so.getLimitPrice();
-		this.symbol = so.getStockid();
-		this.isOpenPos=isOpenPos;
-		this.orderId = orderId;
-	}
-	
-	public StockPosition(Date dt, int orderQty, float orderPrice, String symbol, int isOpenPos, String orderId){
-		this.dt = dt;
-		this.orderQty=orderQty;
-		this.orderPrice=orderPrice;
+	//for jdbc
+	public StockPosition(String symbol, int orderQty, float orderPrice, Date buySubmitDt, 
+			String buyOrderId, String stopSellOrderId, String limitSellOrderId, String jsonSOs){
 		this.symbol = symbol;
-		this.isOpenPos=isOpenPos;
-		this.orderId = orderId;
-	}
-	
-	public String toString(){
-		return String.format("SP:%s,%s,%d,%.2f,%d,%s", symbol, sdf.format(dt), orderQty, orderPrice, isOpenPos, orderId);
-	}
-	
-	public Date getDt() {
-		return dt;
-	}
-	public void setDt(Date dt) {
-		this.dt = dt;
-	}
-	public int getOrderQty() {
-		return orderQty;
-	}
-	public void setOrderQty(int orderQty) {
 		this.orderQty = orderQty;
+		this.orderPrice = orderPrice;
+		this.buySubmitDt = buySubmitDt;
+		this.buyOrderId = buyOrderId;
+		this.stopSellOrderId = stopSellOrderId;
+		this.limitSellOrderId = limitSellOrderId;
+		soMap = (Map<StockOrderType, StockOrder>) JsonUtil.objFromJson(jsonSOs, Map.class);
 	}
+	
+	public StockPosition(String symbol, int orderQty, float orderPrice, Date buySubmitDt, 
+			String buyOrderId, String stopSellOrderId, String limitSellOrderId, Map<StockOrderType, StockOrder> soMap){
+		this.symbol = symbol;
+		this.orderQty = orderQty;
+		this.orderPrice = orderPrice;
+		this.buySubmitDt = buySubmitDt;
+		this.buyOrderId = buyOrderId;
+		this.stopSellOrderId = stopSellOrderId;
+		this.limitSellOrderId = limitSellOrderId;
+		this.soMap = soMap;
+	}
+	public String toString(){
+		return String.format("SP:%s,%d,%.2f,%s", symbol, orderQty, orderPrice, sdf.format(buySubmitDt));
+	}
+
 	public String getSymbol() {
 		return symbol;
 	}
+
 	public void setSymbol(String symbol) {
 		this.symbol = symbol;
 	}
-	public int getIsOpenPos() {
-		return isOpenPos;
+
+	public int getOrderQty() {
+		return orderQty;
 	}
-	public void setIsOpenPos(int isOpenPos) {
-		this.isOpenPos = isOpenPos;
+
+	public void setOrderQty(int orderQty) {
+		this.orderQty = orderQty;
 	}
+
 	public float getOrderPrice() {
 		return orderPrice;
 	}
+
 	public void setOrderPrice(float orderPrice) {
 		this.orderPrice = orderPrice;
 	}
 
-	public String getOrderId() {
-		return orderId;
+	public Date getBuySubmitDt() {
+		return buySubmitDt;
 	}
 
-	public void setOrderId(String orderId) {
-		this.orderId = orderId;
+	public void setBuySubmitDt(Date buySubmitDt) {
+		this.buySubmitDt = buySubmitDt;
 	}
+
+	public String getBuyOrderId() {
+		return buyOrderId;
+	}
+
+	public void setBuyOrderId(String buyOrderId) {
+		this.buyOrderId = buyOrderId;
+	}
+
+	public String getStopSellOrderId() {
+		return stopSellOrderId;
+	}
+
+	public void setStopSellOrderId(String stopSellOrderId) {
+		this.stopSellOrderId = stopSellOrderId;
+	}
+
+	public String getLimitSellOrderId() {
+		return limitSellOrderId;
+	}
+
+	public void setLimitSellOrderId(String limitSellOrderId) {
+		this.limitSellOrderId = limitSellOrderId;
+	}
+
+	public Map<StockOrderType, StockOrder> getSoMap() {
+		return soMap;
+	}
+	public void setSoMap(Map<StockOrderType, StockOrder> soMap) {
+		this.soMap = soMap;
+	}
+	
+	
 }

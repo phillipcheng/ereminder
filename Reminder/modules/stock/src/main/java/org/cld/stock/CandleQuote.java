@@ -10,7 +10,7 @@ import java.util.TreeMap;
 import org.cld.stock.strategy.IntervalUnit;
 
 public class CandleQuote implements TimedItem{
-	String stockid;
+	String symbol;
 	Date startTime;
 	//all price are comparable across the dates
 	float open;
@@ -25,7 +25,7 @@ public class CandleQuote implements TimedItem{
 	private static final SimpleDateFormat mdf = new SimpleDateFormat("MM-dd HH:mm");
 	
 	public String toString(){
-		return String.format("%s,%s,%.2f,%.2f,%.2f,%.2f,%.2f", stockid, sdf.format(startTime), open, high, close, low, volume);
+		return String.format("%s,%s,%.2f,%.2f,%.2f,%.2f,%.2f", symbol, sdf.format(startTime), open, high, close, low, volume);
 	}
 	
 	public static String onlyDate(List<CandleQuote> cql){
@@ -38,7 +38,7 @@ public class CandleQuote implements TimedItem{
 	}
 
 	public CandleQuote(String stockid, Date startTime, float open, float high, float close, float low, double volume, double amount){
-		this.stockid = stockid;
+		this.symbol = stockid;
 		this.startTime = startTime;
 		this.open = open;
 		this.high = high;
@@ -49,7 +49,7 @@ public class CandleQuote implements TimedItem{
 	}
 	
 	public CandleQuote(String stockid, Date startTime, float open, float high, float close, float low, double volume){
-		this.stockid = stockid;
+		this.symbol = stockid;
 		this.startTime = startTime;
 		this.open = open;
 		this.high = high;
@@ -59,7 +59,7 @@ public class CandleQuote implements TimedItem{
 	}
 	
 	public CandleQuote clone(){
-		CandleQuote cq = new CandleQuote(this.stockid, this.startTime, this.open, this.high, this.close, this.low, this.volume, this.amount);
+		CandleQuote cq = new CandleQuote(this.symbol, this.startTime, this.open, this.high, this.close, this.low, this.volume, this.amount);
 		return cq;
 	}
 	
@@ -72,11 +72,11 @@ public class CandleQuote implements TimedItem{
 		this.volume = tt.getVl();
 	}
 	
-	public String getStockid() {
-		return stockid;
+	public String getSymbol() {
+		return symbol;
 	}
-	public void setStockid(String stockid) {
-		this.stockid = stockid;
+	public void setSymbol(String symbol) {
+		this.symbol = symbol;
 	}
 	public Date getStartTime() {
 		return startTime;

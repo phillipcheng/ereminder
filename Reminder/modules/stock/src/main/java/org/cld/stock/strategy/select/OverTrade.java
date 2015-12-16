@@ -173,12 +173,12 @@ public class OverTrade extends SelectStrategy {
 						float price = 0f;
 						if (psubmittime.equals(v_submittime_open)){
 							price = submitCq.getOpen()*(1+psubmitpriceUpRatio*0.01f);
-							scr = new SelectCandidateResult(sc.getNormalTradeStartTime(submitCq.getStartTime()), value, price);
+							scr = new SelectCandidateResult(submitCq.getSymbol(), sc.getNormalTradeStartTime(submitCq.getStartTime()), value, price);
 						}else{
 							price = submitCq.getClose()*(1+psubmitpriceUpRatio*0.01f);
-							scr = new SelectCandidateResult(sc.getNormalTradeEndTime(submitCq.getStartTime()), value, price);
+							scr = new SelectCandidateResult(submitCq.getSymbol(), sc.getNormalTradeEndTime(submitCq.getStartTime()), value, price);
 						}
-						logger.info(String.format("%s has consecutive %s %s %.3f for %d nd til %s", submitCq.getStockid(), pdirection, paggregation, 
+						logger.info(String.format("%s has consecutive %s %s %.3f for %d nd til %s", submitCq.getSymbol(), pdirection, paggregation, 
 								value, days, sdf.format(submitCq.getStartTime())));
 					}
 				}

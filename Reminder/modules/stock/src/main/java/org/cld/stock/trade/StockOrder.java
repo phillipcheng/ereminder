@@ -99,11 +99,11 @@ public class StockOrder {
 	public void setSubmitTime(Date submitTime) {
 		this.submitTime = submitTime;
 	}
-	public String getStockid() {
+	public String getSymbol() {
 		return stockid;
 	}
-	public void setStockid(String stockid) {
-		this.stockid = stockid;
+	public void setSymbol(String symbol) {
+		this.stockid = symbol;
 	}
 	public int getQuantity() {
 		return quantity;

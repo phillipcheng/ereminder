@@ -163,7 +163,7 @@ public class StockPersistMgr {
 				if (o instanceof CandleQuote){
 					CandleQuote cq = (CandleQuote)o;
 					if (StockUtil.filterByTradeHour(cq, th)){
-						cq.setStockid(stockId);
+						cq.setSymbol(stockId);
 						if (!cq.getStartTime().before(sd)){
 							if (cq.getStartTime().after(ed)){
 								break;

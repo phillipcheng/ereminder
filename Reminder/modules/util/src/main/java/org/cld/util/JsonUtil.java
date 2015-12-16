@@ -3,7 +3,6 @@ package org.cld.util;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -39,7 +38,7 @@ public class JsonUtil {
 	}
 	
 	//there is util from map to json object then to string
-	public static String toJsonStringFromMap(Map<String, Object> params){
+	public static String toJsonStringFromMap(Map<String, ? extends Object> params){
 		//
 		List<String> removeKeys = new ArrayList<String>();
 		for (String key: params.keySet()){

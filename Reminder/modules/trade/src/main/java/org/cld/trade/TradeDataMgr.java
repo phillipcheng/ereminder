@@ -88,6 +88,7 @@ public class TradeDataMgr {
 		}
 		ttq.add(tt);
 		CandleQuote cq = new CandleQuote(tt);
+		cq.setSymbol(symbol);
 		//try buy strategy requires tick
 		List<TradeStrategy> tsl = at.getTsl(symbol, IntervalUnit.tick);
 		if (tsl!=null){

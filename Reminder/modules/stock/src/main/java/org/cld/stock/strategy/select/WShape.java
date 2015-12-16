@@ -42,9 +42,10 @@ public class WShape extends SelectStrategy {
 				if (amplitude>ampThresh*0.01f && prevCq.getClose()<minCq.getClose() && currentCq.getOpen()>prevCq.getClose()){
 					logger.debug(String.format("amp:%.4f,\n min:%s,\n max:%s,\n prev:%s,\n cur:%s", amplitude, minCq, maxCq, prevCq, currentCq));
 					if (this.getLookupUnit() == IntervalUnit.day){
-						scr = new SelectCandidateResult(sc.getNormalTradeStartTime(currentCq.getStartTime()), 0f);
+						scr = new SelectCandidateResult(currentCq.getSymbol(), sc.getNormalTradeStartTime(currentCq.getStartTime()), 
+								0f, currentCq.getClose());
 					}else if (this.getLookupUnit() == IntervalUnit.minute){
-						scr = new SelectCandidateResult(currentCq.getStartTime(), 0f);
+						scr = new SelectCandidateResult(currentCq.getSymbol(), currentCq.getStartTime(), 0f, currentCq.getClose());
 					}
 				}
 			}

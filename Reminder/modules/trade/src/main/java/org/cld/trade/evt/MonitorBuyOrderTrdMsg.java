@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 import org.cld.stock.trade.StockOrder;
 import org.cld.trade.AutoTrader;
 import org.cld.trade.StockOrderType;
-import org.cld.trade.TradeKingConnector;
 import org.cld.trade.TradeMsg;
 import org.cld.trade.TradeMsgPR;
 import org.cld.trade.TradeMsgType;
@@ -17,22 +16,20 @@ import org.cld.trade.response.OrderStatus;
 
 public class MonitorBuyOrderTrdMsg extends TradeMsg {
 	private static Logger logger =  LogManager.getLogger(MonitorBuyOrderTrdMsg.class);
-	private StockOrderType orderType;
 	private String orderId;
 	
 	public MonitorBuyOrderTrdMsg(){
 		super(TradeMsgType.monitorBuyLimitOrder);
 	}
 	
-	public MonitorBuyOrderTrdMsg(StockOrderType orderType, String orderId, Map<StockOrderType, StockOrder> somap){
+	public MonitorBuyOrderTrdMsg(String buyOrderId, Map<StockOrderType, StockOrder> somap){
 		this();
-		this.orderType = orderType;
-		this.orderId = orderId;
+		this.orderId = buyOrderId;
 		this.setSomap(somap);
 	}
 	
 	public String toString(){
-		return String.format("SM:%s,%s,%s", this.getMsgType(), orderType, orderId);
+		return String.format("SM:%s,%s", this.getMsgType(), orderId);
 	}
 
 
@@ -41,12 +38,6 @@ public class MonitorBuyOrderTrdMsg extends TradeMsg {
 	}
 	public void setOrderId(String orderId) {
 		this.orderId = orderId;
-	}
-	public StockOrderType getOrderType() {
-		return orderType;
-	}
-	public void setOrderType(StockOrderType orderType) {
-		this.orderType = orderType;
 	}
 	
 	
@@ -63,7 +54,7 @@ public class MonitorBuyOrderTrdMsg extends TradeMsg {
 		List<TradeMsg> tml = new ArrayList<TradeMsg>();
 		if (os!=null){
 			if (OrderStatus.FILLED.equals(os.getStat())){
-				BuyOrderFilledTrdMsg bof = new BuyOrderFilledTrdMsg(this.getSomap());
+				BuyOrderFilledTrdMsg bof = new BuyOrderFilledTrdMsg(this.getSomap(), orderId);
 				tml.add(bof);
 				tmpr.setNewMsgs(tml);
 				tmpr.setExecuted(true);

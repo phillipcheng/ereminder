@@ -3,6 +3,8 @@ package org.cld.trade;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.datacrawl.CrawlConf;
+import org.mortbay.jetty.client.Address;
 import org.mortbay.jetty.client.ContentExchange;
 import org.mortbay.jetty.client.HttpClient;
 
@@ -16,11 +18,13 @@ public class StreamMgr implements Runnable{
 	private List<String> symbols;
 	private TradeKingConnector tm;
 	private TradeDataMgr tdm;
+	private CrawlConf cconf;
 	
-	public StreamMgr(List<String> symbols, TradeKingConnector tm, TradeDataMgr tdm){
+	public StreamMgr(List<String> symbols, TradeKingConnector tm, TradeDataMgr tdm, CrawlConf cconf){
 		this.symbols = symbols;
 		this.tm = tm;
 		this.tdm = tdm;
+		this.cconf = cconf;
 	}
 	
 	@Override
@@ -29,6 +33,9 @@ public class StreamMgr implements Runnable{
 			OAuthConsumer consumer = new JettyOAuthConsumer(tm.getConsumerKey(), tm.getConsumerSecret());
 			consumer.setTokenWithSecret(tm.getOauthToken(), tm.getOauthTokenSecret());
 			HttpClient client = new HttpClient();
+			if (cconf.isUseProxy()){
+				client.setProxy(new Address(cconf.getProxyIP(), cconf.getProxyPort()));
+			}
 			client.start();
 			ContentExchange request = new StreamQuoteRequest(symbols, tdm);
 			consumer.sign(request);

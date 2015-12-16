@@ -245,7 +245,7 @@ public class TradeSimulator {
 			StockOrder buySO = buySOs.get(0);
 			buyPrice = buySO.getExecutedPrice();
 			buyTime = buySO.getExecuteTime();
-			stockid = buySO.getStockid();
+			stockid = buySO.getSymbol();
 		}else{
 			logger.error(String.format("buySO size not 1 but %s", buySOs));
 		}
@@ -285,7 +285,7 @@ public class TradeSimulator {
 	public static BuySellResult trade(SelectCandidateResult scr, SellStrategy ss, StockConfig sc, CrawlConf cconf, TradeHour th){
 		HdfsReader hr =  null;
 		try {
-			String stockid = scr.getStockId();
+			String stockid = scr.getSymbol();
 			List<StockOrder> sol = SellStrategy.makeStockOrders(scr, ss);
 			BuySellInfo bsi = new BuySellInfo("any", ss, sol, scr.getDt());
 			hr = StockPersistMgr.getReader(cconf, sc.getBTFQMinuteQuoteMapper(), stockid);

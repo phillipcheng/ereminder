@@ -47,7 +47,7 @@ public class Range extends SelectStrategy {
 	@Override
 	public SelectCandidateResult selectByStream(CqIndicators cqi) {
 		if (cqi.getCq().getLow()<buyPrice){
-			return new SelectCandidateResult(cqi.getCq().getStartTime(), 0f, cqi.getCq().getLow());
+			return new SelectCandidateResult(cqi.getCq().getSymbol(), cqi.getCq().getStartTime(), 0f, cqi.getCq().getLow());
 		}else{
 			return null;
 		}
