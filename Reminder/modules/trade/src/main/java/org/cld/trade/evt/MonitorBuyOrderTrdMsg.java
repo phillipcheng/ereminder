@@ -6,7 +6,7 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.stock.trade.StockOrder;
+import org.cld.stock.strategy.StockOrder;
 import org.cld.trade.AutoTrader;
 import org.cld.trade.StockOrderType;
 import org.cld.trade.TradeMsg;

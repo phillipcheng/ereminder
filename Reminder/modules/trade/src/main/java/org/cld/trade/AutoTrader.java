@@ -13,25 +13,25 @@ import java.util.TreeMap;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.test.CrawlTestUtil;
-import org.cld.stock.StockConfig;
-import org.cld.stock.StockUtil;
+import org.cld.stock.common.StockConfig;
+import org.cld.stock.common.StockUtil;
 import org.cld.stock.strategy.IntervalUnit;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.strategy.SellStrategy;
+import org.cld.stock.strategy.StockOrder;
 import org.cld.stock.strategy.TradeStrategy;
-import org.cld.stock.trade.StockOrder;
-import org.cld.stock.trade.StockOrder.ActionType;
-import org.cld.stock.trade.StockOrder.OrderType;
-import org.cld.stock.trade.StockOrder.TimeInForceType;
+import org.cld.stock.strategy.StockOrder.ActionType;
+import org.cld.stock.strategy.StockOrder.OrderType;
+import org.cld.stock.strategy.StockOrder.TimeInForceType;
 import org.cld.trade.evt.MonitorBuyOrderTrdMsg;
 import org.cld.trade.evt.MonitorSellPriceTrdMsg;
 import org.cld.trade.persist.StockPosition;
 import org.cld.trade.persist.TradePersistMgr;
 import org.cld.trade.response.OrderStatus;
-import org.mortbay.jetty.client.HttpClient;
+import org.cld.util.ProxyConf;
+import org.cld.util.jdbc.DBConnConf;
+import org.eclipse.jetty.client.HttpClient;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
@@ -50,7 +50,6 @@ public class AutoTrader implements Runnable {
 	
 	//at configures
 	private static final String USESTREAM_KEY="use.stream";
-	private static final String CRAWLCONF_KEY="crawl.conf";
 	private static final String USE_AMOUNT="use.amount";
 	private static final String BASE_MARKET="base.market";
 	private static final String MARKET_OPEN_CRON="market.open.cron";
@@ -64,8 +63,8 @@ public class AutoTrader implements Runnable {
 	private String historyDumpProperties;
 
 	private boolean useStream=true;
-	private String cconffile;
-	private CrawlConf cconf;
+	private ProxyConf proxyConf;
+	private DBConnConf dbConf;
 	private int useAmount;
 	private String baseMarketId;
 	private String marketOpenCron="0 26 9 ? * 2-6";
@@ -78,8 +77,8 @@ public class AutoTrader implements Runnable {
 		try{
 			PropertiesConfiguration pc = new PropertiesConfiguration("at.properties");
 			useStream = pc.getBoolean(USESTREAM_KEY);
-			cconffile = pc.getString(CRAWLCONF_KEY);
-			cconf = CrawlTestUtil.getCConf(cconffile);
+			proxyConf = new ProxyConf(pc);
+			dbConf = new DBConnConf("dm.", pc);
 			setUseAmount(pc.getInt(USE_AMOUNT));
 			setBaseMarketId(pc.getString(BASE_MARKET));
 			marketOpenCron = pc.getString(MARKET_OPEN_CRON);
@@ -196,7 +195,7 @@ public class AutoTrader implements Runnable {
 			if (os.getSide().equals(FixmlConst.Side_Buy) &&
 					os.getStat().equals(OrderStatus.PENDING)){
 				//for all buy order submitted in pending state, add the MonitorBuyOrderTrdMsg
-				StockPosition sp = TradePersistMgr.getStockPositionByOrderId(this.getCconf().getSmalldbconf(), os.getOrderId());
+				StockPosition sp = TradePersistMgr.getStockPositionByOrderId(this.getDbConf(), os.getOrderId());
 				if (sp!=null){
 					TradeMsg mboMsg = new MonitorBuyOrderTrdMsg(os.getOrderId(), sp.getSoMap());
 					addMsg(mboMsg);
@@ -207,7 +206,7 @@ public class AutoTrader implements Runnable {
 					os.getStat().equals(OrderStatus.PENDING) &&
 					os.getTyp().equals(FixmlConst.Typ_StopLimit) || os.getTyp().equals(FixmlConst.Typ_StopTrailing) || os.getTyp().equals(FixmlConst.Typ_Stop)){
 				//for all stop sell order submitted, add the MonitorSellPriceTrdMsg
-				StockPosition sp = TradePersistMgr.getStockPositionByOrderId(this.getCconf().getSmalldbconf(), os.getOrderId());
+				StockPosition sp = TradePersistMgr.getStockPositionByOrderId(this.getDbConf(), os.getOrderId());
 				if (sp!=null){
 					StockOrder limitSellOrder = sp.getSoMap().get(StockOrderType.selllimit);
 					if (limitSellOrder!=null){
@@ -343,9 +342,9 @@ public class AutoTrader implements Runnable {
 				List<String> sl = symbolList.subList(total, end);
 				Runnable streamMgr = null;
 				if (at.useStream){
-					streamMgr = new StreamMgr(sl, at.getTm(), tradeDataMgr, at.getCconf());
+					streamMgr = new StreamMgr(sl, at.getTm(), tradeDataMgr, at.getProxyConf());
 				}else{
-					streamMgr = new StreamSimulator(sl, at.getTm(), tradeDataMgr, at.getCconf(), totalDataThread);
+					streamMgr = new StreamSimulator(sl, at.getTm(), tradeDataMgr, totalDataThread);
 				}
 				new Thread(streamMgr).start();
 				total=end;
@@ -365,12 +364,6 @@ public class AutoTrader implements Runnable {
 	}
 	
 	//setter and getter
-	public CrawlConf getCconf() {
-		return cconf;
-	}
-	public void setCconf(CrawlConf cconf) {
-		this.cconf = cconf;
-	}
 	public int getUseAmount() {
 		return useAmount;
 	}
@@ -421,5 +414,21 @@ public class AutoTrader implements Runnable {
 	}
 	public String getHistoryDumpProperties() {
 		return historyDumpProperties;
+	}
+
+	public ProxyConf getProxyConf() {
+		return proxyConf;
+	}
+
+	public void setProxyConf(ProxyConf proxyConf) {
+		this.proxyConf = proxyConf;
+	}
+
+	public DBConnConf getDbConf() {
+		return dbConf;
+	}
+
+	public void setDbConf(DBConnConf dbConf) {
+		this.dbConf = dbConf;
 	}
 }

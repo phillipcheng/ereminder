@@ -2,7 +2,7 @@ package org.cld.trade;
 
 import java.util.Map;
 
-import org.cld.stock.trade.StockOrder;
+import org.cld.stock.strategy.StockOrder;
 
 
 public abstract class TradeMsg {

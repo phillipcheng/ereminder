@@ -13,6 +13,9 @@
     <Logger name="org.cld" level="DEBUG" additivity="false">
       <AppenderRef ref="Console"/>
     </Logger>
+    <Logger name="oauth.signpost.jetty" level="DEBUG" additivity="false">
+      <AppenderRef ref="Console"/>
+    </Logger>
     
     <Logger name="org.xml.mytaskdef" level="INFO" additivity="false">
       <AppenderRef ref="Console"/>

@@ -5,12 +5,12 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.stock.trade.StockOrder;
-import org.cld.stock.trade.StockOrder.ActionType;
-import org.cld.stock.trade.StockOrder.OrderType;
-import org.cld.stock.trade.StockOrder.TimeInForceType;
 import org.cld.trade.TradeKingConnector;
 import org.cld.trade.evt.MarketCloseTrdMsg;
+import org.cld.stock.strategy.StockOrder;
+import org.cld.stock.strategy.StockOrder.ActionType;
+import org.cld.stock.strategy.StockOrder.OrderType;
+import org.cld.stock.strategy.StockOrder.TimeInForceType;
 import org.cld.trade.AutoTrader;
 import org.cld.trade.response.Balance;
 import org.cld.trade.response.Holding;

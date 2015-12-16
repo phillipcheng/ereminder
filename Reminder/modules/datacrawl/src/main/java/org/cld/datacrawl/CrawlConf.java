@@ -14,7 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.hibernate.SessionFactory;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.mgr.CategoryAnalyze;

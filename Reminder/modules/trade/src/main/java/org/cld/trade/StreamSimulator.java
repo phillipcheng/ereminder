@@ -6,8 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.CrawlConf;
-import org.cld.stock.TradeTick;
+import org.cld.stock.common.TradeTick;
 import org.cld.trade.response.Quote;
 
 public class StreamSimulator implements Runnable{
@@ -21,7 +20,7 @@ public class StreamSimulator implements Runnable{
 	
 	Map<String, Long> lastTickMap = new ConcurrentHashMap<String, Long>();
 	
-	public StreamSimulator(List<String> symbols, TradeKingConnector tm, TradeDataMgr tdm, CrawlConf cconf, int totalThreadNumber){
+	public StreamSimulator(List<String> symbols, TradeKingConnector tm, TradeDataMgr tdm, int totalThreadNumber){
 		this.symbols = new String[symbols.size()];
 		this.symbols = symbols.toArray(this.symbols);
 		this.tm = tm;

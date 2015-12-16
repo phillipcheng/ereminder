@@ -5,9 +5,9 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.stock.trade.StockOrder;
-import org.cld.stock.trade.StockOrder.ActionType;
-import org.cld.stock.trade.StockOrder.OrderType;
+import org.cld.stock.strategy.StockOrder;
+import org.cld.stock.strategy.StockOrder.ActionType;
+import org.cld.stock.strategy.StockOrder.OrderType;
 import org.cld.trade.AutoTrader;
 import org.cld.trade.StockOrderType;
 import org.cld.trade.TradeMsg;
@@ -73,11 +73,11 @@ public class MonitorSellPriceTrdMsg extends TradeMsg {
 				OrderResponse or = at.getTm().trySubmit(selllimit, true);
 				selllimit.setOrderId(or.getClientorderid());
 				if (OrderResponse.SUCCESS.equals(or.getError())){
-					StockPosition sp = TradePersistMgr.getStockPositionByOrderId(at.getCconf().getSmalldbconf(), sellstop.getOrderId());
+					StockPosition sp = TradePersistMgr.getStockPositionByOrderId(at.getDbConf(), sellstop.getOrderId());
 					logger.info(String.format("limit sell order %s submitted successfully.", or.getClientorderid()));
 					if (sp!=null){
 						sp.setLimitSellOrderId(or.getClientorderid());
-						TradePersistMgr.updatePosition(at.getCconf().getSmalldbconf(), sp);
+						TradePersistMgr.updatePosition(at.getDbConf(), sp);
 					}
 				}else{
 					//TODO error handling

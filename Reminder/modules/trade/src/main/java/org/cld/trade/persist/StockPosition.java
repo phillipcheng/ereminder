@@ -4,7 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
-import org.cld.stock.trade.StockOrder;
+import org.cld.stock.strategy.StockOrder;
 import org.cld.trade.StockOrderType;
 import org.cld.util.JsonUtil;
 

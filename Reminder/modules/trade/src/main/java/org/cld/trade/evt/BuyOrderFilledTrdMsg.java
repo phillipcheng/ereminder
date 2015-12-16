@@ -6,7 +6,7 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.stock.trade.StockOrder;
+import org.cld.stock.strategy.StockOrder;
 import org.cld.trade.AutoTrader;
 import org.cld.trade.StockOrderType;
 import org.cld.trade.TradeMsg;
@@ -50,10 +50,10 @@ public class BuyOrderFilledTrdMsg extends TradeMsg {
 		OrderResponse or = at.getTm().trySubmit(sellstop, true); //submit stop order
 		if (OrderResponse.SUCCESS.equals(or.getError())){
 			logger.info(String.format("sellstop order filled. %s", sellstop));
-			StockPosition sp = TradePersistMgr.getStockPositionByOrderId(at.getCconf().getSmalldbconf(), buyOrderId);
+			StockPosition sp = TradePersistMgr.getStockPositionByOrderId(at.getDbConf(), buyOrderId);
 			if (sp!=null){
 				sp.setStopSellOrderId(or.getClientorderid());
-				TradePersistMgr.updatePosition(at.getCconf().getSmalldbconf(), sp);
+				TradePersistMgr.updatePosition(at.getDbConf(), sp);
 			}
 			MonitorSellStopOrderTrdMsg msso = new MonitorSellStopOrderTrdMsg(or.getClientorderid(), somap);
 			sellstop.setOrderId(or.getClientorderid());//set this client id into the stock order context

@@ -8,8 +8,8 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.strategy.SelectCandidateResult;
+import org.cld.stock.strategy.StockOrder;
 import org.cld.stock.strategy.TradeStrategy;
-import org.cld.stock.trade.StockOrder;
 import org.cld.trade.AutoTrader;
 import org.cld.trade.StockOrderType;
 import org.cld.trade.TradeMsg;
@@ -71,7 +71,7 @@ public class BuyOppTrdMsg extends TradeMsg {
 					if (OrderResponse.SUCCESS.equals(or.getError())){
 						StockPosition sp = new StockPosition(scr.getSymbol(), buyOrder.getQuantity(), buyOrder.getLimitPrice(), 
 								new Date(), or.getClientorderid(), null, null, somap);
-						TradePersistMgr.createStockPosition(at.getCconf().getSmalldbconf(), sp);
+						TradePersistMgr.createStockPosition(at.getDbConf(), sp);
 						TradeMsg mbo = new MonitorBuyOrderTrdMsg(or.getClientorderid(), somap);
 						tml.add(mbo);//buy order submitted, monitor buy order msg generated
 					}else{

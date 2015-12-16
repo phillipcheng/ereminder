@@ -1,78 +1,61 @@
 package org.cld.trade.test;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
-import org.cld.stock.StockConfig;
-import org.cld.stock.StockUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.cld.trade.AutoTrader;
-import org.cld.trade.StreamQuoteRequest;
-import org.cld.trade.TradeDataMgr;
-import org.junit.Test;
-
-import org.mortbay.jetty.client.ContentExchange;
-import org.mortbay.jetty.client.HttpClient;
+import org.cld.trade.TradeKingConnector;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.api.Response;
+import org.eclipse.jetty.client.api.Result;
+import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import oauth.signpost.OAuthConsumer;
-import oauth.signpost.jetty.JettyOAuthConsumer;
+import oauth.signpost.jetty.Jetty9OAuthConsumer;
 
-public class TestTradeDataMgr {
+class MyHandler implements Response.ContentListener, Response.CompleteListener{
+
+	private static Logger logger =  LogManager.getLogger(MyHandler.class);
 	
-	@Test
-	public void test1() throws Exception {
-		AutoTrader at = new AutoTrader();
-		StockConfig sc = StockUtil.getStockConfig(at.getBaseMarketId());
-		TradeDataMgr tdm = new TradeDataMgr(at, sc);
-		BufferedReader br = new BufferedReader(new InputStreamReader(
-				new FileInputStream("C:\\mydoc\\myprojects\\ereminder\\Reminder\\modules\\trade\\input\\AAPL_tick_20151214.txt")));
-		String line = null;
-		while ((line=br.readLine())!=null){
-			StreamQuoteRequest.processCsvData("AAPL", line, tdm);
-		}
-		br.close();
+	@Override
+	public void onContent(Response response, ByteBuffer content) {
+		logger.info("content:" + new String(content.array()));
+	}
+
+	@Override
+	public void onComplete(Result result) {
+		 int status = result.getResponse().getStatus();
+         if (status == 200)
+             System.out.println("Successfully connected");
+         else
+             System.out.println("Error Code Received: " + status);
 		
-		Thread.sleep(30000);//60 seconds
 	}
 	
-	@Test
-	public void testStream() throws Exception {
+}
+public class TestTradeDataMgr {
+	
+	public static void main(String args[]) throws Exception {
 		AutoTrader at = new AutoTrader();
         // create a consumer object and configure it with the access
         // token and token secret obtained from the service provider
-        OAuthConsumer consumer = new JettyOAuthConsumer(at.getTm().getConsumerKey(), at.getTm().getConsumerSecret());
+        OAuthConsumer consumer = new Jetty9OAuthConsumer(at.getTm().getConsumerKey(), at.getTm().getConsumerSecret());
         consumer.setTokenWithSecret(at.getTm().getOauthToken(), at.getTm().getOauthTokenSecret());
+        SslContextFactory sslContextFactory = new SslContextFactory();
+        HttpClient client = new HttpClient(sslContextFactory);
+        client.start();
+        Request request = client.newRequest("https://stream.tradeking.com/v1/market/quotes.xml?symbols=AAPL");
+        request.method(HttpMethod.GET);
 
-        // create an HTTP request to a protected resource
-        ContentExchange request = new ContentExchange(true) {
-          // tell me what kind of response code we got
-            protected void onResponseComplete() throws IOException {
-                int status = getResponseStatus();
-                if (status == 200)
-                    System.out.println("Successfully connected");
-                else
-                    System.out.println("Error Code Received: " + status);
-            }
-
-            // print out any response data we get along the stream
-            protected void onResponseContent(Buffer data) {
-              System.out.println(data);
-            }
-        };
-
-        // setup the request
-        request.setMethod("GET");
-        request.setURL("https://stream.tradeking.com/v1/market/quotes.xml?symbols=F");
-
+        MyHandler myhandler = new MyHandler();
         // sign the request
         consumer.sign(request);
-
-        // send the request
-        HttpClient client = new HttpClient();
-        client.start();
-        client.send(request);
-        request.waitForDone();
+        request.onResponseContent(myhandler);
+        request.send(myhandler);
+        Thread.sleep(20000);
 	}
 }

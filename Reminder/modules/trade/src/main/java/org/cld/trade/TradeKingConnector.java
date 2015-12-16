@@ -36,11 +36,10 @@ import org.xml.fixml.OrderQtyDataBlockT;
 import org.xml.fixml.PegInstructionsBlockT;
 
 import org.cld.util.JsonUtil;
-import org.cld.stock.trade.StockOrder;
-import org.cld.stock.trade.StockOrder.ActionType;
-import org.cld.stock.trade.StockOrder.OrderType;
-import org.cld.stock.trade.StockOrder.TimeInForceType;
-
+import org.cld.stock.strategy.StockOrder;
+import org.cld.stock.strategy.StockOrder.ActionType;
+import org.cld.stock.strategy.StockOrder.OrderType;
+import org.cld.stock.strategy.StockOrder.TimeInForceType;
 import org.cld.trade.response.Balance;
 import org.cld.trade.response.Holding;
 import org.cld.trade.response.OrderResponse;

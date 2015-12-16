@@ -3,8 +3,8 @@ package org.cld.trade;
 import java.util.List;
 import java.util.Map;
 
-import org.cld.stock.trade.StockOrder;
-import org.cld.stock.trade.StockOrder.ActionType;
+import org.cld.stock.strategy.StockOrder;
+import org.cld.stock.strategy.StockOrder.ActionType;
 import org.cld.trade.response.Balance;
 import org.cld.trade.response.Holding;
 import org.cld.trade.response.OrderResponse;

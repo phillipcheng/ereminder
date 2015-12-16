@@ -20,6 +20,7 @@ import org.cld.datacrawl.mgr.TargetPrdInvoke;
 import org.cld.datastore.entity.Product;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
+import org.cld.util.ScriptEngineUtil;
 import org.xml.taskdef.AttributeType;
 import org.xml.taskdef.BrowseCatType;
 import org.xml.taskdef.ParamValueType;
@@ -30,7 +31,6 @@ import org.xml.taskdef.ValueType;
 import org.xml.taskdef.VarType;
 import org.xml.mytaskdef.IdUrlMapping;
 import org.xml.mytaskdef.ParsedBrowsePrd;
-import org.xml.mytaskdef.ScriptEngineUtil;
 
 public class ProductListAnalyzeUtil {
 

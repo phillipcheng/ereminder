@@ -6,7 +6,7 @@ import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
-import org.xml.mytaskdef.ScriptEngineUtil;
+import org.cld.util.ScriptEngineUtil;
 import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.OpType;
 import org.xml.taskdef.ValueType;

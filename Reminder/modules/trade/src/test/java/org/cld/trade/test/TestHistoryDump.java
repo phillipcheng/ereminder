@@ -4,11 +4,11 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 
-import org.cld.stock.StockConfig;
-import org.cld.stock.StockUtil;
+import org.cld.stock.common.StockConfig;
+import org.cld.stock.common.StockUtil;
 import org.cld.trade.AutoTrader;
 import org.cld.trade.HistoryDumpMgr;
-import org.cld.trade.StreamQuoteRequest;
+import org.cld.trade.StreamHandler;
 import org.cld.trade.TradeDataMgr;
 import org.junit.Test;
 
@@ -24,7 +24,7 @@ public class TestHistoryDump {
 				new FileInputStream("C:\\mydoc\\myprojects\\ereminder\\Reminder\\modules\\trade\\input\\AAPL_tick_20151214.txt")));
 		String line = null;
 		while ((line=br.readLine())!=null){
-			StreamQuoteRequest.processCsvData("AAPL", line, tdm);
+			StreamHandler.processCsvData("AAPL", line, tdm);
 		}
 		br.close();
 		

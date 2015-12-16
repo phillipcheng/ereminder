@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.stock.TradeTick;
+import org.cld.stock.common.TradeTick;
 import org.cld.util.SafeSimpleDateFormat;
 
 public class Quote {
