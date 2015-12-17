@@ -28,7 +28,7 @@ public class StockPositionJDBCMapper extends JDBCMapper{
 	public StockPosition getObject(ResultSet cursor) {
     	try{
     		StockPosition b= new StockPosition(
-	    			cursor.getString(1), cursor.getInt(2), cursor.getFloat(3), cursor.getDate(4), cursor.getString(5), 
+	    			cursor.getString(1), cursor.getInt(2), cursor.getFloat(3), cursor.getTimestamp(4), cursor.getString(5), 
 	    			cursor.getString(6), cursor.getString(7), cursor.getString(8));
 	    	return b;
     	}catch(Exception e){

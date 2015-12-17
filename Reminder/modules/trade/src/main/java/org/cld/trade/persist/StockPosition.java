@@ -2,6 +2,7 @@ package org.cld.trade.persist;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.Map;
 
 import org.cld.stock.strategy.StockOrder;
@@ -16,7 +17,7 @@ public class StockPosition {
 	String buyOrderId;
 	String stopSellOrderId;
 	String limitSellOrderId;
-	Map<StockOrderType, StockOrder> soMap;
+	Map<String, StockOrder> soMap;
 	
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
@@ -30,11 +31,11 @@ public class StockPosition {
 		this.buyOrderId = buyOrderId;
 		this.stopSellOrderId = stopSellOrderId;
 		this.limitSellOrderId = limitSellOrderId;
-		soMap = (Map<StockOrderType, StockOrder>) JsonUtil.objFromJson(jsonSOs, Map.class);
+		soMap = (Map<String, StockOrder>) JsonUtil.objFromJson(jsonSOs, Map.class);
 	}
 	
 	public StockPosition(String symbol, int orderQty, float orderPrice, Date buySubmitDt, 
-			String buyOrderId, String stopSellOrderId, String limitSellOrderId, Map<StockOrderType, StockOrder> soMap){
+			String buyOrderId, String stopSellOrderId, String limitSellOrderId, Map<String, StockOrder> soMap){
 		this.symbol = symbol;
 		this.orderQty = orderQty;
 		this.orderPrice = orderPrice;
@@ -45,7 +46,8 @@ public class StockPosition {
 		this.soMap = soMap;
 	}
 	public String toString(){
-		return String.format("SP:%s,%d,%.2f,%s", symbol, orderQty, orderPrice, sdf.format(buySubmitDt));
+		return String.format("SP:%s,%d,%.2f,%s,%s,%s,%s", symbol, orderQty, orderPrice, sdf.format(buySubmitDt), 
+				buyOrderId, stopSellOrderId, limitSellOrderId);
 	}
 
 	public String getSymbol() {
@@ -104,12 +106,10 @@ public class StockPosition {
 		this.limitSellOrderId = limitSellOrderId;
 	}
 
-	public Map<StockOrderType, StockOrder> getSoMap() {
+	public Map<String, StockOrder> getSoMap() {
 		return soMap;
 	}
-	public void setSoMap(Map<StockOrderType, StockOrder> soMap) {
+	public void setSoMap(Map<String, StockOrder> soMap) {
 		this.soMap = soMap;
 	}
-	
-	
 }

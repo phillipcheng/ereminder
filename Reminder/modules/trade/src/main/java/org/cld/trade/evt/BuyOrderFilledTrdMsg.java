@@ -25,7 +25,7 @@ public class BuyOrderFilledTrdMsg extends TradeMsg {
 		super(TradeMsgType.buyOrderFilled);
 	}
 	
-	public BuyOrderFilledTrdMsg(Map<StockOrderType, StockOrder> somap, String buyOrderId){
+	public BuyOrderFilledTrdMsg(Map<String, StockOrder> somap, String buyOrderId){
 		this();
 		this.setSomap(somap);
 		this.buyOrderId = buyOrderId;

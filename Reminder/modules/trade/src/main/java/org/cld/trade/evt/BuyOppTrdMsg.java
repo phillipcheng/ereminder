@@ -2,6 +2,7 @@ package org.cld.trade.evt;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
@@ -65,7 +66,7 @@ public class BuyOppTrdMsg extends TradeMsg {
 				Balance balance = at.getTm().getBalance();
 				float cash = balance.getCash();
 				if (cash>at.getUseAmount()){
-					Map<StockOrderType, StockOrder> somap = AutoTrader.genStockOrderMap(scr, ts.getSs(), at.getUseAmount());
+					Map<String, StockOrder> somap = AutoTrader.genStockOrderMap(scr, ts.getSs(), at.getUseAmount());
 					StockOrder buyOrder = somap.get(StockOrderType.buy);
 					OrderResponse or = at.getTm().trySubmit(buyOrder, at.isPreview());
 					if (OrderResponse.SUCCESS.equals(or.getError())){

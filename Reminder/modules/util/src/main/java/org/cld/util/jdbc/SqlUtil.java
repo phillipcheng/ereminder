@@ -97,7 +97,10 @@ public class SqlUtil {
 		try{
 			if (param!=null){
 				for (int i=0; i<param.length;){
-					if (param[i] instanceof String){
+					if (param[i] == null){
+						statement.setString(i+1, null);
+						i++;
+					}else if (param[i] instanceof String){
 						statement.setString(i+1, (String)param[i]);
 						i++;
 					}else if (param[i] instanceof Integer){
@@ -107,7 +110,7 @@ public class SqlUtil {
 						statement.setTimestamp(i+1, (Timestamp) param[i]);
 						i++;
 					}else if (param[i] instanceof Date){
-						statement.setDate(i+1, new java.sql.Date(((Date)param[i]).getTime()));
+						statement.setTimestamp(i+1, new java.sql.Timestamp(((Date)param[i]).getTime()));
 						i++;
 					}else if (param[i] instanceof Float){
 						statement.setFloat(i+1, (Float)param[i]);
@@ -272,7 +275,6 @@ public class SqlUtil {
 			int offset, int limit, String myOrderBy, JDBCMapper mapper){
 		if (offset<0){
     		offset=0;
-        	logger.warn("negative offset not allowed on server side. reset to 0.");
     	}
 		
     	if(limit>MAX_BATCH_SIZE){

@@ -22,7 +22,7 @@ public class MonitorBuyOrderTrdMsg extends TradeMsg {
 		super(TradeMsgType.monitorBuyLimitOrder);
 	}
 	
-	public MonitorBuyOrderTrdMsg(String buyOrderId, Map<StockOrderType, StockOrder> somap){
+	public MonitorBuyOrderTrdMsg(String buyOrderId, Map<String, StockOrder> somap){
 		this();
 		this.orderId = buyOrderId;
 		this.setSomap(somap);

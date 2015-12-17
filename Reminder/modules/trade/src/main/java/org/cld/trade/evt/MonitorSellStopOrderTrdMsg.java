@@ -22,7 +22,7 @@ public class MonitorSellStopOrderTrdMsg extends TradeMsg {
 		super(TradeMsgType.monitorSellStopOrder);
 	}
 	
-	public MonitorSellStopOrderTrdMsg(String orderId, Map<StockOrderType, StockOrder> somap){
+	public MonitorSellStopOrderTrdMsg(String orderId, Map<String, StockOrder> somap){
 		this();
 		this.orderId = orderId;
 		this.setSomap(somap);
@@ -47,7 +47,7 @@ public class MonitorSellStopOrderTrdMsg extends TradeMsg {
 	@Override
 	public TradeMsgPR process(AutoTrader at) {
 		Map<String, OrderStatus> map = at.getTm().getOrderStatus();
-		StockOrder sellstorder = getSomap().get(StockOrderType.sellstop);
+		StockOrder sellstorder = getSomap().get(StockOrderType.sellstop.name());
 		OrderStatus os = map.get(getOrderId());
 		TradeMsgPR tmpr = new TradeMsgPR();
 		if (os!=null){

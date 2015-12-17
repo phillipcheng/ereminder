@@ -27,7 +27,7 @@ public class MonitorSellPriceTrdMsg extends TradeMsg {
 		super(TradeMsgType.monitorSellLimitPrice);
 	}
 	
-	public MonitorSellPriceTrdMsg(String symbol, float price, Map<StockOrderType, StockOrder> somap){
+	public MonitorSellPriceTrdMsg(String symbol, float price, Map<String, StockOrder> somap){
 		this();
 		this.symbol = symbol;
 		this.price = price;
@@ -65,9 +65,9 @@ public class MonitorSellPriceTrdMsg extends TradeMsg {
 				tmpr.setExecuted(true);
 				//send 1 cancel order (succeeded), send 1 market order
 				logger.info(String.format("price %s crossed sell limit %s.", q, this));
-				StockOrder sellstop = getSomap().get(StockOrderType.sellstop);
+				StockOrder sellstop = getSomap().get(StockOrderType.sellstop.name());
 				at.getTm().cancelOrder(sellstop.getOrderId(), ActionType.sell, sellstop.getSymbol(), sellstop.getQuantity());//send cancel order
-				StockOrder selllimit = getSomap().get(StockOrderType.selllimit);
+				StockOrder selllimit = getSomap().get(StockOrderType.selllimit.name());
 				//change this into a market order
 				selllimit.setOrderType(OrderType.market);
 				OrderResponse or = at.getTm().trySubmit(selllimit, true);

@@ -7,7 +7,7 @@ import org.cld.stock.strategy.StockOrder;
 
 public abstract class TradeMsg {
 	private TradeMsgType msgType;
-	protected Map<StockOrderType, StockOrder> somap; //the somap context
+	protected Map<String, StockOrder> somap; //the somap context
 	
 	public TradeMsg(TradeMsgType msgType){
 		this.msgType = msgType;
@@ -24,10 +24,10 @@ public abstract class TradeMsg {
 	public void setMsgType(TradeMsgType msgType) {
 		this.msgType = msgType;
 	}
-	public Map<StockOrderType, StockOrder> getSomap() {
+	public Map<String, StockOrder> getSomap() {
 		return somap;
 	}
-	public void setSomap(Map<StockOrderType, StockOrder> somap) {
+	public void setSomap(Map<String, StockOrder> somap) {
 		this.somap = somap;
 	}
 	

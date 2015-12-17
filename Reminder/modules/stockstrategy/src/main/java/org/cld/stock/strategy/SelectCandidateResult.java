@@ -11,8 +11,8 @@ public class SelectCandidateResult {
 	
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 	
-	public SelectCandidateResult(String stockid, Date dt, float value, float buyPrice){
-		this.setSymbol(stockid);
+	public SelectCandidateResult(String symbol, Date dt, float value, float buyPrice){
+		this.setSymbol(symbol);
 		this.dt = dt;
 		this.value = value;
 		this.setBuyPrice(buyPrice);

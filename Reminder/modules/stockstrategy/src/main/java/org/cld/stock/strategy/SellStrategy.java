@@ -159,7 +159,7 @@ public class SellStrategy {
 		stopSellOrder.setQuantity(qty);
 		stopSellOrder.setTif(TimeInForceType.GTC);
 		sol.add(stopSellOrder);
-		sol.add(makeForceSellOrder(stockid, qty));
+		//sol.add(makeForceSellOrder(stockid, qty));
 		
 		return sol;
 	}

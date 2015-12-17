@@ -1,6 +1,7 @@
 package org.cld.trade;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -124,22 +125,22 @@ public class AutoTrader implements Runnable {
 		return null;
 	}
 	
-	private static Map<StockOrderType, StockOrder> makeMap(List<StockOrder> sol){
-		Map<StockOrderType, StockOrder> map = new HashMap<StockOrderType, StockOrder>();
+	private static Map<String, StockOrder> makeMap(List<StockOrder> sol){
+		Map<String, StockOrder> map = new HashMap<String, StockOrder>();
 		if (sol!=null){
 			for (StockOrder so : sol){
 				if (so.getAction()==ActionType.buy){
-					map.put(StockOrderType.buy, so);
+					map.put(StockOrderType.buy.name(), so);
 				}else{
 					if (so.getTif()==TimeInForceType.MarktOnClose){
-						map.put(StockOrderType.sellmarketclose, so);
+						map.put(StockOrderType.sellmarketclose.name(), so);
 					}else{
 						if (so.getOrderType()==OrderType.stoplimit){
-							map.put(StockOrderType.sellstop, so);
+							map.put(StockOrderType.sellstop.name(), so);
 						}else if (so.getOrderType()==OrderType.stoptrailingpercentage){
-							map.put(StockOrderType.sellstop, so);
+							map.put(StockOrderType.sellstop.name(), so);
 						}else if (so.getOrderType()==OrderType.limit){
-							map.put(StockOrderType.selllimit, so);
+							map.put(StockOrderType.selllimit.name(), so);
 						}
 					}
 				}
@@ -148,7 +149,7 @@ public class AutoTrader implements Runnable {
 		return map;
 	}
 	
-	public static Map<StockOrderType, StockOrder> genStockOrderMap(SelectCandidateResult scr, SellStrategy ss, int cashAmount){
+	public static Map<String, StockOrder> genStockOrderMap(SelectCandidateResult scr, SellStrategy ss, int cashAmount){
 		StockOrder buyso = SellStrategy.makeBuyOrder(scr, ss, cashAmount);
 		List<StockOrder> sellsos= SellStrategy.makeSellOrders(buyso.getSymbol(), buyso.getSubmitTime(), buyso.getQuantity(), buyso.getLimitPrice(), ss);
 		sellsos.add(buyso);
