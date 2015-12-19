@@ -57,13 +57,19 @@
 	
 	<build>
 		<resources>
-      <resource>
-          <directory>src/main/resources</directory>
-          <filtering>false</filtering>
-      </resource>
-		</resources>
+      		<resource>
+        	  <directory>src/main/resources</directory>
+        	  <filtering>false</filtering>
+        	</resource>
+        	<resource>
+        	  <directory>src/test/resources</directory>
+        	  <excludes>
+        	  	<exclude>*.*</exclude>
+        	  </excludes>
+        	</resource>
+       	</resources>
        
-    <pluginManagement>
+    	<pluginManagement>
 		  <plugins>
 		    <plugin>
 		      <groupId>org.eclipse.m2e</groupId>

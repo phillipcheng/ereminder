@@ -21,11 +21,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.stock.common.CandleQuote;
+import org.cld.stock.common.CqIndicators;
 import org.cld.stock.common.StockConfig;
+import org.cld.stock.common.StockDataConfig;
 import org.cld.stock.common.StockUtil;
 import org.cld.stock.common.TradeHour;
 import org.cld.stock.framework.HdfsReader;
 import org.cld.stock.stockbase.ETLConfig;
+import org.cld.stock.strategy.IntervalUnit;
+import org.cld.stock.strategy.SelectStrategy;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.DataMapper;
 import org.cld.util.FileDataMapper;
@@ -385,6 +389,21 @@ public class StockPersistMgr {
 			SqlUtil.closeResources(con, stmt);
 		}
 		return d;
+	}
+	
+	public static List<CqIndicators> getData(CrawlConf cconf, StockDataConfig sdcfg, SelectStrategy bs, TradeHour th){
+		FileDataMapper fdMapper = null;
+		StockConfig sc = StockUtil.getStockConfig(sdcfg.getBaseMarketId());
+		if (sdcfg.getUnit()==IntervalUnit.day){
+			fdMapper = sc.getBTFQDailyQuoteMapper();
+		}else if (sdcfg.getUnit()==IntervalUnit.minute){
+			fdMapper = sc.getBTFQMinuteQuoteMapper();
+		}else{
+			logger.error(String.format("unit not supported: %s", sdcfg.getUnit()));
+		}
+		List<CandleQuote> cql = (List<CandleQuote>) StockPersistMgr.getBTDByStockDate(cconf, fdMapper, sdcfg.getStockId(), 
+				sdcfg.getStartDt(), sdcfg.getEndDt(), th);
+		return CqIndicators.addIndicators(cql, bs);
 	}
 
 }

@@ -1,6 +1,4 @@
-package org.cld.datastore.entity;
-
-import java.io.Serializable;
+package org.cld.util.entity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

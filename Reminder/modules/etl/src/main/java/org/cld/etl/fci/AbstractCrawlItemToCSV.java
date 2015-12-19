@@ -8,8 +8,8 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datastore.entity.CrawledItem;
 import org.cld.etl.csv.TableUtil;
+import org.cld.util.entity.CrawledItem;
 
 public abstract class AbstractCrawlItemToCSV {
 	

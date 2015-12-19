@@ -8,10 +8,10 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datastore.entity.CrawledItem;
-import org.cld.datastore.entity.CrawledItemId;
 import org.cld.datastore.impl.HbaseDataStoreManagerImpl;
 import org.cld.datastore.impl.HbaseDbAdminImpl;
+import org.cld.util.entity.CrawledItem;
+import org.cld.util.entity.CrawledItemId;
 import org.junit.Test;
 
 public class HbaseCrawledItemTest {

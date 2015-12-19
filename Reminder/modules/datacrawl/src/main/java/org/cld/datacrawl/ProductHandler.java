@@ -1,8 +1,8 @@
 package org.cld.datacrawl;
 
-import org.cld.datastore.entity.Category;
-import org.cld.datastore.entity.Product;
 import org.cld.taskmgr.entity.Task;
+import org.cld.util.entity.Category;
+import org.cld.util.entity.Product;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 
 import com.gargoylesoftware.htmlunit.WebClient;

@@ -9,11 +9,12 @@ import javax.swing.JTextField;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.stock.StockDataConfig;
 
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.DefaultComboBoxModel;
+
+import org.cld.stock.common.StockDataConfig;
 import org.cld.stock.strategy.IntervalUnit;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;

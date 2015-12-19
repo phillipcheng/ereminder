@@ -17,15 +17,15 @@ import org.cld.datacrawl.task.BrowseDetailTaskConf;
 import org.cld.datacrawl.task.BrowseProductTaskConf;
 import org.cld.datacrawl.task.InvokeTaskTaskConf;
 import org.cld.datacrawl.util.SomePageErrorException;
-import org.cld.datastore.entity.Category;
-import org.cld.datastore.entity.CrawledItem;
-import org.cld.datastore.entity.CrawledItemId;
 import org.cld.pagea.general.CategoryAnalyzeUtil;
 import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
+import org.cld.util.entity.Category;
+import org.cld.util.entity.CrawledItem;
+import org.cld.util.entity.CrawledItemId;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 

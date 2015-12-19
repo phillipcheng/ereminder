@@ -11,18 +11,20 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.test.CrawlTestUtil;
-import org.cld.stock.CqIndicators;
-import org.cld.stock.StockDataConfig;
-import org.cld.stock.StockUtil;
-import org.cld.stock.TradeHour;
+import org.cld.stock.common.CqIndicators;
+import org.cld.stock.common.StockDataConfig;
+import org.cld.stock.common.StockUtil;
+import org.cld.stock.common.TradeHour;
+import org.cld.stock.framework.SelectStrategyByStockTask;
+import org.cld.stock.persistence.StockPersistMgr;
 import org.cld.stock.strategy.IntervalUnit;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
-import org.cld.stock.strategy.SelectStrategyByStockTask;
 import org.cld.util.PropertiesUtil;
 
 import javax.swing.BoxLayout;
@@ -31,7 +33,7 @@ import javax.swing.JButton;
 public class MainFrame extends JFrame {
 	
 	private static final long serialVersionUID = 1L;
-	private static Logger logger = Logger.getLogger(MainFrame.class);
+	protected static Logger logger =  LogManager.getLogger(MainFrame.class);
 	private static final String KEY_CCONF="cconf.properties";
 	private static final String KEY_STRATEGY="strategy.properties";
 	
@@ -95,7 +97,7 @@ public class MainFrame extends JFrame {
 					}else if (sdcfg.getUnit()==IntervalUnit.minute){
 						th = TradeHour.Normal;
 					}
-					cqilist = StockUtil.getData(cconf, sdcfg, bs, th);
+					cqilist = StockPersistMgr.getData(cconf, sdcfg, bs, th);
 					List<SelectStrategy> bsl = new ArrayList<SelectStrategy>();
 					bsl.add(bs);
 					List<Object[]> kvl = SelectStrategyByStockTask.getBuyOppList(cconf, bsl, sdcfg.getStockId(), 

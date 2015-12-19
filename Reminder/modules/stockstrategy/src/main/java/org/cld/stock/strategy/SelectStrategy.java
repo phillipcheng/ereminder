@@ -45,7 +45,6 @@ public abstract class SelectStrategy {
 	public static final String KEY_DIVSPLIT="divsplit";
 	public static final String KEY_DIVIDEND="dividend";
 	
-	
 	protected StockConfig sc;
 	private String name;
 	private int mbMemory=512;
@@ -60,7 +59,8 @@ public abstract class SelectStrategy {
 	public SelectStrategy(){
 	}
 	
-	//streaming
+	//to be overriden by subclass
+	public void tradeCompleted(OrderFilled or){}
 	public abstract SelectCandidateResult selectByStream(CqIndicators cqi);
 	
 	@JsonIgnore

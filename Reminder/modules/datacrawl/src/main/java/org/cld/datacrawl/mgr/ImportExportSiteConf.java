@@ -13,7 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.test.CrawlTestUtil;
-import org.cld.datastore.entity.SiteConf;
+import org.cld.util.entity.SiteConf;
 
 public class ImportExportSiteConf {
 	private static Logger logger =  LogManager.getLogger(ImportExportSiteConf.class);

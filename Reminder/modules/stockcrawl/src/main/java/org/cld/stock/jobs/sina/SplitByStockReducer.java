@@ -16,12 +16,12 @@ import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.test.CrawlTestUtil;
-import org.cld.datastore.entity.CrawledItem;
-import org.cld.datastore.entity.CrawledItemId;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.cld.stock.config.SinaStockConfig;
 import org.cld.stock.framework.ETLUtil;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
+import org.cld.util.entity.CrawledItem;
+import org.cld.util.entity.CrawledItemId;
 
 
 public class SplitByStockReducer extends Reducer<Text, Text, Text, Text>{

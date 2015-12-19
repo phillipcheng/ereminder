@@ -4,8 +4,8 @@ import static org.junit.Assert.*;
 
 import java.util.Date;
 
-import org.cld.datastore.entity.Category;
-import org.cld.datastore.entity.CrawledItemId;
+import org.cld.util.entity.Category;
+import org.cld.util.entity.CrawledItemId;
 import org.junit.Test;
 
 public class TestCategory {

@@ -6,13 +6,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.cld.datastore.entity.CrawledItem;
 import org.cld.stock.common.StockConfig;
 import org.cld.stock.common.StockUtil;
 import org.cld.stock.config.NasdaqStockConfig;
 import org.cld.stock.framework.StockBase;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
+import org.cld.util.entity.CrawledItem;
 
 public class NasdaqStockBase extends StockBase{
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");

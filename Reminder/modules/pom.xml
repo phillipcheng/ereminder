@@ -14,10 +14,9 @@
 	<modules>
 		<module>util</module>
 		<module>hadooputil</module>
+		<module>etl</module>
 		<module>datastore</module>
 		<module>taskmgr</module>
-		<module>etl</module>
-		<module>cld-action</module>
 		<module>datacrawl</module>
 		<!-- <module>cld-webconf</module> -->
 	</modules>

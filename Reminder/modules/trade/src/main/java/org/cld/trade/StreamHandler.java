@@ -13,7 +13,7 @@ import org.cld.util.SafeSimpleDateFormat;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
 
-public class StreamHandler implements Response.ContentListener, Response.CompleteListener{
+public class StreamHandler implements Response.ContentListener, Response.CompleteListener, Response.BeginListener{
 
 	private static Logger logger =  LogManager.getLogger(StreamHandler.class);
 	private static final SafeSimpleDateFormat sdf = new SafeSimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
@@ -41,6 +41,11 @@ public class StreamHandler implements Response.ContentListener, Response.Complet
 	}
 	
 	@Override
+	public void onBegin(Response response) {
+		logger.info(String.format("response begion %d", response.getStatus()));
+	}
+	
+	@Override
 	public void onComplete(Result result) {
 		status = result.getResponse().getStatus();
 		if (status == 200){
@@ -53,8 +58,9 @@ public class StreamHandler implements Response.ContentListener, Response.Complet
 
 	@Override
 	public void onContent(Response response, ByteBuffer content) {
-		logger.debug(content.toString());
-		processData(content.toString(), tdm);
+		String strContent = new String(content.array());
+		logger.debug(strContent);
+		processData(strContent, tdm);
 	}
 
 	public static void processData(String line, TradeDataMgr tdm){
@@ -78,7 +84,7 @@ public class StreamHandler implements Response.ContentListener, Response.Complet
 		}
 	}
 	
-	public static void processCsvData(String symbol, String line, TradeDataMgr tdm){
+	public static TradeTick processCsvData(String symbol, String line, TradeDataMgr tdm){
 		String[] vs = line.split(",");
 		if (vs.length==3){
 			try {
@@ -87,10 +93,14 @@ public class StreamHandler implements Response.ContentListener, Response.Complet
 				long vl = Long.parseLong(vs[2]);
 				TradeTick tt = new TradeTick(datetime, last, vl);
 				tdm.accept(symbol, tt);
+				return tt;
 			}catch(Exception e){
 				logger.error(String.format("error parsing %s", line), e);
 			}			
+		}else{
+			logger.error("format wrong:%s", line);
 		}
+		return null;
 	}
 
 	public boolean isFinished() {
@@ -100,5 +110,7 @@ public class StreamHandler implements Response.ContentListener, Response.Complet
 	public int getStatus() {
 		return status;
 	}
+
+
 
 }

@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.util.List;
 import java.util.Date;
 
-import org.cld.stock.CqIndicators;
+import org.cld.stock.common.CqIndicators;
 import org.cld.stock.indicator.Indicator;
 import org.cld.stock.indicator.RenderType;
 import org.cld.stock.strategy.IntervalUnit;
@@ -12,7 +12,6 @@ import org.cld.stock.strategy.SelectStrategy;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.DatasetRenderingOrder;
 import org.jfree.chart.plot.XYPlot;

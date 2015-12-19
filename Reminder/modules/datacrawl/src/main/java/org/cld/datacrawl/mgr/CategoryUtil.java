@@ -5,8 +5,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.cld.datastore.entity.Category;
 import org.cld.util.StringUtil;
+import org.cld.util.entity.Category;
 
 
 public class CategoryUtil {

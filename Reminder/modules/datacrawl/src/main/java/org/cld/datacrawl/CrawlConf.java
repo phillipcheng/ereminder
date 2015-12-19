@@ -22,8 +22,6 @@ import org.cld.datacrawl.mgr.ProductAnalyze;
 import org.cld.datacrawl.mgr.ProductListAnalyze;
 import org.cld.datastore.DBConf;
 import org.cld.datastore.api.DataStoreManager;
-import org.cld.datastore.entity.Product;
-import org.cld.datastore.entity.SiteConf;
 import org.cld.datastore.impl.HbaseDataStoreManagerImpl;
 import org.cld.datastore.impl.HdfsDataStoreManagerImpl;
 import org.cld.datastore.impl.HibernateDataStoreManagerImpl;
@@ -32,6 +30,8 @@ import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
+import org.cld.util.entity.Product;
+import org.cld.util.entity.SiteConf;
 import org.cld.util.jdbc.DBConnConf;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreType;

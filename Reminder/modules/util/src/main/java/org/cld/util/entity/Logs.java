@@ -1,4 +1,4 @@
-package org.cld.datastore.entity;
+package org.cld.util.entity;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

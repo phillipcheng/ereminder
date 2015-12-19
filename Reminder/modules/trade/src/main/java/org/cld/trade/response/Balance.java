@@ -11,6 +11,11 @@ public class Balance {
 	public static final String MONEY="money";
 	public static final String CASH="cash";
 	
+	public Balance(float accountValue, float cash){
+		this.accountValue = accountValue;
+		this.cash = cash;
+	}
+	
 	public Balance(Map<String, Object> map){
 		accountValue = Float.parseFloat((String) map.get(ACCOUNTVALUE));
 		Map<String, Object> moneyMap = (Map<String, Object>) map.get(MONEY);

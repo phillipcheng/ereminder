@@ -10,6 +10,7 @@ public class StockOrder {
 		sell,
 		sellshort,
 		buycover,
+		unknown
 	}
 	
 	public enum TimeInForceType{
@@ -24,7 +25,8 @@ public class StockOrder {
 		stop,
 		stoplimit,
 		stoptrailingdollar,
-		stoptrailingpercentage
+		stoptrailingpercentage,
+		unknown
 	}
 
 	public enum StatusType{

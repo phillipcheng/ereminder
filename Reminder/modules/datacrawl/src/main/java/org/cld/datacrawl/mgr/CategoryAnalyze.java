@@ -12,7 +12,6 @@ import org.cld.datacrawl.CrawlTaskGenerator;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.NextPage;
 import org.cld.datastore.api.DataStoreManager;
-import org.cld.datastore.entity.Category;
 import org.cld.datacrawl.task.BrowseCategoryTaskConf;
 import org.cld.datacrawl.task.BrowseDetailTaskConf;
 import org.cld.datacrawl.task.BrsCatStat;
@@ -22,6 +21,7 @@ import org.cld.datacrawl.util.VerifyPageByXPath;
 import org.cld.pagea.general.CategoryAnalyzeUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
+import org.cld.util.entity.Category;
 import org.xml.mytaskdef.BrowseCatInst;
 import org.xml.taskdef.BrowseCatType;
 

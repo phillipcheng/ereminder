@@ -3,8 +3,9 @@ package org.cld.chart;
 import java.awt.Color;
 import java.util.Date;
 import java.util.List;
-import org.cld.stock.CandleQuote;
-import org.cld.stock.CqIndicators;
+
+import org.cld.stock.common.CandleQuote;
+import org.cld.stock.common.CqIndicators;
 import org.cld.stock.indicator.Indicator;
 import org.cld.stock.indicator.RenderType;
 import org.cld.stock.strategy.IntervalUnit;

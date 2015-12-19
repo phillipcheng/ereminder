@@ -7,10 +7,10 @@ import java.util.Date;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.api.DataStoreManager;
-import org.cld.datastore.entity.Category;
-import org.cld.datastore.entity.CrawledItemId;
-import org.cld.datastore.entity.Price;
-import org.cld.datastore.entity.Product;
+import org.cld.util.entity.Category;
+import org.cld.util.entity.CrawledItemId;
+import org.cld.util.entity.Price;
+import org.cld.util.entity.Product;
 
 public class DSMTest {
 	

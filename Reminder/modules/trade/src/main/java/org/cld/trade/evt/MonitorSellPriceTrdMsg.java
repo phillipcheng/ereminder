@@ -5,11 +5,16 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.stock.strategy.OrderFilled;
+import org.cld.stock.strategy.SelectCandidateResult;
+import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.strategy.StockOrder;
+import org.cld.stock.strategy.TradeStrategy;
 import org.cld.stock.strategy.StockOrder.ActionType;
 import org.cld.stock.strategy.StockOrder.OrderType;
 import org.cld.trade.AutoTrader;
 import org.cld.trade.StockOrderType;
+import org.cld.trade.TradeKingConnector;
 import org.cld.trade.TradeMsg;
 import org.cld.trade.TradeMsgPR;
 import org.cld.trade.TradeMsgType;
@@ -23,15 +28,10 @@ public class MonitorSellPriceTrdMsg extends TradeMsg {
 	private String symbol;
 	private float price;
 	
-	public MonitorSellPriceTrdMsg(){
-		super(TradeMsgType.monitorSellLimitPrice);
-	}
-	
-	public MonitorSellPriceTrdMsg(String symbol, float price, Map<String, StockOrder> somap){
-		this();
+	public MonitorSellPriceTrdMsg(String symbol, float price, SelectCandidateResult scr, String bsName, Map<String, StockOrder> somap){
+		super(TradeMsgType.monitorSellLimitPrice, scr, bsName, somap);
 		this.symbol = symbol;
 		this.price = price;
-		this.setSomap(somap);
 	}
 
 	public String toString(){
@@ -70,14 +70,19 @@ public class MonitorSellPriceTrdMsg extends TradeMsg {
 				StockOrder selllimit = getSomap().get(StockOrderType.selllimit.name());
 				//change this into a market order
 				selllimit.setOrderType(OrderType.market);
-				OrderResponse or = at.getTm().trySubmit(selllimit, true);
+				OrderResponse or = at.getTm().trySubmit(selllimit, at.isPreview());
 				selllimit.setOrderId(or.getClientorderid());
 				if (OrderResponse.SUCCESS.equals(or.getError())){
+					//callback
+					OrderFilled of = new OrderFilled(symbol, selllimit.getQuantity(), selllimit.getLimitPrice(), ActionType.sell, OrderType.limit);
+					SelectStrategy bs = at.getBs(scr.getSymbol(), bsName);
+					if (bs!=null){
+						bs.tradeCompleted(of);
+					}
 					StockPosition sp = TradePersistMgr.getStockPositionByOrderId(at.getDbConf(), sellstop.getOrderId());
 					logger.info(String.format("limit sell order %s submitted successfully.", or.getClientorderid()));
 					if (sp!=null){
-						sp.setLimitSellOrderId(or.getClientorderid());
-						TradePersistMgr.updatePosition(at.getDbConf(), sp);
+						TradePersistMgr.updateLimitSellOrderId(at.getDbConf(), sp.getBuyOrderId(), or.getClientorderid());
 					}
 				}else{
 					//TODO error handling

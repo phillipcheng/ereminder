@@ -11,7 +11,7 @@ public class MarketOpenTrdMsg extends TradeMsg {
 	private static Logger logger =  LogManager.getLogger(MarketOpenTrdMsg.class);
 	
 	public MarketOpenTrdMsg() {
-		super(TradeMsgType.marketOpenSoon);
+		super(TradeMsgType.marketOpenSoon, null, null, null);
 	}
 	
 

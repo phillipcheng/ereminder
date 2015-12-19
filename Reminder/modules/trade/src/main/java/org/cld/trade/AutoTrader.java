@@ -1,7 +1,6 @@
 package org.cld.trade;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -27,6 +26,7 @@ import org.cld.stock.strategy.StockOrder.OrderType;
 import org.cld.stock.strategy.StockOrder.TimeInForceType;
 import org.cld.trade.evt.MonitorBuyOrderTrdMsg;
 import org.cld.trade.evt.MonitorSellPriceTrdMsg;
+import org.cld.trade.evt.MonitorSellStopOrderTrdMsg;
 import org.cld.trade.persist.StockPosition;
 import org.cld.trade.persist.TradePersistMgr;
 import org.cld.trade.response.OrderStatus;
@@ -50,6 +50,7 @@ public class AutoTrader implements Runnable {
 	private static final String STRATEGIES="strategies";
 	
 	//at configures
+	private static final String SIMULATE_TRADE="simulate.trade";
 	private static final String USESTREAM_KEY="use.stream";
 	private static final String USE_AMOUNT="use.amount";
 	private static final String BASE_MARKET="base.market";
@@ -58,8 +59,10 @@ public class AutoTrader implements Runnable {
 	private static final String IS_PREVIEW="is.preview";
 	
 	//
-	private TradeKingConnector tradeConnector;
-	private Map<String, TreeMap<IntervalUnit, List<TradeStrategy>>> tsMap = new HashMap<String, TreeMap<IntervalUnit, List<TradeStrategy>>>();//symbol to trade-strategy instance
+	private TradeApi tradeConnector;
+	private Map<String, TreeMap<IntervalUnit, List<TradeStrategy>>> siutsMap = 
+			new HashMap<String, TreeMap<IntervalUnit, List<TradeStrategy>>>();//symbol to interval unit to trade-strategy instance
+	private Map<String, TradeStrategy> tsInstMap = new HashMap<String, TradeStrategy>();//from key(symbol_bs.name) to trade-strategy instance
 	private Set<String> symbols = new HashSet<String>();
 	private String historyDumpProperties;
 
@@ -73,6 +76,7 @@ public class AutoTrader implements Runnable {
 	private boolean isPreview=true;
 	private boolean useLast=false;
 	private Map<String, TradeMsg> msgMap = new HashMap<String, TradeMsg>();
+	private Set<String> prevMsgIds = new HashSet<String>();//to curb too much log
 	
 	public AutoTrader(){
 		try{
@@ -97,10 +101,10 @@ public class AutoTrader implements Runnable {
 				SellStrategy[] ssl = SellStrategy.gen(props);
 				for (String symbol:bsMap.keySet()){
 					symbols.add(symbol);
-					TreeMap<IntervalUnit, List<TradeStrategy>> tslMap = tsMap.get(symbol);
+					TreeMap<IntervalUnit, List<TradeStrategy>> tslMap = siutsMap.get(symbol);
 					if (tslMap==null){
 						tslMap = new TreeMap<IntervalUnit, List<TradeStrategy>>();
-						tsMap.put(symbol, tslMap);
+						siutsMap.put(symbol, tslMap);
 					}
 					SelectStrategy bs = bsMap.get(symbol).get(0);//only 1 bs for each strategy file
 					List<TradeStrategy> tsl = tslMap.get(bs.getLookupUnit());
@@ -108,17 +112,34 @@ public class AutoTrader implements Runnable {
 						tsl = new ArrayList<TradeStrategy>();
 						tslMap.put(bs.getLookupUnit(), tsl);
 					}
-					tsl.add(new TradeStrategy(bs, ssl[0]));
+					TradeStrategy ts = new TradeStrategy(bs, ssl[0]);
+					tsl.add(ts);
+					String key = getSymbolBsKey(symbol, bs.getName());
+					tsInstMap.put(key, ts);
 				}
 			}
-			logger.debug(String.format("interval-stock-ts map: %s", tsMap));
+			logger.debug(String.format("interval-stock-ts map: %s", siutsMap));
 		}catch(Exception e){
 			logger.error("", e);
 		}
 	}
 	
+	public static String getSymbolBsKey(String symbol, String bsName){
+		return String.format("%s_%s", symbol, bsName);
+	}
+	
+	public SelectStrategy getBs(String symbol, String bsName){
+		String key = getSymbolBsKey(symbol, bsName);
+		TradeStrategy ts = tsInstMap.get(key);
+		if (ts!=null){
+			return ts.getBs();
+		}else{
+			return null;
+		}
+	}
+	
 	public List<TradeStrategy> getTsl(String symbol, IntervalUnit iu){
-		TreeMap<IntervalUnit, List<TradeStrategy>> map = tsMap.get(symbol);
+		TreeMap<IntervalUnit, List<TradeStrategy>> map = siutsMap.get(symbol);
 		if (map!=null){
 			return map.get(iu);
 		}
@@ -191,35 +212,43 @@ public class AutoTrader implements Runnable {
 	
 	public void initEngine(){
 		Map<String, OrderStatus> osmap = tradeConnector.getOrderStatus();
-		for (String id:osmap.keySet()){
-			OrderStatus os = osmap.get(id);
-			if (os.getSide().equals(FixmlConst.Side_Buy) &&
-					os.getStat().equals(OrderStatus.PENDING)){
-				//for all buy order submitted in pending state, add the MonitorBuyOrderTrdMsg
-				StockPosition sp = TradePersistMgr.getStockPositionByOrderId(this.getDbConf(), os.getOrderId());
-				if (sp!=null){
-					TradeMsg mboMsg = new MonitorBuyOrderTrdMsg(os.getOrderId(), sp.getSoMap());
-					addMsg(mboMsg);
-				}else{
-					logger.error(String.format("stock position for %s not found.", os.getOrderId()));
-				}
-			}else if (os.getSide().equals(FixmlConst.Side_Sell) &&
-					os.getStat().equals(OrderStatus.PENDING) &&
-					os.getTyp().equals(FixmlConst.Typ_StopLimit) || os.getTyp().equals(FixmlConst.Typ_StopTrailing) || os.getTyp().equals(FixmlConst.Typ_Stop)){
-				//for all stop sell order submitted, add the MonitorSellPriceTrdMsg
-				StockPosition sp = TradePersistMgr.getStockPositionByOrderId(this.getDbConf(), os.getOrderId());
-				if (sp!=null){
-					StockOrder limitSellOrder = sp.getSoMap().get(StockOrderType.selllimit);
-					if (limitSellOrder!=null){
-						TradeMsg msoMsg = new MonitorSellPriceTrdMsg(limitSellOrder.getSymbol(), limitSellOrder.getLimitPrice(), sp.getSoMap());
-						addMsg(msoMsg);
+		if (osmap!=null){
+			for (String id:osmap.keySet()){
+				OrderStatus os = osmap.get(id);
+				if (os.getSide().equals(FixmlConst.Side_Buy) &&
+						os.getStat().equals(OrderStatus.OPEN)){
+					//for all buy order submitted in pending state, add the MonitorBuyOrderTrdMsg
+					StockPosition sp = TradePersistMgr.getStockPositionByOrderId(this.getDbConf(), os.getOrderId());
+					if (sp!=null){
+						TradeMsg mboMsg = new MonitorBuyOrderTrdMsg(os.getOrderId(), sp.getScr(), sp.getBsName(), sp.getSoMap());
+						addMsg(mboMsg);
 					}else{
-						logger.error(String.format("limit sell order not found in somap:%s", sp.getSoMap()));
+						logger.error(String.format("stock position for %s not found.", os.getOrderId()));
 					}
-				}else{
-					logger.error(String.format("stock position for %s not found.", os.getOrderId()));
+				}else if (os.getSide().equals(FixmlConst.Side_Sell) &&
+						os.getStat().equals(OrderStatus.OPEN) &&
+						os.getTyp().equals(FixmlConst.Typ_StopLimit) || os.getTyp().equals(FixmlConst.Typ_StopTrailing) || os.getTyp().equals(FixmlConst.Typ_Stop)){
+					//for all stop sell order submitted, add the MonitorSellPriceTrdMsg
+					StockPosition sp = TradePersistMgr.getStockPositionByOrderId(this.getDbConf(), os.getOrderId());
+					if (sp!=null){
+						StockOrder limitSellOrder = sp.getSoMap().get(StockOrderType.selllimit.name());
+						if (limitSellOrder!=null){
+							TradeMsg msoMsg = new MonitorSellPriceTrdMsg(limitSellOrder.getSymbol(), limitSellOrder.getLimitPrice(), sp.getScr(), sp.getBsName(), sp.getSoMap());
+							addMsg(msoMsg);
+						}else{
+							logger.error(String.format("limit sell order not found in somap:%s", sp.getSoMap()));
+						}
+						TradeMsg mssoMsg = new MonitorSellStopOrderTrdMsg(os.getOrderId(), sp.getScr(), sp.getBsName(), sp.getSoMap());
+						addMsg(mssoMsg);
+					}else{
+						logger.error(String.format("stock position for %s not found.", os.getOrderId()));
+					}
+				}else if (!os.getStat().equals(OrderStatus.FILLED)){
+					logger.info(String.format("order not filled but can't be processed: %s", os));
 				}
 			}
+		}else{
+			logger.error("order status map is null.");
 		}
 	}
 	/**
@@ -244,42 +273,60 @@ public class AutoTrader implements Runnable {
 	@Override
 	public void run() {
 		while (true){
-			if (getMsgMap().size()>0){
-				logger.info(String.format("%d messages to process.", getMsgMap().size()));
-				List<TradeMsgPR> tmprlist = new ArrayList<TradeMsgPR>();
-				List<String> keys = getMsgMapKeys();
-				for (String key:keys){
-					TradeMsg msg = getMsg(key);
-					if (msg!=null){
-						logger.info(String.format("process msg: %s",msg));
-						TradeMsgPR tmpr = msg.process(this);
-						if (tmpr!=null){
-							tmpr.setMsgId(msg.getMsgId());
-							tmprlist.add(tmpr);
-						}
-					}else{
-						logger.error(String.format("msg for key:%s not found.", key));
-					}
-				}
-				for (TradeMsgPR tmpr: tmprlist){
-					if (tmpr.getNewMsgs()!=null){
-						for (TradeMsg sm:tmpr.getNewMsgs()){
-							getMsgMap().put(sm.getMsgId(), sm);
-						}
-					}
-					if (tmpr.getRmMsgs()!=null){
-						for (String mid:tmpr.getRmMsgs()){
-							getMsgMap().remove(mid);
-						}
-					}
-					if (tmpr.isExecuted()){
-						getMsgMap().remove(tmpr.getMsgId());
-					}
-					if (tmpr.cleanAllMsgs){
-						getMsgMap().clear();
+			//check msgs changed to output log
+			boolean changedMsg=false;
+			if (prevMsgIds.size()!=getMsgMap().size()){
+				changedMsg = true;
+			}else{
+				for (String msgId:prevMsgIds){
+					if (!getMsgMap().containsKey(msgId)){
+						changedMsg = true;
+						break;
 					}
 				}
 			}
+			if (changedMsg){
+				logger.info(String.format("%d messages to process.", getMsgMap().size()));
+				logger.info(String.format("process msg: %s",getMsgMap().values()));
+			}
+			//store prev msg ids
+			prevMsgIds.clear();
+			for (String msgId:getMsgMap().keySet()){
+				prevMsgIds.add(msgId);
+			}
+			List<TradeMsgPR> tmprlist = new ArrayList<TradeMsgPR>();
+			List<String> keys = getMsgMapKeys();
+			for (String key:keys){
+				TradeMsg msg = getMsg(key);
+				if (msg!=null){
+					TradeMsgPR tmpr = msg.process(this);
+					if (tmpr!=null){
+						tmpr.setMsgId(msg.getMsgId());
+						tmprlist.add(tmpr);
+					}
+				}else{
+					logger.error(String.format("msg for key:%s not found.", key));
+				}
+			}
+			for (TradeMsgPR tmpr: tmprlist){
+				if (tmpr.getNewMsgs()!=null){
+					for (TradeMsg sm:tmpr.getNewMsgs()){
+						getMsgMap().put(sm.getMsgId(), sm);
+					}
+				}
+				if (tmpr.getRmMsgs()!=null){
+					for (String mid:tmpr.getRmMsgs()){
+						getMsgMap().remove(mid);
+					}
+				}
+				if (tmpr.isExecuted()){
+					getMsgMap().remove(tmpr.getMsgId());
+				}
+				if (tmpr.cleanAllMsgs){
+					getMsgMap().clear();
+				}
+			}
+			
 			try {
 				Thread.sleep(4000);
 			} catch (InterruptedException e) {
@@ -343,9 +390,9 @@ public class AutoTrader implements Runnable {
 				List<String> sl = symbolList.subList(total, end);
 				Runnable streamMgr = null;
 				if (at.useStream){
-					streamMgr = new StreamMgr(sl, at.getTm(), tradeDataMgr, at.getProxyConf());
+					streamMgr = new StreamMgr(sl, (TradeKingConnector) at.getTm(), tradeDataMgr, at.getProxyConf());
 				}else{
-					streamMgr = new StreamSimulator(sl, at.getTm(), tradeDataMgr, totalDataThread);
+					streamMgr = new StreamSimulator(sl, (TradeKingConnector) at.getTm(), tradeDataMgr, totalDataThread);
 				}
 				new Thread(streamMgr).start();
 				total=end;
@@ -401,11 +448,11 @@ public class AutoTrader implements Runnable {
 	public void setUseLast(boolean useLast) {
 		this.useLast = useLast;
 	}
-	public TradeKingConnector getTm() {
+	public TradeApi getTm() {
 		return tradeConnector;
 	}
-	public void setTm(TradeKingConnector tm) {
-		this.tradeConnector = tm;
+	public void setTm(TradeApi tradeApi) {
+		tradeConnector=tradeApi;
 	}
 	public Map<String, TradeMsg> getMsgMap() {
 		return msgMap;

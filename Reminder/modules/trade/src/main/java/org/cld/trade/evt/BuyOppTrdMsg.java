@@ -1,8 +1,6 @@
 package org.cld.trade.evt;
 
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,60 +25,49 @@ import org.cld.trade.response.OrderResponse;
 public class BuyOppTrdMsg extends TradeMsg {
 	private static Logger logger =  LogManager.getLogger(BuyOppTrdMsg.class);
 	
-	private TradeStrategy ts;
-	private List<SelectCandidateResult> scrl;
-	
-	public BuyOppTrdMsg() {
-		super(TradeMsgType.buyOppFound);
-	}
-	
-	public BuyOppTrdMsg(TradeStrategy ts, List<SelectCandidateResult> scrl){
-		this();
-		this.ts = ts;
-		this.scrl = scrl;
-	}
+	TradeStrategy ts;
 	
 	public BuyOppTrdMsg(TradeStrategy ts, SelectCandidateResult scr){
-		this();
+		super(TradeMsgType.buyOppFound, scr, ts.getBs().getName(), null);
 		this.ts = ts;
-		scrl = new ArrayList<SelectCandidateResult>();
-		scrl.add(scr);
 	}
 
 	public String toString(){
-		return String.format("scrl:%s, bs:%s", scrl, ts.getBs());
+		return String.format("scr:%s, ts:%s", scr, ts);
 	}
 	
 	@Override
 	public TradeMsgPR process(AutoTrader at) {
-		List<SelectCandidateResult> trySCRL = null;
-		if (ts.getSs().getSelectNumber()>0){//means not take all
-			trySCRL = ts.getBs().filterResults(scrl, ts.getSs().getSelectNumber());
-		}else{
-			trySCRL = scrl;
-		}
+		logger.info(String.format("ts:%s", ts));
+		
 		TradeMsgPR tmpr = new TradeMsgPR();
 		List<TradeMsg> tml = new ArrayList<TradeMsg>();
-		for (SelectCandidateResult scr: trySCRL){
-			if (scr!=null){
-				Balance balance = at.getTm().getBalance();
-				float cash = balance.getCash();
-				if (cash>at.getUseAmount()){
-					Map<String, StockOrder> somap = AutoTrader.genStockOrderMap(scr, ts.getSs(), at.getUseAmount());
-					StockOrder buyOrder = somap.get(StockOrderType.buy);
+		if (scr!=null){
+			Balance balance = at.getTm().getBalance();
+			float cash = balance.getCash();
+			if (cash>at.getUseAmount()){
+				Map<String, StockOrder> somap = AutoTrader.genStockOrderMap(scr, ts.getSs(), at.getUseAmount());
+				StockOrder buyOrder = somap.get(StockOrderType.buy.name());
+				if (buyOrder!=null){
 					OrderResponse or = at.getTm().trySubmit(buyOrder, at.isPreview());
-					if (OrderResponse.SUCCESS.equals(or.getError())){
-						StockPosition sp = new StockPosition(scr.getSymbol(), buyOrder.getQuantity(), buyOrder.getLimitPrice(), 
-								new Date(), or.getClientorderid(), null, null, somap);
+					if (OrderResponse.SUCCESS.equals(or.getError()) && !at.isPreview()){
+						StockPosition sp = new StockPosition(scr, bsName, somap, or.getClientorderid());
 						TradePersistMgr.createStockPosition(at.getDbConf(), sp);
-						TradeMsg mbo = new MonitorBuyOrderTrdMsg(or.getClientorderid(), somap);
+						TradeMsg mbo = new MonitorBuyOrderTrdMsg(or.getClientorderid(), scr, bsName, somap);
 						tml.add(mbo);//buy order submitted, monitor buy order msg generated
 					}else{
 						logger.error(String.format("buy error: buy order: %s, response: %s", buyOrder, or));
 					}
+				}else{
+					logger.error(String.format("buy order not found in somap:%s", somap));
 				}
+			}else{
+				logger.error(String.format("cash amount %.2f less then needed %d", cash, at.getUseAmount()));
 			}
+		}else{
+			logger.error(String.format("scr is null"));
 		}
+		
 		tmpr.setExecuted(true);
 		tmpr.setNewMsgs(tml);
 		return tmpr;

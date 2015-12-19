@@ -2,14 +2,14 @@ package org.cld.datastore.api;
 
 import java.util.List;
 
-import org.cld.datastore.entity.Category;
-import org.cld.datastore.entity.CrawledItem;
-import org.cld.datastore.entity.CrawledItemId;
-import org.cld.datastore.entity.LogPattern;
-import org.cld.datastore.entity.Logs;
-import org.cld.datastore.entity.Price;
-import org.cld.datastore.entity.Product;
-import org.cld.datastore.entity.SiteConf;
+import org.cld.util.entity.Category;
+import org.cld.util.entity.CrawledItem;
+import org.cld.util.entity.CrawledItemId;
+import org.cld.util.entity.LogPattern;
+import org.cld.util.entity.Logs;
+import org.cld.util.entity.Price;
+import org.cld.util.entity.Product;
+import org.cld.util.entity.SiteConf;
 import org.hibernate.SessionFactory;
 import org.xml.taskdef.BrowseTaskType;
 

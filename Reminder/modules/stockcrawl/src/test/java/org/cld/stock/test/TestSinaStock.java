@@ -9,7 +9,6 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datastore.entity.CrawledItem;
 import org.cld.stock.common.StockUtil;
 import org.cld.stock.config.SinaStockConfig;
 import org.cld.stock.framework.StockBase;
@@ -21,6 +20,7 @@ import org.cld.stock.task.sina.TradeDetailCheckDownload;
 import org.cld.stock.task.sina.TradeDetailPostProcessTask;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
+import org.cld.util.entity.CrawledItem;
 import org.junit.Before;
 import org.junit.Test;
 

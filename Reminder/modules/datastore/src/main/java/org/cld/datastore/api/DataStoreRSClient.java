@@ -7,9 +7,8 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import org.cld.datastore.entity.SiteConf;
 import org.cld.util.RSHttpClient;
+import org.cld.util.entity.SiteConf;
 
 
 public class DataStoreRSClient extends RSHttpClient{

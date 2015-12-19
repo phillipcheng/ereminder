@@ -12,7 +12,7 @@ public class MarketCloseTrdMsg extends TradeMsg {
 	private static Logger logger =  LogManager.getLogger(MarketCloseTrdMsg.class);
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	public MarketCloseTrdMsg() {
-		super(TradeMsgType.marketCloseSoon);
+		super(TradeMsgType.marketCloseSoon, null, null, null);
 	}
 
 	/**

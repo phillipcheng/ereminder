@@ -6,6 +6,9 @@ public class TradeStrategy {
 	private SelectStrategy bs;
 	private SellStrategy ss;
 	
+	public TradeStrategy(){	
+	}
+	
 	public TradeStrategy(SelectStrategy bs, SellStrategy ss){
 		this.setBs(bs);
 		this.setSs(ss);

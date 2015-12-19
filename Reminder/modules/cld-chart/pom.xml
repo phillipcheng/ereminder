@@ -16,7 +16,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.cld.stock</groupId>
-			<artifactId>cld-stock</artifactId>
+			<artifactId>stock.crawl</artifactId>
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>

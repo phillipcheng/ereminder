@@ -33,6 +33,13 @@ public class Quote {
 		return new TradeTick(dt, last, volume);
 	}
 	
+	public Quote(String symbol, TradeTick tt){
+		this.dt = tt.getDatetime();
+		this.symbol = symbol;
+		this.last = tt.getLast();
+		this.volume = tt.getVl();
+	}
+	
 	public Quote(Map<String, Object> map){
 		setSymbol((String) map.get(SYMBOL));
 		try {

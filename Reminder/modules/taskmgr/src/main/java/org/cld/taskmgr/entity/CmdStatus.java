@@ -8,8 +8,8 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.api.DataStoreManager;
-import org.cld.datastore.entity.CrawledItem;
-import org.cld.datastore.entity.CrawledItemId;
+import org.cld.util.entity.CrawledItem;
+import org.cld.util.entity.CrawledItemId;
 
 
 /*

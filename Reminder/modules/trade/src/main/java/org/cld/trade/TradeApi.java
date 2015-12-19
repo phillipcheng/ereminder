@@ -18,6 +18,7 @@ public interface TradeApi {
 	public Balance getBalance();
 	public List<Holding> getHolding();
 	public Map<String, OrderStatus> getOrderStatus();
+	public OrderStatus getTheOrderStatus(String orderId);
 	public List<Quote> getQuotes(String[] stockids);
 	public OrderResponse trySubmit(StockOrder sobuy, boolean submit);
 }

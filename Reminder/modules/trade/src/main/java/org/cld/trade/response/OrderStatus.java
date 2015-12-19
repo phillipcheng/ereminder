@@ -1,5 +1,7 @@
 package org.cld.trade.response;
 
+import org.cld.stock.strategy.StockOrder;
+
 public class OrderStatus {
 
 	public static final String REJECTED="8";
@@ -8,7 +10,7 @@ public class OrderStatus {
 	public static final String OPEN="0";
 	public static final String PENDING="A";
 	
-	
+	String symbol;
 	String orderId;
 	int cumQty;
 	float avgPrice;
@@ -16,8 +18,21 @@ public class OrderStatus {
 	String side;
 	String typ;
 	
-	public OrderStatus(String orderId, int cumQty, float avgPrice, String stat, String side, String typ){
+	public static String toStatus(StockOrder.StatusType soStatus){
+		if (soStatus == StockOrder.StatusType.executed){
+			return FILLED;
+		}else if (soStatus == StockOrder.StatusType.open){
+			return OPEN;
+		}else if (soStatus == StockOrder.StatusType.cancelled){
+			return CANCELED;
+		}else{
+			return null;
+		}
+	}
+	
+	public OrderStatus(String orderId, String symbol, int cumQty, float avgPrice, String stat, String side, String typ){
 		this.orderId = orderId;
+		this.symbol = symbol;
 		this.cumQty = cumQty;
 		this.avgPrice = avgPrice;
 		this.stat = stat;
@@ -26,7 +41,7 @@ public class OrderStatus {
 	}
 	
 	public String toString(){
-		return String.format("OS:%s,%d,%.2f,%s", orderId, cumQty, avgPrice, stat);
+		return String.format("OS:%s,%d,%.2f,%s,%s,%s", orderId, cumQty, avgPrice, stat, side, typ);
 	}
 
 	public int getCumQty() {
@@ -64,6 +79,14 @@ public class OrderStatus {
 	}
 	public void setTyp(String typ) {
 		this.typ = typ;
+	}
+
+	public String getSymbol() {
+		return symbol;
+	}
+
+	public void setSymbol(String symbol) {
+		this.symbol = symbol;
 	}
 
 }

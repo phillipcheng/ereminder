@@ -1,6 +1,6 @@
 package org.cld.datacrawl;
 
-import org.cld.datastore.entity.Product;
+import org.cld.util.entity.Product;
 
 
 public class ProductConf {

@@ -9,8 +9,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import org.cld.stock.CqIndicators;
+import org.cld.stock.common.CqIndicators;
 import org.cld.stock.indicator.Indicator;
 import org.cld.stock.indicator.RenderType;
 import org.cld.stock.strategy.IntervalUnit;

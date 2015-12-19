@@ -16,14 +16,14 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datastore.api.DataStoreManager;
-import org.cld.datastore.entity.Category;
-import org.cld.datastore.entity.CrawledItem;
-import org.cld.datastore.entity.CrawledItemId;
-import org.cld.datastore.entity.LogPattern;
-import org.cld.datastore.entity.Logs;
-import org.cld.datastore.entity.Price;
-import org.cld.datastore.entity.Product;
-import org.cld.datastore.entity.SiteConf;
+import org.cld.util.entity.Category;
+import org.cld.util.entity.CrawledItem;
+import org.cld.util.entity.CrawledItemId;
+import org.cld.util.entity.LogPattern;
+import org.cld.util.entity.Logs;
+import org.cld.util.entity.Price;
+import org.cld.util.entity.Product;
+import org.cld.util.entity.SiteConf;
 
 //for hbase, the createTime of CrawledItemId is not used.
 public class HbaseDataStoreManagerImpl implements DataStoreManager {

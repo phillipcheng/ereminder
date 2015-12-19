@@ -25,8 +25,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import org.cld.datastore.api.DataStoreManager;
-import org.cld.datastore.entity.CrawledItem;
-import org.cld.datastore.entity.CrawledItemId;
 import org.cld.datastore.impl.HdfsDataStoreManagerImpl;
 import org.cld.taskmgr.entity.CmdStatus;
 import org.cld.taskmgr.entity.Task;
@@ -35,6 +33,8 @@ import org.cld.util.DateTimeUtil;
 import org.cld.util.JsonUtil;
 import org.cld.util.ListUtil;
 import org.cld.util.StringUtil;
+import org.cld.util.entity.CrawledItem;
+import org.cld.util.entity.CrawledItemId;
 import org.cld.util.jdbc.ScriptRunner;
 import org.cld.util.jdbc.SqlUtil;
 import org.xml.taskdef.BrowseDetailType;

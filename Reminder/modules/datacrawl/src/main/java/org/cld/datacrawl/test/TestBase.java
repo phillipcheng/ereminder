@@ -11,8 +11,8 @@ import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.task.TestTaskConf;
 import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
 import org.cld.datacrawl.util.HtmlUnitUtil;
-import org.cld.datastore.entity.CrawledItem;
 import org.cld.taskmgr.entity.Task;
+import org.cld.util.entity.CrawledItem;
 
 
 public class TestBase {

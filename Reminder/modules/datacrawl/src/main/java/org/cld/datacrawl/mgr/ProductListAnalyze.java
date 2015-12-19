@@ -16,12 +16,12 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.task.BrowseProductTaskConf;
 import org.cld.datacrawl.task.BrsDetailStat;
-import org.cld.datastore.entity.Category;
-import org.cld.datastore.entity.CrawledItemId;
-import org.cld.datastore.entity.Price;
-import org.cld.datastore.entity.Product;
 import org.cld.pagea.general.ProductListAnalyzeUtil;
 import org.cld.taskmgr.entity.Task;
+import org.cld.util.entity.Category;
+import org.cld.util.entity.CrawledItemId;
+import org.cld.util.entity.Price;
+import org.cld.util.entity.Product;
 import org.xml.taskdef.BDTProcessType;
 
 

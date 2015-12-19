@@ -8,8 +8,8 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datastore.entity.CrawledItem;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
+import org.cld.util.entity.CrawledItem;
 
 /**
  * multiple col table each can has different col, type, etc

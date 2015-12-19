@@ -1,85 +1,52 @@
 package org.cld.trade.persist;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.EnumMap;
 import java.util.Map;
 
+import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.StockOrder;
-import org.cld.trade.StockOrderType;
 import org.cld.util.JsonUtil;
 
 public class StockPosition {
-	String symbol;
-	int orderQty;
-	float orderPrice;
-	Date buySubmitDt;//buy submit datetime
-	String buyOrderId;
-	String stopSellOrderId;
-	String limitSellOrderId;
-	Map<String, StockOrder> soMap;
-	
-	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	private String buyOrderId = null;
+	private String stopSellOrderId = null;
+	private String limitSellOrderId = null;
+	private SelectCandidateResult scr;
+	private String bsName;
+	private Map<String, StockOrder> soMap;
 	
 	//for jdbc
 	public StockPosition(String symbol, int orderQty, float orderPrice, Date buySubmitDt, 
-			String buyOrderId, String stopSellOrderId, String limitSellOrderId, String jsonSOs){
-		this.symbol = symbol;
-		this.orderQty = orderQty;
-		this.orderPrice = orderPrice;
-		this.buySubmitDt = buySubmitDt;
+			String buyOrderId, String stopSellOrderId, String limitSellOrderId, String bsName, String jsonSOs){
 		this.buyOrderId = buyOrderId;
 		this.stopSellOrderId = stopSellOrderId;
 		this.limitSellOrderId = limitSellOrderId;
+		scr = new SelectCandidateResult(symbol, buySubmitDt, 0f, orderPrice);
+		this.bsName = bsName;
 		soMap = (Map<String, StockOrder>) JsonUtil.objFromJson(jsonSOs, Map.class);
 	}
 	
-	public StockPosition(String symbol, int orderQty, float orderPrice, Date buySubmitDt, 
-			String buyOrderId, String stopSellOrderId, String limitSellOrderId, Map<String, StockOrder> soMap){
-		this.symbol = symbol;
-		this.orderQty = orderQty;
-		this.orderPrice = orderPrice;
-		this.buySubmitDt = buySubmitDt;
-		this.buyOrderId = buyOrderId;
-		this.stopSellOrderId = stopSellOrderId;
-		this.limitSellOrderId = limitSellOrderId;
+	public StockPosition(SelectCandidateResult scr, String bsName, Map<String, StockOrder> soMap, 
+			String buyOrderId){
+		this.setBuyOrderId(buyOrderId);
+		this.scr = scr;
+		this.bsName = bsName;
 		this.soMap = soMap;
 	}
+	
 	public String toString(){
-		return String.format("SP:%s,%d,%.2f,%s,%s,%s,%s", symbol, orderQty, orderPrice, sdf.format(buySubmitDt), 
-				buyOrderId, stopSellOrderId, limitSellOrderId);
+		return String.format("SP:%s,%s,%s", scr.toString(), bsName, soMap.toString());
 	}
 
-	public String getSymbol() {
-		return symbol;
+	public Map<String, StockOrder> getSoMap() {
+		return soMap;
+	}
+	public void setSoMap(Map<String, StockOrder> soMap) {
+		this.soMap = soMap;
 	}
 
-	public void setSymbol(String symbol) {
-		this.symbol = symbol;
-	}
-
-	public int getOrderQty() {
-		return orderQty;
-	}
-
-	public void setOrderQty(int orderQty) {
-		this.orderQty = orderQty;
-	}
-
-	public float getOrderPrice() {
-		return orderPrice;
-	}
-
-	public void setOrderPrice(float orderPrice) {
-		this.orderPrice = orderPrice;
-	}
-
-	public Date getBuySubmitDt() {
-		return buySubmitDt;
-	}
-
-	public void setBuySubmitDt(Date buySubmitDt) {
-		this.buySubmitDt = buySubmitDt;
+	public SelectCandidateResult getScr() {
+		return scr;
 	}
 
 	public String getBuyOrderId() {
@@ -106,10 +73,11 @@ public class StockPosition {
 		this.limitSellOrderId = limitSellOrderId;
 	}
 
-	public Map<String, StockOrder> getSoMap() {
-		return soMap;
+	public String getBsName() {
+		return bsName;
 	}
-	public void setSoMap(Map<String, StockOrder> soMap) {
-		this.soMap = soMap;
+
+	public void setBsName(String bsName) {
+		this.bsName = bsName;
 	}
 }

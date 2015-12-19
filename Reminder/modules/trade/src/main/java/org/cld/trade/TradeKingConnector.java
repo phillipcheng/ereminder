@@ -36,6 +36,7 @@ import org.xml.fixml.OrderQtyDataBlockT;
 import org.xml.fixml.PegInstructionsBlockT;
 
 import org.cld.util.JsonUtil;
+import org.cld.stock.strategy.OrderFilled;
 import org.cld.stock.strategy.StockOrder;
 import org.cld.stock.strategy.StockOrder.ActionType;
 import org.cld.stock.strategy.StockOrder.OrderType;
@@ -46,7 +47,7 @@ import org.cld.trade.response.OrderResponse;
 import org.cld.trade.response.OrderStatus;
 import org.cld.trade.response.Quote;
 
-public class TradeKingConnector {
+public class TradeKingConnector implements TradeApi{
 	private static Logger logger =  LogManager.getLogger(TradeKingConnector.class);
 	private static final String CONSUMER_KEY = "consumer.key";
 	private static final String CONSUMER_SECRET = "consumer.secret";
@@ -107,6 +108,68 @@ public class TradeKingConnector {
 		}
 	}
 	
+	public static StockOrder.ActionType toActionType(String side){
+		if (FixmlConst.Side_Buy.equals(side)){
+			return ActionType.buy;
+		}else if (FixmlConst.Side_Sell.equals(side)){
+			return ActionType.sell;
+		}else if (FixmlConst.Side_SellShort.equals(side)){
+			return ActionType.sellshort;
+		}else{
+			logger.error("unsupported side value:" + side);
+			return ActionType.unknown;
+		}
+	}
+	
+	public static String fromActionType(StockOrder.ActionType actType){
+		if (actType==ActionType.buy || actType==ActionType.buycover){
+			return FixmlConst.Side_Buy;
+		}else if (actType==ActionType.sell){
+			return FixmlConst.Side_Sell;
+		}else if (actType == ActionType.sellshort){
+			return FixmlConst.Side_SellShort;
+		}else{
+			logger.error(String.format("unsupported action type:", actType));
+			return null;
+		}
+	}
+	
+	public static StockOrder.OrderType toOrderType(String orderType){
+		if (FixmlConst.Typ_Market.equals(orderType)){
+			return OrderType.market;
+		}else if (FixmlConst.Typ_Limit.equals(orderType)){
+			return OrderType.limit;
+		}else if (FixmlConst.Typ_Stop.equals(orderType)){
+			return OrderType.stop;
+		}else if (FixmlConst.Typ_Market.equals(orderType)){
+			return OrderType.market;
+		}else if (FixmlConst.Typ_StopTrailing.equals(orderType)){
+			return OrderType.stoptrailingpercentage;
+		}else if (FixmlConst.Typ_StopLimit.equals(orderType)){
+			return OrderType.stoplimit;
+		}else{
+			logger.error(String.format("unsupported order type: %s", orderType));
+			throw new RuntimeException(String.format("unsupported order type: %s", orderType));
+		}
+	}
+	
+	public static String fromOrderType(StockOrder.OrderType orderType){
+		if (orderType==OrderType.market){
+			return FixmlConst.Typ_Market;
+		}else if (orderType==OrderType.limit){
+			return FixmlConst.Typ_Limit;
+		}else if (orderType==OrderType.stop){
+			return FixmlConst.Typ_Stop;
+		}else if (orderType==OrderType.stoplimit){
+			return FixmlConst.Typ_StopLimit;
+		}else if (orderType==OrderType.stoptrailingdollar || orderType==OrderType.stoptrailingpercentage){
+			return FixmlConst.Typ_StopTrailing;
+		}else{
+			logger.error(String.format("unsupported order type:", orderType));
+			throw new RuntimeException(String.format("unsupported order type:", orderType));
+		}
+	}
+	
 	private NewOrderSingleMessageT convertSO(StockOrder so){
 		NewOrderSingleMessageT nosm = new NewOrderSingleMessageT();
 		nosm.setAcct(accountId);
@@ -121,17 +184,10 @@ public class TradeKingConnector {
 			logger.error(String.format("tif not set in so.", ""));
 		}
 		//
-		if (so.getOrderType()==OrderType.market){
-			nosm.setTyp(FixmlConst.Typ_Market);
-		}else if (so.getOrderType()==OrderType.limit){
-			nosm.setTyp(FixmlConst.Typ_Limit);
-		}else if (so.getOrderType()==OrderType.stop){
-			nosm.setTyp(FixmlConst.Typ_Stop);
-		}else if (so.getOrderType()==OrderType.stoplimit){
+		nosm.setTyp(fromOrderType(so.getOrderType()));
+		if (so.getOrderType()==OrderType.stoplimit){
 			nosm.setStopPx(new BigDecimal(String.format("%.2f", so.getStopPrice())));
-			nosm.setTyp(FixmlConst.Typ_StopLimit);
 		}else if (so.getOrderType()==OrderType.stoptrailingdollar || so.getOrderType()==OrderType.stoptrailingpercentage){
-			nosm.setTyp(FixmlConst.Typ_StopTrailing);
 			PegInstructionsBlockT pegIns = new PegInstructionsBlockT();
 			if (so.getOrderType()==OrderType.stoptrailingdollar){
 				pegIns.setOfstTyp(BigInteger.ZERO);
@@ -144,17 +200,9 @@ public class TradeKingConnector {
 			nosm.setPegInstr(pegIns);
 		}else{
 			logger.error(String.format("unsupported order type:", so.getOrderType()));
+			throw new RuntimeException(String.format("unsupported order type:", so.getOrderType()));
 		}
-		
-		if (so.getAction()==ActionType.buy || so.getAction()==ActionType.buycover){
-			nosm.setSide(FixmlConst.Side_Buy);
-		}else if (so.getAction()==ActionType.sell){
-			nosm.setSide(FixmlConst.Side_Sell);
-		}else if (so.getAction()==ActionType.sellshort){
-			nosm.setSide(FixmlConst.Side_SellShort);
-		}else{
-			logger.error(String.format("unsupported action type:", so.getAction()));
-		}
+		nosm.setSide(fromActionType(so.getAction()));
 		InstrumentBlockT instr = new InstrumentBlockT();
 		instr.setSym(so.getSymbol());
 		instr.setSecTyp("CS");
@@ -167,6 +215,7 @@ public class TradeKingConnector {
 		return nosm;
 	}
 	
+	@Override
 	public OrderResponse previewOrder(StockOrder so){	
 		OAuthRequest request = new OAuthRequest(Verb.POST, String.format(PREVIEW_ORDER_URL, accountId));
 
@@ -213,6 +262,7 @@ public class TradeKingConnector {
 		logger.info(response.getBody());
 	}
 	
+	@Override
 	public OrderResponse makeOrder(StockOrder so){
 		OAuthRequest request = new OAuthRequest(Verb.POST, String.format(MAKE_ORDER_URL, accountId));
 
@@ -253,6 +303,7 @@ public class TradeKingConnector {
 		return null;
 	}
 	
+	@Override
 	public OrderResponse cancelOrder(String clientOrderId, ActionType at, String symbol, int quantity){
 		OAuthRequest request = new OAuthRequest(Verb.POST, String.format(MAKE_ORDER_URL, accountId));
 
@@ -308,6 +359,7 @@ public class TradeKingConnector {
 		return null;
 	}
 	
+	@Override
 	public Balance getBalance(){
 		OAuthRequest request = new OAuthRequest(Verb.GET, String.format(BALANCE_URL,accountId));
 		service.signRequest(accessToken, request);
@@ -330,6 +382,7 @@ public class TradeKingConnector {
 		return null;
 	}
 	
+	@Override
 	public List<Holding> getHolding(){
 		List<Holding> hlist = new ArrayList<Holding>();
 		OAuthRequest request = new OAuthRequest(Verb.GET, String.format(HOLDING_URL,accountId));
@@ -355,13 +408,20 @@ public class TradeKingConnector {
 		}
 		return hlist;
 	}
-
+	
+	
+	public OrderStatus getTheOrderStatus(String trackOrderId){
+		Map<String, OrderStatus> map = getOrderStatus();
+		return map.get(trackOrderId);
+	}
+	
+	@Override
 	public Map<String, OrderStatus> getOrderStatus(){
 		OAuthRequest request = new OAuthRequest(Verb.GET, String.format(ORDERSTATUS_URL,accountId));
 		service.signRequest(accessToken, request);
 		Response response = request.send();
 		List<Map<String, Object>> fml = null;
-		logger.info(response.getBody());
+		logger.debug(response.getBody());
 		Map<String, Object> map =  JsonUtil.fromJsonStringToMap(response.getBody());
 		if (map!=null){
 			map = (Map<String, Object>) map.get(RESPONSE);
@@ -411,10 +471,10 @@ public class TradeKingConnector {
 					String side = erm.getSide();
 					String typ = erm.getTyp();
 					String stat = erm.getStat();
-					om.put(orderId, new OrderStatus(orderId, qty, price, stat, side, typ));
+					om.put(orderId, new OrderStatus(orderId, symbol, qty, price, stat, side, typ));
 					String linkId = erm.getLnkID();
 					if (linkId!=null && !"".equals(linkId)){
-						om.put(linkId, new OrderStatus(linkId, qty, price, stat, side, typ));
+						om.put(linkId, new OrderStatus(linkId, symbol, qty, price, stat, side, typ));
 					}
 				}
 			}
@@ -424,10 +484,11 @@ public class TradeKingConnector {
 		return om;
 	}
 	
+	@Override
 	public List<Quote> getQuotes(String[] stockids){
 		return getQuotes(stockids, false);
 	}
-	
+
 	public List<Quote> getQuotes(String[] stockids, boolean allInfo){
 		try{
 			String[] fids = Quote.getAllFields();
@@ -480,9 +541,10 @@ public class TradeKingConnector {
 		return null;
 	}
 	
-	public OrderResponse trySubmit(StockOrder sobuy, boolean submit){
+	@Override
+	public OrderResponse trySubmit(StockOrder sobuy, boolean preview){
 		if (sobuy!=null){
-			if (!submit){
+			if (preview){
 				logger.info(String.format("preview order: %s",sobuy));
 				return previewOrder(sobuy);
 			}else{
@@ -495,6 +557,14 @@ public class TradeKingConnector {
 		}
 	}
 
+	public static OrderFilled toOrderFilled(OrderStatus os){
+		StockOrder.ActionType side;//buy,sell
+		StockOrder.OrderType typ;
+		side = toActionType(os.getSide());
+		typ = toOrderType(os.getTyp());
+		return new OrderFilled(os.getSymbol(), os.getCumQty(), os.getAvgPrice(), side, typ);
+	}
+	
 	public String getConsumerKey() {
 		return consumerKey;
 	}

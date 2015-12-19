@@ -21,7 +21,7 @@ public class TestHistoryDump {
 		HistoryDumpMgr hdm = new HistoryDumpMgr(at.getHistoryDumpProperties(), tdm, sc);
 		new Thread(hdm).start();
 		BufferedReader br = new BufferedReader(new InputStreamReader(
-				new FileInputStream("C:\\mydoc\\myprojects\\ereminder\\Reminder\\modules\\trade\\input\\AAPL_tick_20151214.txt")));
+				new FileInputStream("C:\\mydoc\\myprojects\\ereminder\\Reminder\\modules\\trade\\input\\input2.csv")));
 		String line = null;
 		while ((line=br.readLine())!=null){
 			StreamHandler.processCsvData("AAPL", line, tdm);

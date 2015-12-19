@@ -43,8 +43,9 @@ public class TestTradeDataMgr {
 		AutoTrader at = new AutoTrader();
         // create a consumer object and configure it with the access
         // token and token secret obtained from the service provider
-        OAuthConsumer consumer = new Jetty9OAuthConsumer(at.getTm().getConsumerKey(), at.getTm().getConsumerSecret());
-        consumer.setTokenWithSecret(at.getTm().getOauthToken(), at.getTm().getOauthTokenSecret());
+		TradeKingConnector tradeApi = (TradeKingConnector)at.getTm();
+        OAuthConsumer consumer = new Jetty9OAuthConsumer(tradeApi.getConsumerKey(), tradeApi.getConsumerSecret());
+        consumer.setTokenWithSecret(tradeApi.getOauthToken(), tradeApi.getOauthTokenSecret());
         SslContextFactory sslContextFactory = new SslContextFactory();
         HttpClient client = new HttpClient(sslContextFactory);
         client.start();

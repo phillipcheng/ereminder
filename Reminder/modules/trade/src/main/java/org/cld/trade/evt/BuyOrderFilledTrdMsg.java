@@ -6,13 +6,14 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.StockOrder;
+import org.cld.stock.strategy.TradeStrategy;
 import org.cld.trade.AutoTrader;
 import org.cld.trade.StockOrderType;
 import org.cld.trade.TradeMsg;
 import org.cld.trade.TradeMsgPR;
 import org.cld.trade.TradeMsgType;
-import org.cld.trade.persist.StockPosition;
 import org.cld.trade.persist.TradePersistMgr;
 import org.cld.trade.response.OrderResponse;
 
@@ -20,14 +21,9 @@ public class BuyOrderFilledTrdMsg extends TradeMsg {
 	private static Logger logger =  LogManager.getLogger(BuyOrderFilledTrdMsg.class);
 	
 	String buyOrderId;
-	
-	public BuyOrderFilledTrdMsg(){
-		super(TradeMsgType.buyOrderFilled);
-	}
-	
-	public BuyOrderFilledTrdMsg(Map<String, StockOrder> somap, String buyOrderId){
-		this();
-		this.setSomap(somap);
+
+	public BuyOrderFilledTrdMsg(String buyOrderId, SelectCandidateResult scr, String bsName, Map<String, StockOrder> somap){
+		super(TradeMsgType.buyOrderFilled, scr, bsName, somap);
 		this.buyOrderId = buyOrderId;
 	}
 	
@@ -45,20 +41,16 @@ public class BuyOrderFilledTrdMsg extends TradeMsg {
 		List<TradeMsg> tml = new ArrayList<TradeMsg>();
 		TradeMsgPR tmpr = new TradeMsgPR();
 		//submit 1 sell stop trailing order, 1 monitor order msg and 1 monitor price msg
-		StockOrder selllimit = somap.get(StockOrderType.selllimit);
-		StockOrder sellstop = somap.get(StockOrderType.sellstop);
-		OrderResponse or = at.getTm().trySubmit(sellstop, true); //submit stop order
+		StockOrder selllimit = somap.get(StockOrderType.selllimit.name());
+		StockOrder sellstop = somap.get(StockOrderType.sellstop.name());
+		OrderResponse or = at.getTm().trySubmit(sellstop, at.isPreview()); //submit stop order
 		if (OrderResponse.SUCCESS.equals(or.getError())){
 			logger.info(String.format("sellstop order filled. %s", sellstop));
-			StockPosition sp = TradePersistMgr.getStockPositionByOrderId(at.getDbConf(), buyOrderId);
-			if (sp!=null){
-				sp.setStopSellOrderId(or.getClientorderid());
-				TradePersistMgr.updatePosition(at.getDbConf(), sp);
-			}
-			MonitorSellStopOrderTrdMsg msso = new MonitorSellStopOrderTrdMsg(or.getClientorderid(), somap);
+			TradePersistMgr.updateStopSellOrderId(at.getDbConf(), buyOrderId, or.getClientorderid());
+			MonitorSellStopOrderTrdMsg msso = new MonitorSellStopOrderTrdMsg(or.getClientorderid(), scr, bsName, somap);
 			sellstop.setOrderId(or.getClientorderid());//set this client id into the stock order context
 			tml.add(msso);//
-			MonitorSellPriceTrdMsg msp = new MonitorSellPriceTrdMsg(sellstop.getSymbol(), selllimit.getLimitPrice(), somap);
+			MonitorSellPriceTrdMsg msp = new MonitorSellPriceTrdMsg(sellstop.getSymbol(), selllimit.getLimitPrice(), scr, bsName, somap);
 			tml.add(msp);//
 			tmpr.setExecuted(true);
 			tmpr.setNewMsgs(tml);

@@ -36,28 +36,25 @@ public class TestTradePersistMgr {
 		Map<String, StockOrder> somap = AutoTrader.genStockOrderMap(scr, ts.getSs(), at.getUseAmount());
 		StockOrder buyOrder = somap.get(StockOrderType.buy.name());
 		String buyOrderId = buyOrder.getOrderId();
-		StockPosition sp = new StockPosition(scr.getSymbol(), buyOrder.getQuantity(), buyOrder.getLimitPrice(), 
-				new Date(), buyOrderId, null, null, somap);
+		StockPosition sp = new StockPosition(scr, ts.getBs().getName(), somap, buyOrderId);
 		TradePersistMgr.createStockPosition(at.getDbConf(), sp);
 	}
 	
 	@Test
 	public void getPosition(){
-		String buyOrderId = "20151216050151264_3";
+		String buyOrderId = "20151217044228213_1";
 		StockPosition sp = TradePersistMgr.getStockPositionByOrderId(at.getDbConf(), buyOrderId);
 		logger.info(sp);
 	}
 	
 	@Test
 	public void updatePosition(){
-		String buyOrderId = "20151216050151263_1";
+		String buyOrderId = "20151217044228213_1";
 		StockPosition sp = TradePersistMgr.getStockPositionByOrderId(at.getDbConf(), buyOrderId);
 		Map<String, StockOrder> map = sp.getSoMap();
-		StockOrder so = map.get(StockOrderType.sellstop.name());
-		String stopSellOrderId = so.getOrderId();
-		if (sp!=null){
-			sp.setStopSellOrderId(stopSellOrderId);
-			TradePersistMgr.updatePosition(at.getDbConf(), sp);
-		}
+		StockOrder stopsell = map.get(StockOrderType.sellstop.name());
+		StockOrder limitsell = map.get(StockOrderType.selllimit.name());
+		TradePersistMgr.updateStopSellOrderId(at.getDbConf(), buyOrderId, stopsell.getOrderId());
+		TradePersistMgr.updateLimitSellOrderId(at.getDbConf(), buyOrderId, limitsell.getOrderId());
 	}
 }

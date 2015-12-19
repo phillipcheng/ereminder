@@ -58,6 +58,7 @@ public class HistoryDumpMgr implements Runnable {
 		}
 	}
 
+	//return current size
 	private void dumpFile(String symbol, IntervalUnit iu, Deque<? extends Object> oq, int size, Duration interval){
 		TimedItem lastti = (TimedItem) oq.peekLast();
 		TimedItem ti = (TimedItem) oq.peek();
@@ -96,11 +97,13 @@ public class HistoryDumpMgr implements Runnable {
 		try{
 			sdf.setTimeZone(sc.getTimeZone());
 			while(true){
+				long totalSize=0;
 				Map<String, Deque<TradeTick>> ttMap = tdmgr.getHistoryTickMap();
 				int tickSizeThreshold = sizeThresholdMap.get(IntervalUnit.tick);
 				Duration tickIntervalThreshold = intervalThresholdMap.get(IntervalUnit.tick);
 				for (String symbol:ttMap.keySet()){
 					Deque<TradeTick> ttq = ttMap.get(symbol);
+					totalSize +=ttq.size();
 					dumpFile(symbol, IntervalUnit.tick, ttq, tickSizeThreshold, tickIntervalThreshold);
 				}
 				Map<IntervalUnit, Map<String, Deque<CandleQuote>>> icqMap = tdmgr.getHistoryCqMap();
@@ -110,10 +113,11 @@ public class HistoryDumpMgr implements Runnable {
 					Map<String, Deque<CandleQuote>> cqMap = icqMap.get(iu);
 					for (String symbol:cqMap.keySet()){
 						Deque<CandleQuote> cqq = cqMap.get(symbol);
+						totalSize +=cqq.size();
 						dumpFile(symbol, iu, cqq, sizeThreshold, intervalThreshold);
 					}
 				}
-				
+				logger.info(String.format("total size %d", totalSize));
 				Thread.sleep(checkInterval*1000);
 			}
 		}catch(Exception e){

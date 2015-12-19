@@ -3,7 +3,7 @@ package org.cld.chart;
 import java.util.Date;
 import java.util.List;
 
-import org.cld.stock.CqIndicators;
+import org.cld.stock.common.CqIndicators;
 import org.cld.stock.strategy.IntervalUnit;
 import org.cld.stock.strategy.SelectStrategy;
 

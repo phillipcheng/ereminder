@@ -1,4 +1,4 @@
-package org.cld.datastore.entity;
+package org.cld.util.entity;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
