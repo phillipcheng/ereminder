@@ -24,7 +24,7 @@ public class TestBase {
 	
 	public void setProp(String propFile){
 		this.pFile = propFile;
-		cconf = CrawlTestUtil.getCConf(pFile);
+		cconf = new CrawlConf(pFile);
 	}
 	
 	public String getPropFile(){

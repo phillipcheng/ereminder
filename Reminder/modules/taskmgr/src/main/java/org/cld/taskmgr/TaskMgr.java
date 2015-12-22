@@ -21,7 +21,6 @@ import javax.xml.transform.stream.StreamSource;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datastore.api.DataStoreRSClient;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.cld.util.entity.SiteConf;
@@ -35,32 +34,6 @@ public class TaskMgr {
 	private static Logger logger =  LogManager.getLogger(TaskMgr.class);
 	
 	public static final String moduleName="taskMgr";
-	
-	//keys
-	public static final String webconf_wsurl_Key="taskconf.main.url";
-	public static final String useProxy_Key="use.proxy";
-	public static final String proxyIP_Key="proxy.ip";
-	public static final String proxyPort_Key="proxy.port";
-	public static final String maxRetry_Key="retry.num";
-	public static final String timeout_Key="time.out";
-	
-	public static final String hdfsDefaultName_Key= "hadoop.hdfs.default.name";//hadoop.hdfs.default.name=hdfs://localhost:19000
-	public static final String hdfsTaskFolder_Key = "hdfs.task.folder";//hdfs.task.folder:/reminder/task
-	public static final String hadoopJobTracker_Key = "hadoop.job.tracker";//hadoop.job.tracker:localhost:9001
-	public static final String hadoopTaskMapperClassName_Key="task.mapper.class";
-	public static final String yarnApplicationClasspath_Key="yarn.application.classpath";
-	public static final String hdfsCrawledItemFolder_Key="hdfs.crawleditem.folder";
-	public static final String crawlTasksPerMapper_Key = "crawl.task.per.mapper"; //number of tasks/lines each mapper will process
-	
-	private String hdfsDefaultName = null;
-	private String hdfsTaskFolder = null;
-	private String hadoopJobTracker = null;
-	private String hadoopTaskMapperClassName = null;
-	private String[] yarnAppCp = null;
-	private String hadoopCrawledItemFolder=null;//: /reminder/items
-	private int crawlTasksPerMapper = 1;
-	private Map<String, String> hadoopConfigs = new HashMap<String,String>();
-
 
 	public static final String taskType_Key = "task.type";
 	public static final String taskName_Key="task.name";
@@ -78,13 +51,7 @@ public class TaskMgr {
 	
 	private static Map<String, ParsedTasksDef> parsedTaskDefMap = new ConcurrentHashMap<String, ParsedTasksDef>();
 	
-	//max running tasks per site, this is configured for each site, restricted by the site robot policy, 0 for unlimited
-	private Map<String, Integer> maxRunningTasksPerSite = new HashMap<String, Integer>();
-	
-	private PropertiesConfiguration properties;
-	
 	private String masterConfFile;
-	private NodeConf nc;
 	private Map<String, List<Task>> confTaskMap = new HashMap<String, List<Task>>();
 	
 	public static final String TASK_RUN_PARAM_CCONF="cconf";
@@ -100,21 +67,8 @@ public class TaskMgr {
 		parsedTaskDefMap.put(siteid, ptd);
 	}
 	
-	public int getMaxRunningTasks(String siteId){
-		if (maxRunningTasksPerSite.containsKey(siteId)){
-			return maxRunningTasksPerSite.get(siteId);
-		}else{
-			return 0;
-		}
-	}
-	public void setMaxRunningTasks(String siteId, int max){
-		maxRunningTasksPerSite.put(siteId, max);
-	}
-	
-	public void setUp(String masterConfFile, NodeConf nc){
+	public void setUp(String masterConfFile){
 		this.masterConfFile = masterConfFile;
-		this.nc = nc;
-		this.nc.setTaskMgr(this);
 	}
 	
 	public Task getTask(String taskName){
@@ -196,8 +150,7 @@ public class TaskMgr {
 			if (params == null){
 				params = new HashMap<String, Object>();
 			}
-			
-			properties = new PropertiesConfiguration(propFile);
+			PropertiesConfiguration properties = new PropertiesConfiguration(propFile);
 			
 			Iterator<String> enu = properties.getKeys();
 			
@@ -205,29 +158,7 @@ public class TaskMgr {
 				String key = enu.next();	
 				String strVal = properties.getString(key);
 				logger.debug(String.format("key:%s, value:%s", key, strVal));
-				if (webconf_wsurl_Key.equals(key)){
-				}else if (useProxy_Key.equals(key)){
-					Boolean.parseBoolean(strVal);
-				}else if (proxyIP_Key.equals(key)){
-				}else if (proxyPort_Key.equals(key)){
-					Integer.parseInt(strVal);
-				}else if (timeout_Key.equals(key)){
-					Integer.parseInt(strVal);
-				}else if (hdfsTaskFolder_Key.equals(key)){
-					this.hdfsTaskFolder = strVal;
-				}else if (hdfsDefaultName_Key.equals(key)){
-					this.hdfsDefaultName = strVal;
-				}else if (hadoopJobTracker_Key.equals(key)){
-					this.hadoopJobTracker = strVal;
-				}else if (hadoopTaskMapperClassName_Key.equals(key)){
-					this.setHadoopTaskMapperClassName(strVal);
-				}else if (hdfsCrawledItemFolder_Key.equals(key)){
-					this.setHadoopCrawledItemFolder(strVal);
-				}else if (crawlTasksPerMapper_Key.equals(key)){
-					this.setCrawlTasksPerMapper(Integer.parseInt(strVal));
-				}else if (yarnApplicationClasspath_Key.equals(key)){
-					this.setYarnAppCp(properties.getStringArray(key));
-				}else if (taskType_Key.equals(key)){
+				if (taskType_Key.equals(key)){
 					//load task type
 					List<Object> listVal = properties.getList(key);
 					for (int i=0;  i<listVal.size(); i++){
@@ -240,22 +171,6 @@ public class TaskMgr {
 						loadTaskType(taskConf, pluginClassLoader);
 						logger.debug("taskconf put:" + tt + ", " + taskConf);
 					}
-				}else if (taskName_Key.equals(key)){
-					//load task from files
-					/*
-					List<Object> listVal = properties.getList(key);
-					logger.debug(String.format("key:%s, value:%s, listVal.size():%d", key, listVal, listVal.size()));
-					if (!"".equals(strVal.trim())){
-						for (int i=0;  i<listVal.size(); i++){
-							String tname = (String)listVal.get(i);
-							//no ctconf defined in properties, it is v2, try to parse the xml pointed by tname
-							if (setUpSite(tname, null, pluginClassLoader, params).size()==0){
-								logger.error("task type not found:" + tname + "." + Task.taskType_Key);
-							}
-						}
-					}*/
-				}else if (key.startsWith("yarn.") || key.startsWith("mapred.") || key.startsWith("mapreduce.") || key.startsWith("dfs.")){
-					hadoopConfigs.put(key, strVal);
 				}
 			}
 		}catch(Exception e){
@@ -354,7 +269,6 @@ public class TaskMgr {
 				tl.add(bdtTask);
 				logger.info("BDT Task loaded:" + bdtTask);
 			}
-			this.setMaxRunningTasks(tasks.getStoreId(), tasks.getMaxThread());
 		}
 		
 		if (tasks.getPrdTask()!=null){
@@ -428,66 +342,5 @@ public class TaskMgr {
 				return new ArrayList<Task>();
 			}
 		}
-	}
-	
-	public String getHdfsTaskFolder() {
-		return hdfsTaskFolder;
-	}
-
-	public void setHdfsTaskFolder(String hdfsTaskFolder) {
-		this.hdfsTaskFolder = hdfsTaskFolder;
-	}
-
-	public String getHdfsDefaultName() {
-		return hdfsDefaultName;
-	}
-
-	public void setHdfsDefaultName(String hdfsDefaultName) {
-		this.hdfsDefaultName = hdfsDefaultName;
-	}
-
-	public String getHadoopJobTracker() {
-		return hadoopJobTracker;
-	}
-
-	public void setHadoopJobTracker(String hadoopJobTracker) {
-		this.hadoopJobTracker = hadoopJobTracker;
-	}
-
-	public String getHadoopTaskMapperClassName() {
-		return hadoopTaskMapperClassName;
-	}
-
-	public void setHadoopTaskMapperClassName(String hadoopTaskMapperClassName) {
-		this.hadoopTaskMapperClassName = hadoopTaskMapperClassName;
-	}
-
-
-	public String getHadoopCrawledItemFolder() {
-		return hadoopCrawledItemFolder;
-	}
-
-	public void setHadoopCrawledItemFolder(String hadoopCrawledItemFolder) {
-		this.hadoopCrawledItemFolder = hadoopCrawledItemFolder;
-	}
-
-	public int getCrawlTasksPerMapper() {
-		return crawlTasksPerMapper;
-	}
-
-	public void setCrawlTasksPerMapper(int crawlTasksPerMapper) {
-		this.crawlTasksPerMapper = crawlTasksPerMapper;
-	}
-
-	public String[] getYarnAppCp() {
-		return yarnAppCp;
-	}
-
-	public void setYarnAppCp(String[] yarnAppCp) {
-		this.yarnAppCp = yarnAppCp;
-	}
-	
-	public Map<String, String> getHadoopConfigs() {
-		return hadoopConfigs;
 	}
 }

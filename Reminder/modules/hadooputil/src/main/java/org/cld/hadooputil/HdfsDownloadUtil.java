@@ -18,6 +18,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.util.ProxyConf;
 
 public class HdfsDownloadUtil {
 	
@@ -25,14 +26,14 @@ public class HdfsDownloadUtil {
 	
 	public static int tryMax = 3;
 	
-	private static InputStream getInputStream(String url, boolean useProxy, String proxyIp, int port){
+	private static InputStream getInputStream(String url, ProxyConf proxyConf){
 		InputStream is=null;
 		try{
 			URL website = new URL(url);
-			if (!useProxy){
+			if (!proxyConf.isUseProxy()){
 				is = website.openStream();
 			}else{
-				Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyIp, port));
+				Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyConf.getHost(), proxyConf.getPort()));
 				is = website.openConnection(proxy).getInputStream();
 			}
 		}catch(Exception e){
@@ -41,13 +42,12 @@ public class HdfsDownloadUtil {
 		return is;
 	}
 	
-	public static void downloadFileToHdfs(String url, boolean useProxy, String proxyIp, int port, 
-			String filePath, String fsDefaultName){
+	public static void downloadFileToHdfs(String url, ProxyConf proxyConf, String filePath, String fsDefaultName){
 		InputStream is = null;
 		try{
 			int tryNum=0;
 			while (is==null && tryNum<tryMax){
-				is = getInputStream(url, useProxy, proxyIp, port);
+				is = getInputStream(url, proxyConf);
 				tryNum++;
 			}
 			if (is!=null){

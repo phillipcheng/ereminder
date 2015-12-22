@@ -1,26 +1,22 @@
 package org.cld.taskmgr;
 
 import java.io.Serializable;
-import java.rmi.RemoteException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.taskmgr.entity.Task;
-import org.cld.taskmgr.entity.TaskPersistMgr;
+import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
+import org.cld.taskmgr.hadoop.TaskMapper;
 import org.cld.util.SafeSimpleDateFormat;
 import org.cld.util.ScriptEngineUtil;
 import org.cld.util.StringUtil;
-import org.cld.util.distribute.SimpleNodeConf;
 import org.xml.mytaskdef.ConfKey;
 import org.xml.taskdef.ValueType;
 import org.xml.taskdef.VarType;
@@ -31,53 +27,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
 public class TaskUtil {
+	public static final String KEY_TASKCONF_TYPE="tconf.type";
+	public static final String TASKCONF_PROPERTIES="task.properties.file"; //the key in the hadoop configuration for task conf properties file
+	
 	private static Map<String, SafeSimpleDateFormat> dfMap = new HashMap<String, SafeSimpleDateFormat>();
 	public static final String LIST_VALUE_SEP=",";
 	private static Logger logger =  LogManager.getLogger(TaskUtil.class);
-	
-	public static Set<Task> convertToSet(List<Task> tl){
-		LinkedHashSet<Task> lhs = new LinkedHashSet<Task>();
-		for (int i=0; i<tl.size(); i++){
-			lhs.add(tl.get(i));
-		}
-		return lhs;
-	}
-	
-	public static List<String> getKeyList(List<? extends Task> tl){
-		List<String> kl = new ArrayList<String>();
-		for (int i=0 ; i<tl.size(); i++){
-			Task t = tl.get(i);
-			kl.add(t.getId());
-		}
-		return kl;
-	}
-	
-	public static List<String> getKeyList(Set<Task> tl){
-		List<String> kl = new ArrayList<String>();
-		Iterator<Task> it = tl.iterator();
-		while (it.hasNext()){			
-			kl.add(it.next().getId());
-		}
-		return kl;
-	}
-	
-	public static Set<String> getKeySet(List<Task> tl){
-		Set<String> kl = new HashSet<String>();
-		Iterator<Task> it = tl.iterator();
-		while (it.hasNext()){			
-			kl.add(it.next().getId());
-		}
-		return kl;
-	}
-	
-	public static Set<String> getKeySet(Set<? extends Task> tl){
-		Set<String> kl = new HashSet<String>();
-		Iterator<? extends Task> it = tl.iterator();
-		while (it.hasNext()){			
-			kl.add(it.next().getId());
-		}
-		return kl;
-	}
 	
 	public static String taskToJson(Task t){
 		//
@@ -117,14 +72,6 @@ public class TaskUtil {
 		}
 	}
 	
-	//
-	public static NodeConf getNodeConf(String properties){
-		NodeConf nc = null;
-		nc = new NodeConf(properties);
-		return nc;
-	}
-	
-
 	public static Object getValue(ValueType vt, String valueExp){
 		return getValue(vt, valueExp, vt.getToType());
 	}
@@ -222,5 +169,49 @@ public class TaskUtil {
 		String valueExp = evalStringValue(vt.getFromType(), vt.getValue(), params);
 		//get value from valueExp
 		return getValue(vt, valueExp);
+	}
+	
+	/**
+	 * 
+	 * @param tconfPropertyFile
+	 * @param tconf
+	 * @param tlist
+	 * @param sourceName: task file output name as well as the task name
+	 * @return jobId
+	 */
+	public static String hadoopExecuteCrawlTasks(String tconfPropertyFile, TaskConf tconf, List<Task> tlist, 
+			String sourceName, boolean sync){
+		return hadoopExecuteCrawlTasksWithReducer(tconfPropertyFile, tconf, tlist, sourceName, sync, 
+				TaskMapper.class, null, null);
+	}
+	
+	public static String hadoopExecuteCrawlTasks(String tconfPropertyFile, TaskConf tconf, List<Task> tlist, 
+			String sourceName, boolean sync, Map<String, String> hadoopJobParams){
+		return hadoopExecuteCrawlTasksWithReducer(tconfPropertyFile, tconf, tlist, sourceName, sync, 
+				TaskMapper.class, null, hadoopJobParams);
+	}
+	
+	public static String hadoopExecuteCrawlTasksWithReducer(String tconfPropertyFile, TaskConf tconf, List<Task> tlist, 
+			String sourceName, boolean sync, Class mapperClass, Class reducerClass, Map<String, String> hadoopJobParams){
+		Map<String, String> hadoopCrawlTaskParams = new HashMap<String, String>();
+		hadoopCrawlTaskParams.put(TASKCONF_PROPERTIES, tconfPropertyFile);
+		if (hadoopJobParams!=null){
+			hadoopCrawlTaskParams.putAll(hadoopJobParams);
+		}
+		return HadoopTaskLauncher.executeTasks(tconf, tlist, hadoopCrawlTaskParams, 
+				sourceName, sync, mapperClass, reducerClass);
+	}
+	
+	public static TaskConf getTaskConf(String propertyFile){
+		try{
+			PropertiesConfiguration pc = new PropertiesConfiguration(propertyFile);
+			String tconfClass = pc.getString(KEY_TASKCONF_TYPE);
+			Class clazz = Class.forName(tconfClass);
+			TaskConf tconf = (TaskConf) clazz.getDeclaredConstructor(String.class).newInstance(propertyFile);
+			return tconf;
+		}catch(Exception e){
+			logger.error("", e);
+		}
+		return null;
 	}
 }

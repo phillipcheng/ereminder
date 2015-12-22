@@ -10,9 +10,7 @@ import org.cld.stock.strategy.OrderFilled;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.strategy.StockOrder;
-import org.cld.stock.strategy.TradeStrategy;
 import org.cld.trade.AutoTrader;
-import org.cld.trade.StockOrderType;
 import org.cld.trade.TradeKingConnector;
 import org.cld.trade.TradeMsg;
 import org.cld.trade.TradeMsgPR;
@@ -52,24 +50,27 @@ public class MonitorBuyOrderTrdMsg extends TradeMsg {
 		TradeMsgPR tmpr = new TradeMsgPR();
 		List<TradeMsg> tml = new ArrayList<TradeMsg>();
 		if (os!=null){
-			if (OrderStatus.FILLED.equals(os.getStat())){
-				//callback
-				OrderFilled of = TradeKingConnector.toOrderFilled(os);
-				SelectStrategy bs = at.getBs(scr.getSymbol(), bsName);
-				if (bs!=null){
-					bs.tradeCompleted(of);
+			OrderFilled of = TradeKingConnector.toOrderFilled(os);
+			SelectStrategy bs = at.getBs(scr.getSymbol(), bsName);
+			if (bs!=null){
+				if (OrderStatus.FILLED.equals(os.getStat())){
+					//callback
+					bs.tradeCompleted(of, true);
+					BuyOrderFilledTrdMsg bof = new BuyOrderFilledTrdMsg(orderId, this.scr, bsName, this.getSomap());
+					tml.add(bof);
+					tmpr.setNewMsgs(tml);
+					tmpr.setExecuted(true);
+					return tmpr;
+				}else if (OrderStatus.CANCELED.equals(os.getStat())){
+					logger.info(String.format("order %s cancelled", os));
+					bs.tradeCompleted(of, false);
+					tmpr.setExecuted(true);
+					return tmpr;
+				}else{
+					logger.info(String.format("status is %s for buy order %s", os.getStat(), os.getOrderId()));
 				}
-				BuyOrderFilledTrdMsg bof = new BuyOrderFilledTrdMsg(orderId, this.scr, bsName, this.getSomap());
-				tml.add(bof);
-				tmpr.setNewMsgs(tml);
-				tmpr.setExecuted(true);
-				return tmpr;
-			}else if (OrderStatus.CANCELED.equals(os.getStat())){
-				logger.info(String.format("order %s cancelled", os));
-				tmpr.setExecuted(true);
-				return tmpr;
 			}else{
-				logger.info(String.format("status is %s for buy order %s", os.getStat(), os.getOrderId()));
+				logger.error(String.format("SYSTEM error, bs not found for name %s", bsName));
 			}
 		}else{
 			logger.info(String.format("%s not found in the recent orders.", getOrderId()));

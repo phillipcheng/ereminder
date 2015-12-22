@@ -49,8 +49,6 @@ public class AutoTrader implements Runnable {
 	private static final String HISTORY_DUMP="history.dump";
 	private static final String STRATEGIES="strategies";
 	
-	//at configures
-	private static final String SIMULATE_TRADE="simulate.trade";
 	private static final String USESTREAM_KEY="use.stream";
 	private static final String USE_AMOUNT="use.amount";
 	private static final String BASE_MARKET="base.market";

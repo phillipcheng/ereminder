@@ -11,24 +11,27 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.test.CrawlTestUtil;
-import org.cld.stock.common.CqIndicators;
-import org.cld.stock.common.StockDataConfig;
-import org.cld.stock.common.StockUtil;
-import org.cld.stock.common.TradeHour;
-import org.cld.stock.framework.SelectStrategyByStockTask;
-import org.cld.stock.persistence.StockPersistMgr;
-import org.cld.stock.strategy.IntervalUnit;
-import org.cld.stock.strategy.SelectCandidateResult;
-import org.cld.stock.strategy.SelectStrategy;
-import org.cld.util.PropertiesUtil;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.commons.configuration.PropertiesConfiguration;
+
+import org.cld.util.PropertiesUtil;
+import org.cld.taskmgr.TaskUtil;
+
+import org.cld.stock.analyze.AnalyzeConf;
+import org.cld.stock.analyze.SelectStrategyByStockTask;
+import org.cld.stock.analyze.StockAnalyzePersistMgr;
+import org.cld.stock.common.CqIndicators;
+import org.cld.stock.common.StockDataConfig;
+import org.cld.stock.common.TradeHour;
+import org.cld.stock.strategy.IntervalUnit;
+import org.cld.stock.strategy.SelectCandidateResult;
+import org.cld.stock.strategy.SelectStrategy;
+
 
 public class MainFrame extends JFrame {
 	
@@ -39,7 +42,7 @@ public class MainFrame extends JFrame {
 	
 	private JSplitPane lrSplitPane = null;
 	private String chartPropertiesFile = "chart.properties";
-	private CrawlConf cconf;
+	private AnalyzeConf aconf;
 	private SelectStrategy bs = null;
 	private String baseMarketId="nasdaq";
 	
@@ -53,7 +56,7 @@ public class MainFrame extends JFrame {
 			PropertiesConfiguration pc = new PropertiesConfiguration(chartPropertiesFile);
 			String pFile = pc.getString(KEY_CCONF);
 			String strategyFile = pc.getString(KEY_STRATEGY);
-			cconf = CrawlTestUtil.getCConf(pFile);
+			aconf = (AnalyzeConf) TaskUtil.getTaskConf(pFile);
 			PropertiesConfiguration strategyPC = PropertiesUtil.getPC(strategyFile);
 			List<SelectStrategy> bsl = SelectStrategy.genList(strategyPC, strategyFile, baseMarketId);
 			if (bsl.size()>0){
@@ -97,10 +100,10 @@ public class MainFrame extends JFrame {
 					}else if (sdcfg.getUnit()==IntervalUnit.minute){
 						th = TradeHour.Normal;
 					}
-					cqilist = StockPersistMgr.getData(cconf, sdcfg, bs, th);
+					cqilist = StockAnalyzePersistMgr.getData(aconf, sdcfg, bs, th);
 					List<SelectStrategy> bsl = new ArrayList<SelectStrategy>();
 					bsl.add(bs);
-					List<Object[]> kvl = SelectStrategyByStockTask.getBuyOppList(cconf, bsl, sdcfg.getStockId(), 
+					List<Object[]> kvl = SelectStrategyByStockTask.getBuyOppList(aconf, bsl, sdcfg.getStockId(), 
 							sdcfg.getStartDt(), sdcfg.getEndDt(), th, null);
 					List<Date> dl = new ArrayList<Date>();
 					for (Object[] kv:kvl){

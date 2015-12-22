@@ -52,7 +52,7 @@ public class TestJobs extends TestBase{
 	@Test
 	public void run_jobs_transform() throws Exception {
 		String outputFile = "/output/jobs";
-		FileSystem fs = FileSystem.get(HadoopTaskLauncher.getHadoopConf(cconf.getNodeConf()));
+		FileSystem fs = FileSystem.get(HadoopTaskLauncher.getHadoopConf(cconf));
 		fs.delete(new Path(outputFile), true);
 		//HBaseToCSVMapperLauncher.genCSVFromHbase(this.getPropFile(), outputFile);
 	}

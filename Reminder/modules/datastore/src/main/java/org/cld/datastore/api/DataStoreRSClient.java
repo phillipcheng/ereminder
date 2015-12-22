@@ -7,6 +7,7 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.util.ProxyConf;
 import org.cld.util.RSHttpClient;
 import org.cld.util.entity.SiteConf;
 
@@ -18,13 +19,8 @@ public class DataStoreRSClient extends RSHttpClient{
 	
 	private String mainRequestUrl = MAIN_REQUEST_URL;
 	
-	public DataStoreRSClient(String mainRequestUrl, int timeout){
-		super(timeout);
-		this.mainRequestUrl = mainRequestUrl;
-	}
-	
-	public DataStoreRSClient(String mainRequestUrl, String proxyHost, int proxyPort, int timeout){
-		super(proxyHost, proxyPort, timeout);
+	public DataStoreRSClient(String mainRequestUrl, ProxyConf proxyConf, int timeout){
+		super(proxyConf, timeout);
 		this.mainRequestUrl = mainRequestUrl;
 	}
 	

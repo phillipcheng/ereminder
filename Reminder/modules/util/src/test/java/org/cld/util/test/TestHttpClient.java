@@ -6,6 +6,7 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.util.ProxyConf;
 import org.cld.util.RSHttpClient;
 import org.junit.Test;
 
@@ -37,7 +38,7 @@ public class TestHttpClient {
 	
 	public Logger logger = LogManager.getLogger(TestHttpClient.class);
 	
-	RSHttpClient httpClient = new RSHttpClient(proxyhost, proxyport, timeout);
+	RSHttpClient httpClient = new RSHttpClient(new ProxyConf(true, proxyhost, proxyport), timeout);
 	
 	//return sessionId or NULL for error
 	public String startSession(String userId){

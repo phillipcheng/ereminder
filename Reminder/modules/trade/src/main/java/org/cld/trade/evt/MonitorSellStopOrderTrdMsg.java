@@ -51,30 +51,32 @@ public class MonitorSellStopOrderTrdMsg extends TradeMsg {
 		TradeMsgPR tmpr = new TradeMsgPR();
 		if (os!=null){
 			List<String> rmMsgList = new ArrayList<String>();
-			if (OrderStatus.FILLED.equals(os.getStat())){
-				//callback
-				OrderFilled of = TradeKingConnector.toOrderFilled(os);
-				SelectStrategy bs = at.getBs(scr.getSymbol(), bsName);
-				if (bs!=null){
-					bs.tradeCompleted(of);
+			OrderFilled of = TradeKingConnector.toOrderFilled(os);
+			SelectStrategy bs = at.getBs(scr.getSymbol(), bsName);
+			if (bs!=null){
+				if (OrderStatus.FILLED.equals(os.getStat())){
+					bs.tradeCompleted(of, true);
+					logger.info(String.format("sell stop order filled. %s", os));
+					StockOrder limitSellOrder = somap.get(StockOrderType.selllimit.name());
+					MonitorSellPriceTrdMsg mspMsg = new MonitorSellPriceTrdMsg(limitSellOrder.getSymbol(), limitSellOrder.getLimitPrice(), scr, bsName, somap);
+					rmMsgList.add(mspMsg.getMsgId());
+					tmpr.setExecuted(true);
+					tmpr.setRmMsgs(rmMsgList);
+					return tmpr;
+				}else if (OrderStatus.CANCELED.equals(os.getStat())){
+					bs.tradeCompleted(of, false);
+					logger.info(String.format("sell stop order cancelled %s", os.getOrderId()));
+					//do not monitor any more
+					//try to cancel the monitor sell price msg
+					tmpr.setExecuted(true);
+					return tmpr;
+				}else if (OrderStatus.OPEN.equals(os.getStat())){
+					logger.debug(String.format("sell stop order %s in open state.", os.getOrderId()));
+				}else{
+					logger.info(String.format("status is %s for sell stop order %s", os.getStat(), os.getOrderId()));
 				}
-				logger.info(String.format("sell stop order filled. %s", os));
-				StockOrder limitSellOrder = somap.get(StockOrderType.selllimit.name());
-				MonitorSellPriceTrdMsg mspMsg = new MonitorSellPriceTrdMsg(limitSellOrder.getSymbol(), limitSellOrder.getLimitPrice(), scr, bsName, somap);
-				rmMsgList.add(mspMsg.getMsgId());
-				tmpr.setExecuted(true);
-				tmpr.setRmMsgs(rmMsgList);
-				return tmpr;
-			}else if (OrderStatus.CANCELED.equals(os.getStat())){
-				logger.info(String.format("sell stop order cancelled %s", os.getOrderId()));
-				//do not monitor any more
-				//try to cancel the monitor sell price msg
-				tmpr.setExecuted(true);
-				return tmpr;
-			}else if (OrderStatus.OPEN.equals(os.getStat())){
-				logger.debug(String.format("sell stop order %s in open state.", os.getOrderId()));
 			}else{
-				logger.info(String.format("status is %s for sell stop order %s", os.getStat(), os.getOrderId()));
+				logger.error(String.format("SYSTEM error, bs can't be found for name:%s", bsName));
 			}
 		}else{
 			logger.info(String.format("%s not found in the recent orders.", getOrderId()));

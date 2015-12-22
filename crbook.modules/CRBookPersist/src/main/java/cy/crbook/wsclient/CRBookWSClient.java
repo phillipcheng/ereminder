@@ -13,7 +13,7 @@ import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+import org.cld.util.ProxyConf;
 import org.cld.util.RSHttpClient;
 
 import cy.common.entity.Book;
@@ -29,14 +29,9 @@ public class CRBookWSClient extends RSHttpClient{
 	
 	private String mainRequestUrl;
 	
-	public CRBookWSClient(String mainRequestUrl, int timeout){
-		super(timeout);
-		this.mainRequestUrl = mainRequestUrl;
-	}
-	
 	//timeout in seconds
-	public CRBookWSClient(String mainRequestUrl, String proxyHost, int proxyPort, int timeout){
-		super(proxyHost, proxyPort, timeout);
+	public CRBookWSClient(String mainRequestUrl, ProxyConf proxyConf, int timeout){
+		super(proxyConf, timeout);
 		this.mainRequestUrl= mainRequestUrl;
 	}
 	

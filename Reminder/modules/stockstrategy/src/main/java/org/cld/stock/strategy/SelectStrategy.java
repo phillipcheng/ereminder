@@ -60,7 +60,7 @@ public abstract class SelectStrategy {
 	}
 	
 	//to be overriden by subclass
-	public void tradeCompleted(OrderFilled or){}
+	public void tradeCompleted(OrderFilled of, boolean success){}
 	public abstract SelectCandidateResult selectByStream(CqIndicators cqi);
 	
 	@JsonIgnore
@@ -104,8 +104,6 @@ public abstract class SelectStrategy {
 		String unit = (String) params.get(KEY_LU_UNIT);
 		if (StrategyConst.V_UNIT_DAY.equals(unit)){
 			setLookupUnit(IntervalUnit.day);
-		}else if (StrategyConst.V_UNIT_MINUTE5.equals(unit)){
-			setLookupUnit(IntervalUnit.minute5);
 		}else if (StrategyConst.V_UNIT_MINUTE.equals(unit)){
 			setLookupUnit(IntervalUnit.minute);
 		}else if (StrategyConst.V_UNIT_TICK.equals(unit)){

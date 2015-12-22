@@ -17,11 +17,15 @@ import org.cld.util.JsonUtil;
 
 public class Range extends SelectStrategy {
 	public static Logger logger = LogManager.getLogger(Range.class);
+	
 	public static final String PROP_TABLE="scs.table.data";
+	public static final String SHIFT_RATE="shift.rate";
+	public static final float default_shiftRate=0.02f;
 	
 	public Range(){
 	}
 	
+	private float shiftRate = default_shiftRate;
 	private float orgBuyPrice;
 	private float currentPrice;
 
@@ -46,11 +50,24 @@ public class Range extends SelectStrategy {
 	@Override
 	public void init(){
 		super.init();
+		if (super.getParams().containsKey(SHIFT_RATE)){
+			shiftRate = Float.parseFloat((String) super.getParams().get(SHIFT_RATE));
+		}
+		logger.info(String.format("shift rate is %.3f", shiftRate));
 	}
 
+	
 	@Override
-	public void tradeCompleted(OrderFilled or){
-		currentPrice = 0.98f * or.getAvgPrice();
+	public void tradeCompleted(OrderFilled or, boolean success){
+		if (success){
+			currentPrice = or.getAvgPrice() * (1-shiftRate);
+		}else{
+			if (or.getSide()==ActionType.buy){//failed to buy recover the price
+				currentPrice = or.getAvgPrice() / (1-shiftRate);
+			}else{
+				logger.info(String.format("failed to sell %s, maybe cancelled, keep the price.", or));
+			}
+		}
 		if (currentPrice>orgBuyPrice){
 			currentPrice = orgBuyPrice;
 		}
@@ -66,7 +83,7 @@ public class Range extends SelectStrategy {
 	@Override
 	public SelectCandidateResult selectByStream(CqIndicators cqi) {
 		if (cqi.getCq().getLow()<currentPrice){
-			currentPrice = currentPrice*0.98f;//to prevent tons of opp generated
+			currentPrice = currentPrice*(1-shiftRate);//to prevent tons of opp generated
 			logger.info(String.format("range price for %s is changed to %.3f", cqi.getCq().getSymbol(), currentPrice));
 			return new SelectCandidateResult(cqi.getCq().getSymbol(), cqi.getCq().getStartTime(), 0f, cqi.getCq().getLow());
 		}else{

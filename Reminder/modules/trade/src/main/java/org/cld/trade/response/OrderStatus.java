@@ -41,7 +41,7 @@ public class OrderStatus {
 	}
 	
 	public String toString(){
-		return String.format("OS:%s,%d,%.2f,%s,%s,%s", orderId, cumQty, avgPrice, stat, side, typ);
+		return String.format("OS:%s,%s, %d,%.2f,%s,%s,%s", orderId, symbol, cumQty, avgPrice, stat, side, typ);
 	}
 
 	public int getCumQty() {

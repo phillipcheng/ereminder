@@ -42,8 +42,14 @@ public class TestTradeConnector {
 		so.setSymbol("GLUU");
 		so.setTif(TimeInForceType.DayOrder);
 		so.setOrderType(OrderType.limit);
-		so.setLimitPrice(3);
+		so.setLimitPrice(2);
 		tm.makeOrder(so);
+	}
+	
+	@Test
+	public void testCancelOrder(){
+		OrderResponse or = tm.cancelOrder("SVI-6009123085", ActionType.sell, "CLVS", 36);
+		logger.info(or);
 	}
 	
 	@Test
@@ -82,8 +88,6 @@ public class TestTradeConnector {
 		logger.info(tm.makeOrder(so));
 	}
 	
-
-	
 	@Test
 	public void testGetAccount(){
 		tm.getAccount();
@@ -111,13 +115,7 @@ public class TestTradeConnector {
 	public void testGetQuotes(){
 		tm.getQuotes(new String[]{"GLUU", "FIT"}, true);
 	}
-	
-	@Test
-	public void testCancelOrder(){
-		OrderResponse or = tm.cancelOrder("SVI-6007515427", ActionType.sell, "CLVS", 36);
-		logger.info(or);
-	}
-	
+
 	@Test
 	public void testGetOrderStatus(){
 		Map<String, OrderStatus> map = tm.getOrderStatus();

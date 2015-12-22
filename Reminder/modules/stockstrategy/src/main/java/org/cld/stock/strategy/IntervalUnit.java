@@ -3,7 +3,6 @@ package org.cld.stock.strategy;
 public enum IntervalUnit {
 	tick,
 	minute,
-	minute5,
 	day,
 	unspecified;
 	

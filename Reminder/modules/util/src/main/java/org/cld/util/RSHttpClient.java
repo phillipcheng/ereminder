@@ -12,35 +12,25 @@ import org.apache.commons.httpclient.params.HttpClientParams;
 public class RSHttpClient {
 	
 	//host configuration
-	protected boolean useProxy=false;
-	protected String proxyHost;
-	protected int proxyPort;
-	
+	protected ProxyConf proxyConf;
 	//client parameters
 	protected int timeout;
 	protected MultiThreadedHttpConnectionManager connectionManager;
 	
-	
-	public RSHttpClient(int timeout){
+	//timeout in seconds
+	public RSHttpClient(ProxyConf proxyConf, int timeout){
 		this.timeout = timeout*1000;
 		connectionManager = new MultiThreadedHttpConnectionManager();
 		connectionManager.getParams().setMaxConnectionsPerHost(HostConfiguration.ANY_HOST_CONFIGURATION, 50);
 		connectionManager.getParams().setMaxTotalConnections(60);
-	}
-	
-	//timeout in seconds
-	public RSHttpClient(String proxyHost, int proxyPort, int timeout){
-		this(timeout);
-		this.useProxy=true;
-		this.proxyHost=proxyHost;
-		this.proxyPort = proxyPort;
+		this.proxyConf = proxyConf;
 	}
 	
 	public HttpClient getHttpClient(){
 		HttpClient httpclient = new HttpClient(connectionManager);
-		if (useProxy){
+		if (proxyConf.isUseProxy()){
 			HostConfiguration config = httpclient.getHostConfiguration();
-	        config.setProxy(this.proxyHost, this.proxyPort);
+	        config.setProxy(this.proxyConf.getHost(), this.proxyConf.getPort());
 		}
         HttpClientParams params = httpclient.getParams();
         params.setConnectionManagerTimeout(timeout);

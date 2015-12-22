@@ -96,10 +96,10 @@ public class TabularCSVConvertTask extends Task implements Serializable{
 	public List<Task> runMyself(Map<String, Object> params, TaskStat ts) throws InterruptedException{
 		try{
 			cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
-			FileSystem fs = FileSystem.get(HadoopTaskLauncher.getHadoopConf(cconf.getNodeConf()));
+			FileSystem fs = FileSystem.get(HadoopTaskLauncher.getHadoopConf(cconf));
 			logger.info("process convert task: " + tableId);
-			String inF = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + inputFolder + "/";
-			String outF = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" + outputFolder + "/";
+			String inF = cconf.getHadoopCrawledItemFolder() + "/" + inputFolder + "/";
+			String outF = cconf.getHadoopCrawledItemFolder() + "/" + outputFolder + "/";
 			String ifname = inF + tableId;
 			String ofname = outF + tableId;
 			Path ip = new Path(ifname);

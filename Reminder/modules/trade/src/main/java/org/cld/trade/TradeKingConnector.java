@@ -1,6 +1,5 @@
 package org.cld.trade;
 
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -14,6 +13,7 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.namespace.QName;
+import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang3.StringUtils;
@@ -34,8 +34,9 @@ import org.xml.fixml.NewOrderSingleMessageT;
 import org.xml.fixml.OrderCancelRequestMessageT;
 import org.xml.fixml.OrderQtyDataBlockT;
 import org.xml.fixml.PegInstructionsBlockT;
-
+import org.xml.sax.XMLReader;
 import org.cld.util.JsonUtil;
+import org.cld.fixml.FixmlUtil;
 import org.cld.stock.strategy.OrderFilled;
 import org.cld.stock.strategy.StockOrder;
 import org.cld.stock.strategy.StockOrder.ActionType;
@@ -198,10 +199,8 @@ public class TradeKingConnector implements TradeApi{
 			}
 			pegIns.setPegPxTyp(BigInteger.ONE);
 			nosm.setPegInstr(pegIns);
-		}else{
-			logger.error(String.format("unsupported order type:", so.getOrderType()));
-			throw new RuntimeException(String.format("unsupported order type:", so.getOrderType()));
 		}
+		
 		nosm.setSide(fromActionType(so.getAction()));
 		InstrumentBlockT instr = new InstrumentBlockT();
 		instr.setSym(so.getSymbol());
@@ -222,7 +221,7 @@ public class TradeKingConnector implements TradeApi{
 		FIXML fixml = new FIXML();
 		NewOrderSingleMessageT nosm = convertSO(so);
 		JAXBElement<NewOrderSingleMessageT> me = new JAXBElement<NewOrderSingleMessageT>(
-				new QName(QNAME_ORDER), NewOrderSingleMessageT.class, nosm);
+				new QName("http://www.fixprotocol.org/FIXML-5-0-SP2", QNAME_ORDER), NewOrderSingleMessageT.class, nosm);
 		fixml.setMessage(me);
 		try{
 			JAXBContext jaxbContext = JAXBContext.newInstance(FIXML.class);
@@ -231,8 +230,6 @@ public class TradeKingConnector implements TradeApi{
 			StringWriter sw = new StringWriter();
 			jaxbMarshaller.marshal(fixml, sw);
 			String payload = sw.toString();
-			payload = payload.replaceAll("ns2:", "");
-			payload = payload.replaceAll(":ns2", "");
 			logger.info(String.format("body:%s", payload));
 			request.addPayload(payload);
 			request.addHeader("content-type", "application/xml");
@@ -269,7 +266,7 @@ public class TradeKingConnector implements TradeApi{
 		FIXML fixml = new FIXML();
 		NewOrderSingleMessageT nosm = convertSO(so);
 		JAXBElement<NewOrderSingleMessageT> me = new JAXBElement<NewOrderSingleMessageT>(
-				new QName(QNAME_ORDER), NewOrderSingleMessageT.class, nosm);
+				new QName("http://www.fixprotocol.org/FIXML-5-0-SP2", QNAME_ORDER), NewOrderSingleMessageT.class, nosm);
 		fixml.setMessage(me);
 		try{
 			JAXBContext jaxbContext = JAXBContext.newInstance(FIXML.class);
@@ -278,8 +275,6 @@ public class TradeKingConnector implements TradeApi{
 			StringWriter sw = new StringWriter();
 			jaxbMarshaller.marshal(fixml, sw);
 			String payload = sw.toString();
-			payload = payload.replaceAll("ns2:", "");
-			payload = payload.replaceAll(":ns2", "");
 			logger.info(String.format("body:%s", payload));
 			request.addPayload(payload);
 			request.addHeader("content-type", "application/xml");
@@ -326,7 +321,7 @@ public class TradeKingConnector implements TradeApi{
 		oq.setQty(new BigDecimal(quantity));
 		nosm.setOrdQty(oq);
 		JAXBElement<OrderCancelRequestMessageT> me = new JAXBElement<OrderCancelRequestMessageT>(
-				new QName(QNAME_ORDER_CANCEL), OrderCancelRequestMessageT.class, nosm);
+				new QName("http://www.fixprotocol.org/FIXML-5-0-SP2", QNAME_ORDER_CANCEL), OrderCancelRequestMessageT.class, nosm);
 		fixml.setMessage(me);
 		try{
 			JAXBContext jaxbContext = JAXBContext.newInstance(FIXML.class);
@@ -335,8 +330,6 @@ public class TradeKingConnector implements TradeApi{
 			StringWriter sw = new StringWriter();
 			jaxbMarshaller.marshal(fixml, sw);
 			String payload = sw.toString();
-			payload = payload.replaceAll("ns2:", "");
-			payload = payload.replaceAll(":ns2", "");
 			logger.info(String.format("body:%s", payload));
 			request.addPayload(payload);
 			request.addHeader("content-type", "application/xml");
@@ -448,15 +441,21 @@ public class TradeKingConnector implements TradeApi{
 		}
 		Map<String, OrderStatus> om = new HashMap<String, OrderStatus>();
 		try{
-			JAXBContext jaxbContext = JAXBContext.newInstance("org.xml.fixml");
-			Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+			//Prepare JAXB objects
+			JAXBContext jc = JAXBContext.newInstance("org.xml.fixml");
+			Unmarshaller u = jc.createUnmarshaller();
+			//Create an XMLReader to use with our filter
+			SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+			saxParserFactory.setNamespaceAware(true);
+			XMLReader reader = saxParserFactory.newSAXParser().getXMLReader();		
+			
 			if (fml!=null){
 				for (Object fm:fml){
 					Map<String, Object> fmm = (Map<String, Object>) fm;
 					String fixmm = (String) fmm.get(FIXMLMSG);
-					StringReader sr = new StringReader(fixmm);
-					FIXML fixml = (FIXML) jaxbUnmarshaller.unmarshal(sr);
-					JAXBElement<ExecutionReportMessageT> me = (JAXBElement<ExecutionReportMessageT>) fixml.getMessage();
+					//StringReader sr = new StringReader(fixmm);
+					JAXBElement<FIXML> fixml = FixmlUtil.unmarshal(u, reader, fixmm);
+					JAXBElement<ExecutionReportMessageT> me = (JAXBElement<ExecutionReportMessageT>) fixml.getValue().getMessage();
 					ExecutionReportMessageT erm = me.getValue();
 					String orderId = erm.getOrdID();
 					String symbol = null;

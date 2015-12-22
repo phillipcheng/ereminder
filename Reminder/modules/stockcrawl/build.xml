@@ -6,17 +6,6 @@
 	<property name="dist"  location="target"/>
   
 	<target name="dist">
-		<copy file="${dist}/cld-stock-1.0.0.jar" todir="${dist}/lib/"/>
-	</target>
-	
-	<target name="transfer">
-		<java classname="org.cld.hadooputil.TransferHdfsFile">
-       <arg line="20 hdfs://192.85.247.104:19000 /reminder/nasdaq/daily C:\\Kibot\\daily - - true"/>
-       <classpath>
-				<fileset dir="target/lib">
-					<include name="**/*.jar"/>
-				</fileset>
-			</classpath>
-		</java>
+		<copy file="${dist}/stock.crawl-1.0.0.jar" todir="${dist}/lib/"/>
 	</target>
 </project>

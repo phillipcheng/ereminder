@@ -159,13 +159,6 @@ public class StockUtil {
 			cal.set(Calendar.SECOND, 0);
 			cal.set(Calendar.MILLISECOND, 0);
 			return cal.getTime();
-		}else if (iu == IntervalUnit.minute5){
-			cal.setTime(dt);
-			int minute = cal.get(Calendar.MINUTE);
-			cal.set(Calendar.SECOND, 0);
-			cal.set(Calendar.MILLISECOND, 0);
-			cal.set(Calendar.MINUTE, minute-minute%5);
-			return cal.getTime();
 		}else if (iu == IntervalUnit.day){
 			cal.setTime(dt);
 			cal.set(Calendar.SECOND, 0);

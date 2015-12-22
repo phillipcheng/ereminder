@@ -9,7 +9,6 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.mgr.CategoryAnalyze;
 import org.cld.datacrawl.mgr.EmptyListProcessor;
 import org.cld.datacrawl.task.BrowseCategoryTaskConf;
@@ -18,7 +17,6 @@ import org.cld.datacrawl.task.BrowseProductTaskConf;
 import org.cld.datacrawl.task.InvokeTaskTaskConf;
 import org.cld.datacrawl.util.SomePageErrorException;
 import org.cld.pagea.general.CategoryAnalyzeUtil;
-import org.cld.taskmgr.NodeConf;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
@@ -52,18 +50,6 @@ public class CrawlTestUtil{
 		public int getId(){
 			return id;
 		}
-	}
-
-	public static CrawlConf getCConf(String properties){
-		NodeConf nc = null;
-		CrawlConf cconf = null;
-		nc = new NodeConf(properties);
-		cconf = new CrawlConf(properties, nc);
-		
-		if (cconf.getDsm(CrawlConf.crawlDsManager_Value_Hibernate)!=null){
-			CrawlUtil.setupSessionFactory(nc, cconf);
-		}
-		return cconf;
 	}
 	
 	private static void setupSRT(SiteRuntime srt, CrawlConf cconf, String rootTaskId){
@@ -231,7 +217,7 @@ public class CrawlTestUtil{
 	 */
 	public static void executeTasks(List<Task> tl, CrawlConf cconf, String propFile){
 		if (tl.size()>0){
-			CrawlUtil.hadoopExecuteCrawlTasks(propFile, cconf, tl, null, false);
+			TaskUtil.hadoopExecuteCrawlTasks(propFile, cconf, tl, null, false);
 		}
 	}
 	

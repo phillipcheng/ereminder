@@ -61,13 +61,7 @@ public class BookHandler implements ProductHandler{
 		if (wsMainUrl==null || "".equals(wsMainUrl)){
 			return null;
 		}
-		CRBookWSClient wsclient;
-		if (cconf.isUseProxy()){
-			wsclient = new CRBookWSClient(wsMainUrl, cconf.getProxyIP(), cconf.getProxyPort(), cconf.getTimeout());
-		}else{
-			wsclient = new CRBookWSClient(wsMainUrl, cconf.getTimeout());
-		}
-		return wsclient;
+		return new CRBookWSClient(wsMainUrl, cconf.getProxyConf(), cconf.getTimeout());
 	}
 	
 	public static void publishBookPages(Book b, List<Page> pageList, CRBookWSClient wsclient){

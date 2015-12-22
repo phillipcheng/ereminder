@@ -76,7 +76,7 @@ public class ProductAnalyze{
 				Map<String, Object> paramMap = new HashMap<String, Object>();
 				paramMap.putAll(task.getParamMap());
 				paramMap.putAll(ci.getParamMap());
-				outputDirPrefix = cconf.getTaskMgr().getHadoopCrawledItemFolder() + "/" +
+				outputDirPrefix = cconf.getHadoopCrawledItemFolder() + "/" +
 						task.getOutputDir(paramMap) + "/" + ci.getId().getId();
 			}
 			String[][] csv = ci.getCsvValue();

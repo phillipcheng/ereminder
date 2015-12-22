@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.common.CandleQuote;
 import org.cld.util.FileDataMapper;
+import org.cld.util.FsType;
 
 public class NasdaqFileFQMinuteMapper extends FileDataMapper{
 	Logger logger = LogManager.getLogger(NasdaqFileFQMinuteMapper.class);
@@ -41,9 +42,16 @@ public class NasdaqFileFQMinuteMapper extends FileDataMapper{
 	}
 
 	@Override
-	public String getFileName(String stockId) {
+	public String getFileName(String stockId, FsType fsType) {
 		String fn = stockId.replace("^", ".");
-		return String.format("/reminder/nasdaq/min/%s.txt", fn);
+		if (fsType == FsType.hdfs){
+			return String.format("/reminder/nasdaq/min/%s.txt", fn);
+		}else if (fsType == FsType.local){
+			return String.format("C:\\Kibot\\1min\\%s.txt", fn);
+		}else{
+			logger.error(String.format("unsupported fsType:%s", fsType));
+			return null;
+		}
 	}
 	
 	@Override

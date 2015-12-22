@@ -67,11 +67,15 @@
 			<groupId>commons-pool</groupId>
 			<artifactId>commons-pool</artifactId>
 		</dependency>
-
 		<dependency>
       		<groupId>org.apache.hadoop</groupId>
       		<artifactId>hadoop-client</artifactId>
     	</dependency>
+    	<dependency>
+			<groupId>org.cld.utils</groupId>
+			<artifactId>cld-util</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 	</dependencies>
 
 </project>

@@ -72,21 +72,22 @@ public class MonitorSellPriceTrdMsg extends TradeMsg {
 				selllimit.setOrderType(OrderType.market);
 				OrderResponse or = at.getTm().trySubmit(selllimit, at.isPreview());
 				selllimit.setOrderId(or.getClientorderid());
-				if (OrderResponse.SUCCESS.equals(or.getError())){
-					//callback
-					OrderFilled of = new OrderFilled(symbol, selllimit.getQuantity(), selllimit.getLimitPrice(), ActionType.sell, OrderType.limit);
-					SelectStrategy bs = at.getBs(scr.getSymbol(), bsName);
-					if (bs!=null){
-						bs.tradeCompleted(of);
-					}
-					StockPosition sp = TradePersistMgr.getStockPositionByOrderId(at.getDbConf(), sellstop.getOrderId());
-					logger.info(String.format("limit sell order %s submitted successfully.", or.getClientorderid()));
-					if (sp!=null){
-						TradePersistMgr.updateLimitSellOrderId(at.getDbConf(), sp.getBuyOrderId(), or.getClientorderid());
+				OrderFilled of = new OrderFilled(symbol, selllimit.getQuantity(), selllimit.getLimitPrice(), ActionType.sell, OrderType.limit);
+				SelectStrategy bs = at.getBs(scr.getSymbol(), bsName);
+				if (bs!=null){
+					if (OrderResponse.SUCCESS.equals(or.getError())){
+						bs.tradeCompleted(of, true);
+						StockPosition sp = TradePersistMgr.getStockPositionByOrderId(at.getDbConf(), sellstop.getOrderId());
+						logger.info(String.format("limit sell order %s submitted successfully.", or.getClientorderid()));
+						if (sp!=null){
+							TradePersistMgr.updateLimitSellOrderId(at.getDbConf(), sp.getBuyOrderId(), or.getClientorderid());
+						}
+					}else{
+						bs.tradeCompleted(of, false);
+						logger.error(String.format("sell market order error: sell order: %s, response: %s", selllimit, or));
 					}
 				}else{
-					//TODO error handling
-					logger.error(String.format("sell market order error: sell order: %s, response: %s", selllimit, or));
+					logger.error(String.format("SYSTEM error, bs can't be found for name:%s", bsName));
 				}
 				return tmpr;
 			}

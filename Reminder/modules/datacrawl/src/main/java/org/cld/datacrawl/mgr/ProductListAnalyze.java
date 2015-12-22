@@ -77,7 +77,6 @@ public class ProductListAnalyze implements ListProcessInf{
 		for (TargetPrdInvoke fullOutput:targetPrdInvokeList){
 			//generate browse product task
 			Map<String, Object> taskParams = new HashMap<String, Object>();
-			taskParams.put(CrawlConf.taskParamCConf_Key, cconf);
 			taskParams.putAll(fullOutput.getInParams());
 			String taskName = null;
 			if (fullOutput.getTaskName()!=null){
@@ -124,9 +123,6 @@ public class ProductListAnalyze implements ListProcessInf{
 					if (maxItems>0 && itemCount>maxItems){
 						break;
 					}
-					//wait for cancel
-					if (cconf.isCancelable())
-						Thread.sleep(100);
 					
 					//need to process all the items
 					List<Task> tl1= readItem(wc, listPage, cat, itemList.get(i), null, readTime, cconf, task);

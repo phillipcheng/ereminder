@@ -2,6 +2,8 @@ package org.cld.trade.response;
 
 import java.util.Map;
 
+import org.json.JSONObject;
+
 public class OrderResponse {
 	
 	public static final String ID="@id";
@@ -21,7 +23,9 @@ public class OrderResponse {
 	}
 	
 	public OrderResponse(Map<String, Object> map){
-		clientorderid = (String) map.get(CLIENTORDERID);
+		if (!JSONObject.NULL.equals(map.get(CLIENTORDERID))){
+			clientorderid = (String) map.get(CLIENTORDERID);
+		}
 		error = (String) map.get(ERROR);
 	}
 	

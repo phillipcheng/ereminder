@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.hibernate.SessionFactory;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
@@ -24,12 +23,11 @@ import org.cld.datastore.DBConf;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.impl.HbaseDataStoreManagerImpl;
 import org.cld.datastore.impl.HdfsDataStoreManagerImpl;
-import org.cld.datastore.impl.HibernateDataStoreManagerImpl;
-import org.cld.taskmgr.AppConf;
-import org.cld.taskmgr.NodeConf;
+import org.cld.taskmgr.TaskConf;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
+import org.cld.util.ProxyConf;
 import org.cld.util.entity.Product;
 import org.cld.util.entity.SiteConf;
 import org.cld.util.jdbc.DBConnConf;
@@ -37,13 +35,9 @@ import org.cld.util.jdbc.DBConnConf;
 import com.fasterxml.jackson.annotation.JsonIgnoreType;
 
 @JsonIgnoreType
-public class CrawlConf implements AppConf {
+public class CrawlConf extends TaskConf {
 
 	private static Logger logger =  LogManager.getLogger(CrawlConf.class);
-	
-	public static final String useProxy_Key="use.proxy";
-	public static final String proxyIP_Key="proxy.ip";
-	public static final String proxyPort_Key="proxy.port";
 	
 	public static final String maxRetry_Key="retry.num";
 	public static final String maxLoop_Key="max.loop";
@@ -58,26 +52,17 @@ public class CrawlConf implements AppConf {
 	//dsm can be a list, 1st is default, each site can pick one if not use default
 	public static final String crawlDsManager_Key="crawl.ds.manager";
 		public static final String crawlDsManager_Value_Nothing="nothing";
-		public static final String crawlDsManager_Value_Hibernate="hibernate";
 		public static final String crawlDsManager_Value_Hbase = "hbase";
 		public static final String crawlDsManager_Value_Hdfs = "hdfs";
 	public static final String crawlDBConnectionUrl_Key = "crawl.db.connection.url";
 	
-	public static final String dsDriver_Key="driver";
-	public static final String dsUrl_Key="url";
-	public static final String dsUser_Key="user";
-	public static final String dsPass_Key="pass";
-	
 	public static final String DS_BIG="big.dm.";
 	public static final String DS_SMALL="small.dm.";
 	
-	public static final String systemProductClassName="org.cld.datastore.entity.Product";
+	public static final String systemProductClassName="org.cld.util.entity.Product";
 	public static final String systemProductName="product";
-	public static final String taskParamCConf_Key="cconf";
 	
-	private boolean useProxy=false;
-	private String proxyIP;
-	private int proxyPort;
+	private ProxyConf proxyConf;
 
 	private int maxRetry=2;//immediate #retry for each broken link
 	private int maxLoop=10;//immediate #retry for each broken link
@@ -99,8 +84,8 @@ public class CrawlConf implements AppConf {
 	//type to dsm instance, //TODO, name to dsm instance, same type can be multiple different dsm
 	private Map<String, DataStoreManager> dsmMap = new HashMap<String, DataStoreManager>();
 
-	private DBConnConf bigdbconf = new DBConnConf();
-	private DBConnConf smalldbconf = new DBConnConf();
+	private DBConnConf bigdbconf = null;
+	private DBConnConf smalldbconf = null;
 	
 	private Map<String, String> params = new HashMap<String, String>();//store all the parameters in name-value pair for toString
 	
@@ -112,16 +97,11 @@ public class CrawlConf implements AppConf {
 	private List<CrawlConfListener> listeners = new ArrayList<CrawlConfListener>();//list of crawl-conf-change-listeners
 	private ClassLoader pluginClassLoader;
 	private TaskMgr taskMgr;
-	private SessionFactory taskSF;
-	private NodeConf nodeConf;
 	
-	public CrawlConf(){
+	public CrawlConf(String properties){
+		super(properties);
 		taskMgr = new TaskMgr();
-	}
-	
-	public CrawlConf(String file, NodeConf nc){
-		this();
-		setup(file, nc);		
+		setup(properties);
 	}
 	
 	public DBConf getDBConf(){
@@ -131,11 +111,9 @@ public class CrawlConf implements AppConf {
 		return dbconf;
 	}
 	
-	public void setup(String file, NodeConf nc){
-		this.setNodeConf(nc);
-		taskMgr.setUp(file, nc);
+	public void setup(String file){
+		taskMgr.setUp(file);
 		this.masterConfFile = file;
-		//InputStream inStream = CrawlConf.class.getClassLoader().getResourceAsStream(file);
 		try {
 			properties = new PropertiesConfiguration(file);
 		} catch (ConfigurationException e) {
@@ -181,18 +159,15 @@ public class CrawlConf implements AppConf {
 		
 		//
 		Map<String, Object> taskParams = new HashMap<String, Object>();
-		taskParams.put(taskParamCConf_Key, this);
 		taskMgr.reload(pluginClassLoader, taskParams);
 		
 		//
 		for (String dsmtype:crawlDsManagerValue){
-			if (dsmtype.equals(crawlDsManager_Value_Hibernate)){
-				dsmMap.put(dsmtype, new HibernateDataStoreManagerImpl());
-			}else if (dsmtype.equals(crawlDsManager_Value_Hbase)){
-				dsmMap.put(dsmtype, new HbaseDataStoreManagerImpl(HadoopTaskLauncher.getHadoopConf(getNodeConf())));
+			if (dsmtype.equals(crawlDsManager_Value_Hbase)){
+				dsmMap.put(dsmtype, new HbaseDataStoreManagerImpl(HadoopTaskLauncher.getHadoopConf(this)));
 			}else if (dsmtype.equals(crawlDsManager_Value_Hdfs)){
-				dsmMap.put(dsmtype, new HdfsDataStoreManagerImpl(HadoopTaskLauncher.getHadoopConf(getNodeConf()), 
-						getTaskMgr().getHadoopCrawledItemFolder()));
+				dsmMap.put(dsmtype, new HdfsDataStoreManagerImpl(HadoopTaskLauncher.getHadoopConf(this), 
+						this.getHadoopCrawledItemFolder()));
 			}
 		}
 		
@@ -282,20 +257,16 @@ public class CrawlConf implements AppConf {
 			//2. reload conf
 			properties = new PropertiesConfiguration(this.masterConfFile);
 			
+			setProxyConf(new ProxyConf(properties));
+			bigdbconf = new DBConnConf(DS_BIG, properties);
+			smalldbconf = new DBConnConf(DS_SMALL, properties);
 			//3. parse new
 			Iterator<String> enu = properties.getKeys();
 			String strVal=null;
 			while(enu.hasNext()){
 				String key = enu.next();	
 				strVal = properties.getString(key);
-				//for all types of crawl tasks
-				if (useProxy_Key.equals(key)){
-					useProxy = Boolean.parseBoolean(strVal);
-				}else if (proxyIP_Key.equals(key)){
-					proxyIP = strVal;
-				}else if (proxyPort_Key.equals(key)){
-					proxyPort = Integer.parseInt(strVal);
-				}else if (maxRetry_Key.equals(key)){
+				if (maxRetry_Key.equals(key)){
 					maxRetry = Integer.parseInt(strVal);
 				}else if (timeout_Key.equals(key)){
 					timeout=Integer.parseInt(strVal);
@@ -309,9 +280,7 @@ public class CrawlConf implements AppConf {
 					List<Object> listVal = properties.getList(key);
 					for (int i=0;  i<listVal.size(); i++){
 						String dsmtype = (String)listVal.get(i);
-						if (crawlDsManager_Value_Hibernate.equals(dsmtype)){
-							crawlDsManagerValue.add(dsmtype);
-						}else if (crawlDsManager_Value_Hbase.equals(dsmtype)){
+						if (crawlDsManager_Value_Hbase.equals(dsmtype)){
 							crawlDsManagerValue.add(dsmtype);
 						}else if (crawlDsManager_Value_Hdfs.equals(dsmtype)){
 							crawlDsManagerValue.add(dsmtype);
@@ -323,22 +292,6 @@ public class CrawlConf implements AppConf {
 					}
 				}else if (crawlDBConnectionUrl_Key.equals(key)){
 					crawlDBConnectionUrl = strVal;
-				}else if ( (DS_BIG + dsDriver_Key).equals(key)){
-					bigdbconf.setDriver(strVal);
-				}else if ((DS_BIG + dsUrl_Key).equals(key)){
-					bigdbconf.setUrl(strVal);
-				}else if ((DS_BIG + dsUser_Key).equals(key)){
-					bigdbconf.setUser(strVal);
-				}else if ((DS_BIG + dsPass_Key).equals(key)){
-					bigdbconf.setPass(strVal);
-				}else if ( (DS_SMALL + dsDriver_Key).equals(key)){
-					smalldbconf.setDriver(strVal);
-				}else if ((DS_SMALL + dsUrl_Key).equals(key)){
-					smalldbconf.setUrl(strVal);
-				}else if ((DS_SMALL + dsUser_Key).equals(key)){
-					smalldbconf.setUser(strVal);
-				}else if ((DS_SMALL + dsPass_Key).equals(key)){
-					smalldbconf.setPass(strVal);
 				}else if (productType_Key.equals(key)){
 					List<Object> listVal = properties.getList(key);
 					for (int i=0;  i<listVal.size(); i++){
@@ -375,7 +328,6 @@ public class CrawlConf implements AppConf {
 	 */
 	public List<Task> setUpSite(String confFileName, SiteConf sc){
 		Map<String, Object> taskParams = new HashMap<String, Object>();
-		taskParams.put(taskParamCConf_Key, this);
 		return taskMgr.setUpSite(confFileName, sc, pluginClassLoader, taskParams);
 	}
 	
@@ -414,24 +366,6 @@ public class CrawlConf implements AppConf {
 	public void setTimeout(int timeout) {
 		this.timeout = timeout;
 	}
-	public String getProxyIP() {
-		return proxyIP;
-	}
-	public void setProxyIP(String proxyIP) {
-		this.proxyIP = proxyIP;
-	}
-	public int getProxyPort() {
-		return proxyPort;
-	}
-	public void setProxyPort(int proxyPort) {
-		this.proxyPort = proxyPort;
-	}
-	public boolean isUseProxy() {
-		return useProxy;
-	}
-	public void setUseProxy(boolean useProxy) {
-		this.useProxy = useProxy;
-	}
 	public int getMaxRetry() {
 		return maxRetry;
 	}
@@ -448,14 +382,6 @@ public class CrawlConf implements AppConf {
 	
 	public Map<String, ProductConf> getPrdConfMap(){
 		return prdConfMap;
-	}
-
-	public SessionFactory getTaskSF() {
-		return taskSF;
-	}
-
-	public void setTaskSF(SessionFactory taskSF) {
-		this.taskSF = taskSF;
 	}
 	
 	public DataStoreManager getDsm(String type) {
@@ -513,18 +439,6 @@ public class CrawlConf implements AppConf {
 	
 	public TaskMgr getTaskMgr(){
 		return taskMgr;
-	}
-
-	public NodeConf getNodeConf() {
-		return nodeConf;
-	}
-
-	public void setNodeConf(NodeConf nodeConf) {
-		this.nodeConf = nodeConf;
-	}
-	
-	public boolean isCancelable(){
-		return nodeConf.isCancelable();
 	}
 
 	public CategoryAnalyze getCa() {
@@ -597,5 +511,13 @@ public class CrawlConf implements AppConf {
 
 	public void setSmalldbconf(DBConnConf smalldbconf) {
 		this.smalldbconf = smalldbconf;
+	}
+
+	public ProxyConf getProxyConf() {
+		return proxyConf;
+	}
+
+	public void setProxyConf(ProxyConf proxyConf) {
+		this.proxyConf = proxyConf;
 	}
 }

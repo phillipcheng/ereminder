@@ -1,15 +1,12 @@
 package org.cld.taskmgr.hadoop;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
@@ -29,8 +26,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.hadooputil.RegexFilter;
-import org.cld.taskmgr.NodeConf;
-import org.cld.taskmgr.TaskMgr;
+import org.cld.taskmgr.TaskConf;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.StringUtil;
@@ -80,23 +76,22 @@ public class HadoopTaskLauncher {
 		return btt.getTaskNumPerJob();
 	}
 	
-	public static Configuration getHadoopConf(NodeConf nc){
+	public static Configuration getHadoopConf(TaskConf tconf){
 		//all the site config should go here, since we can't point the etc/hadoop folder which contains the site config
-		TaskMgr taskMgr = nc.getTaskMgr();
 		Configuration conf = new Configuration();
-		if (taskMgr.getHadoopJobTracker()!=null){
-			String jobTracker=taskMgr.getHadoopJobTracker();
+		if (tconf.getHadoopJobTracker()!=null){
+			String jobTracker=tconf.getHadoopJobTracker();
 			String host = jobTracker.substring(0,jobTracker.indexOf(":"));
-			conf.set("mapreduce.jobtracker.address", taskMgr.getHadoopJobTracker());
+			conf.set("mapreduce.jobtracker.address", tconf.getHadoopJobTracker());
 			conf.set("yarn.resourcemanager.hostname", host);
 			conf.set("mapreduce.framework.name", "yarn");
 			conf.set("yarn.nodemanager.aux-services", "mapreduce_shuffle");
 		}
-		conf.set("fs.default.name", taskMgr.getHdfsDefaultName());
-		conf.setInt(NLineInputFormat.LINES_PER_MAP, taskMgr.getCrawlTasksPerMapper());
+		conf.set("fs.default.name", tconf.getHdfsDefaultName());
+		conf.setInt(NLineInputFormat.LINES_PER_MAP, tconf.getTasksPerMapper());
 		
-		for (String key:taskMgr.getHadoopConfigs().keySet()){
-			String value = taskMgr.getHadoopConfigs().get(key);
+		for (String key:tconf.getHadoopConfigs().keySet()){
+			String value = tconf.getHadoopConfigs().get(key);
 			//logger.info(String.format("key:%s,value:%s", key, value));
 			conf.set(key, value);
 		}
@@ -141,11 +136,10 @@ public class HadoopTaskLauncher {
 		hadoopParams.put("mapreduce.reduce.java.opts", optValue);
 	}
 	
-	public static String executeTasks(NodeConf nc, List<Task> taskList, Map<String, String> hadoopParams, 
+	public static String executeTasks(TaskConf tconf, List<Task> taskList, Map<String, String> hadoopParams, 
 			String sourceName, boolean sync, Class mapperClass, Class reducerClass){
 		if (taskList.size()>0){
-			TaskMgr taskMgr = nc.getTaskMgr();
-			Configuration conf = getHadoopConf(nc);
+			Configuration conf = getHadoopConf(tconf);
 			//generate task list file
 			try {
 				//generate the task file
@@ -158,7 +152,7 @@ public class HadoopTaskLauncher {
 				}
 				if (sourceName==null) sourceName = getSourceName(taskList);
 				String escapedName = StringUtil.escapeFileName(sourceName);
-				taskFileName = taskMgr.getHdfsTaskFolder() + "/" + escapedName;
+				taskFileName = tconf.getHdfsTaskFolder() + "/" + escapedName;
 				logger.info(String.format("task file: %s with length %d generated.", taskFileName, fileContent.length()));
 				Path fileNamePath = new Path(taskFileName);
 				OutputStream fin = fs.create(fileNamePath);
@@ -171,48 +165,10 @@ public class HadoopTaskLauncher {
 				logger.info("after update hadoop params:" + hadoopParams);
 				boolean multipleOutput = hasMultipleOutput(t);
 				String outputDir = t.getOutputDir(null);
-				return executeTasks(nc, hadoopParams, new String[]{taskFileName}, multipleOutput, outputDir, sync, mapperClass, reducerClass, true);
+				return executeTasks(tconf, hadoopParams, new String[]{taskFileName}, multipleOutput, outputDir, sync, mapperClass, reducerClass, true);
 			}catch (Exception e) {
 				logger.error("", e);
 			}
-		}
-		return null;
-	}
-	
-	public static String executeTasksByFile(NodeConf nc, Map<String, String> hadoopParams, 
-			String[] sourceName, Map<String, Object> cconfMap, Class mapperClass, Class reducerClass){
-		TaskMgr taskMgr = nc.getTaskMgr();
-		Configuration conf = getHadoopConf(nc);
-		//generate task list file
-		try {
-			//generate the task file
-			FileSystem fs = FileSystem.get(conf);
-			String[] taskFileName = new String[sourceName.length];
-			for (int i=0; i<taskFileName.length; i++){
-				String fileName = sourceName[i].trim();
-				taskFileName[i]= taskMgr.getHdfsTaskFolder() + "/" + fileName;
-			}
-			Path taskPath = new Path(taskFileName[0]);
-			if (fs.exists(taskPath)){
-				FSDataInputStream input = fs.open(taskPath);
-				String firstTaskStr = (new BufferedReader(new InputStreamReader(input))).readLine();
-				input.close();
-				Task t0 = TaskUtil.taskFromJson(firstTaskStr);
-				if (t0.getConfName()!=null){
-					taskMgr.setUpSite(t0.getConfName(), null, HadoopTaskLauncher.class.getClassLoader(), cconfMap);
-				}
-				logger.debug("firstTaskStr:" + firstTaskStr);
-				logger.debug("t0:" + t0.toString());
-				t0.initParsedTaskDef();
-				updateHadoopParams(t0, hadoopParams);
-				boolean multipleOutput = hasMultipleOutput(t0);
-				String outputDir = t0.getOutputDir(null);
-				return executeTasks(nc, hadoopParams, taskFileName, multipleOutput, outputDir, false, mapperClass, reducerClass, true);
-			}else{
-				logger.error(String.format("task file %s not exist.", taskFileName[0]));
-			}
-		}catch (Exception e) {
-			logger.error("", e);
 		}
 		return null;
 	}
@@ -226,13 +182,13 @@ public class HadoopTaskLauncher {
 	 * @return jobId
 	 */
 	public static final String FILTER_REGEXP_KEY="file.pattern";
-	public static String executeTasks(NodeConf nc, Map<String, String> hadoopParams, 
+	public static String executeTasks(TaskConf tconf, Map<String, String> hadoopParams, 
 			String[] inputPaths, boolean multipleOutput, String outputDir, 
 			boolean sync, Class<? extends Mapper> mapperClass, Class<? extends Reducer> reducerClass, boolean uselinesPerMap){
-		return executeTasks(nc, hadoopParams, inputPaths, multipleOutput, outputDir, sync, mapperClass, reducerClass, null, null, null, uselinesPerMap);
+		return executeTasks(tconf, hadoopParams, inputPaths, multipleOutput, outputDir, sync, mapperClass, reducerClass, null, null, null, uselinesPerMap);
 	}
 	
-	public static String executeTasks(NodeConf nc, Map<String, String> hadoopParams, 
+	public static String executeTasks(TaskConf tconf, Map<String, String> hadoopParams, 
 			String[] inputPaths, boolean multipleOutput, String outputDir, 
 			boolean sync, 
 			Class<? extends Mapper> mapperClass, 
@@ -241,8 +197,7 @@ public class HadoopTaskLauncher {
 			Class<? extends RawComparator> groupComparatorClass, 
 			Class mapperOutputKeyClass, boolean uselinesPerMap){
 		try{
-			TaskMgr taskMgr = nc.getTaskMgr();
-			Configuration conf = getHadoopConf(nc);
+			Configuration conf = getHadoopConf(tconf);
 			FileSystem fs = FileSystem.get(conf);
 			if (hadoopParams!=null){
 				for(String key: hadoopParams.keySet()){
@@ -255,8 +210,8 @@ public class HadoopTaskLauncher {
 				job.setInputFormatClass(NLineInputFormat.class);
 			}
 			//add app specific jars to classpath
-			if (nc.getTaskMgr().getYarnAppCp()!=null){
-				for (String s: nc.getTaskMgr().getYarnAppCp()){
+			if (tconf.getYarnAppCp()!=null){
+				for (String s: tconf.getYarnAppCp()){
 					//find all the jar,zip files under s if s is a directory
 					FileStatus[] fslist = fs.listStatus(new Path(s));
 					Path[] plist = FileUtil.stat2Paths(fslist);
@@ -304,14 +259,14 @@ public class HadoopTaskLauncher {
 				if (outputDir.startsWith("/")){
 					out = new Path(outputDir);
 				}else{
-					out = new Path(taskMgr.getHadoopCrawledItemFolder() + "/" + outputDir);
+					out = new Path(tconf.getHadoopCrawledItemFolder() + "/" + outputDir);
 				}
 				fs.delete(out, true);
 				FileOutputFormat.setOutputPath(job, out);
 			}else{
 				job.setOutputFormatClass(NullOutputFormat.class);
 			}
-			if (taskMgr.getHadoopJobTracker()!=null && !sync){
+			if (tconf.getHadoopJobTracker()!=null && !sync){
 				job.submit();
 			}else{
 				job.waitForCompletion(true);
