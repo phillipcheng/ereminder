@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>crbook.ws</artifactId>
+    <artifactId>crbook-ws</artifactId>
     <packaging>war</packaging>
-    <name>crbookws</name>
+    <name>crbook-ws</name>
     <description>crbook web service</description>
     
     	
@@ -208,16 +208,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-        	<groupId>crbook</groupId>
-        	<artifactId>crbook-persist</artifactId>
-        	<version>1.0.0</version>
-        </dependency>
-        <dependency>
-        	<groupId>crbook</groupId>
-        	<artifactId>cy-common</artifactId>
-        	<version>1.0.0</version>
-        </dependency>
-        <dependency>
 			<groupId>commons-httpclient</groupId>
 			<artifactId>commons-httpclient</artifactId>
 		</dependency>
@@ -246,6 +236,16 @@
 			<groupId>javax.transaction</groupId>
 			<artifactId>jta</artifactId>
 			<version>1.1</version>
-		</dependency>			
+		</dependency>	
+		<dependency>
+        	<groupId>crbook</groupId>
+        	<artifactId>crbook-persist</artifactId>
+        	<version>1.0.0</version>
+        </dependency>
+        <dependency>
+        	<groupId>crbook</groupId>
+        	<artifactId>crbook-common</artifactId>
+        	<version>1.0.0</version>
+        </dependency>		
     </dependencies>
 </project>

@@ -6,6 +6,6 @@
 	<property name="dist"  location="target"/>
   
 	<target name="dist">
-		<copy file="${dist}/cld-trade-1.0.0.jar" todir="${dist}/lib/"/>
+		<copy file="${dist}/stock.trade-1.0.0.jar" todir="${dist}/lib/"/>
 	</target>
 </project>

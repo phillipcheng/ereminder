@@ -117,7 +117,7 @@ public class HistoryDumpMgr implements Runnable {
 						dumpFile(symbol, iu, cqq, sizeThreshold, intervalThreshold);
 					}
 				}
-				logger.info(String.format("total size %d", totalSize));
+				logger.debug(String.format("total size %d", totalSize));
 				Thread.sleep(checkInterval*1000);
 			}
 		}catch(Exception e){

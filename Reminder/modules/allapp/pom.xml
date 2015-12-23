@@ -14,15 +14,20 @@
 	</profiles>
 	<dependencies>
 		<dependency>
-      	<groupId>org.cld.stock</groupId>
-      	<artifactId>stock.crawl</artifactId>
-      	<version>1.0.0</version>
-    </dependency>
+      		<groupId>org.cld.stock</groupId>
+			<artifactId>stock.analyze</artifactId>
+      		<version>1.0.0</version>
+    	</dependency>
 		<dependency>
-      	<groupId>org.cld.book</groupId>
-      	<artifactId>cld-book</artifactId>
-      	<version>1.0.0</version>
-    </dependency>
+      		<groupId>org.cld.stock</groupId>
+      		<artifactId>stock.etl</artifactId>
+      		<version>1.0.0</version>
+    	</dependency>
+		<dependency>
+      		<groupId>org.cld.book</groupId>
+      		<artifactId>crbook-etl</artifactId>
+      		<version>1.0.0</version>
+    	</dependency>
 	</dependencies>
 	
 	<build>

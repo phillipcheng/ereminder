@@ -47,9 +47,9 @@ public class MonitorSellStopOrderTrdMsg extends TradeMsg {
 	@Override
 	public TradeMsgPR process(AutoTrader at) {
 		OrderStatus os = at.getTm().getTheOrderStatus(getOrderId());
-		logger.debug(String.format("os got from monitor limit sell order:%s", os.toString()));
 		TradeMsgPR tmpr = new TradeMsgPR();
 		if (os!=null){
+			logger.debug(String.format("os got from monitor limit sell order:%s", os.toString()));
 			List<String> rmMsgList = new ArrayList<String>();
 			OrderFilled of = TradeKingConnector.toOrderFilled(os);
 			SelectStrategy bs = at.getBs(scr.getSymbol(), bsName);

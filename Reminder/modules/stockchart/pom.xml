@@ -2,8 +2,8 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.cld.chart</groupId>
-	<artifactId>cld-chart</artifactId>
-	<name>chart</name>
+	<artifactId>stock.chart</artifactId>
+	<name>stockchart</name>
 	<parent>
 		<artifactId>env</artifactId>
 		<groupId>org.cld.build</groupId>

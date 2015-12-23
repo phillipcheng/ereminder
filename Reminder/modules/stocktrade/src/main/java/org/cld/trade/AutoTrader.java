@@ -271,64 +271,64 @@ public class AutoTrader implements Runnable {
 	@Override
 	public void run() {
 		while (true){
-			//check msgs changed to output log
-			boolean changedMsg=false;
-			if (prevMsgIds.size()!=getMsgMap().size()){
-				changedMsg = true;
-			}else{
-				for (String msgId:prevMsgIds){
-					if (!getMsgMap().containsKey(msgId)){
-						changedMsg = true;
-						break;
-					}
-				}
-			}
-			if (changedMsg){
-				logger.info(String.format("%d messages to process.", getMsgMap().size()));
-				logger.info(String.format("process msg: %s",getMsgMap().values()));
-			}
-			//store prev msg ids
-			prevMsgIds.clear();
-			for (String msgId:getMsgMap().keySet()){
-				prevMsgIds.add(msgId);
-			}
-			List<TradeMsgPR> tmprlist = new ArrayList<TradeMsgPR>();
-			List<String> keys = getMsgMapKeys();
-			for (String key:keys){
-				TradeMsg msg = getMsg(key);
-				if (msg!=null){
-					TradeMsgPR tmpr = msg.process(this);
-					if (tmpr!=null){
-						tmpr.setMsgId(msg.getMsgId());
-						tmprlist.add(tmpr);
-					}
+			try{
+				//check msgs changed to output log
+				boolean changedMsg=false;
+				if (prevMsgIds.size()!=getMsgMap().size()){
+					changedMsg = true;
 				}else{
-					logger.error(String.format("msg for key:%s not found.", key));
-				}
-			}
-			for (TradeMsgPR tmpr: tmprlist){
-				if (tmpr.getNewMsgs()!=null){
-					for (TradeMsg sm:tmpr.getNewMsgs()){
-						getMsgMap().put(sm.getMsgId(), sm);
+					for (String msgId:prevMsgIds){
+						if (!getMsgMap().containsKey(msgId)){
+							changedMsg = true;
+							break;
+						}
 					}
 				}
-				if (tmpr.getRmMsgs()!=null){
-					for (String mid:tmpr.getRmMsgs()){
-						getMsgMap().remove(mid);
+				if (changedMsg){
+					logger.info(String.format("%d messages to process.", getMsgMap().size()));
+					logger.info(String.format("process msg: %s",getMsgMap().values()));
+				}
+				//store prev msg ids
+				prevMsgIds.clear();
+				for (String msgId:getMsgMap().keySet()){
+					prevMsgIds.add(msgId);
+				}
+				List<TradeMsgPR> tmprlist = new ArrayList<TradeMsgPR>();
+				List<String> keys = getMsgMapKeys();
+				for (String key:keys){
+					TradeMsg msg = getMsg(key);
+					if (msg!=null){
+						TradeMsgPR tmpr = msg.process(this);
+						if (tmpr!=null){
+							tmpr.setMsgId(msg.getMsgId());
+							tmprlist.add(tmpr);
+						}
+					}else{
+						logger.error(String.format("msg for key:%s not found.", key));
 					}
 				}
-				if (tmpr.isExecuted()){
-					getMsgMap().remove(tmpr.getMsgId());
+				for (TradeMsgPR tmpr: tmprlist){
+					if (tmpr.getNewMsgs()!=null){
+						for (TradeMsg sm:tmpr.getNewMsgs()){
+							getMsgMap().put(sm.getMsgId(), sm);
+						}
+					}
+					if (tmpr.getRmMsgs()!=null){
+						for (String mid:tmpr.getRmMsgs()){
+							getMsgMap().remove(mid);
+						}
+					}
+					if (tmpr.isExecuted()){
+						getMsgMap().remove(tmpr.getMsgId());
+					}
+					if (tmpr.cleanAllMsgs){
+						getMsgMap().clear();
+					}
 				}
-				if (tmpr.cleanAllMsgs){
-					getMsgMap().clear();
-				}
-			}
-			
-			try {
+				
 				Thread.sleep(4000);
-			} catch (InterruptedException e) {
-				logger.error("", e);
+			}catch(Throwable t){//prevent the system from stop for unknown error
+				logger.error("", t);
 			}
 		}
 	}
