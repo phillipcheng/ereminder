@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="sina-stock-fr-footnote" productType="default">
+	<PrdTask>
+		<baseBrowseTask enableJS="true" taskName="footnote" mbMemoryNeeded="1024" dsm="hdfs">
+			<param name="marketId"/>
+			<param name="stockid"/>
+			<param name="startDate" type="string"/>
+			<param name="endDate" type="string"/>
+			<param name="year" type="int" value="0"/>
+			<param name="quarter" value="0" type="int"/>
+			<startUrl value="http://vip.stock.finance.sina.com.cn/corp/go.php/vFD_FootNotes/stockid/[stockid].phtml"/>
+			<userAttribute name="id">
+				<value value="stockid" fromScope="param"/>
+			</userAttribute>
+			<userAttribute name="RowDateIdx">
+				<value value="0,0,0,0,0,0,0" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="RowCsvName">
+				<value value="account,inventory,recievableAging,tax,incomeStructureByIndustry,incomeStructureByProduct,incomeStructureByRegion" toType="list"/>
+			</userAttribute>
+			<userAttribute name="data1">
+				<value value="//div[@id='con03-0']/table[1]/tbody[1]/tr/td" toType="list"/>
+			</userAttribute>
+			<userAttribute name="RowSpan1">
+				<value value="//div[@id='con03-0']/table[1]/tbody[1]/tr/td[1]/@rowspan" optional="true" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="ColNum1">
+				<value value="count(//div[@id='con03-0']/table[1]/tbody[1]/tr[1]/td)" toType="int"/>
+			</userAttribute>
+			<userAttribute name="data2">
+				<value value="//div[@id='con03-2']/table[1]/tbody[1]/tr/td" toType="list"/>
+			</userAttribute>
+			<userAttribute name="RowSpan2">
+				<value value="//div[@id='con03-2']/table[1]/tbody[1]/tr/td[1]/@rowspan" optional="true" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="ColNum2">
+				<value value="count(//div[@id='con03-2']/table[1]/tbody[1]/tr[1]/td)" toType="int"/>
+			</userAttribute>
+			<userAttribute name="data3">
+				<value value="//div[@id='con03-3']/table[1]/tbody[1]/tr/td" toType="list"/>
+			</userAttribute>
+			<userAttribute name="RowSpan3">
+				<value value="//div[@id='con03-3']/table[1]/tbody[1]/tr/td[1]/@rowspan" optional="true" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="ColNum3">
+				<value value="count(//div[@id='con03-3']/table[1]/tbody[1]/tr[1]/td)" toType="int"/>
+			</userAttribute>
+			<userAttribute name="data4">
+				<value value="//div[@id='con03-4']/table[1]/tbody[1]/tr/td" toType="list"/>
+			</userAttribute>
+			<userAttribute name="RowSpan4">
+				<value value="//div[@id='con03-4']/table[1]/tbody[1]/tr/td[1]/@rowspan" optional="true" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="ColNum4">
+				<value value="count(//div[@id='con03-4']/table[1]/tbody[1]/tr[1]/td)" toType="int"/>
+			</userAttribute>
+			<userAttribute name="data5">
+				<value value="//div[@id='con03-5']/table[1]/tbody[1]/tr/td" toType="list"/>
+			</userAttribute>
+			<userAttribute name="RowSpan5">
+				<value value="//div[@id='con03-5']/table[1]/tbody[1]/tr/td[1]/@rowspan" optional="true" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="ColNum5">
+				<value value="count(//div[@id='con03-5']/table[1]/tbody[1]/tr[1]/td)" toType="int"/>
+			</userAttribute>
+			<userAttribute name="data6">
+				<value value="//div[@id='con03-5']/table[2]/tbody[1]/tr/td" toType="list"/>
+			</userAttribute>
+			<userAttribute name="RowSpan6">
+				<value value="//div[@id='con03-5']/table[2]/tbody[1]/tr/td[1]/@rowspan" optional="true" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="ColNum6">
+				<value value="count(//div[@id='con03-5']/table[2]/tbody[1]/tr[1]/td)" toType="int"/>
+			</userAttribute>
+			<userAttribute name="data7">
+				<value value="//div[@id='con03-5']/table[3]/tbody[1]/tr/td" toType="list"/>
+			</userAttribute>
+			<userAttribute name="RowSpan7">
+				<value value="//div[@id='con03-5']/table[3]/tbody[1]/tr/td[1]/@rowspan" optional="true" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="ColNum7">
+				<value value="count(//div[@id='con03-5']/table[3]/tbody[1]/tr[1]/td)" toType="int"/>
+			</userAttribute>
+			<csvtransform transformClass="org.cld.etl.csv.MultiVarRowTablesToCSV" outputType="byJobMulti">
+			</csvtransform>
+			<filter><function>function getDate(q) {
+    if (q=='1') return '-03-31'
+    if (q=='2') return '-06-30'
+    if (q=='3') return '-09-30'
+    if (q=='4') return '-12-31'
+}
+year==0 || quarter==0 || arr[0]==(year+getDate(quarter))</function></filter>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>

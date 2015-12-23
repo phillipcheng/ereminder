@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="nasdaq-holding-summary" productType="default">
+	<PrdTask tryPattern="false">
+		<baseBrowseTask enableJS="false" dsm="nothing" taskName="nasdaq-holding-summary" mbMemoryNeeded="1024">
+			<param name="marketId"/>
+			<param name="stockid"/>
+			<param name="startDate"/>
+			<param name="endDate"/>
+			<param name="HasHeader" type="boolean" value="false"/>
+			<startUrl value="'http://www.nasdaq.com/symbol/' + stockid.toLowerCase() + '/ownership-summary'" fromType="expression"/>
+			<userAttribute name="id">
+				<value value="stockid + '_' + endDate" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="1,2" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="ColCsvName">
+				<value value="InstitutionalSummary,InsiderSummary" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="data1">
+				<value value="//div[@id='outstanding']/following-sibling::div[1]/div[1]/table/tbody/tr/td" toType="list" toEntryType="string" optional="true"/>
+			</userAttribute>
+			<userAttribute name="data2">
+				<value value="//div[@id='holders-stacked']/following-sibling::div[1]/div[1]/table/tbody/tr/td" toType="list" toEntryType="string" optional="true"/>
+			</userAttribute>
+			<csvtransform outputType="byJobMulti" transformClass="org.cld.etl.csv.MultiColTablesAsCSV">
+			</csvtransform>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>

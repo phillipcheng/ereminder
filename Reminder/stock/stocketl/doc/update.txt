@@ -1,0 +1,73 @@
+export HADOOP_USER_CLASSPATH_FIRST=true
+
+Date:
+SH:
+listed:1061
+delisted:45
+suspended:1
+
+SZ:
+listed:1718
+delisted:50
+suspended:3
+
+
+Sina-HS-A
+listed:	2748
+ST warning:	27
+
+
+httpcore 4.3.3   => 4.4.1
+httpclient 4.3.3 =>4.5
+htmlunit 2.15 => 2.18
+
+
+hbase(main):010:0> count 'crawledItem', {INTERVAL=>1}
+
+Current count: 1, row: CmdStatus|hs_a_2015-08-03|AllCmdRun
+Current count: 2, row: CmdStatus|hs_a_2015-08-03|sina-stock-corp-info
+Current count: 3, row: CmdStatus|hs_a_2015-08-03|sina-stock-corp-manager
+Current count: 4, row: CmdStatus|hs_a_2015-08-03|sina-stock-corp-related
+Current count: 5, row: CmdStatus|hs_a_2015-08-03|sina-stock-corp-related-other
+Current count: 6, row: CmdStatus|hs_a_2015-08-03|sina-stock-fr-achievenotice|2015-08-03
+Current count: 7, row: CmdStatus|hs_a_2015-08-03|sina-stock-fr-achievenotice|2015-08-08
+Current count: 8, row: CmdStatus|hs_a_2015-08-03|sina-stock-fr-assetdevalue-year|2015-08-03
+Current count: 9, row: CmdStatus|hs_a_2015-08-03|sina-stock-fr-assetdevalue-year|2015-08-08
+Current count: 10, row: CmdStatus|hs_a_2015-08-03|sina-stock-fr-footnote|2015-08-03
+Current count: 11, row: CmdStatus|hs_a_2015-08-03|sina-stock-fr-footnote|2015-08-08
+Current count: 12, row: CmdStatus|hs_a_2015-08-03|sina-stock-fr-guideline-year|2015-08-03
+Current count: 13, row: CmdStatus|hs_a_2015-08-03|sina-stock-fr-guideline-year|2015-08-08
+Current count: 14, row: CmdStatus|hs_a_2015-08-03|sina-stock-fr-quarter-BalanceSheet|2015-08-03
+Current count: 15, row: CmdStatus|hs_a_2015-08-03|sina-stock-fr-quarter-BalanceSheet|2015-08-08
+Current count: 16, row: CmdStatus|hs_a_2015-08-03|sina-stock-fr-quarter-CashFlow|2015-08-03
+Current count: 17, row: CmdStatus|hs_a_2015-08-03|sina-stock-fr-quarter-CashFlow|2015-08-08
+Current count: 18, row: CmdStatus|hs_a_2015-08-03|sina-stock-fr-quarter-ProfitStatement|2015-08-03
+Current count: 19, row: CmdStatus|hs_a_2015-08-03|sina-stock-fr-quarter-ProfitStatement|2015-08-08
+Current count: 20, row: CmdStatus|hs_a_2015-08-03|sina-stock-issue-sharebonus|2015-08-03
+Current count: 21, row: CmdStatus|hs_a_2015-08-03|sina-stock-issue-sharebonus|2015-08-08
+Current count: 22, row: CmdStatus|hs_a_2015-08-03|sina-stock-market-dzjy|2015-08-03
+Current count: 23, row: CmdStatus|hs_a_2015-08-03|sina-stock-market-dzjy|2015-08-08
+Current count: 24, row: CmdStatus|hs_a_2015-08-03|sina-stock-market-fq|2015-08-03
+Current count: 25, row: CmdStatus|hs_a_2015-08-03|sina-stock-market-fq|2015-08-08
+Current count: 26, row: CmdStatus|hs_a_2015-08-03|sina-stock-market-history|2015-08-03
+Current count: 27, row: CmdStatus|hs_a_2015-08-03|sina-stock-market-history|2015-08-08
+Current count: 28, row: CmdStatus|hs_a_2015-08-03|sina-stock-market-rzrq|2015-08-03
+Current count: 29, row: CmdStatus|hs_a_2015-08-03|sina-stock-market-rzrq|2015-08-08
+Current count: 30, row: CmdStatus|hs_a_2015-08-03|sina-stock-market-tradedetail|2015-08-03
+Current count: 31, row: CmdStatus|hs_a_2015-08-03|sina-stock-market-tradedetail|2015-08-08
+Current count: 32, row: CmdStatus|hs_a_2015-08-03|sina-stock-stock-holder-circulate|2015-08-03
+Current count: 33, row: CmdStatus|hs_a_2015-08-03|sina-stock-stock-holder-circulate|2015-08-08
+Current count: 34, row: CmdStatus|hs_a_2015-08-03|sina-stock-stock-holder-fund|2015-08-03
+Current count: 35, row: CmdStatus|hs_a_2015-08-03|sina-stock-stock-holder-fund|2015-08-08
+Current count: 36, row: CmdStatus|hs_a_2015-08-03|sina-stock-stock-holder|2015-08-03
+Current count: 37, row: CmdStatus|hs_a_2015-08-03|sina-stock-stock-holder|2015-08-08
+Current count: 38, row: CmdStatus|hs_a_2015-08-03|sina-stock-stock-structure|2015-08-03
+Current count: 39, row: CmdStatus|hs_a_2015-08-03|sina-stock-stock-structure|2015-08-08
+Current count: 40, row: CmdStatus|hs_a_2015-08-08|AllCmdRun
+Current count: 41, row: CmdStatus|hs_a|sina-stock-ids
+.....
+2776
+Current count: 2817, row: sina-stock-ids|hs_a_2015-08-03
+
+1 (stock-ids|08-03) + 1 (stock-ids)+  2775 + 2*(17+1(AllCmdStatus)) + 4(static)
+2817

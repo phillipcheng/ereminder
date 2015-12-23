@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="nasdaq-fr-quarter-revenue" productType="default">
+	<PrdTask tryPattern="false">
+		<baseBrowseTask enableJS="false" dsm="nothing" taskName="nasdaq-fr-quarter-revenue" mbMemoryNeeded="1024">
+			<param name="marketId"/>
+			<param name="stockid"/>
+			<param name="startDate"/>
+			<param name="endDate"/>
+			<param name="quarter" type="int" value="0"/>
+			<param name="year" type="int" value="0"/>
+			<!-- since url is by id, so the quarter and year meaning the start quarter and year -->
+			<startUrl value="http://fundamentals.nasdaq.com/redpage.asp?selected=[stockid]"/>
+			<userAttribute name="id">
+				<value value="stockid + '_' + endDate" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="CellRowNum">
+				<value value="3" toType="int"/>
+			</userAttribute>
+			<userAttribute name="DataType">
+				<value value="Number,Text,Number" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="3" toType="int"/>
+			</userAttribute>
+			<userAttribute name="RowHeader">
+				<value value="//table[@class='ipos']/tbody/tr[not(@bgcolor)]/td[@class='body1']/b" toType="externalList" toEntryType="string" firstPageOnly="true" optional="true"/>
+			</userAttribute>
+			<userAttribute name="ColHeader">
+				<value value="//table[@class='ipos']/tbody/tr[4]/td[@nowrap='nowrap'][position()>1]/b/text()[position()=1]" toType="externalList" toEntryType="string" optional="true"/>
+			</userAttribute>
+			<userAttribute name="data">
+				<value value="//table[@class='ipos']/tbody/tr[position()>5][@bgcolor!='']/td[position()>1]" toType="externalList" toEntryType="string" optional="true"/>
+			</userAttribute>
+			<csvtransform outputType="byId" transformClass="org.cld.etl.csv.CellTableAsCSV">
+				<ops>
+					<expression>function getQuarterEndDateFromMonth(qrt) {
+    var q = new String(qrt)
+    q = q.replace(/\(FYE\)/g, "")
+    q = q.replace(/^\s+|\s+$/g, '')
+    if (q=='January') return '01-31'
+    if (q=='February') return '02-28'
+    if (q=='March') return '03-31'
+    if (q=='April') return '04-30'
+    if (q=='May') return '05-31'
+    if (q=='June') return '06-30'
+    if (q=='July') return '07-31'
+    if (q=='August') return '08-31'
+    if (q=='September') return '09-30'
+    if (q=='October') return '10-31'
+    if (q=='November') return '11-30'
+    if (q=='December') return '12-31'
+    return q
+}
+
+function merge(arr){
+    arr[1] = arr[0] + '-' + arr[1]
+    arr = arr.slice(1,arr.length)
+    return arr.join(',')
+}
+rarr = arr.split(',')
+rarr[1] = getQuarterEndDateFromMonth(rarr[1])
+var eps = rarr[3].substring(0,rarr[3].lastIndexOf("("));
+var epsd = rarr[3].substring(rarr[3].lastIndexOf("(")+1,rarr[3].lastIndexOf(")"));
+rarr[3]=eps;
+rarr[5]=epsd;
+var month = epsd.substring(0, epsd.indexOf("/"));
+var day = epsd.substring(epsd.indexOf("/")+1, epsd.lastIndexOf("/"));
+var year = epsd.substring(epsd.lastIndexOf("/")+1);
+rarr[5] = year + "-" + month + "-" + day
+rarr[0] = year
+merge(rarr)</expression>
+				</ops>
+			</csvtransform>
+			<filter byDate="false"><function>function getDate(q) {
+    if (q=='1') return '-03-31'
+    if (q=='2') return '-06-30'
+    if (q=='3') return '-09-30'
+    if (q=='4') return '-12-31'
+}
+(year==0 || quarter==0 || arr[0]&gt;=(year+getDate(quarter))) &amp;&amp; arr.length>3 &amp;&amp; arr[0].indexOf('Total')==-1</function></filter>
+		</baseBrowseTask>
+		<nextPage value="//table[@class='ipos']/tbody/tr[last()]/td/a[text()='Previous 3 Years']" optional="true"/>
+		<lastPageCondition>
+			<expression>nextPage == null</expression>
+		</lastPageCondition>
+	</PrdTask>
+</Tasks>

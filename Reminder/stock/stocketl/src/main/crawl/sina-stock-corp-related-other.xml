@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="sina-stock-corp-related-other" productType="default">
+	<PrdTask>
+		<baseBrowseTask enableJS="true" taskName="corp-related-other" dsm="hdfs">
+			<param name="marketId"/>
+			<param name="stockid"/>
+			<param name="startDate" type="string"/>
+			<param name="endDate" type="string"/>
+			<param name="HasHeader" value="false" type="boolean"/>
+			<param name="static" value="true" type="boolean"/>
+			<startUrl value="http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CorpOtherInfo/stockid/[stockid]/menu_num/5.phtml"/>
+			<userAttribute name="id">
+				<value value="stockid" toType="string" fromScope="param"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="2,2" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="data1">
+				<value value="//div[@id='con02-0']/table[1]/tbody/tr[count(td)>1]/td" toType="list" toEntryType="string" optional="true"/>
+			</userAttribute>
+			<userAttribute name="data2">
+				<value value="//div[@id='con02-0']/table[2]/tbody/tr[count(td)>1]/td" toType="list" toEntryType="string" optional="true"/>
+			</userAttribute>
+			<userAttribute name="RowCsvName">
+				<value value="industries,concepts" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<pageVerify operator="!=">
+				<lhs value="//div[@id='con02-0']/table[1]/tbody/tr[1]/td"></lhs>
+				<rhs value="null"></rhs>
+			</pageVerify>
+			<pageVerify operator="!=">
+				<lhs value="//div[@id='con02-0']/table[2]/tbody/tr[1]/td"></lhs>
+				<rhs value="null"></rhs>
+			</pageVerify>
+			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byJobMulti">
+			</csvtransform>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>

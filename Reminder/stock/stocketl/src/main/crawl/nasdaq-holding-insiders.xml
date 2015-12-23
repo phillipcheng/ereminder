@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="nasdaq-holding-insiders" productType="default">
+	<PrdTask tryPattern="false">
+		<baseBrowseTask enableJS="false" dsm="nothing" taskName="nasdaq-holding-insiders" mbMemoryNeeded="1024">
+			<param name="marketId"/>
+			<param name="stockid"/>
+			<param name="startDate"/>
+			<param name="endDate"/>
+			<param name="HasHeader" type="boolean" value="false"/>
+			<startUrl value="http://www.nasdaq.com/symbol/[stockid]/insider-trades"/>
+			<userAttribute name="id">
+				<value value="stockid + '_' + endDate" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="8" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="DataType1">
+				<value value="Text,Text,Date" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="data1">
+				<value value="//div[@class='genTable']/table[1]/tbody/tr/td" toType="externalList" toEntryType="string" optional="true"/>
+			</userAttribute>
+			<userAttribute name="RowDateIdx">
+				<value value="2" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<csvtransform outputType="byId" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
+			</csvtransform>
+		</baseBrowseTask>
+		<nextPage value="//ul[@id='pager']/ul[1]/li[last()-1]/a" optional="true"/>
+		<lastPageCondition>
+			<expression>nextPage == null</expression>
+		</lastPageCondition>
+	</PrdTask>
+</Tasks>

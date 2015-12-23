@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="nasdaq-quote-fq-check" productType="default">
+	<PrdTask tryPattern="false">
+		<baseBrowseTask enableJS="false" taskName="nasdaq-quote-fq-check" dsm="hdfs" mbMemoryNeeded="256">
+			<param name="stockid"/>
+			<startUrl value="http://finance.yahoo.com/q/hp?s=[stockid]+Historical+Prices"/>
+			<userAttribute name="id">
+				<value value='"fq-check" + stockid' toType="string" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="1" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="DataType1">
+				<value value="Date" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="data1">
+				<value value="//table[@class='yfnc_datamodoutline1']/tbody/tr/td/table/tbody/tr[2]/td[1]" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="HasHeader">
+				<value value="false" toType="boolean"/>
+			</userAttribute>
+			<csvtransform outputType="byId" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV"/>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>

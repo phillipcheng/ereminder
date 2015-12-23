@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="nasdaq-ids" productType="default">
+	<PrdTask tryPattern="false">
+		<baseBrowseTask enableJS="false" dsm="hbase" taskName="stock-list" mbMemoryNeeded="1024">
+			<param name="marketId"/>
+			<startUrl value="http://www.nasdaq.com/screening/companies-by-industry.aspx?exchange=[marketId]"/>
+			<userAttribute name="id">
+				<value value="marketId" toType="string" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="ids">
+				<value value="//table[@id='CompanylistResults']/tbody/tr/td[2]/h3/a/text()" toType="externalList"/>
+			</userAttribute>
+			<userAttribute name="HasHeader">
+				<value value="false" toType="boolean"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="6" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="DataType1">
+				<value value="Text,Text,Number,Text,Date,Text" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="data1">
+				<value value="//table[@id='CompanylistResults']/tbody/tr[count(td)>4]/td[not(@style) or @style!='display:none']" toType="externalList" toEntryType="string" optional="true"/>
+			</userAttribute>
+			<csvtransform outputType="byJobSingle" reverse="true" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
+			</csvtransform>
+		</baseBrowseTask>
+		<nextPage value="//div[@id='pagerContainer']/ul/li[last()-1]/a" optional="true"/>
+		<lastPageCondition>
+			<expression>nextPage == null</expression>
+		</lastPageCondition>
+	</PrdTask>
+</Tasks>

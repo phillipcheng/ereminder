@@ -1,0 +1,15 @@
+#/bin/bash
+#stock test
+CL=
+
+for file in ../lib/*
+do
+	CL=$CL:$file
+done
+CL=$CL:../lib
+
+echo $CL
+
+
+#all
+java -Xmx4g -cp "$CL" org.cld.hadooputil.TransferHdfsFile $1 $2 $3 $4 $5 $6 $7

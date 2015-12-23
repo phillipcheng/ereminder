@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="nasdaq-fr-quarter-BalanceSheet" productType="default">
+	<PrdTask tryPattern="false">
+		<baseBrowseTask enableJS="true" dsm="nothing" taskName="nasdaq-fr-quarter-BalanceSheet" mbMemoryNeeded="1024">
+			<param name="marketId"/>
+			<param name="stockid"/>
+			<param name="startDate"/>
+			<param name="endDate"/>
+			<param name="quarter" type="int" value="0"/>
+			<param name="year" type="int" value="0"/>
+			<param name="HasHeader" type="boolean" value="false"/>
+			<startUrl value="'http://www.nasdaq.com/symbol/' + stockid.toLowerCase() + '/financials?query=balance-sheet&amp;data=quarterly'" fromType="expression"/>
+			<userAttribute name="id">
+				<value value="stockid + '_' + endDate" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="DataType">
+				<value value="Text,Date" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="4" toType="int"/>
+			</userAttribute>
+			<userAttribute name="data">
+				<value value="//div[@id='financials-iframe-wrap']/div[1]/table[1]/thead/tr/th[position()>2]|//div[@id='financials-iframe-wrap']/div[1]/table[1]/tbody/tr/td[position()>1]" toType="list" toEntryType="string" optional="true"/>
+			</userAttribute>
+			<csvtransform outputType="byId" reverse="true" transformClass="org.cld.etl.csv.SpreadColTableAsCSV">
+			</csvtransform>
+			<filter><function>function getDate(q) {
+    if (q=='1') return '-03-31'
+    if (q=='2') return '-06-30'
+    if (q=='3') return '-09-30'
+    if (q=='4') return '-12-31'
+}
+year==0 || quarter==0 || arr[1]&gt;=(year+getDate(quarter))</function> </filter>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>

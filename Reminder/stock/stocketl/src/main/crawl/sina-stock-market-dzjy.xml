@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="sina-stock-market-dzjy" productType="default">
+	<PrdTask tryPattern="false">
+		<baseBrowseTask enableJS="true" taskName="market-dzjy" dsm="hdfs">
+			<param name="marketId"/>
+			<param name="date"/>
+			<param name="startDate" type="string"/>
+			<param name="endDate" type="string"/>
+			<param name="HasHeader" type="boolean" value="false"/>
+			<startUrl value="http://vip.stock.finance.sina.com.cn/q/go.php/vInvestConsult/kind/dzjy/index.phtml?bdate=[date]&amp;edate=[date]&amp;num=60"/>
+			<userAttribute name="id">
+				<value value="date" fromScope="param"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="9" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="data1">
+				<value value="//table[@id='dataTable']/tbody/tr[count(td)>1]/td" toType="externalList" toEntryType="string" optional="true"/>
+			</userAttribute>
+			<userAttribute name="RowCsvName">
+				<value value="dzjy" toType="list"/>
+			</userAttribute>
+			<pageVerify operator="!=">
+				<lhs value="//table[@id='dataTable']/thead[2]/tr/td"></lhs>
+				<rhs value="null"></rhs>
+			</pageVerify>
+			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byId">
+			</csvtransform>
+		</baseBrowseTask>
+		<nextPage optional="true" value="//div[@class='pages']/a[last()]">
+		</nextPage>
+		<lastPageCondition operator="!=">
+			<lhs value="//div[@class='pages']/a[last()]/@class"/>
+			<rhs value="page"/>
+		</lastPageCondition>
+	</PrdTask>
+</Tasks>

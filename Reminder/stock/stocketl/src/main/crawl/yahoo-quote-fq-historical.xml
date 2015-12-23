@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="yahoo-quote-fq-historical" productType="default">
+	<PrdTask tryPattern="false">
+		<baseBrowseTask enableJS="false" taskName="fq-historical" dsm="hdfs" mbMemoryNeeded="256">
+			<param name="marketId"/>
+			<param name="baseMarketId"/>
+			<param name="stockid"/>
+			<param name="storeId" type="expression" value="baseMarketId + '-quote-fq-historical'"/>
+			<param name="startDate" type="string"/>
+			<param name="endDate" type="string"/>
+			<startUrl value="'http://real-chart.finance.yahoo.com/table.csv?s=' + stockid + '&amp;a=' + (startDate.substring(5,7)-1) + '&amp;b=' + startDate.substring(8,10) + '&amp;c=' + startDate.substring(0,4) + '&amp;d=' + (endDate.substring(5,7)-1) + '&amp;e=' + endDate.substring(8,10) + '&amp;f=' + endDate.substring(0,4) + '&amp;g=d&amp;ignore=.csv'" fromType="expression"/>
+			<cachePage value="'raw/' + marketId + '_' + endDate + '/' + baseMarketId + '-quote-fq-historical/' + stockid+ '_' + endDate + '.csv'" fromType="expression"/>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>

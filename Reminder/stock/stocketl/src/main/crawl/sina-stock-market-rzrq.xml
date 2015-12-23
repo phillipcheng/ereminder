@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="sina-stock-market-rzrq" productType="default">
+	<!-- HS_A market allows rzrq since 2012/11/12 -->
+	<PrdTask tryPattern="false">
+		<baseBrowseTask enableJS="true" taskName="market-rzrq" dsm="hdfs">
+			<param name="marketId"/>
+			<param name="date"/>
+			<param name="startDate" type="string"/>
+			<param name="endDate" type="string"/>
+			<param name="HasHeader" value="false" type="boolean"/>
+			<startUrl value="http://vip.stock.finance.sina.com.cn/q/go.php/vInvestConsult/kind/rzrq/index.phtml?tradedate=[date]"/>
+			<userAttribute name="id">
+				<value value="date" fromScope="param"/>
+			</userAttribute>
+			<userAttribute name="stockid">
+				<!-- needed for the csv etl should be renamed into kid -->
+				<value value="date" fromScope="param"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="5,11" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="data1">
+				<value value="//table[@id='dataTable'][1]/tbody/tr[position()&gt;2]/td" toType="list" toEntryType="string" optional="true"/>
+			</userAttribute>
+			<userAttribute name="data2">
+				<value value="//table[@id='dataTable'][2]/tbody/tr[count(td)=11]/td" toType="list" toEntryType="string" optional="true"/>
+			</userAttribute>
+			<userAttribute name="DataType2">
+				<value value="Number,Number,Text,Number,Number,Number,Number,Number,Number,Number,Number" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="RowCsvName">
+				<value value="summary,detail" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<pageVerify operator="!=">
+				<lhs value="//table[@id='dataTable'][1]/tbody/tr/td"/>
+				<rhs value="null"/>
+			</pageVerify>
+			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byId">
+			</csvtransform>
+		</baseBrowseTask>
+		<totalPage value="1" toType="int"/>
+	</PrdTask>
+</Tasks>

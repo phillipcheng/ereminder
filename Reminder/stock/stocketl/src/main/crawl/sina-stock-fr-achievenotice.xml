@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../shopping/src/main/resources/Task_2_0.xsd" rootVolume="999990" storeId="sina-stock-fr-achievenotice" productType="default">
+	<PrdTask>
+		<baseBrowseTask enableJS="true" taskName="earnnotice" dsm="nothing">
+			<param name="marketId"/>
+			<param name="stockid"/>
+			<param name="startDate" type="string"/>
+			<param name="endDate" type="string"/>
+			<param name="HasHeader" type="boolean" value="false"/>
+			<param name="ColNum" type="int" value="1"/>
+			<param name="ColDateIdx" type="int" value="0"/>
+			<!-- 公告日期 -->
+			<param name="RowNum" type="int" value="6"/>
+			<startUrl value="http://money.finance.sina.com.cn/corp/go.php/vFD_AchievementNotice/stockid/[stockid].phtml"/>
+			<userAttribute name="id">
+				<value value="stockid" fromScope="param"/>
+			</userAttribute>
+			<userAttribute name="DataType">
+				<value value="Date,Date,Text,Text,Text,Number" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="data">
+				<value value="//table[@id='Table1']/tbody/tr[count(td)=2]/td[2]" toType="list"/>
+			</userAttribute>
+			<csvtransform transformClass="org.cld.etl.csv.SpreadColTableAsCSV" outputType="byId">
+				<ops>
+					<expression>
+						function getPercentage(str) {
+							regexp = /[^%0-9]+([0-9\.]+)%/;
+							match = regexp.exec(str);
+							var total = 0;
+							var count = 0;
+							while (match !== null) {
+								count++;
+								var m = match[1].toString();
+								total += parseFloat(m);
+								str = str.substring (str.indexOf(m) + m.length + 1, str.length);
+								match = regexp.exec(str);
+							}
+							if (count>0){
+								return total/count;
+							}else{
+								return 0;
+							}
+						}
+						rarr = arr.split(',');
+						rarr.join(',') + ',' + getPercentage(rarr[3].toString()).toString()
+					</expression>
+				</ops>
+			</csvtransform>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>

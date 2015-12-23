@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="nasdaq-earn-announce-time" productType="default">
+	<PrdTask tryPattern="false">
+		<baseBrowseTask enableJS="false" dsm="nothing" taskName="nasdaq-earn-announce-time" mbMemoryNeeded="1024">
+			<param name="marketId" type="string"/>
+			<param name="startDate" type="string"/>
+			<param name="endDate" type="string"/>
+			<param name="date" type="string"/>
+			<param name="HasHeader" type="boolean" value="false"/>
+			<startUrl value='"http://biz.yahoo.com/research/earncal/" + date.replace(/-/g, "") + ".html"' fromType="expression"/>
+			<userAttribute name="id">
+				<value value="'nasdaq-earn-announce-time_' + date" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="3" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="DataType1">
+				<value value="Text,Text,Text" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="data1">
+				<value value="//p/table/tbody/tr/td/table/tbody/tr[position()>2]/td[position()&lt;4]" toType="list" toEntryType="string" optional="true"/>
+			</userAttribute>
+			<csvtransform outputType="byJobSingle" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
+				<ops>
+					<expression>
+						sarr = arr.split(",")
+						if (sarr[2]=="After Market Close"){
+							sarr[2]="after";
+						}else if (sarr[2]=="Before Market Open"){
+							sarr[2]="before";
+						}else{
+							sarr[2]="na";
+						}
+						date+','+sarr[1]+','+sarr[2]
+					</expression>
+				</ops>
+			</csvtransform>
+			<filter byDate="false"><function>
+			arr[1].indexOf(".")==-1</function>
+			</filter>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>

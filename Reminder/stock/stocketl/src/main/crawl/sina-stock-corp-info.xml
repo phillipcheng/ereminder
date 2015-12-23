@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="sina-stock-corp-info" productType="default">
+	<PrdTask>
+		<baseBrowseTask enableJS="true" taskName="corp-info" dsm="hdfs" mbMemoryNeeded="512">
+			<param name="marketId"/>
+			<param name="stockid"/>
+			<param name="startDate" type="string"/>
+			<param name="endDate" type="string"/>
+			<param name="ColNum" value="2" type="int"/>
+			<param name="DataType" value="Text"/>
+			<param name="static" value="true" type="boolean"/>
+			<startUrl value="http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CorpInfo/stockid/[stockid].phtml"/>
+			<userAttribute name="data">
+				<value value="//table[@id='comInfo1']/tbody/tr/td" toType="list"/>
+			</userAttribute>
+			<idUrlMapping>
+				<Token value="http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CorpInfo/stockid/" name="prefix" type="string"/>
+				<Token value="[0-9]+" name="id" type="regexp"/>
+				<Token value=".phtml" name="suffix" type="string"/>
+			</idUrlMapping>
+			<csvtransform transformClass="org.cld.etl.csv.SpreadColTableAsCSV" outputType="byJobSingle">
+			</csvtransform>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>

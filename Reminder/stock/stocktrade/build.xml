@@ -1,0 +1,11 @@
+<project name="MyProject" default="dist" basedir=".">
+    <description>
+        simple example build file
+    </description>
+	<property name="src"  location="src"/>
+	<property name="dist"  location="target"/>
+  
+	<target name="dist">
+		<copy file="${dist}/stock.trade-1.0.0.jar" todir="${dist}/lib/"/>
+	</target>
+</project>

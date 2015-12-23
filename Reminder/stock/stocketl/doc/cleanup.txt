@@ -1,0 +1,2 @@
+remove small files (usually are useless files)
+./hadoop fs -ls -R /reminder | awk '{if ($5>0 && $5<100) print $8}' | xargs ./hadoop fs -rm

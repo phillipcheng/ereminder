@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="nasdaq-quote-historical" productType="default">
+	<PrdTask tryPattern="false">
+		<baseBrowseTask enableJS="false" dsm="hdfs" taskName="quote-historical" mbMemoryNeeded="512" taskNumPerJob="25">
+			<param name="marketId"/>
+			<param name="stockid"/>
+			<param name="startDate"/>
+			<param name="endDate"/>
+			<param name="HasHeader" type="boolean" value="false"/>
+			<startUrl value="http://www.nasdaq.com/symbol/[stockid]/historical"/>
+			<userAttribute name="id">
+				<value value="stockid + '_' + endDate" toType="string" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="6" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="DataType1">
+				<value value="Date" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="data1">
+				<value value="//div[@id='quotes_content_left_pnlAJAX']/table[1]/tbody/tr[position()&gt;1]/td" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="RowDateIdx">
+				<value value="0" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<csvtransform outputType="byId" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV"/>
+		</baseBrowseTask>
+		<!-- just use default 3 month 
+		<firstPageClickStream>
+			<link>
+				<input name="//select[@id='ddlTimeFrame']" nameType="xpath">
+					<value value="//select[@id='ddlTimeFrame']/option[last()]/@value" toType="string">
+						<pageVerify operator="!=">
+							<lhs value="//div[@id='quotes_content_left_pnlAJAX']/table[1]/tbody/tr[position()&gt;1]/td"/>
+							<rhs value="null"/>
+						</pageVerify>
+					</value>
+				</input>
+			</link>
+		</firstPageClickStream>
+		 -->
+	</PrdTask>
+</Tasks>

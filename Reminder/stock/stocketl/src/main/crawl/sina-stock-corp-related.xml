@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="sina-stock-corp-related" productType="default">
+	<PrdTask>
+		<baseBrowseTask enableJS="true" taskName="corp-related" dsm="hdfs">
+			<param name="marketId"/>
+			<param name="stockid"/>
+			<param name="startDate" type="string"/>
+			<param name="endDate" type="string"/>
+			<param name="HasHeader" value="true" type="boolean"/>
+			<param name="static" value="true" type="boolean"/>
+			<startUrl value="http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CorpXiangGuan/stockid/[stockid].phtml"/>
+			<userAttribute name="id">
+				<value value="stockid" toType="string" fromScope="param"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="2,4,2" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="data1">
+				<value value="//div[@id='con03-1']/table[1]/tbody/tr/td" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="data2">
+				<value value="//div[@id='con03-3']/table[1]/tbody/tr/td" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="data3">
+				<value value="//div[@id='con03-4']/table[1]/tbody/tr/td" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="RowCsvName">
+				<value value="securities,indices,xis" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<csvtransform transformClass="org.cld.etl.csv.MultiRowTablesAsCSV" outputType="byJobMulti">
+			</csvtransform>
+		</baseBrowseTask>
+	</PrdTask>
+</Tasks>

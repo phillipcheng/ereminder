@@ -1,0 +1,415 @@
+<?xml version='1.0' encoding='utf-8' ?>
+
+<workbook version='8.2' xmlns:user='http://www.tableausoftware.com/xml/user'>
+  <!-- build 8100.14.0408.1805                -->
+  <preferences>
+  </preferences>
+  <datasources>
+    <datasource caption='TradeDetail (stock)' inline='true' name='mysql.42331.394208530095' version='8.2'>
+      <connection class='mysql' dbname='stock' odbc-native-protocol='yes' port='3306' server='192.85.247.105' username='mysql'>
+        <relation join='inner' type='join'>
+          <clause type='join'>
+            <expression op='='>
+              <expression op='[TradeDetail].[symbol]'>
+              </expression>
+              <expression op='[NasdaqProfile].[symbol]'>
+              </expression>
+            </expression>
+          </clause>
+          <relation name='TradeDetail' table='[TradeDetail]' type='table' />
+          <relation name='NasdaqProfile' table='[NasdaqProfile]' type='table' />
+        </relation>
+        <cols>
+          <map key='[NasdaqProfile_symbol]' value='[NasdaqProfile].[symbol]' />
+          <map key='[adr]' value='[NasdaqProfile].[adr]' />
+          <map key='[buyPrice]' value='[TradeDetail].[buyPrice]' />
+          <map key='[buydate]' value='[TradeDetail].[buydate]' />
+          <map key='[industry]' value='[NasdaqProfile].[industry]' />
+          <map key='[ipoyear]' value='[NasdaqProfile].[ipoyear]' />
+          <map key='[lastsale]' value='[NasdaqProfile].[lastsale]' />
+          <map key='[marketcap]' value='[NasdaqProfile].[marketcap]' />
+          <map key='[name]' value='[NasdaqProfile].[name]' />
+          <map key='[orderType]' value='[TradeDetail].[orderType]' />
+          <map key='[percentage]' value='[TradeDetail].[percentage]' />
+          <map key='[sector]' value='[NasdaqProfile].[sector]' />
+          <map key='[sellDate]' value='[TradeDetail].[sellDate]' />
+          <map key='[sellPrice]' value='[TradeDetail].[sellPrice]' />
+          <map key='[sn]' value='[TradeDetail].[sn]' />
+          <map key='[symbol]' value='[TradeDetail].[symbol]' />
+        </cols>
+      </connection>
+      <aliases enabled='yes' />
+      <column caption='sellhourminute' datatype='string' name='[Calculation_1271123093447287]' role='dimension' type='nominal'>
+        <calculation class='tableau' formula='STR(DATEPART( &apos;hour&apos;, [sellDate])) +  &quot;:&quot; + STR(DATEPART(&apos;minute&apos;,[sellDate]))' scope-isolation='false' />
+      </column>
+      <column datatype='integer' name='[Number of Records]' role='measure' type='quantitative' user:auto-column='numrec'>
+        <calculation class='tableau' formula='1' />
+      </column>
+      <column caption='marketcap (bin)' datatype='integer' name='[marketcap (bin)]' role='dimension' type='ordinal'>
+        <calculation class='bin' decimals='4' formula='[marketcap]' peg='0' size='1e+07' />
+      </column>
+      <column datatype='real' name='[marketcap]' role='measure' type='quantitative'>
+      </column>
+      <column caption='percentage (bin)' datatype='integer' name='[percentage (bin)]' role='dimension' type='ordinal'>
+        <calculation class='bin' decimals='-3' formula='[percentage]' peg='0' size='0.008' />
+      </column>
+      <column datatype='real' name='[percentage]' role='measure' type='quantitative'>
+      </column>
+      <column datatype='string' name='[sector]' role='dimension' type='nominal'>
+      </column>
+      <column-instance column='[sector]' derivation='None' name='[none:sector:nk]' pivot='key' type='nominal' />
+      <extract count='-1' enabled='false' units='records'>
+        <connection class='dataengine' dbname='C:\Users\cheyi\Documents\My Tableau Repository\Datasources\TradeDetail (stock).tde' schema='Extract' tablename='Extract' update-time='11/23/2015 7:29:18 PM'>
+          <relation name='Extract' table='[Extract].[Extract]' type='table' />
+          <cols>
+            <map key='[Calculation_1271123093447287]' value='[Extract].[Calculation_1271123093447287]' />
+            <map key='[NasdaqProfile_symbol]' value='[Extract].[symbol]' />
+            <map key='[Number of Records]' value='[Extract].[Number of Records]' />
+            <map key='[adr]' value='[Extract].[adr]' />
+            <map key='[buyPrice]' value='[Extract].[buyPrice]' />
+            <map key='[buydate]' value='[Extract].[buydate]' />
+            <map key='[industry]' value='[Extract].[industry]' />
+            <map key='[ipoyear]' value='[Extract].[ipoyear]' />
+            <map key='[lastsale]' value='[Extract].[lastsale]' />
+            <map key='[marketcap]' value='[Extract].[marketcap]' />
+            <map key='[name]' value='[Extract].[name]' />
+            <map key='[orderType]' value='[Extract].[orderType]' />
+            <map key='[percentage]' value='[Extract].[percentage]' />
+            <map key='[sector]' value='[Extract].[sector]' />
+            <map key='[sellDate]' value='[Extract].[sellDate]' />
+            <map key='[sellPrice]' value='[Extract].[sellPrice]' />
+            <map key='[symbol]' value='[Extract].[symbol1]' />
+          </cols>
+          <calculations>
+            <calculation column='[Calculation_1271123093447287]' formula='STR(DATEPART( &apos;hour&apos;, [sellDate])) +  &quot;:&quot; + STR(DATEPART(&apos;minute&apos;,[sellDate]))' />
+            <calculation column='[Number of Records]' formula='1' />
+          </calculations>
+          <refresh>
+            <refresh-event add-from-file-path='' increment-value='%null%' refresh-type='create' rows-inserted='6927' timestamp-start='2015-11-23 19:29:18.286000' />
+          </refresh>
+        </connection>
+      </extract>
+      <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
+      <style>
+        <style-rule element='mark'>
+          <encoding attr='color' field='[none:sector:nk]' type='palette'>
+            <map to='#1f77b4'>
+              <bucket>&quot;Basic Industries&quot;</bucket>
+            </map>
+            <map to='#2ca02c'>
+              <bucket>&quot;Consumer Services&quot;</bucket>
+            </map>
+            <map to='#8c564b'>
+              <bucket>&quot;Public Utilities&quot;</bucket>
+            </map>
+            <map to='#9467bd'>
+              <bucket>&quot;Miscellaneous&quot;</bucket>
+            </map>
+            <map to='#98df8a'>
+              <bucket>&quot;Energy&quot;</bucket>
+            </map>
+            <map to='#aec7e8'>
+              <bucket>&quot;Capital Goods&quot;</bucket>
+            </map>
+            <map to='#c49c94'>
+              <bucket>&quot;Technology&quot;</bucket>
+            </map>
+            <map to='#c5b0d5'>
+              <bucket>&quot;n/a&quot;</bucket>
+            </map>
+            <map to='#d62728'>
+              <bucket>&quot;Finance&quot;</bucket>
+            </map>
+            <map to='#e377c2'>
+              <bucket>&quot;Transportation&quot;</bucket>
+            </map>
+            <map to='#ff7f0e'>
+              <bucket>&quot;Consumer Durables&quot;</bucket>
+            </map>
+            <map to='#ff9896'>
+              <bucket>&quot;Health Care&quot;</bucket>
+            </map>
+            <map to='#ffbb78'>
+              <bucket>&quot;Consumer Non-Durables&quot;</bucket>
+            </map>
+          </encoding>
+        </style-rule>
+      </style>
+      <semantic-values>
+        <semantic-value key='[Country].[Name]' value='&quot;United States&quot;' />
+      </semantic-values>
+    </datasource>
+  </datasources>
+  <worksheets>
+    <worksheet name='Sheet 1'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='TradeDetail (stock)' name='mysql.42331.394208530095' />
+          </datasources>
+          <datasource-dependencies datasource='mysql.42331.394208530095'>
+            <column-instance column='[percentage]' derivation='Avg' name='[avg:percentage:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[sector]' derivation='None' name='[none:sector:nk]' pivot='key' type='nominal' />
+            <column datatype='real' name='[percentage]' role='measure' type='quantitative'>
+            </column>
+            <column datatype='string' name='[sector]' role='dimension' type='nominal'>
+            </column>
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style>
+        </style>
+        <panes>
+          <pane id='1'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Automatic' />
+          </pane>
+        </panes>
+        <rows>[mysql.42331.394208530095].[avg:percentage:qk]</rows>
+        <cols>[mysql.42331.394208530095].[none:sector:nk]</cols>
+        <show-full-range>
+          <column>[mysql.42331.394208530095].[marketCap (bin)]</column>
+        </show-full-range>
+      </table>
+    </worksheet>
+    <worksheet name='Sheet 2'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='TradeDetail (stock)' name='mysql.42331.394208530095' />
+          </datasources>
+          <datasource-dependencies datasource='mysql.42331.394208530095'>
+            <column caption='sellhourminute' datatype='string' name='[Calculation_1271123093447287]' role='dimension' type='nominal'>
+              <calculation class='tableau' formula='STR(DATEPART( &apos;hour&apos;, [sellDate])) +  &quot;:&quot; + STR(DATEPART(&apos;minute&apos;,[sellDate]))' scope-isolation='false' />
+            </column>
+            <column-instance column='[percentage]' derivation='Avg' name='[avg:percentage:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[percentage]' derivation='Count' name='[cnt:percentage:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[Calculation_1271123093447287]' derivation='None' name='[none:Calculation_1271123093447287:nk]' pivot='key' type='nominal' />
+            <column-instance column='[sn]' derivation='None' name='[none:sn:nk]' pivot='key' type='nominal' />
+            <column datatype='real' name='[percentage]' role='measure' type='quantitative'>
+            </column>
+            <column datatype='string' name='[sn]' role='dimension' type='nominal'>
+            </column>
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style>
+        </style>
+        <panes>
+          <pane>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Automatic' />
+          </pane>
+          <pane id='1' y-axis-name='[mysql.42331.394208530095].[avg:percentage:qk]'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Automatic' />
+          </pane>
+          <pane id='2' y-axis-name='[mysql.42331.394208530095].[cnt:percentage:qk]'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Automatic' />
+            <encodings>
+              <color column='[mysql.42331.394208530095].[none:sn:nk]' />
+            </encodings>
+          </pane>
+        </panes>
+        <rows>([mysql.42331.394208530095].[avg:percentage:qk] + [mysql.42331.394208530095].[cnt:percentage:qk])</rows>
+        <cols>[mysql.42331.394208530095].[none:Calculation_1271123093447287:nk]</cols>
+      </table>
+    </worksheet>
+  </worksheets>
+  <windows>
+    <window class='schema' source-height='-1' />
+    <window auto-hidden='0' class='worksheet' maximized='0' name='Sheet 1'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='31'>
+            <card type='columns' />
+          </strip>
+          <strip size='31'>
+            <card type='rows' />
+          </strip>
+        </edge>
+      </cards>
+      <highlight>
+        <color-one-way>
+          <field>[mysql.42331.394208530095].[marketCap (bin)]</field>
+          <field>[mysql.42331.394208530095].[marketcap (bin)]</field>
+          <field>[mysql.42331.394208530095].[none:Calculation_1271123093447287:nk]</field>
+          <field>[mysql.42331.394208530095].[none:country:nk]</field>
+          <field>[mysql.42331.394208530095].[none:industry:nk]</field>
+          <field>[mysql.42331.394208530095].[none:ipoyear:nk]</field>
+          <field>[mysql.42331.394208530095].[none:orderType:nk]</field>
+          <field>[mysql.42331.394208530095].[none:percentage:qk]</field>
+          <field>[mysql.42331.394208530095].[none:sector:nk]</field>
+          <field>[mysql.42331.394208530095].[none:stockid:nk]</field>
+          <field>[mysql.42331.394208530095].[none:subsector:nk]</field>
+          <field>[mysql.42331.394208530095].[percentage (bin)]</field>
+          <field>[mysql.42331.394208530095].[yr:buydate:ok]</field>
+          <field>[mysql.42331.394208530095].[yr:sellDate:ok]</field>
+        </color-one-way>
+      </highlight>
+    </window>
+    <window auto-hidden='0' class='worksheet' maximized='1' name='Sheet 2'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+            <card pane-specification-id='2' param='[mysql.42331.394208530095].[none:sn:nk]' type='color' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='31'>
+            <card type='columns' />
+          </strip>
+          <strip size='31'>
+            <card type='rows' />
+          </strip>
+        </edge>
+      </cards>
+      <highlight>
+        <color-one-way>
+          <field>[mysql.42331.394208530095].[none:Calculation_1271123093447287:nk]</field>
+          <field>[mysql.42331.394208530095].[none:sn:nk]</field>
+        </color-one-way>
+      </highlight>
+    </window>
+  </windows>
+  <thumbnails>
+    <thumbnail height='192' name='Sheet 1' width='192'>
+      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
+    </thumbnail>
+    <thumbnail height='192' name='Sheet 2' width='192'>
+      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
+      IOCCAAGXfwO7fjxCxwPn9gAAAABJRU5ErkJggg==
+    </thumbnail>
+  </thumbnails>
+</workbook>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" rootVolume="999990" storeId="nasdaq-holding-institutional" productType="default">
+	<PrdTask tryPattern="false">
+		<baseBrowseTask enableJS="false" dsm="nothing" taskName="nasdaq-holding-institutional" mbMemoryNeeded="1024">
+			<param name="marketId"/>
+			<param name="stockid"/>
+			<param name="startDate"/>
+			<param name="endDate"/>
+			<param name="HasHeader" type="boolean" value="false"/>
+			<param name="quarter" type="int" value="0"/>
+			<param name="year" type="int" value="0"/>
+			<startUrl value="'http://www.nasdaq.com/symbol/' + stockid.toLowerCase() + '/institutional-holdings'" fromType="expression"/>
+			<userAttribute name="id">
+				<value value="stockid + '_' + endDate" fromType="expression"/>
+			</userAttribute>
+			<userAttribute name="ColNum">
+				<value value="6" toType="list" toEntryType="int"/>
+			</userAttribute>
+			<userAttribute name="DataType1">
+				<value value="Text,Date" toType="list" toEntryType="string"/>
+			</userAttribute>
+			<userAttribute name="data1">
+				<value value="//div[@id='quotes_content_left_pnlInsider']/table[1]/tbody/tr/td" toType="externalList" toEntryType="string" optional="true"/>
+			</userAttribute>
+			<csvtransform outputType="byId" transformClass="org.cld.etl.csv.MultiRowTablesAsCSV">
+			</csvtransform>
+			<filter><function>function getDate(q) {
+    if (q=='1') return '-03-31'
+    if (q=='2') return '-06-30'
+    if (q=='3') return '-09-30'
+    if (q=='4') return '-12-31'
+}
+year==0 || quarter==0 || arr[1]&gt;=(year+getDate(quarter))</function></filter>
+		</baseBrowseTask>
+		<nextPage value="//ul[@id='pager']/ul[1]/li[last()-1]/a" optional="true"/>
+		<lastPageCondition>
+			<expression>nextPage == null</expression>
+		</lastPageCondition>
+	</PrdTask>
+</Tasks>
