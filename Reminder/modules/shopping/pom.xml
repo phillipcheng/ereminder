@@ -44,21 +44,6 @@
 			<artifactId>cld-util</artifactId>
 			<version>1.0.0</version>
 		</dependency>
-		<dependency>
-			<groupId>org.cld.action</groupId>
-			<artifactId>cld-action</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-		<dependency>
-			<groupId>crbook</groupId>
-			<artifactId>cy-common</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-		<dependency>
-        	<groupId>crbook</groupId>
-        	<artifactId>crbook-persist</artifactId>
-        	<version>1.0.0</version>
-        </dependency>
 	</dependencies>
 	
 	<build>

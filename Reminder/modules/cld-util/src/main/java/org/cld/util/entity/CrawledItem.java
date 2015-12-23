@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CrawledItem {
-	public static final String CRAWLITEM_TYPE="org.cld.datastore.entity.CrawledItem";
+	public static final String CRAWLITEM_TYPE="org.cld.util.entity.CrawledItem";
 	
 	private static Logger logger =  LogManager.getLogger(CrawledItem.class);
 	

@@ -32,15 +32,15 @@
 	
 	<build>
 		<resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <excludes>
-                </excludes>
-                <filtering>false</filtering>
-            </resource>
-        </resources>
+      <resource>
+          <directory>src/main/resources</directory>
+          <excludes>
+          </excludes>
+          <filtering>false</filtering>
+      </resource>
+  </resources>
        
-       <pluginManagement>
+  <pluginManagement>
 		  <plugins>
 		    <plugin>
 		      <groupId>org.eclipse.m2e</groupId>
@@ -67,7 +67,7 @@
 		      </configuration>
 		    </plugin>
 		  </plugins>
-		</pluginManagement>
+	</pluginManagement>
 		
 		<plugins>
 			<plugin>

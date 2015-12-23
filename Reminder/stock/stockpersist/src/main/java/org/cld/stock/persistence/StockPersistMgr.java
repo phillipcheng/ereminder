@@ -196,14 +196,12 @@ public class StockPersistMgr {
 		return sql;
 	}
 	
-	public static Map<String, Date> getStockLUDateByCmd(Set<String> tables, DBConnConf dbconf){
+	public static Map<String, Date> getStockLUDateByCmd(String query, DBConnConf dbconf){
 		Map<String, Date> stockLUMap = new HashMap<String, Date>();
 		Connection con = null;
 		Statement stmt = null;
-		String query = "";
 		try{
 			con = SqlUtil.getConnection(dbconf);
-			query = getMarketLUDateQueryByTables(tables);
 			stmt = con.createStatement();
 			ResultSet res = stmt.executeQuery(query);
 			while (res.next()){

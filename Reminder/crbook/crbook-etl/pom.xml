@@ -19,15 +19,15 @@
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
-			<groupId>crbook</groupId>
+			<groupId>org.cld.crbook</groupId>
 			<artifactId>crbook-common</artifactId>
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
-    	<groupId>crbook</groupId>
-    	<artifactId>crbook-persist</artifactId>
-    	<version>1.0.0</version>
-    </dependency>
+    		<groupId>org.cld.crbook</groupId>
+    		<artifactId>crbook-persist</artifactId>
+    		<version>1.0.0</version>
+    	</dependency>
 	</dependencies>
 	
 	<build>

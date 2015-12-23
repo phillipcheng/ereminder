@@ -8,10 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.MapContext;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
@@ -184,11 +182,11 @@ public class ProductAnalyze{
 			product.setCsvValue(csv);
 			//filter the csv
 			FilterType ft= btt.getFilter();
-			String filterExp = ft.getFunction();
 			Map<String, Object> attributes = new HashMap<String, Object>();
 			attributes.putAll(product.getParamMap());
 			boolean hasFiltered=false;
 			if (ft!=null){
+				String filterExp = ft.getFunction();
 				List<String[]> passedCsv = new ArrayList<String[]>();
 				for (String[] arr:csv){
 					//anyway the csv[1] is the value list, i need to make it into an array

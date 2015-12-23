@@ -12,4 +12,4 @@ echo $CL
 
 
 #all
-java -Xmx4g -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/data/reminder -cp "$CL:$HBASE_HOME/conf" org.cld.stock.RunStock cld-stock-cluster.properties $1 $2 $3 $4 $5 $6 $7
+java -Xmx4g -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/data/reminder -cp "$CL:$HBASE_HOME/conf" org.cld.stock.etl.RunStock cld-stock-cluster.properties $1 $2 $3 $4 $5 $6 $7

@@ -387,7 +387,8 @@ public class ETLUtil {
 		String[] ids = getStockIdByMarketId(etlConfig, marketId, cconf, cmd);
 		Map<String, Date> stockLUMap = new HashMap<String, Date>();
 		if (needCheckDB(etlConfig, cconf, cmd)){
-			stockLUMap = StockPersistMgr.getStockLUDateByCmd(etlConfig.getTablesByCmd(cmd).keySet(), cconf.getBigdbconf());
+			String query = etlConfig.getStockLUDateByCmd(cmd);
+			stockLUMap = StockPersistMgr.getStockLUDateByCmd(query, cconf.getBigdbconf());
 		}
 		List<Task> tlist = new ArrayList<Task>();
 		int batchId = 0;
@@ -474,7 +475,8 @@ public class ETLUtil {
 		Map<String, Date> stockLUMap = new HashMap<String, Date>();
 		if (!Arrays.asList(sc.getUpdateAllCmds()).contains(cmd)){
 			if (needCheckDB(sc, cconf, cmd)){
-				stockLUMap = StockPersistMgr.getStockLUDateByCmd(sc.getTablesByCmd(cmd).keySet(), cconf.getBigdbconf());
+				String query = sc.getStockLUDateByCmd(cmd);
+				stockLUMap = StockPersistMgr.getStockLUDateByCmd(query, cconf.getBigdbconf());
 			}
 		}
 		List<Task> tlist = new ArrayList<Task>();
@@ -555,7 +557,8 @@ public class ETLUtil {
 		List<Task> tlist = new ArrayList<Task>();
 		Map<String, Date> stockLUMap = new HashMap<String, Date>();
 		if (needCheckDB(sc, cconf, cmd)){
-			stockLUMap = StockPersistMgr.getStockLUDateByCmd(sc.getTablesByCmd(cmd).keySet(), cconf.getBigdbconf());
+			String query = sc.getStockLUDateByCmd(cmd);
+			stockLUMap = StockPersistMgr.getStockLUDateByCmd(query, cconf.getBigdbconf());
 		}
 		int[] eyq = DateTimeUtil.getYearQuarter(endDate);
 		int endYear = eyq[0];

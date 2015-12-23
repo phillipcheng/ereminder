@@ -13,7 +13,7 @@ import org.apache.logging.log4j.Logger;
 @Table(name = "Product")
 public class Product extends CrawledItem{
 	public static final Logger logger = LogManager.getLogger(Product.class);
-	public static final String CRAWLITEM_TYPE="org.cld.datastore.entity.Product";
+	public static final String CRAWLITEM_TYPE="org.cld.util.entity.Product";
 	public static String CAT_SEP=":";
 	
 	public Product(){

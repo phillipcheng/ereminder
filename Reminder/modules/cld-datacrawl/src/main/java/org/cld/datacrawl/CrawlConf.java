@@ -335,7 +335,7 @@ public class CrawlConf extends TaskConf {
 		listeners.add(lis);
 	}
 	
-	//must be sub-class of org.cld.datastore.entity.Product
+	//must be sub-class of org.cld.util.entity.Product
 	public Product getProductInstance(String key){
 		if (key==null || "".equals(key)){
 			key="product";
