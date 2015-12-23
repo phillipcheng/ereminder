@@ -2,9 +2,9 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.cld</groupId>
-	<artifactId>cld-modules</artifactId>
+	<artifactId>stock-modules</artifactId>
 	<packaging>pom</packaging>
-	<name>cld-modules</name>
+	<name>stock-modules</name>
 	<parent>
 		<artifactId>env</artifactId>
 		<groupId>org.cld.build</groupId>
@@ -12,13 +12,12 @@
 	</parent>
 
 	<modules>
-		<module>cld-util</module>
-		<module>cld-hadooputil</module>
-		<module>cld-etl</module>
-		<module>cld-datastore</module>
-		<module>cld-taskmgr</module>
-		<module>cld-datacrawl</module>
-		<module>signpost-jetty9</module>
+		<module>stockstrategy</module>
+		<module>stockpersist</module>
+		<module>stocketl</module>
+		<module>stockanalyze</module>
+		<module>stockchart</module>
+		<module>stocktrade</module>
 	</modules>
 
 </project>

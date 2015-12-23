@@ -2,9 +2,9 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.cld</groupId>
-	<artifactId>cld-modules</artifactId>
+	<artifactId>crbook-modules</artifactId>
 	<packaging>pom</packaging>
-	<name>cld-modules</name>
+	<name>crbook-modules</name>
 	<parent>
 		<artifactId>env</artifactId>
 		<groupId>org.cld.build</groupId>
@@ -12,13 +12,10 @@
 	</parent>
 
 	<modules>
-		<module>cld-util</module>
-		<module>cld-hadooputil</module>
-		<module>cld-etl</module>
-		<module>cld-datastore</module>
-		<module>cld-taskmgr</module>
-		<module>cld-datacrawl</module>
-		<module>signpost-jetty9</module>
+		<module>crbook-common</module>
+		<module>crbook-persist</module>
+		<module>crbook-etl</module>
+		<module>crbook-ws</module>
 	</modules>
 
 </project>
