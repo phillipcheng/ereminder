@@ -59,6 +59,16 @@ public class TestStock {
 	}
 	
 	@Test
+	public void testBuySellOverTrade() throws Exception {
+		String pFile = "analyze.local.properties";
+		AnalyzeConf aconf = (AnalyzeConf) TaskUtil.getTaskConf(pFile);
+		Date startDate = msdf.parse("2015-05-01 10:00");
+		Date endDate = msdf.parse("2015-12-01 20:20");
+		String sn = "overtradeone";
+		AnalyzeBase.validateAllStrategyByStock(pFile, aconf, "nasdaq", startDate, endDate, sn, null, TradeHour.Normal);
+	}
+	
+	@Test
 	public void testBuyOvertrade() throws Exception{
 		String pFile = "analyze.properties";
 		AnalyzeConf aconf = (AnalyzeConf) TaskUtil.getTaskConf(pFile);
