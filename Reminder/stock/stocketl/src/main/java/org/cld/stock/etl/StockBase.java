@@ -557,12 +557,14 @@ public abstract class StockBase extends TestBase{
 		ETLConfig sc = ETLConfig.getETLConfig(baseMarketId);
 		String[] excludeCmds = null;
 		String[] includeCmds = null;
-		if (param.startsWith(EXCLUDE_MARK+"")){
-			param = param.substring(1);
-			excludeCmds = StringUtils.split(param,EXCLUDE_MARK);
-		}else if (param.startsWith(INCLUDE_MARK+"")){
-			param = param.substring(1);
-			includeCmds = StringUtils.split(param,INCLUDE_MARK);
+		if (param!=null){
+			if (param.startsWith(EXCLUDE_MARK+"")){
+				param = param.substring(1);
+				excludeCmds = StringUtils.split(param,EXCLUDE_MARK);
+			}else if (param.startsWith(INCLUDE_MARK+"")){
+				param = param.substring(1);
+				includeCmds = StringUtils.split(param,INCLUDE_MARK);
+			}
 		}
 		List<String> jobIds = new ArrayList<String>();
 		String datePart = sc.getDatePart(marketId, startDate, endDate);
@@ -603,12 +605,14 @@ public abstract class StockBase extends TestBase{
 		ETLConfig sc = ETLConfig.getETLConfig(baseMarketId);
 		String[] excludeCmds = new String[]{};
 		String[] includeCmds = null;
-		if (param.startsWith(EXCLUDE_MARK+"")){
-			param = param.substring(1);
-			excludeCmds = StringUtils.split(param,EXCLUDE_MARK);
-		}else if (param.startsWith(INCLUDE_MARK+"")){
-			param = param.substring(1);
-			includeCmds = StringUtils.split(param,INCLUDE_MARK);
+		if (param!=null){
+			if (param.startsWith(EXCLUDE_MARK+"")){
+				param = param.substring(1);
+				excludeCmds = StringUtils.split(param,EXCLUDE_MARK);
+			}else if (param.startsWith(INCLUDE_MARK+"")){
+				param = param.substring(1);
+				includeCmds = StringUtils.split(param,INCLUDE_MARK);
+			}
 		}
 		String strEndDate = sdf.format(endDate);
 		String localDirRoot = dumpDir + strEndDate;
@@ -629,12 +633,14 @@ public abstract class StockBase extends TestBase{
 	public void loadDataFiles(String param){
 		String[] excludeCmds = new String[]{};
 		String[] includeCmds = null;
-		if (param.startsWith(EXCLUDE_MARK+"")){
-			param = param.substring(1);
-			excludeCmds = StringUtils.split(param,EXCLUDE_MARK);
-		}else if (param.startsWith(INCLUDE_MARK+"")){
-			param = param.substring(1);
-			includeCmds = StringUtils.split(param,INCLUDE_MARK);
+		if (param!=null){
+			if (param.startsWith(EXCLUDE_MARK+"")){
+				param = param.substring(1);
+				excludeCmds = StringUtils.split(param,EXCLUDE_MARK);
+			}else if (param.startsWith(INCLUDE_MARK+"")){
+				param = param.substring(1);
+				includeCmds = StringUtils.split(param,INCLUDE_MARK);
+			}
 		}
 		String strEndDate = sdf.format(endDate);
 		String localDirRoot = dumpDir + strEndDate;

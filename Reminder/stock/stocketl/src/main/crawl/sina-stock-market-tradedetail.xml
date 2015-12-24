@@ -5,7 +5,7 @@ rootVolume="999990"
 storeId="sina-stock-market-tradedetail" 
 productType="default">
 	<PrdTask tryPattern="false"><!-- this data is 2 days in delay -->
-		<baseBrowseTask enableJS="true"  taskName="market-tradedetail"  dsm="hdfs" mbMemoryNeeded="256" taskNumPerJob="100">
+		<baseBrowseTask enableJS="true"  taskName="market-tradedetail"  dsm="hdfs" mbMemoryNeeded="512" taskNumPerJob="100">
 			<param name="marketId"/>
 			<param name="stockid"/>
 			<param name="date"/>

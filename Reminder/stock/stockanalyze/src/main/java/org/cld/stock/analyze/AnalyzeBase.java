@@ -28,6 +28,7 @@ import org.cld.stock.strategy.SellStrategy;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.JsonUtil;
+import org.cld.util.StringUtil;
 import org.cld.util.jdbc.DBConnConf;
 
 public class AnalyzeBase {
@@ -39,19 +40,25 @@ public class AnalyzeBase {
 	public static final String STRATEGY_PREFIX="strategy.";
 	public static final String STRATEGY_SUFFIX=".properties";
 	public static final String STRATEGY_NAMES_SEP="_";//can't be , :
+	public static final String STRATEGY_NAME_KEY="sn";
+	public static final String STEP_KEY="step";
+	public static final String TRADE_HOUR_KEY="th";
+		public static final String TH_NORMAL="normal";
+		public static final String TH_ALL="all";
 	public static final String GEN_DETAIL_FILE="gendetailfile";
 	public static int NUM_REDUCER= 200;
 	public static final int mapMbMem = 1024;
 	public static final int reduceMbMemSellStrategy = 1024;
 	public static final int reduceMbMemStrategyResult = 2048;
-	public static void validateAllStrategyByStock(String propFile, AnalyzeConf aconf, String baseMarketId, String marketId, Date startDate, Date endDate, 
+	
+	public static void validateAllStrategyByStock(String propFile, AnalyzeConf aconf, String baseMarketId, Date startDate, Date endDate, 
 			String snParam, String stepParam, TradeHour th){
 		String folderName = null;
 		if (snParam!=null){
 			String strParam = snParam.replace(STRATEGY_NAMES_SEP, "_");
-			folderName = String.format("%s_%s_%s_%s", marketId, sdf.format(startDate), sdf.format(endDate), strParam);
+			folderName = String.format("%s_%s_%s_%s", baseMarketId, sdf.format(startDate), sdf.format(endDate), strParam);
 		}else{
-			folderName = String.format("%s_%s_%s", marketId, sdf.format(startDate), sdf.format(endDate));
+			folderName = String.format("%s_%s_%s", baseMarketId, sdf.format(startDate), sdf.format(endDate));
 		}
 		
 		String outputDir1 = String.format("/reminder/sresult/%s/all1", folderName);
@@ -152,6 +159,21 @@ public class AnalyzeBase {
 		}catch(Exception e){
 			logger.error("", e);
 		}
+	}
+	
+	public static void validateAllStrategyByStock(String propFile, AnalyzeConf aconf, String baseMarketId, Date startDate, Date endDate, 
+			String params){
+		Map<String, String> keyvalues = StringUtil.parseMapParams(params);
+		String snParam = keyvalues.get(STRATEGY_NAME_KEY);
+		String stepParam = keyvalues.get(STEP_KEY);
+		String strTradeHour = keyvalues.get(TRADE_HOUR_KEY);
+		TradeHour th = TradeHour.All;
+		if (strTradeHour!=null){
+			if (TH_NORMAL.equals(strTradeHour)){
+				th = TradeHour.Normal;
+			}
+		}
+		validateAllStrategyByStock(propFile, aconf, baseMarketId, startDate, endDate, snParam, stepParam, th);
 	}
 	
 	public static String[] getSybmolsByMarketId(DBConnConf dbconf, String baseMarketId, String subsector, String country){

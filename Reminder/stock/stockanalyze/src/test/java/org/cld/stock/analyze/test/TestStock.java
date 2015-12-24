@@ -55,8 +55,7 @@ public class TestStock {
 		Date startDate = msdf.parse("2015-05-01 10:00");
 		Date endDate = msdf.parse("2015-12-01 20:20");
 		String sn = "simpleone";
-		String marketId = "unused";
-		AnalyzeBase.validateAllStrategyByStock(pFile, aconf, "nasdaq", marketId, startDate, endDate, sn, null, TradeHour.Normal);
+		AnalyzeBase.validateAllStrategyByStock(pFile, aconf, "nasdaq", startDate, endDate, sn, null, TradeHour.Normal);
 	}
 	
 	@Test

@@ -129,12 +129,14 @@ public class MergeTask extends Task implements Serializable{
 			String param, boolean doMR){
 		String[] excludeCmds = null;
 		String[] includeCmds = null;
-		if (param.startsWith(StockBase.EXCLUDE_MARK+"")){
-			param = param.substring(1);
-			excludeCmds = StringUtils.split(param,StockBase.EXCLUDE_MARK);
-		}else if (param.startsWith(StockBase.INCLUDE_MARK+"")){
-			param = param.substring(1);
-			includeCmds = StringUtils.split(param,StockBase.INCLUDE_MARK);
+		if (param!=null){
+			if (param.startsWith(StockBase.EXCLUDE_MARK+"")){
+				param = param.substring(1);
+				excludeCmds = StringUtils.split(param,StockBase.EXCLUDE_MARK);
+			}else if (param.startsWith(StockBase.INCLUDE_MARK+"")){
+				param = param.substring(1);
+				includeCmds = StringUtils.split(param,StockBase.INCLUDE_MARK);
+			}
 		}
 		Configuration conf = HadoopTaskLauncher.getHadoopConf(cconf);
 		//generate task list file
