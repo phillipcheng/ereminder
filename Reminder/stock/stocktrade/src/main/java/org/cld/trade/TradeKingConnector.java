@@ -330,7 +330,7 @@ public class TradeKingConnector implements TradeApi{
 			StringWriter sw = new StringWriter();
 			jaxbMarshaller.marshal(fixml, sw);
 			String payload = sw.toString();
-			logger.info(String.format("body:%s", payload));
+			logger.info(String.format("cancel order body:%s", payload));
 			request.addPayload(payload);
 			request.addHeader("content-type", "application/xml");
 			request.addHeader("content-length", ""+payload.length());

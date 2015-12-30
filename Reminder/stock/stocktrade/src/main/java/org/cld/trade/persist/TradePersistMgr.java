@@ -2,6 +2,7 @@ package org.cld.trade.persist;
 
 import java.sql.Connection;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,7 +28,22 @@ public class TradePersistMgr {
 			List<StockPosition> lo = (List<StockPosition>) SqlUtil.getObjectsByParam(sql, new Object[]{soid, soid, soid}, 
 					con, -1, -1, "", mapper);
 			if (lo.size()==1){
-				return lo.get(0);
+				StockPosition sp = lo.get(0);
+				//set the orderids to soMap
+				Map<String, StockOrder> map = sp.getSoMap();
+				if (sp.getBuyOrderId()!=null){
+					StockOrder so = map.get(StockOrderType.buy.name());
+					so.setOrderId(sp.getBuyOrderId());
+				}
+				if (sp.getStopSellOrderId()!=null){
+					StockOrder so = map.get(StockOrderType.sellstop.name());
+					so.setOrderId(sp.getStopSellOrderId());
+				}
+				if (sp.getLimitSellOrderId()!=null){
+					StockOrder so = map.get(StockOrderType.selllimit.name());
+					so.setOrderId(sp.getLimitSellOrderId());					
+				}
+				return sp;
 			}else if (lo.size()==0){
 				logger.error(String.format("no stockposition found for soid:%s", soid));
 			}else if (lo.size()>1){

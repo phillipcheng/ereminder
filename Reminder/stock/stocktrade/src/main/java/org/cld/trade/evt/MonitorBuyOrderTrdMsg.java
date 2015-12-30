@@ -14,7 +14,6 @@ import org.cld.trade.AutoTrader;
 import org.cld.trade.TradeKingConnector;
 import org.cld.trade.TradeMsg;
 import org.cld.trade.TradeMsgPR;
-import org.cld.trade.TradeMsgType;
 import org.cld.trade.response.OrderStatus;
 
 public class MonitorBuyOrderTrdMsg extends TradeMsg {

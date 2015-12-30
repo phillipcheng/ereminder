@@ -4,8 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.trade.evt.MarketCloseTrdMsg;
-import org.cld.trade.evt.MarketOpenTrdMsg;
+import org.cld.trade.evt.MarketOpenCloseTrdMsg;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -23,16 +22,8 @@ public class GenMsgQuartzJob implements Job {
 		logger.info(String.format("triggered at: %s", sdf.format(new Date())));
 		AutoTrader at = (AutoTrader) context.getMergedJobDataMap().get(AutoTrader.JDM_KEY_AT);
 		String triggerName=context.getTrigger().getKey().getName();
-		if (TradeMsgType.marketOpenSoon.toString().equals(triggerName)){
-			MarketOpenTrdMsg motm = new MarketOpenTrdMsg(); //simulate use last
-			at.addMsg(motm);
-			logger.info(String.format("message %s added.", motm));
-		}else if (TradeMsgType.marketCloseSoon.toString().equals(triggerName)){
-			MarketCloseTrdMsg mctm = new MarketCloseTrdMsg();
-			at.addMsg(mctm);
-			logger.info(String.format("message %s added.", mctm));
-		}else{
-			logger.error("unknown triggerName:" + triggerName);
-		}
+		TradeMsg trdMsg = new MarketOpenCloseTrdMsg(triggerName);
+		at.addMsg(trdMsg);
+		logger.info(String.format("msg added %s", trdMsg));
 	}
 }

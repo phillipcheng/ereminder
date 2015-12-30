@@ -158,6 +158,16 @@ public abstract class StockBase extends TestBase{
 		return ci;
 	}
 	
+	//sequentially run tasks
+	public String[] runCmdHadoopless(String cmdName, String marketId, String startDate, String endDate) {
+		logger.info(String.format("runCmdHadoopless cmd:%s, market %s, start %s, end %s.", cmdName, marketId, startDate, endDate));
+		ETLConfig sc = ETLConfig.getETLConfig(baseMarketId);
+		Map<String, Object> params = getDateParamMap(startDate, endDate);
+		params.put(AbstractCrawlItemToCSV.FN_MARKETID, marketId);
+		params.put(AbstractCrawlItemToCSV.FN_BASEMARKETID, baseMarketId);
+		return ETLUtil.runTaskByCmd(sc, marketId, cconf, this.getPropFile(), cmdName, params, false);
+	}
+	
 	//cmdName is the fileName of the site-conf without suffix, is the storeid
 	public CmdStatus runCmd(String cmdName, String marketId, String startDate, String endDate) {
 		logger.info(String.format("runCmd cmd:%s, market %s, start %s, end %s.", cmdName, marketId, startDate, endDate));
@@ -191,7 +201,7 @@ public abstract class StockBase extends TestBase{
 		}else{	
 			cs = new CmdStatus(marketId, cmdName, ed, false, sc.getSdf());
 		}
-		String[] jobIds = ETLUtil.runTaskByCmd(sc, marketId, cconf, this.getPropFile(), cmdName, params);
+		String[] jobIds = ETLUtil.runTaskByCmd(sc, marketId, cconf, this.getPropFile(), cmdName, params, true);
 		for (String jobId:jobIds){
 			if (jobId!=null){
 				cs.getJsMap().put(jobId, 4);//PREPARE

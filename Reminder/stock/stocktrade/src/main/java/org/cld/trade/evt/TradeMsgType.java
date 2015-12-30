@@ -1,9 +1,7 @@
-package org.cld.trade;
+package org.cld.trade.evt;
 
 public enum TradeMsgType {
-	
-	marketOpenSoon,
-	marketCloseSoon,
+	marketOpenClose,
 	buyOppFound,
 	monitorBuyLimitOrder,
 	buyOrderFilled,

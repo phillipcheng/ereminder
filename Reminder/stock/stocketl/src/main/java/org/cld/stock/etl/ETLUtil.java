@@ -25,6 +25,7 @@ import org.cld.stock.common.StockConfig;
 import org.cld.stock.common.StockUtil;
 import org.cld.stock.etl.base.ETLConfig;
 import org.cld.stock.persistence.StockPersistMgr;
+import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.TaskMapper;
@@ -174,11 +175,11 @@ public class ETLUtil {
 	//marketid, stockid, year, quarter:	runTaskByStockYearQuarter	BalanceSheet, CashFlow, sina-fq, sina-historical
 	//marketid, stockid, date         : runTaskByStockDate			sina-stock-market-tradedetail
 	//marketid, stockid,			  :	runTaskByStock				holding-insiders, dividend-history, quote-historical, short-interest, corp-info, nasdaq-fq
-	//marketid, date                  : runTaskByDate				sina-stock-market-dzjy, rzrq 
+	//marketid, date                  : runTaskByDate				sina-stock-market-dzjy, rzrq, nasdaq-upcoming-dividend
 	//marketid                        : runTaskByMarket		        stock-ids
 	//marketid, stockid, year, month  : runTaskByMarketYearMonth    sina-stock-ipo
 	public static String[] runTaskByCmd(ETLConfig sc, String marketId, CrawlConf cconf, String propfile, String cmdName, 
-			Map<String, Object> params){
+			Map<String, Object> params, boolean useHadoop){
 		List<Task> tl = new ArrayList<Task>();
 		boolean sync = false;
 		if (sc.getSyncCmds()!=null){
@@ -227,9 +228,9 @@ public class ETLUtil {
 					if (btt.getParamMap().containsKey(AbstractCrawlItemToCSV.FN_YEAR) && btt.getParamMap().containsKey(AbstractCrawlItemToCSV.FN_MONTH)){
 						jobIds = runTaskByMarketYearMonth(sc, cconf, propfile, t, cmdName, params, sync, mapperClass, reducerClass);
 					}else if (btt.getParamMap().containsKey(PK_DATE)){
-						jobIds = runTaskByDate(sc, sd, ed, cconf, propfile, t, params, cmdName, sync, mapperClass, reducerClass);
+						jobIds = runTaskByDate(sc, sd, ed, cconf, propfile, t, params, cmdName, sync, mapperClass, reducerClass, useHadoop);
 					} else{
-						jobIds = runTaskByMarket(sc, cconf, propfile, t, cmdName, params, sync, mapperClass, reducerClass);
+						jobIds = runTaskByMarket(sc, cconf, propfile, t, cmdName, params, sync, mapperClass, reducerClass, useHadoop);
 					}
 				}
 			}else{
@@ -311,29 +312,61 @@ public class ETLUtil {
 				mapperClass, reducerClass, hadoopJobParams);
 		return new String[]{jobId};
 	}
-	//stock-ids
+	
+	private static List<String> getCsvList(List<CrawledItem> cil){
+		List<String> outputList = new ArrayList<String>();
+		for (CrawledItem ci:cil){
+			if (ci!=null && ci.getCsvValue()!=null){
+				//key,value,filename
+				for (String[] kv : ci.getCsvValue()){
+					if (AbstractCrawlItemToCSV.KEY_VALUE_UNDEFINED.equals(kv[0])){
+						outputList.add(kv[1]);
+					}else{
+						String str = String.format("%s,%s", kv[0], kv[1]);
+						outputList.add(str);
+					}
+				}
+			}
+		}
+		return outputList;
+	}
+	//return job ids for hadoop (async call), return csv array if not using hadoop
 	private static String[] runTaskByMarket(ETLConfig sc, CrawlConf cconf, String propfile, Task t, String cmd, 
-			Map<String, Object> params, boolean sync, Class mapperClass, Class reducerClass){
+			Map<String, Object> params, boolean sync, Class mapperClass, Class reducerClass, boolean useHadoop){
 		logger.info("into runTaskByMarket");
 		List<Task> tlist = new ArrayList<Task>();
 		t.putAllParams(params);
 		updateMarketIdParam(t);
 		tlist.add(t);
 		String taskName = ETLUtil.getTaskName(sc, cmd, t.getParamMap());
-		String jobId = TaskUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tlist, taskName, sync, mapperClass, reducerClass, null);
-		if (jobId!=null){
-			return new String[]{jobId};
+		if (useHadoop){
+			String jobId = TaskUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tlist, taskName, sync, mapperClass, reducerClass, null);
+			if (jobId!=null){
+				return new String[]{jobId};
+			}else{
+				return new String[]{};
+			}
 		}else{
+			try {
+				params.put(TaskMgr.TASK_RUN_PARAM_CCONF, cconf);
+				List<String> sl = getCsvList(t.runMyselfWithOutput(params, false));
+				String[] sa = new String[sl.size()];
+				return sl.toArray(sa);
+			}catch(Exception e){
+				logger.error("", e);
+			}
 			return new String[]{};
 		}
 	}
-	//sina-stock-market-dzjy, rzrq 
+	//return job ids for hadoop (async call), return csv array if not using hadoop
 	private static String[] runTaskByDate(ETLConfig etlConfig, Date startDate, Date endDate, CrawlConf cconf, String propfile, Task t, 
-			Map<String, Object> params, String cmd, boolean sync, Class mapperClass, Class reducerClass){
+			Map<String, Object> params, String cmd, boolean sync, Class mapperClass, Class reducerClass, boolean useHadoop){
 		logger.info("into runTaskByDate");
 		StockConfig sc = StockUtil.getStockConfig(etlConfig.getBaseMarketId());
 		Map<String, String> tables = etlConfig.getTablesByCmd(cmd);
-		Date luDate = StockPersistMgr.getMarketLUDateByCmd(tables.keySet(), cconf.getBigdbconf());
+		Date luDate = null;
+		if (tables!=null)
+			luDate = StockPersistMgr.getMarketLUDateByCmd(tables.keySet(), cconf.getBigdbconf());
 		Date sd = null;
 		if (luDate!=null){
 			sd = DateTimeUtil.tomorrow(luDate);
@@ -371,11 +404,26 @@ public class ETLUtil {
 			taskParams.putAll(params);
 		String taskName = ETLUtil.getTaskName(etlConfig, cmd, taskParams);
 		logger.info("sending out:" + tlist.size() + " tasks.");
-		String jobId = TaskUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tlist, taskName, sync, mapperClass, reducerClass, null);
-		if (jobId!=null){
-			return new String[]{jobId};
+		if (useHadoop){
+			String jobId = TaskUtil.hadoopExecuteCrawlTasksWithReducer(propfile, cconf, tlist, taskName, sync, mapperClass, reducerClass, null);
+			if (jobId!=null){
+				return new String[]{jobId};
+			}else{
+				return new String[]{};
+			}
 		}else{
-			return new String[]{};
+			List<String> output = new ArrayList<String>();
+			for (Task at:tlist){
+				try{
+					taskParams.put(TaskMgr.TASK_RUN_PARAM_CCONF, cconf);
+					List<String> sl = getCsvList(at.runMyselfWithOutput(taskParams, false));
+					output.addAll(sl);
+				}catch(Exception e){
+					logger.error("", e);
+				}
+			}
+			String[] sa = new String[output.size()];
+			return output.toArray(sa);
 		}
 	}
 	

@@ -1,6 +1,8 @@
 package org.cld.stock.mapper.ext;
 
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,6 +11,7 @@ import org.cld.util.jdbc.JDBCMapper;
 
 public class NasdaqSplitJDBCMapper extends JDBCMapper{
 	Logger logger = LogManager.getLogger(NasdaqSplitJDBCMapper.class);
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
 	private NasdaqSplitJDBCMapper(){
 		
@@ -28,9 +31,9 @@ public class NasdaqSplitJDBCMapper extends JDBCMapper{
 	@Override
 	public Object getObject(ResultSet cursor) {
     	try{
-    		DivSplit b= new DivSplit(
-	    			cursor.getString(1), cursor.getDate(5), cursor.getDate(4), cursor.getString(2));
-	    	return b;
+    		DivSplit b;
+    		b= new DivSplit(cursor.getString(1), cursor.getDate(5), cursor.getDate(4), cursor.getString(2));
+    		return b;
     	}catch(Exception e){
     		logger.error("", e);
     		return null;

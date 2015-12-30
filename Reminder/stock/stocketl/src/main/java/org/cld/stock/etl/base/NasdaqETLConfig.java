@@ -75,9 +75,11 @@ public class NasdaqETLConfig extends ETLConfig{
 	public static final String QUOTE_HISTORY="nasdaq-quote-historical";
 	
 	//issue
-	public static final String ISSUE_SPLIT="nasdaq-issue-split";//upcoming split
+	public static final String ISSUE_UPCOMING_SPLIT="nasdaq-issue-upcoming-split";
 	public static final String ISSUE_XDIVSPLIT_HISTORY="nasdaq-issue-xds-history";
-	public static final String ISSUE_DIVIDEND="nasdaq-issue-dividend";
+	public static final String ISSUE_DIVIDEND_HISTORY="nasdaq-issue-dividend-history";
+	public static final String ISSUE_UPCOMING_DIVIDEND="nasdaq-issue-upcoming-dividend";
+	
 	
 	//holdings
 	public static final String HOLDING_SUMMARY="nasdaq-holding-summary";
@@ -172,11 +174,11 @@ public class NasdaqETLConfig extends ETLConfig{
 		
 		m = new HashMap<String,String>();
 		m.put("NasdaqDividend","part");
-		cmdTableMap.put(ISSUE_DIVIDEND, m);
+		cmdTableMap.put(ISSUE_DIVIDEND_HISTORY, m);
 		
 		m = new HashMap<String,String>();
 		m.put("NasdaqSplit","part");
-		cmdTableMap.put(ISSUE_SPLIT, m);
+		cmdTableMap.put(ISSUE_UPCOMING_SPLIT, m);
 	}
 	
 	public static String[] corpConfs = new String[]{
@@ -193,8 +195,8 @@ public class NasdaqETLConfig extends ETLConfig{
 	};
 	public static String[] issueConfs = new String[]{
 		ISSUE_XDIVSPLIT_HISTORY, //
-		ISSUE_DIVIDEND,
-		ISSUE_SPLIT,
+		ISSUE_DIVIDEND_HISTORY,
+		ISSUE_UPCOMING_SPLIT,
 	};
 	public static String[] holderConfs = new String[]{
 		HOLDING_INSTITUTIONAL,

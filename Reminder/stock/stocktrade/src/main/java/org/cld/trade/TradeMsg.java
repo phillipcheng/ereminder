@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.StockOrder;
+import org.cld.trade.evt.TradeMsgType;
 
 public abstract class TradeMsg {
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");

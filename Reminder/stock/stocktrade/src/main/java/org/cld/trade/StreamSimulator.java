@@ -18,6 +18,8 @@ public class StreamSimulator implements Runnable{
 	private TradeDataMgr tdm;
 	private int threadNum =0;
 	
+	private boolean running=true;
+	
 	Map<String, Long> lastTickMap = new ConcurrentHashMap<String, Long>();
 	
 	public StreamSimulator(List<String> symbols, TradeKingConnector tm, TradeDataMgr tdm, int totalThreadNumber){
@@ -30,8 +32,8 @@ public class StreamSimulator implements Runnable{
 	
 	@Override
 	public void run() {
-		try{
-			while (true){
+		while (running){
+			try{
 				List<Quote> ql = tm.getQuotes(symbols);
 				if (ql!=null){
 					for (Quote q:ql){
@@ -45,9 +47,12 @@ public class StreamSimulator implements Runnable{
 					}
 				}
 				Thread.sleep(1000*threadNum);//limitation maximum admitted 60 per Minute
+			}catch(InterruptedException ie){
+				running=false;
+				logger.info("StreamSimulator stopped.");
+			}catch(Throwable t){
+				logger.error("not interrupted exception, goon", t);
 			}
-		}catch(Exception e){
-			logger.error("", e);
 		}
 	}
 }

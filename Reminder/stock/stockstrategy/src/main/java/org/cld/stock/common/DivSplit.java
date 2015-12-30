@@ -1,40 +1,47 @@
 package org.cld.stock.common;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class DivSplit {
 	
-	private String stockid;
+	private String symbol;
 	private Date exDt; //ex-div date
 	private Date dt; //announce date
-	private float dividend; //per stock, 0 means a split
+	private float dividend=0f; //per stock, 0 means a split
 	private AnnounceTime at = AnnounceTime.beforeMarket;//announce time
 	private String info; 
 	
-	public DivSplit(String stockid, Date dt, Date exDt, String info){
-		this.stockid = stockid;
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	
+	public DivSplit(String symbol, Date dt, Date exDt, String info){
+		this.symbol = symbol;
 		this.dt = dt;
 		this.exDt = exDt;
 		this.info = info;
 	}
 	
-	public DivSplit(String stockid, Date dt, Date exDt, float dividend){
-		this.stockid = stockid;
+	public DivSplit(String symbol, Date dt, Date exDt, float dividend){
+		this.symbol = symbol;
 		this.dt = dt;
 		this.exDt = exDt;
 		this.dividend = dividend;
 	}
 	
-	public DivSplit(String stockid, Date dt, Date exDt, float dividend, AnnounceTime at){
-		this(stockid, dt, exDt, dividend);
+	public DivSplit(String symbol, Date dt, Date exDt, float dividend, AnnounceTime at){
+		this(symbol, dt, exDt, dividend);
 		this.setAt(at);
 	}
 	
-	public String getStockid() {
-		return stockid;
+	public String toString(){
+		return String.format("divsplit: %s: xdiv day:%s, dividend:%.3f, splitInfo:%s", symbol, sdf.format(exDt), dividend, info);
 	}
-	public void setStockid(String stockid) {
-		this.stockid = stockid;
+	
+	public String getSymbol() {
+		return symbol;
+	}
+	public void setSymbol(String symbol) {
+		this.symbol = symbol;
 	}
 	public Date getDt() {
 		return dt;

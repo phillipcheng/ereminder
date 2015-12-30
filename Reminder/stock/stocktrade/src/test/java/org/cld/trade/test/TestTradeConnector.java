@@ -6,7 +6,6 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.trade.TradeKingConnector;
-import org.cld.trade.evt.MarketCloseTrdMsg;
 import org.cld.stock.strategy.StockOrder;
 import org.cld.stock.strategy.StockOrder.ActionType;
 import org.cld.stock.strategy.StockOrder.OrderType;
@@ -120,13 +119,6 @@ public class TestTradeConnector {
 	public void testGetOrderStatus(){
 		Map<String, OrderStatus> map = tm.getOrderStatus();
 		logger.info(map);
-	}
-	
-	@Test
-	public void testStartWithCloseMsg(){
-		AutoTrader ta = new AutoTrader();
-		MarketCloseTrdMsg mc = new MarketCloseTrdMsg();
-		ta.start(mc);
 	}
 
 }

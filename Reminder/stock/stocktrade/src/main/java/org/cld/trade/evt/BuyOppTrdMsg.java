@@ -16,7 +16,6 @@ import org.cld.trade.AutoTrader;
 import org.cld.trade.StockOrderType;
 import org.cld.trade.TradeMsg;
 import org.cld.trade.TradeMsgPR;
-import org.cld.trade.TradeMsgType;
 import org.cld.trade.persist.StockPosition;
 import org.cld.trade.persist.TradePersistMgr;
 import org.cld.trade.response.Balance;

@@ -37,7 +37,7 @@ public class SinaStockBase extends StockBase{
 		Map<String, String> hadoopParams = new HashMap<String, String>();
 		HadoopTaskLauncher.updateHadoopMemParams(3072, hadoopParams);
 		return new String[] {
-				HadoopTaskLauncher.executeTasks(getCconf(), hadoopParams, 
+				HadoopTaskLauncher.hadoopExecuteTasks(getCconf(), hadoopParams, 
 						new String[]{"/reminder/items/merge/"+this.specialParam}, 
 						true, "/reminder/items/mlinput/"+this.specialParam, false, 
 						SplitByStockMapper.class, 

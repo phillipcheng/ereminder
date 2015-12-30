@@ -165,7 +165,7 @@ public class HadoopTaskLauncher {
 				logger.info("after update hadoop params:" + hadoopParams);
 				boolean multipleOutput = hasMultipleOutput(t);
 				String outputDir = t.getOutputDir(null);
-				return executeTasks(tconf, hadoopParams, new String[]{taskFileName}, multipleOutput, outputDir, sync, mapperClass, reducerClass, true);
+				return hadoopExecuteTasks(tconf, hadoopParams, new String[]{taskFileName}, multipleOutput, outputDir, sync, mapperClass, reducerClass, true);
 			}catch (Exception e) {
 				logger.error("", e);
 			}
@@ -182,13 +182,13 @@ public class HadoopTaskLauncher {
 	 * @return jobId
 	 */
 	public static final String FILTER_REGEXP_KEY="file.pattern";
-	public static String executeTasks(TaskConf tconf, Map<String, String> hadoopParams, 
+	public static String hadoopExecuteTasks(TaskConf tconf, Map<String, String> hadoopParams, 
 			String[] inputPaths, boolean multipleOutput, String outputDir, 
 			boolean sync, Class<? extends Mapper> mapperClass, Class<? extends Reducer> reducerClass, boolean uselinesPerMap){
-		return executeTasks(tconf, hadoopParams, inputPaths, multipleOutput, outputDir, sync, mapperClass, reducerClass, null, null, null, uselinesPerMap);
+		return hadoopExecuteTasks(tconf, hadoopParams, inputPaths, multipleOutput, outputDir, sync, mapperClass, reducerClass, null, null, null, uselinesPerMap);
 	}
 	
-	public static String executeTasks(TaskConf tconf, Map<String, String> hadoopParams, 
+	public static String hadoopExecuteTasks(TaskConf tconf, Map<String, String> hadoopParams, 
 			String[] inputPaths, boolean multipleOutput, String outputDir, 
 			boolean sync, 
 			Class<? extends Mapper> mapperClass, 

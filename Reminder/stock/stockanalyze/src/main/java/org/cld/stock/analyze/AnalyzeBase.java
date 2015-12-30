@@ -81,7 +81,7 @@ public class AnalyzeBase {
 			for (String sn:strategyNames){
 				String strategyName = STRATEGY_PREFIX+sn+STRATEGY_SUFFIX;
 				PropertiesConfiguration props = new PropertiesConfiguration(strategyName);
-				Map<String, List<SelectStrategy>> scsl = SelectStrategy.genMap(props, sn, baseMarketId);
+				Map<String, List<SelectStrategy>> scsl = SelectStrategy.genMap(props, sn, baseMarketId, aconf.getDbconf());
 				for (String symbol:scsl.keySet()){
 					List<SelectStrategy> bsl = allSelectStrategy.get(symbol);
 					if (bsl==null){
@@ -128,7 +128,7 @@ public class AnalyzeBase {
 				hadoopParams.put("mapreduce.reduce.memory.mb", reduceMbMemSellStrategy + "");
 				hadoopParams.put("mapreduce.reduce.java.opts", reduceOptValue);
 				hadoopParams.put("mapreduce.job.reduces", NUM_REDUCER+"");
-				HadoopTaskLauncher.executeTasks(aconf, hadoopParams, new String[]{outputDir1}, false, outputDir2, true, 
+				HadoopTaskLauncher.hadoopExecuteTasks(aconf, hadoopParams, new String[]{outputDir1}, false, outputDir2, true, 
 						SellStrategyByStockMapper.class, SellStrategyByStockReducer.class, 
 						StockIdDatePartitioner.class, StockIdDateGroupingComparator.class, StockIdDatePair.class, false);
 			}
@@ -144,7 +144,7 @@ public class AnalyzeBase {
 				hadoopParams.put("mapreduce.reduce.java.opts", reduceOptValue);
 				hadoopParams.put("mapreduce.job.reduces", NUM_REDUCER+"");
 				hadoopParams.put(GEN_DETAIL_FILE, Boolean.toString(genDetailFiles));
-				HadoopTaskLauncher.executeTasks(aconf, hadoopParams, new String[]{outputDir2}, true, outputDir3, true, 
+				HadoopTaskLauncher.hadoopExecuteTasks(aconf, hadoopParams, new String[]{outputDir2}, true, outputDir3, true, 
 						StrategyResultMapper.class, StrategyResultReducer.class, false);
 			}
 			if (stepParam==null || "4".equals(stepParam)){
@@ -153,7 +153,7 @@ public class AnalyzeBase {
 				hadoopParams.put("mapred.output.key.comparator.class", "org.apache.hadoop.mapred.lib.KeyFieldBasedComparator");
 				hadoopParams.put("mapred.text.key.comparator.options", "-n");
 				hadoopParams.put("file.pattern", ".*part.*");
-				HadoopTaskLauncher.executeTasks(aconf, hadoopParams, new String[]{outputDir3}, false, outputDir4, true, 
+				HadoopTaskLauncher.hadoopExecuteTasks(aconf, hadoopParams, new String[]{outputDir3}, false, outputDir4, true, 
 						SortMapper.class, DefaultCopyTextReducer.class, false);
 			}
 		}catch(Exception e){

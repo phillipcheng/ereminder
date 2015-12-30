@@ -58,7 +58,7 @@ public class MainFrame extends JFrame {
 			String strategyFile = pc.getString(KEY_STRATEGY);
 			aconf = (AnalyzeConf) TaskUtil.getTaskConf(pFile);
 			PropertiesConfiguration strategyPC = PropertiesUtil.getPC(strategyFile);
-			List<SelectStrategy> bsl = SelectStrategy.genList(strategyPC, strategyFile, baseMarketId);
+			List<SelectStrategy> bsl = SelectStrategy.genList(strategyPC, strategyFile, baseMarketId, aconf.getDbconf());
 			if (bsl.size()>0){
 				bs = bsl.get(0);
 			}

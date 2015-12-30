@@ -28,6 +28,8 @@ public class StreamMgr implements Runnable{
 	private StreamHandler streamHandler;
 	private ProxyConf proxyConf;
 	
+	private boolean running=true;
+	
 	public StreamMgr(List<String> symbols, TradeKingConnector tm, TradeDataMgr tdm, ProxyConf pconf){
 		this.symbols = symbols;
 		this.tm = tm;
@@ -51,32 +53,44 @@ public class StreamMgr implements Runnable{
 	
 	@Override
 	public void run() {
-		try{
-			OAuthConsumer consumer = new Jetty9OAuthConsumer(tm.getConsumerKey(), tm.getConsumerSecret());
-			consumer.setTokenWithSecret(tm.getOauthToken(), tm.getOauthTokenSecret());
-			//https support
-			SslContextFactory sslContextFactory = new SslContextFactory();
-	        HttpClient httpClient = new HttpClient(sslContextFactory);
-	        //proxy support
-	        if (proxyConf.isUseProxy()){
-				ProxyConfiguration proxyConfig = httpClient.getProxyConfiguration();
-				HttpProxy proxy = new HttpProxy(proxyConf.getHost(), proxyConf.getPort());
-				proxyConfig.getProxies().add(proxy);
-			}
-			httpClient.start();
-			String symbolsParam = StringUtils.join(symbols, ',');
-			String url = String.format(STREAM_URL, symbolsParam);
-			sendRequest(httpClient, url, consumer);
-			while (true){
+		OAuthConsumer consumer = new Jetty9OAuthConsumer(tm.getConsumerKey(), tm.getConsumerSecret());
+		consumer.setTokenWithSecret(tm.getOauthToken(), tm.getOauthTokenSecret());
+		//https support
+		SslContextFactory sslContextFactory = new SslContextFactory();
+        HttpClient httpClient = new HttpClient(sslContextFactory);
+        //proxy support
+        if (proxyConf.isUseProxy()){
+			ProxyConfiguration proxyConfig = httpClient.getProxyConfiguration();
+			HttpProxy proxy = new HttpProxy(proxyConf.getHost(), proxyConf.getPort());
+			proxyConfig.getProxies().add(proxy);
+		}
+        try{
+        	httpClient.start();
+        }catch(Exception e){
+        	logger.error("error to start httpclient.", e);
+        }
+		String symbolsParam = StringUtils.join(symbols, ',');
+		String url = String.format(STREAM_URL, symbolsParam);
+		sendRequest(httpClient, url, consumer);
+		while (running){
+			try{
 				if (streamHandler.isFinished()){
-					logger.error(String.format("request state %d finished for %s!", streamHandler.getStatus(), symbols));
+					//logger.error(String.format("request state %d finished for %s!", streamHandler.getStatus(), symbols));
 					streamHandler.reset();
 					sendRequest(httpClient, url, consumer);
 				}
 				Thread.sleep(3000);
+			}catch(InterruptedException ie){
+				running = false;
+				try{
+					httpClient.stop(); 
+				}catch(Exception e){
+		        	logger.error("error to stop httpclient.", e);
+		        }
+				logger.info("StreamMgr stopped.");
+			}catch(Throwable t){
+				logger.error("not interrupted exception, goon", t);
 			}
-		}catch(Exception e){
-			logger.error("", e);
 		}
 	}
 }

@@ -1,6 +1,9 @@
 package org.cld.trade;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -13,6 +16,7 @@ import java.util.TreeMap;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.stock.common.DivSplit;
 import org.cld.stock.common.StockConfig;
 import org.cld.stock.common.StockUtil;
 import org.cld.stock.strategy.IntervalUnit;
@@ -24,15 +28,19 @@ import org.cld.stock.strategy.TradeStrategy;
 import org.cld.stock.strategy.StockOrder.ActionType;
 import org.cld.stock.strategy.StockOrder.OrderType;
 import org.cld.stock.strategy.StockOrder.TimeInForceType;
+import org.cld.stock.strategy.persist.StrategyPersistMgr;
+import org.cld.trade.evt.MarketOpenCloseEvtType;
+import org.cld.trade.evt.MarketStatusType;
 import org.cld.trade.evt.MonitorBuyOrderTrdMsg;
 import org.cld.trade.evt.MonitorSellPriceTrdMsg;
 import org.cld.trade.evt.MonitorSellStopOrderTrdMsg;
+import org.cld.trade.evt.TradeMsgType;
 import org.cld.trade.persist.StockPosition;
 import org.cld.trade.persist.TradePersistMgr;
 import org.cld.trade.response.OrderStatus;
 import org.cld.util.ProxyConf;
+import org.cld.util.StringUtil;
 import org.cld.util.jdbc.DBConnConf;
-import org.eclipse.jetty.client.HttpClient;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
@@ -52,40 +60,44 @@ public class AutoTrader implements Runnable {
 	private static final String USESTREAM_KEY="use.stream";
 	private static final String USE_AMOUNT="use.amount";
 	private static final String BASE_MARKET="base.market";
-	private static final String MARKET_OPEN_CRON="market.open.cron";
-	private static final String MARKET_CLOSE_CRON="market.close.cron";
 	private static final String IS_PREVIEW="is.preview";
 	
 	//
 	private TradeApi tradeConnector;
 	private Map<String, TreeMap<IntervalUnit, List<TradeStrategy>>> siutsMap = 
 			new HashMap<String, TreeMap<IntervalUnit, List<TradeStrategy>>>();//symbol to interval unit to trade-strategy instance
-	private Map<String, TradeStrategy> tsInstMap = new HashMap<String, TradeStrategy>();//from key(symbol_bs.name) to trade-strategy instance
+	private Map<String, TradeStrategy> tsInstMap = new HashMap<String, TradeStrategy>();//from key(symbol_bsname) to trade-strategy instance
 	private Set<String> symbols = new HashSet<String>();
 	private String historyDumpProperties;
 
-	private boolean useStream=true;
 	private ProxyConf proxyConf;
 	private DBConnConf dbConf;
 	private int useAmount;
 	private String baseMarketId;
-	private String marketOpenCron="0 26 9 ? * 2-6";
-	private String marketCloseCron="0 55 15 ? * 2-6";
+	
+	private String regularMarketOpenCron="0 29 9 ? * 2-6";
+	private String regularMarketClosedCron = "0 0 16 ? * 2-6";
+	private String preMarketOpenCron = "0 0 6 ? * 2-6";
+	private String preMarketCloseCron = "0 28 9 ? * 2-6";
+	private String afterHourMarketOpenCron = "0 2 16 ? * 2-6";
+	private String afterHourMarketCloseCron = "0 0 20 ? * 2-6";
+	
 	private boolean isPreview=true;
 	private boolean useLast=false;
 	private Map<String, TradeMsg> msgMap = new HashMap<String, TradeMsg>();
 	private Set<String> prevMsgIds = new HashSet<String>();//to curb too much log
 	
+	private StockConfig sc;
+	private TradeDataMgr tradeDataMgr;
+	
 	public AutoTrader(){
 		try{
 			PropertiesConfiguration pc = new PropertiesConfiguration("at.properties");
-			useStream = pc.getBoolean(USESTREAM_KEY);
+			pc.getBoolean(USESTREAM_KEY);
 			proxyConf = new ProxyConf(pc);
 			dbConf = new DBConnConf("dm.", pc);
 			setUseAmount(pc.getInt(USE_AMOUNT));
 			setBaseMarketId(pc.getString(BASE_MARKET));
-			marketOpenCron = pc.getString(MARKET_OPEN_CRON);
-			marketCloseCron = pc.getString(MARKET_CLOSE_CRON);
 			isPreview = pc.getBoolean(IS_PREVIEW);
 			this.historyDumpProperties= pc.getString(HISTORY_DUMP);
 			//setup trade connctor
@@ -95,7 +107,7 @@ public class AutoTrader implements Runnable {
 			for (int i=0; i<strategyFiles.size(); i++){
 				String strategyName = (String)strategyFiles.get(i);
 				PropertiesConfiguration props = new PropertiesConfiguration(strategyName);
-				Map<String, List<SelectStrategy>> bsMap = SelectStrategy.genMap(props, strategyName, getBaseMarketId());
+				Map<String, List<SelectStrategy>> bsMap = SelectStrategy.genMap(props, strategyName, getBaseMarketId(), dbConf);
 				SellStrategy[] ssl = SellStrategy.gen(props);
 				for (String symbol:bsMap.keySet()){
 					symbols.add(symbol);
@@ -117,6 +129,10 @@ public class AutoTrader implements Runnable {
 				}
 			}
 			logger.debug(String.format("interval-stock-ts map: %s", siutsMap));
+			sc = StockUtil.getStockConfig(getBaseMarketId());
+	        tradeDataMgr = new TradeDataMgr(this, sc);
+	        //apply split div when engine start, this is called used by preMarket open evt
+	        this.applySplitDiv(new Date());
 		}catch(Exception e){
 			logger.error("", e);
 		}
@@ -142,6 +158,20 @@ public class AutoTrader implements Runnable {
 			return map.get(iu);
 		}
 		return null;
+	}
+	
+	public List<TradeStrategy> getTsl(String symbol){
+		List<TradeStrategy> tsl = new ArrayList<TradeStrategy>();
+		TreeMap<IntervalUnit, List<TradeStrategy>> map = siutsMap.get(symbol);
+		if (map!=null){
+			for (IntervalUnit iu: map.keySet()){
+				List<TradeStrategy> l = map.get(iu);
+				if (l!=null){
+					tsl.addAll(l);
+				}
+			}
+		}
+		return tsl;
 	}
 	
 	private static Map<String, StockOrder> makeMap(List<StockOrder> sol){
@@ -205,6 +235,17 @@ public class AutoTrader implements Runnable {
 	public TradeMsg getMsg(String key){
 		synchronized(this.msgMap){
 			return this.msgMap.get(key);
+		}
+	}
+	
+	public void applySplitDiv(Date dt){
+		List<DivSplit> dsList = StrategyPersistMgr.getTodayDiv(dbConf, dt);
+		dsList.addAll(StrategyPersistMgr.getTodaySplit(dbConf, dt));
+		for (DivSplit div:dsList){
+			List<TradeStrategy> tsl = getTsl(div.getSymbol());
+			for (TradeStrategy ts: tsl){
+				ts.getBs().xdivDay(div, dbConf);
+			}
 		}
 	}
 	
@@ -350,24 +391,129 @@ public class AutoTrader implements Runnable {
 	        JobDetail genMarketMsgJob = JobBuilder.newJob(GenMsgQuartzJob.class).
 	        		withIdentity("genMarketMsg", "genMarketMsg").storeDurably().usingJobData(jdm).build();
 	        
-	        //scheduler to send market open msg
-	        Trigger marketOpenTrigger = TriggerBuilder.newTrigger().
-	        		withIdentity(TradeMsgType.marketOpenSoon.toString(), TradeMsgType.marketOpenSoon.toString()).forJob(genMarketMsgJob).
-	        		withSchedule(CronScheduleBuilder.cronSchedule(at.getMarketOpenCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
+	        Trigger preMarketOpenTrigger = TriggerBuilder.newTrigger().
+	        		withIdentity(MarketOpenCloseEvtType.preMarketOpen.toString(), TradeMsgType.marketOpenClose.toString()).forJob(genMarketMsgJob).
+	        		withSchedule(CronScheduleBuilder.cronSchedule(at.getPreMarketOpenCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
 	        		build();
-	        //scheduler to send market close msg
-	        Trigger marketCloseTrigger = TriggerBuilder.newTrigger().
-	        		withIdentity(TradeMsgType.marketCloseSoon.toString(), TradeMsgType.marketCloseSoon.toString()).forJob(genMarketMsgJob).
-	        		withSchedule(CronScheduleBuilder.cronSchedule(at.getMarketCloseCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
+	        Trigger preMarketCloseTrigger = TriggerBuilder.newTrigger().
+	        		withIdentity(MarketOpenCloseEvtType.preMarketClose.toString(), TradeMsgType.marketOpenClose.toString()).forJob(genMarketMsgJob).
+	        		withSchedule(CronScheduleBuilder.cronSchedule(at.getPreMarketCloseCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
 	        		build();
-	        scheduler.addJob(genMarketMsgJob, true);
-	        scheduler.scheduleJob(marketOpenTrigger);
-	        scheduler.scheduleJob(marketCloseTrigger);
+	        Trigger regularMarketOpenTrigger = TriggerBuilder.newTrigger().
+	        		withIdentity(MarketOpenCloseEvtType.regularMarketOpen.toString(), TradeMsgType.marketOpenClose.toString()).forJob(genMarketMsgJob).
+	        		withSchedule(CronScheduleBuilder.cronSchedule(at.getRegularMarketOpenCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
+	        		build();
+	        Trigger regularMarketCloseTrigger = TriggerBuilder.newTrigger().
+	        		withIdentity(MarketOpenCloseEvtType.regularMarketClose.toString(), TradeMsgType.marketOpenClose.toString()).forJob(genMarketMsgJob).
+	        		withSchedule(CronScheduleBuilder.cronSchedule(at.getRegularMarketClosedCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
+	        		build();
+	        Trigger afterMarketOpenTrigger = TriggerBuilder.newTrigger().
+	        		withIdentity(MarketOpenCloseEvtType.afterMarketOpen.toString(), TradeMsgType.marketOpenClose.toString()).forJob(genMarketMsgJob).
+	        		withSchedule(CronScheduleBuilder.cronSchedule(at.getAfterHourMarketOpenCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
+	        		build();
+	        Trigger afterMarketCloseTrigger = TriggerBuilder.newTrigger().
+	        		withIdentity(MarketOpenCloseEvtType.afterMarketClose.toString(), TradeMsgType.marketOpenClose.toString()).forJob(genMarketMsgJob).
+	        		withSchedule(CronScheduleBuilder.cronSchedule(at.getAfterHourMarketCloseCron()).inTimeZone(TimeZone.getTimeZone("EST"))).
+	        		build();
+	        
+	        scheduler.addJob(genMarketMsgJob, true); 
+	        scheduler.scheduleJob(preMarketOpenTrigger);
+	        scheduler.scheduleJob(preMarketCloseTrigger);
+	        scheduler.scheduleJob(regularMarketOpenTrigger);
+	        scheduler.scheduleJob(regularMarketCloseTrigger);
+	        scheduler.scheduleJob(afterMarketOpenTrigger);
+	        scheduler.scheduleJob(afterMarketCloseTrigger);
 	        scheduler.start();
 		}catch(Exception e){
 			logger.error("", e);
 		}
 	}
+	//preMarketOpenCron = "0 0 6 ? * 2-6";
+	//preMarketCloseCron = "0 28 9 ? * 2-6";
+	//regularMarketOpenCron="0 29 9 ? * 2-6";
+	//regularMarketClosedCron = "0 0 16 ? * 2-6";
+	//afterHourMarketOpenCron = "0 2 16 ? * 2-6";
+	//afterHourMarketCloseCron = "0 0 20 ? * 2-6";
+	private static String preMarketOpenHM = "06:00";
+	private static String preMarketCloseHM = "09:28";
+	private static String regularMarketOpenHM = "09:29";
+	private static String regularMarketCloseHM = "16:00";
+	private static String afterMarketOpenHM = "16:02";
+	private static String afterMarketCloseHM = "20:00";
+	
+	public static MarketStatusType getMarketStatus(){
+		Calendar cal = Calendar.getInstance();
+		cal.setTimeZone(TimeZone.getTimeZone("EST"));
+		cal.setTime(new Date());
+		int dow = cal.get(Calendar.DAY_OF_WEEK);
+		if (dow == Calendar.SATURDAY || dow == Calendar.SUNDAY){
+			return MarketStatusType.Close;
+		}
+		SimpleDateFormat hmSdf = new SimpleDateFormat("HH:mm");
+		hmSdf.setTimeZone(TimeZone.getTimeZone("EST"));
+		String hourMinute = hmSdf.format(cal.getTime());
+		if (StringUtil.inRange(preMarketOpenHM, preMarketCloseHM, hourMinute)){
+			return MarketStatusType.Pre;
+		}else if (StringUtil.inRange(regularMarketOpenHM, regularMarketCloseHM, hourMinute)){
+			return MarketStatusType.Regular;
+		}else if (StringUtil.inRange(afterMarketOpenHM, afterMarketCloseHM, hourMinute)){
+			return MarketStatusType.After;
+		}else{
+			return MarketStatusType.Close;
+		}
+	}
+	
+	private List<Thread> streamMgrList = new ArrayList<Thread>();
+	
+	//using steam feeding or quote query
+	private List<Thread> getAndStartStreamMgrs(boolean useStream){
+		List<Thread> tl = new ArrayList<Thread>();
+		List<String> symbolList = new ArrayList<String>();
+        symbolList.addAll(symbols);
+        int total=0;
+		int totalDataThread = symbolList.size()/StreamMgr.REQUEST_MAX_SYMBOLS + 1;
+		while (total<symbolList.size()){
+			int end = Math.min(total+StreamMgr.REQUEST_MAX_SYMBOLS, symbolList.size());
+			List<String> sl = symbolList.subList(total, end);
+			Runnable streamMgr = null;
+			if (useStream){
+				streamMgr = new StreamMgr(sl, (TradeKingConnector) getTm(), getTradeDataMgr(), getProxyConf());
+			}else{
+				streamMgr = new StreamSimulator(sl, (TradeKingConnector) getTm(), getTradeDataMgr(), totalDataThread);
+			}
+			Thread t = new Thread(streamMgr);
+			tl.add(t);
+			t.start();
+			total=end;
+		}
+		return tl;
+	}
+	
+	public void startStreamMgr(MarketStatusType mst){
+		if (mst == MarketStatusType.Close){
+			for (Thread t: streamMgrList){
+				t.interrupt();
+			}
+			streamMgrList.clear();
+		}else if (mst == MarketStatusType.Regular){
+			for (Thread t: streamMgrList){
+				t.interrupt();
+			}
+			streamMgrList.clear();
+			List<Thread> tl = getAndStartStreamMgrs(true);
+			streamMgrList.addAll(tl);
+		}else if (mst == MarketStatusType.Pre || mst == MarketStatusType.After){
+			for (Thread t: streamMgrList){
+				t.interrupt();
+			}
+			streamMgrList.clear();
+			List<Thread> tl = getAndStartStreamMgrs(false);
+			streamMgrList.addAll(tl);
+		}else{
+			logger.error(String.format("unsupported market status type: %s", mst));
+		}
+	}
+	
 	public static void main(String[] args){
 		try{
 			AutoTrader at = new AutoTrader();
@@ -375,28 +521,9 @@ public class AutoTrader implements Runnable {
 			at.initEngine();
 			new Thread(at).start();
 			//
-			StockConfig sc = StockUtil.getStockConfig(at.getBaseMarketId());
-	        TradeDataMgr tradeDataMgr = new TradeDataMgr(at, sc);
-	        List<String> symbolList = new ArrayList<String>();
-	        symbolList.addAll(at.symbols);
-	        int total=0;
-			HttpClient client = new HttpClient();
-			client.start();
-			int totalDataThread = symbolList.size()/StreamMgr.REQUEST_MAX_SYMBOLS + 1;
-			while (total<symbolList.size()){
-				int end = Math.min(total+StreamMgr.REQUEST_MAX_SYMBOLS, symbolList.size());
-				List<String> sl = symbolList.subList(total, end);
-				Runnable streamMgr = null;
-				if (at.useStream){
-					streamMgr = new StreamMgr(sl, (TradeKingConnector) at.getTm(), tradeDataMgr, at.getProxyConf());
-				}else{
-					streamMgr = new StreamSimulator(sl, (TradeKingConnector) at.getTm(), tradeDataMgr, totalDataThread);
-				}
-				new Thread(streamMgr).start();
-				total=end;
-			}
+			at.startStreamMgr(getMarketStatus());
 	        //
-	        HistoryDumpMgr hdm = new HistoryDumpMgr(at.getHistoryDumpProperties(), tradeDataMgr, sc);
+	        HistoryDumpMgr hdm = new HistoryDumpMgr(at.getHistoryDumpProperties(), at.getTradeDataMgr(), at.getSc());
 	        new Thread(hdm).start();
 	        //
 	        AutoTrader.startScheduler(at);
@@ -421,18 +548,6 @@ public class AutoTrader implements Runnable {
 	}
 	public void setBaseMarketId(String baseMarketId) {
 		this.baseMarketId = baseMarketId;
-	}
-	public String getMarketOpenCron() {
-		return marketOpenCron;
-	}
-	public void setMarketOpenCron(String marketOpenCron) {
-		this.marketOpenCron = marketOpenCron;
-	}
-	public String getMarketCloseCron() {
-		return marketCloseCron;
-	}
-	public void setMarketCloseCron(String marketCloseCron) {
-		this.marketCloseCron = marketCloseCron;
 	}
 	public boolean isPreview() {
 		return isPreview;
@@ -477,4 +592,77 @@ public class AutoTrader implements Runnable {
 	public void setDbConf(DBConnConf dbConf) {
 		this.dbConf = dbConf;
 	}
+
+	public String getRegularMarketOpenCron() {
+		return regularMarketOpenCron;
+	}
+
+	public void setRegularMarketOpenCron(String regularMarketOpenCron) {
+		this.regularMarketOpenCron = regularMarketOpenCron;
+	}
+
+	public String getRegularMarketClosedCron() {
+		return regularMarketClosedCron;
+	}
+
+	public void setRegularMarketClosedCron(String regularMarketClosedCron) {
+		this.regularMarketClosedCron = regularMarketClosedCron;
+	}
+
+	public String getPreMarketOpenCron() {
+		return preMarketOpenCron;
+	}
+
+	public void setPreMarketOpenCron(String preMarketOpenCron) {
+		this.preMarketOpenCron = preMarketOpenCron;
+	}
+
+	public String getPreMarketCloseCron() {
+		return preMarketCloseCron;
+	}
+
+	public void setPreMarketCloseCron(String preMarketCloseCron) {
+		this.preMarketCloseCron = preMarketCloseCron;
+	}
+
+	public String getAfterHourMarketOpenCron() {
+		return afterHourMarketOpenCron;
+	}
+
+	public void setAfterHourMarketOpenCron(String afterHourMarketOpenCron) {
+		this.afterHourMarketOpenCron = afterHourMarketOpenCron;
+	}
+
+	public String getAfterHourMarketCloseCron() {
+		return afterHourMarketCloseCron;
+	}
+
+	public void setAfterHourMarketCloseCron(String afterHourMarketCloseCron) {
+		this.afterHourMarketCloseCron = afterHourMarketCloseCron;
+	}
+
+	public Map<String, TreeMap<IntervalUnit, List<TradeStrategy>>> getSiutsMap() {
+		return siutsMap;
+	}
+
+	public void setSiutsMap(Map<String, TreeMap<IntervalUnit, List<TradeStrategy>>> siutsMap) {
+		this.siutsMap = siutsMap;
+	}
+
+	public StockConfig getSc() {
+		return sc;
+	}
+
+	public void setSc(StockConfig sc) {
+		this.sc = sc;
+	}
+
+	public TradeDataMgr getTradeDataMgr() {
+		return tradeDataMgr;
+	}
+
+	public void setTradeDataMgr(TradeDataMgr tradeDataMgr) {
+		this.tradeDataMgr = tradeDataMgr;
+	}
+
 }

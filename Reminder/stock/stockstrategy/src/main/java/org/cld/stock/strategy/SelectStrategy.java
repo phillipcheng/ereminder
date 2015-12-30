@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.common.CandleQuote;
 import org.cld.stock.common.CqIndicators;
+import org.cld.stock.common.DivSplit;
 import org.cld.stock.common.StockConfig;
 import org.cld.stock.common.StockUtil;
 import org.cld.stock.indicator.Expression;
@@ -21,6 +22,7 @@ import org.cld.util.CombPermUtil;
 import org.cld.util.DataMapper;
 import org.cld.util.JsonUtil;
 import org.cld.util.StringUtil;
+import org.cld.util.jdbc.DBConnConf;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -62,6 +64,7 @@ public abstract class SelectStrategy {
 	//to be overriden by subclass
 	public void tradeCompleted(OrderFilled of, boolean success){}
 	public abstract SelectCandidateResult selectByStream(CqIndicators cqi);
+	public void xdivDay(DivSplit ds, DBConnConf dbConf){};//when xdiv day comes
 	
 	@JsonIgnore
 	public Map<String, DataMapper> getDataMappers() {
@@ -143,7 +146,7 @@ public abstract class SelectStrategy {
 		}
 	}
 	//called after initProp, before init
-	protected Map<String, SelectStrategy> genBsMap(PropertiesConfiguration pc){
+	protected Map<String, SelectStrategy> genBsMap(PropertiesConfiguration pc, DBConnConf dbconf){
 		//this is the seed SelectStrategy
 		if (pc.containsKey(PROP_SYMBOLS)){
 			String symbolFile = pc.getString(PROP_SYMBOLS);
@@ -222,8 +225,9 @@ public abstract class SelectStrategy {
 		}
 	}
 	
-	private static SelectStrategy initBs(Class selectClass, Map<String, Object> pm, String baseMarketId, PropertiesConfiguration props, String strategyName, 
-			Map<String, List<SelectStrategy>> bsMap ){
+	private static SelectStrategy initBs(Class selectClass, Map<String, Object> pm, String baseMarketId, 
+			PropertiesConfiguration props, String strategyName, 
+			Map<String, List<SelectStrategy>> bsMap, DBConnConf dbconf){
 		try{
 			SelectStrategy bs = (SelectStrategy) selectClass.newInstance();
 			bs.setBaseMarketId(baseMarketId);
@@ -232,7 +236,7 @@ public abstract class SelectStrategy {
 			bs.setName(strategyName);
 			bs.init();
 			if (bsMap!=null){
-				Map<String, SelectStrategy> map = bs.genBsMap(props);
+				Map<String, SelectStrategy> map = bs.genBsMap(props, dbconf);
 				for (String symbol:map.keySet()){
 					List<SelectStrategy> bsl = bsMap.get(symbol);
 					if (bsl==null){
@@ -251,7 +255,7 @@ public abstract class SelectStrategy {
 		}
 	}
 	
-	public static Map<String, List<SelectStrategy>> genMap(PropertiesConfiguration props, String simpleStrategyName, String baseMarketId){
+	public static Map<String, List<SelectStrategy>> genMap(PropertiesConfiguration props, String simpleStrategyName, String baseMarketId, DBConnConf dbconf){
 		Map<String, List<SelectStrategy>> bsMap =new HashMap<String, List<SelectStrategy>>();
 		Map<String, Object[]> paramMap = new HashMap<String,Object[]>();
 		Iterator<String> paramKeyIt = props.getKeys(KEY_PARAM);
@@ -264,10 +268,10 @@ public abstract class SelectStrategy {
 			List<Map<String,Object>> paramsMapList = CombPermUtil.eachOne(paramMap);
 			if (paramsMapList.size()>0){
 				for (Map<String,Object> pm:paramsMapList){
-					initBs(selectClass, pm, baseMarketId, props, simpleStrategyName, bsMap);
+					initBs(selectClass, pm, baseMarketId, props, simpleStrategyName, bsMap, dbconf);
 				}
 			}else{//no param at all
-				initBs(selectClass, null, baseMarketId, props, simpleStrategyName, bsMap);
+				initBs(selectClass, null, baseMarketId, props, simpleStrategyName, bsMap, dbconf);
 			}
 		}catch(Exception e){
 			logger.error("", e);
@@ -276,7 +280,7 @@ public abstract class SelectStrategy {
 		return bsMap;
 	}
 	
-	public static List<SelectStrategy> genList(PropertiesConfiguration props, String simpleStrategyName, String baseMarketId){
+	public static List<SelectStrategy> genList(PropertiesConfiguration props, String simpleStrategyName, String baseMarketId, DBConnConf dbconf){
 		List<SelectStrategy> bsList=new ArrayList<SelectStrategy>();
 		Map<String, Object[]> paramMap = new HashMap<String,Object[]>();
 		Iterator<String> paramKeyIt = props.getKeys(KEY_PARAM);
@@ -289,10 +293,10 @@ public abstract class SelectStrategy {
 			List<Map<String,Object>> paramsMapList = CombPermUtil.eachOne(paramMap);
 			if (paramsMapList.size()>0){
 				for (Map<String,Object> pm:paramsMapList){
-					bsList.add(initBs(selectClass, pm, baseMarketId, props, simpleStrategyName, null));
+					bsList.add(initBs(selectClass, pm, baseMarketId, props, simpleStrategyName, null, dbconf));
 				}
 			}else{//no param at all
-				bsList.add(initBs(selectClass, null, baseMarketId, props, simpleStrategyName, null));
+				bsList.add(initBs(selectClass, null, baseMarketId, props, simpleStrategyName, null, dbconf));
 			}
 		}catch(Exception e){
 			logger.error("", e);

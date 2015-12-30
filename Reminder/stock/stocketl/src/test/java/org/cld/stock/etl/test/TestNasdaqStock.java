@@ -1,11 +1,13 @@
 package org.cld.stock.etl.test;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.common.StockConfig;
 import org.cld.stock.common.StockUtil;
+import org.cld.stock.etl.ETLUtil;
 import org.cld.stock.etl.StockBase;
 import org.cld.stock.etl.base.NasdaqETLConfig;
 import org.cld.stock.etl.base.NasdaqStockBase;
@@ -144,15 +146,19 @@ public class TestNasdaqStock {
 	}	
 	@Test
 	public void testCmd_Issue_Dividend(){
-		nsb.runCmd(NasdaqETLConfig.ISSUE_DIVIDEND, marketId, "2015-08-01", sdf.format(sc.getLatestOpenMarketDate(new Date())));
+		nsb.runCmd(NasdaqETLConfig.ISSUE_DIVIDEND_HISTORY, marketId, "2015-08-01", sdf.format(sc.getLatestOpenMarketDate(new Date())));
 	}
 	@Test
 	public void testCmd_Issue_ExDivSplit(){
 		nsb.runCmd(NasdaqETLConfig.ISSUE_XDIVSPLIT_HISTORY, marketId, "2011-08-01", sdf.format(sc.getLatestOpenMarketDate(new Date())));
 	}
 	@Test
-	public void testCmd_Issue_Split(){
-		nsb.runCmd(NasdaqETLConfig.ISSUE_SPLIT, marketId, "2011-08-01", sdf.format(sc.getLatestOpenMarketDate(new Date())));
+	public void testCmd_Upcoming_Split(){
+		nsb.runCmd(NasdaqETLConfig.ISSUE_UPCOMING_SPLIT, marketId, "2011-08-01", sdf.format(sc.getLatestOpenMarketDate(new Date())));
+	}
+	@Test
+	public void testCmd_Upcoming_Dividend(){
+		nsb.runCmd(NasdaqETLConfig.ISSUE_UPCOMING_DIVIDEND, marketId, "2015-12-01", sdf.format(sc.getLatestOpenMarketDate(new Date())));
 	}
 	@Test
 	public void testCmd_QuoteShortInterest(){
@@ -176,5 +182,18 @@ public class TestNasdaqStock {
 		String pFile = "client1-v2.properties";
 		StockBase sb = new NasdaqStockBase(pFile, marketId, null, null);
 		sb.fqReady(new Date());
+	}
+	
+	@Test
+	public void testCmd_Upcoming_Split_Hadoopless(){
+		String[] csvs = nsb.runCmdHadoopless(NasdaqETLConfig.ISSUE_UPCOMING_SPLIT, marketId, "2011-08-01", 
+				sdf.format(sc.getLatestOpenMarketDate(new Date())));
+		logger.info(Arrays.toString(csvs));
+	}
+	@Test
+	public void testCmd_Upcoming_Dividend_Hadoopless(){
+		String[] csvs = nsb.runCmdHadoopless(NasdaqETLConfig.ISSUE_UPCOMING_DIVIDEND, marketId, "2015-12-24", 
+				sdf.format(sc.getLatestOpenMarketDate(new Date())));
+		logger.info(Arrays.toString(csvs));
 	}
 }
