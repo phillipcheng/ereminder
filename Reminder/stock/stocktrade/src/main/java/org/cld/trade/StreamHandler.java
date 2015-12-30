@@ -42,7 +42,7 @@ public class StreamHandler implements Response.ContentListener, Response.Complet
 	
 	@Override
 	public void onBegin(Response response) {
-		//logger.info(String.format("response begin %d", response.getStatus()));
+		logger.info(String.format("response begin %d", response.getStatus()));
 	}
 	
 	@Override
@@ -51,7 +51,7 @@ public class StreamHandler implements Response.ContentListener, Response.Complet
 		if (status == 200){
 			logger.info("Successfully connected");
 		}else{
-			//logger.error("Error Code Received: " + status);
+			logger.error("Error Code Received: " + status);
 		}
 		finished = true;
 	}

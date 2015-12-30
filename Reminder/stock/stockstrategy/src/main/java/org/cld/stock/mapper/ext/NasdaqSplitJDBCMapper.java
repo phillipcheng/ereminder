@@ -2,8 +2,6 @@ package org.cld.stock.mapper.ext;
 
 import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.common.DivSplit;
@@ -50,4 +48,16 @@ public class NasdaqSplitJDBCMapper extends JDBCMapper{
 		return true;
 	}
 
+	//SNFCA,5.000%,2016-02-05,2016-02-05,, 
+	//AFSI,2 : 1,2016-02-02,2016-02-03,2015-12-15,
+	@Override
+	public String getInsertSql(String csv){
+		String[] fields = csv.split(",", -1);
+		if (fields.length>=5){
+			return String.format("'%s','%s','%s','%s','%s'", 
+				fields[0], fields[1], fields[2], fields[3], fields[4]);
+		}else{
+			return null;
+		}
+	}
 }

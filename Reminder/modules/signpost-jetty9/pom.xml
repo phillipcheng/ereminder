@@ -19,7 +19,6 @@
 		<groupId>org.eclipse.jetty</groupId>
 		<artifactId>jetty-client</artifactId>
 		<version>9.3.6.v20151106</version>
-		<scope>compile</scope>
 	</dependency>
 	<dependency>
     	<groupId>org.apache.logging.log4j</groupId>

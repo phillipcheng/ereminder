@@ -344,4 +344,36 @@ public class SqlUtil {
 		}
 		return con;
 	}
+	
+	public static void insertCsvs(DBConnConf dbconf, JDBCMapper mapper, String[] csvlines){
+		Connection con = null;
+		try{
+			con = SqlUtil.getConnection(dbconf);
+			for (int i=csvlines.length-1; i>=0; i--){
+				String csv = csvlines[i];
+				Statement statement=null;
+				try{
+					String values = mapper.getInsertSql(csv);
+					if (values!=null){
+						statement = con.createStatement();
+						String insertSql = String.format("replace into %s values(%s)", mapper.getTableName(), values);
+						statement.executeUpdate(insertSql);
+					}
+				}catch(Exception e){
+					String msg = e.getMessage();
+					if (msg.contains("truncation")){
+						//ignore
+					}else{
+						logger.error("",e);
+					}
+				}finally{
+					closeResources(null, statement);
+				}
+			}
+		}catch(Exception e){
+			logger.error("", e);
+		}finally{
+			SqlUtil.closeResources(con, null);
+		}
+	}
 }

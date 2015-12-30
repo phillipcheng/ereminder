@@ -16,6 +16,7 @@ import java.util.TreeMap;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.datacrawl.CrawlConf;
 import org.cld.stock.common.DivSplit;
 import org.cld.stock.common.StockConfig;
 import org.cld.stock.common.StockUtil;
@@ -29,6 +30,7 @@ import org.cld.stock.strategy.StockOrder.ActionType;
 import org.cld.stock.strategy.StockOrder.OrderType;
 import org.cld.stock.strategy.StockOrder.TimeInForceType;
 import org.cld.stock.strategy.persist.StrategyPersistMgr;
+import org.cld.taskmgr.TaskUtil;
 import org.cld.trade.evt.MarketOpenCloseEvtType;
 import org.cld.trade.evt.MarketStatusType;
 import org.cld.trade.evt.MonitorBuyOrderTrdMsg;
@@ -56,6 +58,7 @@ public class AutoTrader implements Runnable {
 	private static final String TRADE_CONNECTOR="trade.connector";
 	private static final String HISTORY_DUMP="history.dump";
 	private static final String STRATEGIES="strategies";
+	private static final String CRAWL_CONF="crawl.conf";
 	
 	private static final String USESTREAM_KEY="use.stream";
 	private static final String USE_AMOUNT="use.amount";
@@ -69,6 +72,8 @@ public class AutoTrader implements Runnable {
 	private Map<String, TradeStrategy> tsInstMap = new HashMap<String, TradeStrategy>();//from key(symbol_bsname) to trade-strategy instance
 	private Set<String> symbols = new HashSet<String>();
 	private String historyDumpProperties;
+	private String crawlconfProperties;
+	private CrawlConf cconf;
 
 	private ProxyConf proxyConf;
 	private DBConnConf dbConf;
@@ -102,6 +107,9 @@ public class AutoTrader implements Runnable {
 			this.historyDumpProperties= pc.getString(HISTORY_DUMP);
 			//setup trade connctor
 			tradeConnector = new TradeKingConnector(pc.getString(TRADE_CONNECTOR));
+			//setup cconf
+			crawlconfProperties = pc.getString(CRAWL_CONF);
+			setCconf((CrawlConf) TaskUtil.getTaskConf(crawlconfProperties));
 			//setup strategy
 			List<Object> strategyFiles = pc.getList(STRATEGIES);
 			for (int i=0; i<strategyFiles.size(); i++){
@@ -239,6 +247,7 @@ public class AutoTrader implements Runnable {
 	}
 	
 	public void applySplitDiv(Date dt){
+		logger.info("applySplitDiv!");
 		List<DivSplit> dsList = StrategyPersistMgr.getTodayDiv(dbConf, dt);
 		dsList.addAll(StrategyPersistMgr.getTodaySplit(dbConf, dt));
 		for (DivSplit div:dsList){
@@ -576,93 +585,83 @@ public class AutoTrader implements Runnable {
 	public String getHistoryDumpProperties() {
 		return historyDumpProperties;
 	}
-
 	public ProxyConf getProxyConf() {
 		return proxyConf;
 	}
-
 	public void setProxyConf(ProxyConf proxyConf) {
 		this.proxyConf = proxyConf;
 	}
-
 	public DBConnConf getDbConf() {
 		return dbConf;
 	}
-
 	public void setDbConf(DBConnConf dbConf) {
 		this.dbConf = dbConf;
 	}
-
 	public String getRegularMarketOpenCron() {
 		return regularMarketOpenCron;
 	}
-
 	public void setRegularMarketOpenCron(String regularMarketOpenCron) {
 		this.regularMarketOpenCron = regularMarketOpenCron;
 	}
-
 	public String getRegularMarketClosedCron() {
 		return regularMarketClosedCron;
 	}
-
 	public void setRegularMarketClosedCron(String regularMarketClosedCron) {
 		this.regularMarketClosedCron = regularMarketClosedCron;
 	}
-
 	public String getPreMarketOpenCron() {
 		return preMarketOpenCron;
 	}
-
 	public void setPreMarketOpenCron(String preMarketOpenCron) {
 		this.preMarketOpenCron = preMarketOpenCron;
 	}
-
 	public String getPreMarketCloseCron() {
 		return preMarketCloseCron;
 	}
-
 	public void setPreMarketCloseCron(String preMarketCloseCron) {
 		this.preMarketCloseCron = preMarketCloseCron;
 	}
-
 	public String getAfterHourMarketOpenCron() {
 		return afterHourMarketOpenCron;
 	}
-
 	public void setAfterHourMarketOpenCron(String afterHourMarketOpenCron) {
 		this.afterHourMarketOpenCron = afterHourMarketOpenCron;
 	}
-
 	public String getAfterHourMarketCloseCron() {
 		return afterHourMarketCloseCron;
 	}
-
 	public void setAfterHourMarketCloseCron(String afterHourMarketCloseCron) {
 		this.afterHourMarketCloseCron = afterHourMarketCloseCron;
 	}
-
 	public Map<String, TreeMap<IntervalUnit, List<TradeStrategy>>> getSiutsMap() {
 		return siutsMap;
 	}
-
 	public void setSiutsMap(Map<String, TreeMap<IntervalUnit, List<TradeStrategy>>> siutsMap) {
 		this.siutsMap = siutsMap;
 	}
-
 	public StockConfig getSc() {
 		return sc;
 	}
-
 	public void setSc(StockConfig sc) {
 		this.sc = sc;
 	}
-
 	public TradeDataMgr getTradeDataMgr() {
 		return tradeDataMgr;
 	}
-
 	public void setTradeDataMgr(TradeDataMgr tradeDataMgr) {
 		this.tradeDataMgr = tradeDataMgr;
+	}
+	public CrawlConf getCconf() {
+		return cconf;
+	}
+	public void setCconf(CrawlConf cconf) {
+		this.cconf = cconf;
+	}
+	public String getCrawlconfProperties() {
+		return crawlconfProperties;
+	}
+	public void setCrawlconfProperties(String crawlconfProperties) {
+		this.crawlconfProperties = crawlconfProperties;
 	}
 
 }

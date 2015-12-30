@@ -37,6 +37,9 @@ create table NasdaqExDivSplit(stockid varchar(150), dt Date, info varchar(150), 
 drop table if exists NasdaqSplit;
 create table NasdaqSplit(stockid varchar(150), ratio varchar(50), paydate Date, exdt Date, dt Date, primary key (stockid, exdt));
 
+drop table if exists NasdaqUpcomingDividend;
+create table NasdaqUpcomingDividend(stockid varchar(150), exdt Date, dividend decimal(10,4), annualDividend decimal(10,4), recordDt Date, announceDt Date, payDt Date, primary key (stockid, exdt));
+
 #nasdaq-fq-quote-historical
 drop table if exists NasdaqFqHistory;
 create table NasdaqFqHistory(stockid varchar(150), dt Date, open decimal(20,2), high decimal(20,2), low decimal(20,2), close decimal(20,2), volume bigint, adjClose decimal(20,2), primary key (stockid, dt));

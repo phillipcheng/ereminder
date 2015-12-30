@@ -28,4 +28,8 @@ public abstract class JDBCMapper implements DataMapper {
 	public boolean oneFetch(){
 		return true;
 	}
+	
+	public String getInsertSql(String csv){
+		return null;
+	}
 }

@@ -8,6 +8,7 @@ import org.cld.trade.AutoTrader;
 import org.cld.trade.HistoryDumpMgr;
 import org.cld.trade.TradeDataMgr;
 import org.cld.trade.TradeSimulatorConnector;
+import org.cld.trade.evt.MarketOpenCloseTrdMsg;
 import org.cld.trade.evt.MarketStatusType;
 import org.junit.Test;
 
@@ -49,5 +50,11 @@ public class TestAutoTrader {
 		Thread.sleep(5000);
 		at.startStreamMgr(MarketStatusType.Regular);
 		Thread.sleep(5000);
+	}
+	
+	@Test
+	public void testCrawlUpdate(){
+		AutoTrader at = new AutoTrader();
+		MarketOpenCloseTrdMsg.crawlUpdate(at);
 	}
 }

@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.cld.stock.common.DivSplit;
 import org.cld.stock.mapper.ext.NasdaqDividendJDBCMapper;
 import org.cld.stock.mapper.ext.NasdaqSplitJDBCMapper;
+import org.cld.stock.mapper.ext.NasdaqUpcomingDivMapper;
 import org.cld.util.jdbc.DBConnConf;
 import org.cld.util.jdbc.SqlUtil;
 
@@ -73,9 +74,9 @@ public class StrategyPersistMgr {
 	}
 	
 	public static List<DivSplit> getTodayDiv(DBConnConf dbconf, Date dt){
-		NasdaqDividendJDBCMapper mapper = NasdaqDividendJDBCMapper.getInstance();
+		NasdaqUpcomingDivMapper mapper = NasdaqUpcomingDivMapper.getInstance();
 		Connection con = null;
-		String sql = String.format("select * from %s where EffDate='%s'", 
+		String sql = String.format("select * from %s where exdt='%s'", 
 				mapper.getTableName(), sdf.format(dt));
 		try{
 			con = SqlUtil.getConnection(dbconf);
