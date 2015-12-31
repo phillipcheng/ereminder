@@ -38,6 +38,10 @@ public class MarketOpenCloseTrdMsg extends TradeMsg {
 		ocType = MarketOpenCloseEvtType.valueOf(triggerName);
 	}
 	
+	@Override
+	public String toString(){
+		return String.format("msgId:%s, octype:%s", getMsgId(), ocType);
+	}
 
 	private static final String[] crawlCmds = new String[]{NasdaqETLConfig.ISSUE_UPCOMING_DIVIDEND, NasdaqETLConfig.ISSUE_UPCOMING_SPLIT};
 	private static Map<String, JDBCMapper> mapper = new HashMap<String, JDBCMapper>();
@@ -71,7 +75,8 @@ public class MarketOpenCloseTrdMsg extends TradeMsg {
 	@Override
 	public TradeMsgPR process(AutoTrader at) {
 		TradeMsgPR tmpr = new TradeMsgPR();
-		MarketStatusType mst = AutoTrader.getMarketStatus();
+		MarketStatusType mst = AutoTrader.getMarketStatus(at);
+		logger.info(String.format("market status is %s", mst));
 		at.startStreamMgr(mst);
 		if (ocType == MarketOpenCloseEvtType.preMarketOpen){
 			//find all impacted symbols by ExDiv

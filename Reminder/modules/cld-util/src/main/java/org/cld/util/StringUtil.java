@@ -323,7 +323,7 @@ public class StringUtil {
 	}
 	
 	public static boolean inRange(String begin, String end, String compare){
-		if (compare.compareTo(begin)>=0 && compare.compareTo(end)<=0){
+		if (compare.compareTo(begin)>=0 && compare.compareTo(end)<0){
 			return true;
 		}else{
 			return false;

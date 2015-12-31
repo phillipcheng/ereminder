@@ -12,18 +12,17 @@ import org.quartz.JobExecutionException;
 public class GenMsgQuartzJob implements Job {
 	
 	protected static Logger logger =  LogManager.getLogger(GenMsgQuartzJob.class);
-	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
+	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	public GenMsgQuartzJob(){
 	}
 	
 	@Override
 	public void execute(JobExecutionContext context) throws JobExecutionException {
-		logger.info(String.format("triggered at: %s", sdf.format(new Date())));
 		AutoTrader at = (AutoTrader) context.getMergedJobDataMap().get(AutoTrader.JDM_KEY_AT);
 		String triggerName=context.getTrigger().getKey().getName();
 		TradeMsg trdMsg = new MarketOpenCloseTrdMsg(triggerName);
 		at.addMsg(trdMsg);
-		logger.info(String.format("msg added %s", trdMsg));
+		logger.info(String.format("triggered at %s, msg added %s", sdf.format(new Date()), trdMsg));
 	}
 }

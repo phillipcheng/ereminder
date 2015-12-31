@@ -437,20 +437,27 @@ public class AutoTrader implements Runnable {
 			logger.error("", e);
 		}
 	}
-	//preMarketOpenCron = "0 0 6 ? * 2-6";
-	//preMarketCloseCron = "0 28 9 ? * 2-6";
-	//regularMarketOpenCron="0 29 9 ? * 2-6";
-	//regularMarketClosedCron = "0 0 16 ? * 2-6";
-	//afterHourMarketOpenCron = "0 2 16 ? * 2-6";
-	//afterHourMarketCloseCron = "0 0 20 ? * 2-6";
-	private static String preMarketOpenHM = "06:00";
-	private static String preMarketCloseHM = "09:28";
-	private static String regularMarketOpenHM = "09:29";
-	private static String regularMarketCloseHM = "16:00";
-	private static String afterMarketOpenHM = "16:02";
-	private static String afterMarketCloseHM = "20:00";
 	
-	public static MarketStatusType getMarketStatus(){
+	private static String getHM(String cronExp){
+		String[] ele = cronExp.split(" ");
+		String min = ele[1];
+		String hour = ele[2];
+		if (hour.length()==1){
+			hour = "0" + hour;
+		}
+		if (min.length()==1){
+			min = "0"+min;
+		}
+		return String.format("%s:%s", hour, min);
+	}
+	
+	public static MarketStatusType getMarketStatus(AutoTrader at){
+		String preMarketOpenHM = getHM(at.getPreMarketOpenCron());
+		String preMarketCloseHM = getHM(at.getPreMarketCloseCron());
+		String regularMarketOpenHM = getHM(at.getRegularMarketOpenCron());
+		String regularMarketCloseHM = getHM(at.getRegularMarketClosedCron());
+		String afterMarketOpenHM = getHM(at.getAfterHourMarketOpenCron());
+		String afterMarketCloseHM = getHM(at.getAfterHourMarketCloseCron());
 		Calendar cal = Calendar.getInstance();
 		cal.setTimeZone(TimeZone.getTimeZone("EST"));
 		cal.setTime(new Date());
@@ -461,6 +468,7 @@ public class AutoTrader implements Runnable {
 		SimpleDateFormat hmSdf = new SimpleDateFormat("HH:mm");
 		hmSdf.setTimeZone(TimeZone.getTimeZone("EST"));
 		String hourMinute = hmSdf.format(cal.getTime());
+		//[,)
 		if (StringUtil.inRange(preMarketOpenHM, preMarketCloseHM, hourMinute)){
 			return MarketStatusType.Pre;
 		}else if (StringUtil.inRange(regularMarketOpenHM, regularMarketCloseHM, hourMinute)){
@@ -530,7 +538,9 @@ public class AutoTrader implements Runnable {
 			at.initEngine();
 			new Thread(at).start();
 			//
-			at.startStreamMgr(getMarketStatus());
+			MarketStatusType mst = getMarketStatus(at);
+			logger.info(String.format("market status is %s", mst));
+			at.startStreamMgr(mst);
 	        //
 	        HistoryDumpMgr hdm = new HistoryDumpMgr(at.getHistoryDumpProperties(), at.getTradeDataMgr(), at.getSc());
 	        new Thread(hdm).start();

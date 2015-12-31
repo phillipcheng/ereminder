@@ -23,7 +23,11 @@ public abstract class TradeMsg {
 	}
 	
 	public String getMsgId(){
-		return String.format("%s_%s_%s", msgType, scr.getSymbol(), sdf.format(scr.getDt()));
+		if (scr!=null){
+			return String.format("%s_%s_%s", msgType, scr.getSymbol(), sdf.format(scr.getDt()));
+		}else{
+			return String.format("%s", msgType);
+		}
 	}
 
 	public abstract TradeMsgPR process(AutoTrader at);
