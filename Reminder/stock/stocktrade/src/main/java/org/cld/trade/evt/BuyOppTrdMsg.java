@@ -46,13 +46,12 @@ public class BuyOppTrdMsg extends TradeMsg {
 		List<TradeMsg> tml = new ArrayList<TradeMsg>();
 		if (scr!=null){
 			Balance balance = at.getTm().getBalance();
-			float cash = balance.getCash();
 			Map<String, StockOrder> somap = AutoTrader.genStockOrderMap(scr, ts.getSs(), at.getUseAmount());
 			StockOrder buyOrder = somap.get(StockOrderType.buy.name());
 			if (buyOrder!=null){
 				//of for callback
 				OrderFilled of = new OrderFilled(scr.getSymbol(), buyOrder.getQuantity(), scr.getBuyPrice(), ActionType.buy, OrderType.limit);
-				if (cash>at.getUseAmount()){
+				if (balance.canBuy(at.getUseAmount())){
 					OrderResponse or = at.getTm().trySubmit(buyOrder, at.isPreview());
 					if (OrderResponse.SUCCESS.equals(or.getError()) && !at.isPreview()){
 						StockPosition sp = new StockPosition(scr, bsName, somap, or.getClientorderid());
@@ -65,7 +64,7 @@ public class BuyOppTrdMsg extends TradeMsg {
 					}
 				}else{
 					ts.getBs().tradeCompleted(of, false);
-					logger.info(String.format("cash amount %.2f less then needed %d", cash, at.getUseAmount()));
+					logger.info(String.format("balance %s less then needed %d", balance, at.getUseAmount()));
 				}
 			}else{
 				logger.error(String.format("SYSTEM error! buy order not found in somap:%s", somap));

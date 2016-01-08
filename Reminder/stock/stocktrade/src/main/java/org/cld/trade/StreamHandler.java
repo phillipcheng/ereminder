@@ -30,6 +30,7 @@ public class StreamHandler implements Response.ContentListener, Response.Complet
 	private TradeDataMgr tdm;
 	private boolean finished=false;
 	private int status=200;
+	private String buffer = null;
 	
 	public StreamHandler(TradeDataMgr tdm){
 		this.tdm = tdm;
@@ -60,7 +61,16 @@ public class StreamHandler implements Response.ContentListener, Response.Complet
 	public void onContent(Response response, ByteBuffer content) {
 		String strContent = new String(content.array());
 		logger.debug(strContent);
-		processData(strContent, tdm);
+		if (strContent.startsWith("{") && strContent.endsWith("}")){
+			processData(strContent, tdm);
+		}else if (strContent.startsWith("{")){
+			buffer = strContent;
+		}else if (strContent.endsWith("}")){
+			buffer += strContent;
+			processData(buffer, tdm);
+			buffer = null;
+			logger.info("processed 1 unterminated content.");
+		}
 	}
 
 	public static void processData(String line, TradeDataMgr tdm){

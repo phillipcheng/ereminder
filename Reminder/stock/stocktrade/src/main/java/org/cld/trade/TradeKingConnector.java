@@ -89,6 +89,9 @@ public class TradeKingConnector implements TradeApi{
 	private Token accessToken;
 
 	
+	public TradeKingConnector(){
+		this("tradeking.properties");
+	}
 	
 	public TradeKingConnector(String propFile){//1 proper file 1 account
 		try{
@@ -484,18 +487,20 @@ public class TradeKingConnector implements TradeApi{
 	}
 	
 	@Override
-	public List<Quote> getQuotes(String[] stockids){
-		return getQuotes(stockids, false);
-	}
-
-	public List<Quote> getQuotes(String[] stockids, boolean allInfo){
+	public List<Quote> getQuotes(String[] stockids, String[] fids, boolean extendedHour){
 		try{
-			String[] fids = Quote.getAllFields();
 			String symbols = StringUtils.join(stockids, ",");
+			if (fids==null){
+				if (extendedHour){
+					fids = Quote.getExtendeHourQuoteFields();
+				}else{
+					fids = Quote.getRegularQuoteFields();
+				}
+			}
 			String strFids = StringUtils.join(fids, ",");
 			OAuthRequest request = new OAuthRequest(Verb.POST, QUOTES_URL);
 			request.addBodyParameter("symbols", symbols);
-			if (!allInfo){
+			if (fids!=null){
 				request.addBodyParameter("fids", strFids);
 			}
 			service.signRequest(accessToken, request);
@@ -514,13 +519,13 @@ public class TradeKingConnector implements TradeApi{
 								List ql = (List) map.get(QUOTE);
 								for (Object o : ql){
 									map = (Map<String, Object>)o;
-									Quote q = new Quote(map);
+									Quote q = new Quote(map, extendedHour);
 									retql.add(q);
 								}
 							}else{
 								//single symbol quote is a map
 								map = (Map<String, Object>)oq;
-								Quote q = new Quote(map);
+								Quote q = new Quote(map, extendedHour);
 								retql.add(q);
 							}
 						}else{

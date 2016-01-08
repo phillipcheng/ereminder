@@ -1,5 +1,6 @@
 package org.cld.stock.strategy.persist;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class RangeEntry {
@@ -31,6 +32,24 @@ public class RangeEntry {
 	}
 	public void setBuyPrice(float buyPrice) {
 		this.buyPrice = buyPrice;
+	}
+	
+	@Override
+	public boolean equals(Object o){
+		if (o instanceof RangeEntry){
+			RangeEntry re = (RangeEntry) o;
+			return (this.symbol.equals(re.getSymbol()) && 
+					//this.dt.equals(re.getDt()) && 
+					this.buyPrice==re.getBuyPrice());
+		}else{
+			return false;
+		}
+	}
+
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	@Override
+	public String toString(){
+		return String.format("%s,%s,%.2f", symbol, sdf.format(dt), buyPrice);
 	}
 
 }

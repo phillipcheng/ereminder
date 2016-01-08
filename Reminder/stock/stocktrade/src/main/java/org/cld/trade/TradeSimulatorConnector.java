@@ -97,7 +97,7 @@ public class TradeSimulatorConnector implements TradeApi, Runnable {
 	}
 
 	@Override
-	public List<Quote> getQuotes(String[] stockids) {
+	public List<Quote> getQuotes(String[] stockids, String[] fids, boolean extendedHour){
 		List<Quote> ql = new ArrayList<Quote>();
 		for (String symbol:stockids){
 			if (!quoteMap.containsKey(symbol)){
@@ -149,6 +149,7 @@ public class TradeSimulatorConnector implements TradeApi, Runnable {
 				String line = null;
 				int cnt=0;
 				while ((line=br.readLine())!=null){
+					logger.debug(String.format("get line:%s", line));
 					cnt++;
 					TradeTick tt = StreamHandler.processCsvData(symbol, line, tdm);
 					updateOrderStatus(tt, symbol);

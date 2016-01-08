@@ -19,6 +19,6 @@ public interface TradeApi {
 	public List<Holding> getHolding();
 	public Map<String, OrderStatus> getOrderStatus();
 	public OrderStatus getTheOrderStatus(String orderId);
-	public List<Quote> getQuotes(String[] stockids);
+	public List<Quote> getQuotes(String[] stockids, String[] fids, boolean extendedHour);
 	public OrderResponse trySubmit(StockOrder sobuy, boolean submit);
 }

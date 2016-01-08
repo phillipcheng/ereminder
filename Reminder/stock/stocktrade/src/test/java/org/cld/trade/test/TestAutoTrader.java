@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.common.StockConfig;
 import org.cld.stock.common.StockUtil;
+import org.cld.stock.strategy.SellStrategy;
 import org.cld.trade.AutoTrader;
 import org.cld.trade.HistoryDumpMgr;
 import org.cld.trade.TradeDataMgr;
@@ -14,21 +15,37 @@ import org.junit.Test;
 
 public class TestAutoTrader {
 	private static Logger logger =  LogManager.getLogger(TestAutoTrader.class);
+	
 	@Test
-	public void test1() throws Exception {
+	public void testAutoTraderEngineNoStopSellOrder() throws Exception {
 		AutoTrader at = new AutoTrader();
 		StockConfig sc = StockUtil.getStockConfig(at.getBaseMarketId());
 		TradeDataMgr tdm = new TradeDataMgr(at, sc);
-		
-		TradeSimulatorConnector tradeApi = new TradeSimulatorConnector("C:\\mydoc\\myprojects\\ereminder\\Reminder\\modules\\trade\\input", tdm);
+		SellStrategy ss = at.getSs("FIT", "strategy.range.properties");
+		ss.setStopPercentage(11);
+		TradeSimulatorConnector tradeApi = new TradeSimulatorConnector("C:\\mydoc\\myprojects\\ereminder\\Reminder\\stock\\stocktrade\\input", tdm);
 		at.setTm(tradeApi);
 		at.initEngine();
 		new Thread(at).start();
 		
-		HistoryDumpMgr hdm = new HistoryDumpMgr(at.getHistoryDumpProperties(), tdm, sc);
-		new Thread(hdm).start();
 		new Thread(tradeApi).start();
-		Thread.sleep(3000000);//30 seconds
+		Thread.sleep(Long.MAX_VALUE);
+	}
+	
+	@Test
+	public void testAutoTraderEngineHasStopSellOrder() throws Exception {
+		AutoTrader at = new AutoTrader();
+		StockConfig sc = StockUtil.getStockConfig(at.getBaseMarketId());
+		TradeDataMgr tdm = new TradeDataMgr(at, sc);
+		SellStrategy ss = at.getSs("FIT", "strategy.range.properties");
+		ss.setStopPercentage(2);
+		TradeSimulatorConnector tradeApi = new TradeSimulatorConnector("C:\\mydoc\\myprojects\\ereminder\\Reminder\\stock\\stocktrade\\input", tdm);
+		at.setTm(tradeApi);
+		at.initEngine();
+		new Thread(at).start();
+		
+		new Thread(tradeApi).start();
+		Thread.sleep(Long.MAX_VALUE);
 	}
 	
 	@Test
@@ -44,6 +61,15 @@ public class TestAutoTrader {
 		Thread.sleep(5000);
 		at.startStreamMgr(MarketStatusType.Regular);
 		Thread.sleep(5000);
+	}
+	
+	@Test
+	public void testStreamSimulator() throws Exception{
+		AutoTrader at = new AutoTrader();
+		at.startStreamMgr(MarketStatusType.Pre);
+		HistoryDumpMgr hdm = new HistoryDumpMgr(at.getHistoryDumpProperties(), at.getTradeDataMgr(), at.getSc());
+        new Thread(hdm).start();
+		Thread.sleep(Long.MAX_VALUE);
 	}
 	
 	@Test
@@ -86,5 +112,10 @@ public class TestAutoTrader {
         while(true){
         	Thread.sleep(10000);
         }
+	}
+	
+	@Test
+	public void testMgmt() throws Exception {
+		AutoTrader.main(null);
 	}
 }

@@ -2,8 +2,8 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.cld.stock</groupId>
-	<artifactId>stock.trade</artifactId>
-	<name>stocktrade</name>
+	<artifactId>stock.sheet</artifactId>
+	<name>stock.sheet</name>
 	<parent>
 		<artifactId>env</artifactId>
 		<groupId>org.cld.build</groupId>
@@ -26,21 +26,6 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>oauth.signpost</groupId>
-			<artifactId>signpost-core</artifactId>
-			<version>1.2.1.2</version>
-		</dependency>
-		<dependency>
-			<groupId>oauth.signpost</groupId>
-			<artifactId>signpost-jetty9</artifactId>
-			<version>1.2.1.2</version>
-		</dependency>
-		<dependency>
-		  <groupId>org.scribe</groupId>
-		  <artifactId>scribe</artifactId>
-		  <version>1.3.6</version>
-		</dependency>
-		<dependency>
 	    	<groupId>org.apache.logging.log4j</groupId>
 	    	<artifactId>log4j-api</artifactId>
   		</dependency>
@@ -55,34 +40,23 @@
   		</dependency>
   		<dependency>
 	    	<groupId>org.cld.stock</groupId>
-	    	<artifactId>stock.etl</artifactId>
+	    	<artifactId>stock.trade</artifactId>
 	    	<version>1.0.0</version>
-	    	<exclusions>
-	    		<exclusion>
-	    			<groupId>org.cld.hadooputils</groupId>
-	          		<artifactId>cld-hadooputil</artifactId>
-	        	</exclusion>
-    			<exclusion>
-					<groupId>org.apache.hbase</groupId>
-					<artifactId>hbase-client</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.apache.hive</groupId>
-					<artifactId>hive-jdbc</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.apache.hive</groupId>
-					<artifactId>hive-exec</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.mortbay.jetty</groupId>
-					<artifactId>jetty</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.mortbay.jetty</groupId>
-					<artifactId>jetty-util</artifactId>
-				</exclusion>
-	        </exclusions> 
+  		</dependency>
+  		<dependency>
+	    	<groupId>com.google.api-client</groupId>
+	    	<artifactId>google-api-client</artifactId>
+	    	<version>1.20.0</version>
+  		</dependency>
+  		<dependency>
+	    	<groupId>com.google.oauth-client</groupId>
+	    	<artifactId>google-oauth-client-jetty</artifactId>
+	    	<version>1.20.0</version>
+  		</dependency>
+  		<dependency>
+	    	<groupId>com.google.apis</groupId>
+	    	<artifactId>google-api-services-script</artifactId>
+	    	<version>v1-rev1-1.20.0</version>
   		</dependency>
 	</dependencies>
 	

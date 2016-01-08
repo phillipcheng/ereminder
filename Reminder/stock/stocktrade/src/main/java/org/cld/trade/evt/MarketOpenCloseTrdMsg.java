@@ -76,6 +76,7 @@ public class MarketOpenCloseTrdMsg extends TradeMsg {
 	public TradeMsgPR process(AutoTrader at) {
 		TradeMsgPR tmpr = new TradeMsgPR();
 		MarketStatusType mst = AutoTrader.getMarketStatus(at);
+		at.setCurMst(mst);
 		logger.info(String.format("market status is %s", mst));
 		at.startStreamMgr(mst);
 		if (ocType == MarketOpenCloseEvtType.preMarketOpen){

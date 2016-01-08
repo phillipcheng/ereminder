@@ -6,6 +6,7 @@ public enum TradeMsgType {
 	monitorBuyLimitOrder,
 	buyOrderFilled,
 	monitorSellStopOrder,
+	monitorSellLimitOrder,
 	monitorSellLimitPrice,
 
 }

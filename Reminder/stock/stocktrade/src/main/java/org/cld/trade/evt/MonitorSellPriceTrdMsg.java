@@ -54,7 +54,7 @@ public class MonitorSellPriceTrdMsg extends TradeMsg {
 	 */
 	@Override
 	public TradeMsgPR process(AutoTrader at) {
-		List<Quote> ql = at.getTm().getQuotes(new String[]{getSymbol()});
+		List<Quote> ql = at.getTm().getQuotes(new String[]{getSymbol()}, null, at.isExtendedHour());
 		TradeMsgPR tmpr = new TradeMsgPR();
 		if (ql!=null && ql.size()==1){
 			Quote q = ql.get(0);

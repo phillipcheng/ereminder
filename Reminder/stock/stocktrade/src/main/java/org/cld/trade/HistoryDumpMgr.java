@@ -17,8 +17,9 @@ import org.cld.stock.common.StockConfig;
 import org.cld.stock.common.TimedItem;
 import org.cld.stock.common.TradeTick;
 import org.cld.stock.strategy.IntervalUnit;
+import org.cld.trade.mgmt.HistoryDumpMXBean;
 
-public class HistoryDumpMgr implements Runnable {
+public class HistoryDumpMgr implements Runnable, HistoryDumpMXBean {
 	private static Logger logger =  LogManager.getLogger(HistoryDumpMgr.class);
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
 	
@@ -70,10 +71,10 @@ public class HistoryDumpMgr implements Runnable {
 			}
 		}
 		if (oq.size()>size || overdue){
-			File f = new File(String.format("%s%s%s_%s_%s", dumpDir, File.separator, symbol, iu, sdf.format(ti.getDatetime())));
+			File f = new File(String.format("%s%s%s_%s", dumpDir, File.separator, symbol, iu));
 			BufferedWriter bw = null;
 			try{
-				bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f)));
+				bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f, true)));
 				int originalSize = oq.size();
 				for (int i=0; i<originalSize; i++){
 					ti = (TimedItem) oq.remove();
@@ -92,15 +93,44 @@ public class HistoryDumpMgr implements Runnable {
 			}
 		}
 	}
+	
+	@Override
+	public void dumpTickNow(){
+		Map<String, Deque<TradeTick>> ttMap = tdmgr.getHistoryTickMap();
+		for (String symbol:ttMap.keySet()){
+			Deque<TradeTick> ttq = ttMap.get(symbol);
+			dumpFile(symbol, IntervalUnit.tick, ttq, 0, Duration.ZERO);
+		}
+	}
+	
+	@Override
+	public long getTotalSize(){
+		long totalSize=0;
+		Map<String, Deque<TradeTick>> ttMap = tdmgr.getHistoryTickMap();
+		for (String symbol:ttMap.keySet()){
+			Deque<TradeTick> ttq = ttMap.get(symbol);
+			totalSize +=ttq.size();
+		}
+		Map<IntervalUnit, Map<String, Deque<CandleQuote>>> icqMap = tdmgr.getHistoryCqMap();
+		for (IntervalUnit iu: icqMap.keySet()){
+			Map<String, Deque<CandleQuote>> cqMap = icqMap.get(iu);
+			for (String symbol:cqMap.keySet()){
+				Deque<CandleQuote> cqq = cqMap.get(symbol);
+				totalSize +=cqq.size();
+			}
+		}
+		return totalSize;
+	}
+	
 	@Override
 	public void run() {
 		try{
 			sdf.setTimeZone(sc.getTimeZone());
 			while(true){
 				long totalSize=0;
-				Map<String, Deque<TradeTick>> ttMap = tdmgr.getHistoryTickMap();
 				int tickSizeThreshold = sizeThresholdMap.get(IntervalUnit.tick);
 				Duration tickIntervalThreshold = intervalThresholdMap.get(IntervalUnit.tick);
+				Map<String, Deque<TradeTick>> ttMap = tdmgr.getHistoryTickMap();
 				for (String symbol:ttMap.keySet()){
 					Deque<TradeTick> ttq = ttMap.get(symbol);
 					totalSize +=ttq.size();

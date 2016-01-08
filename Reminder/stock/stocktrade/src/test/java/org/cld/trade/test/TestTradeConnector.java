@@ -111,8 +111,8 @@ public class TestTradeConnector {
 	}
 	
 	@Test
-	public void testGetQuotes(){
-		tm.getQuotes(new String[]{"GLUU", "FIT"}, true);
+	public void testGetQuotesRegular(){
+		tm.getQuotes(new String[]{"GLUU", "FIT"}, null, false);
 	}
 
 	@Test

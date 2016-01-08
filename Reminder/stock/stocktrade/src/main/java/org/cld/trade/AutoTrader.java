@@ -1,5 +1,6 @@
 package org.cld.trade;
 
+import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -12,6 +13,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.TreeMap;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
@@ -37,6 +41,7 @@ import org.cld.trade.evt.MonitorBuyOrderTrdMsg;
 import org.cld.trade.evt.MonitorSellPriceTrdMsg;
 import org.cld.trade.evt.MonitorSellStopOrderTrdMsg;
 import org.cld.trade.evt.TradeMsgType;
+import org.cld.trade.mgmt.AutoTraderMXBean;
 import org.cld.trade.persist.StockPosition;
 import org.cld.trade.persist.TradePersistMgr;
 import org.cld.trade.response.OrderStatus;
@@ -52,7 +57,7 @@ import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
 
-public class AutoTrader implements Runnable {
+public class AutoTrader implements Runnable, AutoTraderMXBean {
 	private static Logger logger =  LogManager.getLogger(AutoTrader.class);
 	//external configures
 	private static final String TRADE_CONNECTOR="trade.connector";
@@ -65,12 +70,16 @@ public class AutoTrader implements Runnable {
 	private static final String BASE_MARKET="base.market";
 	private static final String IS_PREVIEW="is.preview";
 	
+	PropertiesConfiguration atProperties;
+	//(symbol, (interval unit, [trade-strategy instance]))
+	private Map<String, TreeMap<IntervalUnit, List<TradeStrategy>>> siutsMap = 
+			new HashMap<String, TreeMap<IntervalUnit, List<TradeStrategy>>>();
+	//(symbol_bsname, trade-strategy instance)
+	private Map<String, TradeStrategy> tsInstMap = new HashMap<String, TradeStrategy>();
+	private Set<String> symbols = new HashSet<String>();
+	
 	//
 	private TradeApi tradeConnector;
-	private Map<String, TreeMap<IntervalUnit, List<TradeStrategy>>> siutsMap = 
-			new HashMap<String, TreeMap<IntervalUnit, List<TradeStrategy>>>();//symbol to interval unit to trade-strategy instance
-	private Map<String, TradeStrategy> tsInstMap = new HashMap<String, TradeStrategy>();//from key(symbol_bsname) to trade-strategy instance
-	private Set<String> symbols = new HashSet<String>();
 	private String historyDumpProperties;
 	private String crawlconfProperties;
 	private CrawlConf cconf;
@@ -88,32 +97,22 @@ public class AutoTrader implements Runnable {
 	private String afterHourMarketCloseCron = "0 0 20 ? * 2-6";
 	
 	private boolean isPreview=true;
-	private boolean useLast=false;
 	private Map<String, TradeMsg> msgMap = new HashMap<String, TradeMsg>();
 	private Set<String> prevMsgIds = new HashSet<String>();//to curb too much log
 	
 	private StockConfig sc;
 	private TradeDataMgr tradeDataMgr;
+	private MarketStatusType curMst;
 	
-	public AutoTrader(){
-		try{
-			PropertiesConfiguration pc = new PropertiesConfiguration("at.properties");
-			pc.getBoolean(USESTREAM_KEY);
-			proxyConf = new ProxyConf(pc);
-			dbConf = new DBConnConf("dm.", pc);
-			setUseAmount(pc.getInt(USE_AMOUNT));
-			setBaseMarketId(pc.getString(BASE_MARKET));
-			isPreview = pc.getBoolean(IS_PREVIEW);
-			this.historyDumpProperties= pc.getString(HISTORY_DUMP);
-			//setup trade connctor
-			tradeConnector = new TradeKingConnector(pc.getString(TRADE_CONNECTOR));
-			//setup cconf
-			crawlconfProperties = pc.getString(CRAWL_CONF);
-			setCconf((CrawlConf) TaskUtil.getTaskConf(crawlconfProperties));
-			//setup strategy
-			List<Object> strategyFiles = pc.getList(STRATEGIES);
+	@Override
+	public void setupStrategys(){
+		try {
+			siutsMap = new HashMap<String, TreeMap<IntervalUnit, List<TradeStrategy>>>();
+			tsInstMap = new HashMap<String, TradeStrategy>();
+			List<Object> strategyFiles = atProperties.getList(STRATEGIES);
 			for (int i=0; i<strategyFiles.size(); i++){
 				String strategyName = (String)strategyFiles.get(i);
+				logger.debug(String.format("interval-stock-ts map: %s", siutsMap));
 				PropertiesConfiguration props = new PropertiesConfiguration(strategyName);
 				Map<String, List<SelectStrategy>> bsMap = SelectStrategy.genMap(props, strategyName, getBaseMarketId(), dbConf);
 				SellStrategy[] ssl = SellStrategy.gen(props);
@@ -130,13 +129,35 @@ public class AutoTrader implements Runnable {
 						tsl = new ArrayList<TradeStrategy>();
 						tslMap.put(bs.getLookupUnit(), tsl);
 					}
+					String key = getSymbolBsKey(symbol, bs.getName());
 					TradeStrategy ts = new TradeStrategy(bs, ssl[0]);
 					tsl.add(ts);
-					String key = getSymbolBsKey(symbol, bs.getName());
 					tsInstMap.put(key, ts);
 				}
 			}
-			logger.debug(String.format("interval-stock-ts map: %s", siutsMap));
+		}catch(Exception e){
+			logger.error("", e);
+		}
+	}
+	
+	public AutoTrader(){
+		try{
+			atProperties = new PropertiesConfiguration("at.properties");
+			atProperties.getBoolean(USESTREAM_KEY);
+			proxyConf = new ProxyConf(atProperties);
+			dbConf = new DBConnConf("dm.", atProperties);
+			setUseAmount(atProperties.getInt(USE_AMOUNT));
+			setBaseMarketId(atProperties.getString(BASE_MARKET));
+			isPreview = atProperties.getBoolean(IS_PREVIEW);
+			historyDumpProperties= atProperties.getString(HISTORY_DUMP);
+			//setup trade connctor
+			tradeConnector = new TradeKingConnector(atProperties.getString(TRADE_CONNECTOR));
+			//setup cconf
+			crawlconfProperties = atProperties.getString(CRAWL_CONF);
+			setCconf((CrawlConf) TaskUtil.getTaskConf(crawlconfProperties));
+			//setup strategy
+			setupStrategys();
+			//setup data manager
 			sc = StockUtil.getStockConfig(getBaseMarketId());
 	        tradeDataMgr = new TradeDataMgr(this, sc);
 	        //apply split div when engine start, this is called used by preMarket open evt
@@ -155,6 +176,16 @@ public class AutoTrader implements Runnable {
 		TradeStrategy ts = tsInstMap.get(key);
 		if (ts!=null){
 			return ts.getBs();
+		}else{
+			return null;
+		}
+	}
+	
+	public SellStrategy getSs(String symbol, String bsName){
+		String key = getSymbolBsKey(symbol, bsName);
+		TradeStrategy ts = tsInstMap.get(key);
+		if (ts!=null){
+			return ts.getSs();
 		}else{
 			return null;
 		}
@@ -299,6 +330,8 @@ public class AutoTrader implements Runnable {
 			logger.error("order status map is null.");
 		}
 	}
+	
+	private static final int PROCESS_INTERVAL=2000;
 	/**
 	 * start: Msgs: [market will open]|[market will close]
 	 *  [market will open]
@@ -322,61 +355,64 @@ public class AutoTrader implements Runnable {
 	public void run() {
 		while (true){
 			try{
-				//check msgs changed to output log
-				boolean changedMsg=false;
-				if (prevMsgIds.size()!=getMsgMap().size()){
-					changedMsg = true;
-				}else{
-					for (String msgId:prevMsgIds){
-						if (!getMsgMap().containsKey(msgId)){
-							changedMsg = true;
-							break;
-						}
-					}
-				}
-				if (changedMsg){
-					logger.info(String.format("%d messages to process.", getMsgMap().size()));
-					logger.info(String.format("process msg: %s",getMsgMap().values()));
-				}
-				//store prev msg ids
-				prevMsgIds.clear();
-				for (String msgId:getMsgMap().keySet()){
-					prevMsgIds.add(msgId);
-				}
-				List<TradeMsgPR> tmprlist = new ArrayList<TradeMsgPR>();
-				List<String> keys = getMsgMapKeys();
-				for (String key:keys){
-					TradeMsg msg = getMsg(key);
-					if (msg!=null){
-						TradeMsgPR tmpr = msg.process(this);
-						if (tmpr!=null){
-							tmpr.setMsgId(msg.getMsgId());
-							tmprlist.add(tmpr);
-						}
+				if (curMst==MarketStatusType.Regular){
+					//check msgs changed to output log
+					boolean changedMsg=false;
+					if (prevMsgIds.size()!=getMsgMap().size()){
+						changedMsg = true;
 					}else{
-						logger.error(String.format("msg for key:%s not found.", key));
-					}
-				}
-				for (TradeMsgPR tmpr: tmprlist){
-					if (tmpr.getNewMsgs()!=null){
-						for (TradeMsg sm:tmpr.getNewMsgs()){
-							getMsgMap().put(sm.getMsgId(), sm);
+						for (String msgId:prevMsgIds){
+							if (!getMsgMap().containsKey(msgId)){
+								changedMsg = true;
+								break;
+							}
 						}
 					}
-					if (tmpr.getRmMsgs()!=null){
-						for (String mid:tmpr.getRmMsgs()){
-							getMsgMap().remove(mid);
+					if (changedMsg){
+						logger.info(String.format("%d messages to process.", getMsgMap().size()));
+						logger.info(String.format("process msg: %s",getMsgMap().values()));
+					}
+					//store prev msg ids
+					prevMsgIds.clear();
+					for (String msgId:getMsgMap().keySet()){
+						prevMsgIds.add(msgId);
+					}
+					List<TradeMsgPR> tmprlist = new ArrayList<TradeMsgPR>();
+					List<String> keys = getMsgMapKeys();
+					for (String key:keys){
+						TradeMsg msg = getMsg(key);
+						if (msg!=null){
+							TradeMsgPR tmpr = msg.process(this);
+							if (tmpr!=null){
+								tmpr.setMsgId(msg.getMsgId());
+								tmprlist.add(tmpr);
+							}
+						}else{
+							logger.error(String.format("msg for key:%s not found.", key));
 						}
 					}
-					if (tmpr.isExecuted()){
-						getMsgMap().remove(tmpr.getMsgId());
+					for (TradeMsgPR tmpr: tmprlist){
+						if (tmpr.getNewMsgs()!=null){
+							for (TradeMsg sm:tmpr.getNewMsgs()){
+								getMsgMap().put(sm.getMsgId(), sm);
+							}
+						}
+						if (tmpr.getRmMsgs()!=null){
+							for (String mid:tmpr.getRmMsgs()){
+								getMsgMap().remove(mid);
+							}
+						}
+						if (tmpr.isExecuted()){
+							getMsgMap().remove(tmpr.getMsgId());
+						}
+						if (tmpr.cleanAllMsgs){
+							getMsgMap().clear();
+						}
 					}
-					if (tmpr.cleanAllMsgs){
-						getMsgMap().clear();
-					}
+				}else{
+					//do nothing for none-regular market now.
 				}
-				
-				Thread.sleep(4000);
+				Thread.sleep(PROCESS_INTERVAL);
 			}catch(Throwable t){//prevent the system from stop for unknown error
 				logger.error("", t);
 			}
@@ -496,7 +532,7 @@ public class AutoTrader implements Runnable {
 			if (useStream){
 				streamMgr = new StreamMgr(sl, (TradeKingConnector) getTm(), getTradeDataMgr(), getProxyConf());
 			}else{
-				streamMgr = new StreamSimulator(sl, (TradeKingConnector) getTm(), getTradeDataMgr(), totalDataThread);
+				streamMgr = new StreamSimulator(sl, (TradeKingConnector) getTm(), getTradeDataMgr(), totalDataThread, true);
 			}
 			Thread t = new Thread(streamMgr);
 			tl.add(t);
@@ -539,6 +575,7 @@ public class AutoTrader implements Runnable {
 			new Thread(at).start();
 			//
 			MarketStatusType mst = getMarketStatus(at);
+			at.setCurMst(mst);
 			logger.info(String.format("market status is %s", mst));
 			at.startStreamMgr(mst);
 	        //
@@ -546,6 +583,12 @@ public class AutoTrader implements Runnable {
 	        new Thread(hdm).start();
 	        //
 	        AutoTrader.startScheduler(at);
+	        //mgmt
+	        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+	        ObjectName atName = new ObjectName("stock.trade:type=AutoTrader");
+	        mbs.registerMBean(at, atName);
+	        ObjectName hdName = new ObjectName("stock.trade:type=HistoryDump");
+	        mbs.registerMBean(hdm, hdName);
 	        //
 	        while(true){
 	        	Thread.sleep(10000);
@@ -555,6 +598,17 @@ public class AutoTrader implements Runnable {
 		}
 	}
 	
+	public boolean isExtendedHour(){
+		return isExtendedHour(this.curMst);
+	}
+	
+	public static boolean isExtendedHour(MarketStatusType mst){
+    	if (mst == MarketStatusType.After || mst == MarketStatusType.Pre){
+    		return true;
+    	}else{
+    		return false;
+    	}
+	}
 	//setter and getter
 	public int getUseAmount() {
 		return useAmount;
@@ -573,12 +627,6 @@ public class AutoTrader implements Runnable {
 	}
 	public void setPreview(boolean isPreview) {
 		this.isPreview = isPreview;
-	}
-	public boolean isUseLast() {
-		return useLast;
-	}
-	public void setUseLast(boolean useLast) {
-		this.useLast = useLast;
 	}
 	public TradeApi getTm() {
 		return tradeConnector;
@@ -672,6 +720,14 @@ public class AutoTrader implements Runnable {
 	}
 	public void setCrawlconfProperties(String crawlconfProperties) {
 		this.crawlconfProperties = crawlconfProperties;
+	}
+
+	public MarketStatusType getCurMst() {
+		return curMst;
+	}
+
+	public void setCurMst(MarketStatusType curMst) {
+		this.curMst = curMst;
 	}
 
 }

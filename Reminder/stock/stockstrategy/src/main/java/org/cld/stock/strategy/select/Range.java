@@ -15,7 +15,6 @@ import org.cld.stock.strategy.OrderFilled;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.strategy.StockOrder.ActionType;
-import org.cld.stock.strategy.StockOrder.OrderType;
 import org.cld.stock.strategy.persist.RangeEntry;
 import org.cld.stock.strategy.persist.StrategyPersistMgr;
 import org.cld.util.JsonUtil;
@@ -110,12 +109,6 @@ public class Range extends SelectStrategy {
 			currentPrice = orgBuyPrice;
 		}
 		logger.info(String.format("tradeCompleted current price for %s is changed to %.3f", or.getSymbol(), currentPrice));
-		if (or.getSide()==ActionType.buy){//going down	
-		}else if (or.getSide()==ActionType.sell){
-			if (or.getTyp()==OrderType.limit){//going up
-			}else if (or.getTyp()==OrderType.stoplimit){//going down
-			}
-		}
 	}
 	
 	@Override
