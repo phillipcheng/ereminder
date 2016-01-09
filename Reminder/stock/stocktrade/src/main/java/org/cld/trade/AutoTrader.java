@@ -40,6 +40,7 @@ import org.cld.trade.evt.MarketStatusType;
 import org.cld.trade.evt.MonitorBuyOrderTrdMsg;
 import org.cld.trade.evt.MonitorSellPriceTrdMsg;
 import org.cld.trade.evt.MonitorSellStopOrderTrdMsg;
+import org.cld.trade.evt.MonitorSellLimitOrderTrdMsg;
 import org.cld.trade.evt.TradeMsgType;
 import org.cld.trade.mgmt.AutoTraderMXBean;
 import org.cld.trade.persist.StockPosition;
@@ -69,17 +70,11 @@ public class AutoTrader implements Runnable, AutoTraderMXBean {
 	private static final String USE_AMOUNT="use.amount";
 	private static final String BASE_MARKET="base.market";
 	private static final String IS_PREVIEW="is.preview";
+	private static final String MSG_CHECK_INTERVAL="msg.check.interval";
+	private static final String BUY_LVL_FACTOR="buy.level.factor"; //for each level increased, how much more invested
 	
 	PropertiesConfiguration atProperties;
-	//(symbol, (interval unit, [trade-strategy instance]))
-	private Map<String, TreeMap<IntervalUnit, List<TradeStrategy>>> siutsMap = 
-			new HashMap<String, TreeMap<IntervalUnit, List<TradeStrategy>>>();
-	//(symbol_bsname, trade-strategy instance)
-	private Map<String, TradeStrategy> tsInstMap = new HashMap<String, TradeStrategy>();
-	private Set<String> symbols = new HashSet<String>();
-	
 	//
-	private TradeApi tradeConnector;
 	private String historyDumpProperties;
 	private String crawlconfProperties;
 	private CrawlConf cconf;
@@ -88,6 +83,9 @@ public class AutoTrader implements Runnable, AutoTraderMXBean {
 	private DBConnConf dbConf;
 	private int useAmount;
 	private String baseMarketId;
+	private boolean isPreview=true;
+	private int msgCheckInterval=2000;
+	private float buyLvlFactor=0.1f;
 	
 	private String regularMarketOpenCron="0 29 9 ? * 2-6";
 	private String regularMarketClosedCron = "0 0 16 ? * 2-6";
@@ -96,7 +94,13 @@ public class AutoTrader implements Runnable, AutoTraderMXBean {
 	private String afterHourMarketOpenCron = "0 2 16 ? * 2-6";
 	private String afterHourMarketCloseCron = "0 0 20 ? * 2-6";
 	
-	private boolean isPreview=true;
+	//(symbol, (interval unit, [trade-strategy instance]))
+	private Map<String, TreeMap<IntervalUnit, List<TradeStrategy>>> siutsMap = 
+			new HashMap<String, TreeMap<IntervalUnit, List<TradeStrategy>>>();
+	//(symbol_bsname, trade-strategy instance)
+	private Map<String, TradeStrategy> tsInstMap = new HashMap<String, TradeStrategy>();
+	private Set<String> symbols = new HashSet<String>();
+	private TradeApi tradeConnector;
 	private Map<String, TradeMsg> msgMap = new HashMap<String, TradeMsg>();
 	private Set<String> prevMsgIds = new HashSet<String>();//to curb too much log
 	
@@ -150,6 +154,14 @@ public class AutoTrader implements Runnable, AutoTraderMXBean {
 			setBaseMarketId(atProperties.getString(BASE_MARKET));
 			isPreview = atProperties.getBoolean(IS_PREVIEW);
 			historyDumpProperties= atProperties.getString(HISTORY_DUMP);
+			if (atProperties.containsKey(MSG_CHECK_INTERVAL)){
+				msgCheckInterval = atProperties.getInt(MSG_CHECK_INTERVAL);
+			}
+			if (atProperties.containsKey(BUY_LVL_FACTOR)){
+				buyLvlFactor = atProperties.getFloat(BUY_LVL_FACTOR);
+			}
+			logger.debug(String.format("msg check interval: %d", msgCheckInterval));
+			logger.debug(String.format("buy level factor: %.2f", buyLvlFactor));
 			//setup trade connctor
 			tradeConnector = new TradeKingConnector(atProperties.getString(TRADE_CONNECTOR));
 			//setup cconf
@@ -237,7 +249,7 @@ public class AutoTrader implements Runnable, AutoTraderMXBean {
 		return map;
 	}
 	
-	public static Map<String, StockOrder> genStockOrderMap(SelectCandidateResult scr, SellStrategy ss, int cashAmount){
+	public static Map<String, StockOrder> genStockOrderMap(SelectCandidateResult scr, SellStrategy ss, float cashAmount){
 		StockOrder buyso = SellStrategy.makeBuyOrder(scr, ss, cashAmount);
 		List<StockOrder> sellsos= SellStrategy.makeSellOrders(buyso.getSymbol(), buyso.getSubmitTime(), buyso.getQuantity(), buyso.getLimitPrice(), ss);
 		sellsos.add(buyso);
@@ -307,7 +319,7 @@ public class AutoTrader implements Runnable, AutoTraderMXBean {
 				}else if (os.getSide().equals(FixmlConst.Side_Sell) &&
 						os.getStat().equals(OrderStatus.OPEN) &&
 						os.getTyp().equals(FixmlConst.Typ_StopLimit) || os.getTyp().equals(FixmlConst.Typ_StopTrailing) || os.getTyp().equals(FixmlConst.Typ_Stop)){
-					//for all stop sell order submitted, add the MonitorSellPriceTrdMsg
+					//for all stop sell order submitted, add MonitorSellPriceTrdMsg and MonitorSellStopOrderTrdMsg, yes stop sell order scenario 
 					StockPosition sp = TradePersistMgr.getStockPositionByOrderId(this.getDbConf(), os.getOrderId());
 					if (sp!=null){
 						StockOrder limitSellOrder = sp.getSoMap().get(StockOrderType.selllimit.name());
@@ -322,6 +334,17 @@ public class AutoTrader implements Runnable, AutoTraderMXBean {
 					}else{
 						logger.error(String.format("stock position for %s not found.", os.getOrderId()));
 					}
+				}else if(os.getSide().equals(FixmlConst.Side_Sell) &&
+						os.getStat().equals(OrderStatus.OPEN) &&
+						os.getTyp().equals(FixmlConst.Typ_Limit)){
+					//for all limit sell order submitted, add MonitorSellLimitOrderTrdMsg, no stop sell order scenario
+					StockPosition sp = TradePersistMgr.getStockPositionByOrderId(this.getDbConf(), os.getOrderId());
+					if (sp!=null){
+						TradeMsg mssoMsg = new MonitorSellLimitOrderTrdMsg(os.getOrderId(), sp.getScr(), sp.getBsName(), sp.getSoMap());
+						addMsg(mssoMsg);
+					}else{
+						logger.error(String.format("stock position for %s not found.", os.getOrderId()));
+					}
 				}else if (!os.getStat().equals(OrderStatus.FILLED)){
 					logger.info(String.format("order not filled but can't be processed: %s", os));
 				}
@@ -331,7 +354,6 @@ public class AutoTrader implements Runnable, AutoTraderMXBean {
 		}
 	}
 	
-	private static final int PROCESS_INTERVAL=2000;
 	/**
 	 * start: Msgs: [market will open]|[market will close]
 	 *  [market will open]
@@ -355,64 +377,64 @@ public class AutoTrader implements Runnable, AutoTraderMXBean {
 	public void run() {
 		while (true){
 			try{
-				if (curMst==MarketStatusType.Regular){
-					//check msgs changed to output log
-					boolean changedMsg=false;
-					if (prevMsgIds.size()!=getMsgMap().size()){
-						changedMsg = true;
-					}else{
-						for (String msgId:prevMsgIds){
-							if (!getMsgMap().containsKey(msgId)){
-								changedMsg = true;
-								break;
-							}
+				//check msgs changed to output log
+				boolean changedMsg=false;
+				if (prevMsgIds.size()!=getMsgMap().size()){
+					changedMsg = true;
+				}else{
+					for (String msgId:prevMsgIds){
+						if (!getMsgMap().containsKey(msgId)){
+							changedMsg = true;
+							break;
 						}
 					}
-					if (changedMsg){
-						logger.info(String.format("%d messages to process.", getMsgMap().size()));
-						logger.info(String.format("process msg: %s",getMsgMap().values()));
-					}
-					//store prev msg ids
-					prevMsgIds.clear();
-					for (String msgId:getMsgMap().keySet()){
-						prevMsgIds.add(msgId);
-					}
-					List<TradeMsgPR> tmprlist = new ArrayList<TradeMsgPR>();
-					List<String> keys = getMsgMapKeys();
-					for (String key:keys){
-						TradeMsg msg = getMsg(key);
-						if (msg!=null){
-							TradeMsgPR tmpr = msg.process(this);
-							if (tmpr!=null){
-								tmpr.setMsgId(msg.getMsgId());
-								tmprlist.add(tmpr);
+				}
+				if (changedMsg){
+					logger.info(String.format("%d messages to process.", getMsgMap().size()));
+					logger.info(String.format("process msg: %s",getMsgMap().values()));
+				}
+				//store prev msg ids
+				prevMsgIds.clear();
+				for (String msgId:getMsgMap().keySet()){
+					prevMsgIds.add(msgId);
+				}
+				List<TradeMsgPR> tmprlist = new ArrayList<TradeMsgPR>();
+				List<String> keys = getMsgMapKeys();
+				for (String key:keys){
+					TradeMsg msg = getMsg(key);
+					if (msg!=null){
+						if (curMst==MarketStatusType.Regular || msg.getMsgType()==TradeMsgType.marketOpenClose){//process market open close msg always
+								TradeMsgPR tmpr = msg.process(this);
+								if (tmpr!=null){
+									tmpr.setMsgId(msg.getMsgId());
+									tmprlist.add(tmpr);
 							}
 						}else{
-							logger.error(String.format("msg for key:%s not found.", key));
+							logger.debug(String.format("msg:%s ignored for non-regular market", msg));
 						}
+					}else{
+						logger.error(String.format("msg for key:%s not found.", key));
 					}
-					for (TradeMsgPR tmpr: tmprlist){
-						if (tmpr.getNewMsgs()!=null){
-							for (TradeMsg sm:tmpr.getNewMsgs()){
-								getMsgMap().put(sm.getMsgId(), sm);
-							}
-						}
-						if (tmpr.getRmMsgs()!=null){
-							for (String mid:tmpr.getRmMsgs()){
-								getMsgMap().remove(mid);
-							}
-						}
-						if (tmpr.isExecuted()){
-							getMsgMap().remove(tmpr.getMsgId());
-						}
-						if (tmpr.cleanAllMsgs){
-							getMsgMap().clear();
-						}
-					}
-				}else{
-					//do nothing for none-regular market now.
 				}
-				Thread.sleep(PROCESS_INTERVAL);
+				for (TradeMsgPR tmpr: tmprlist){
+					if (tmpr.getNewMsgs()!=null){
+						for (TradeMsg sm:tmpr.getNewMsgs()){
+							getMsgMap().put(sm.getMsgId(), sm);
+						}
+					}
+					if (tmpr.getRmMsgs()!=null){
+						for (String mid:tmpr.getRmMsgs()){
+							getMsgMap().remove(mid);
+						}
+					}
+					if (tmpr.isExecuted()){
+						getMsgMap().remove(tmpr.getMsgId());
+					}
+					if (tmpr.cleanAllMsgs){
+						getMsgMap().clear();
+					}
+				}
+				Thread.sleep(msgCheckInterval);
 			}catch(Throwable t){//prevent the system from stop for unknown error
 				logger.error("", t);
 			}
@@ -728,6 +750,14 @@ public class AutoTrader implements Runnable, AutoTraderMXBean {
 
 	public void setCurMst(MarketStatusType curMst) {
 		this.curMst = curMst;
+	}
+
+	public float getBuyLvlFactor() {
+		return buyLvlFactor;
+	}
+
+	public void setBuyLvlFactor(float buyLvlFactor) {
+		this.buyLvlFactor = buyLvlFactor;
 	}
 
 }

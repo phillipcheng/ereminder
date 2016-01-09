@@ -65,6 +65,8 @@ public class MonitorBuyOrderTrdMsg extends TradeMsg {
 					bs.tradeCompleted(of, false);
 					tmpr.setExecuted(true);
 					return tmpr;
+				}else if (OrderStatus.PARTIALLY_FILLED.equals(os.getStat())){//since this msg might be played for a long time
+					logger.debug(String.format("order %s is partially filled.", os.getOrderId()));
 				}else{
 					logger.info(String.format("status is %s for buy order %s", os.getStat(), os.getOrderId()));
 				}

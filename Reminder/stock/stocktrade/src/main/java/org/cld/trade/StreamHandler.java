@@ -69,7 +69,7 @@ public class StreamHandler implements Response.ContentListener, Response.Complet
 			buffer += strContent;
 			processData(buffer, tdm);
 			buffer = null;
-			logger.info("processed 1 unterminated content.");
+			logger.debug("processed 1 unterminated content.");
 		}
 	}
 

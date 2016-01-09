@@ -70,6 +70,8 @@ public class MonitorSellStopOrderTrdMsg extends TradeMsg {
 					return tmpr;
 				}else if (OrderStatus.OPEN.equals(os.getStat())){
 					logger.debug(String.format("sell stop order %s in open state.", os.getOrderId()));
+				}else if (OrderStatus.PARTIALLY_FILLED.equals(os.getStat())){//since this msg might be played for a long time
+					logger.debug(String.format("sell stop order %s is partially filled.", os.getOrderId()));
 				}else{
 					logger.info(String.format("status is %s for sell stop order %s", os.getStat(), os.getOrderId()));
 				}

@@ -22,6 +22,9 @@ public class BuyingPower {
 	private float stock;
 	private float options;
 	
+	public BuyingPower(float stock){
+		this.stock = stock;
+	}
 	
 	public BuyingPower(Map<String, Object> map){
 		cashavailableforwithdrawal = Float.parseFloat((String) map.get(cashavailableforwithdrawal_));

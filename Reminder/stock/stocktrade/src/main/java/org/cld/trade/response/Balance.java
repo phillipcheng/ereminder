@@ -13,9 +13,10 @@ public class Balance {
 	public static final String CASH="cash";
 	public static final String buyingpower_="buyingpower";
 	
-	public Balance(float accountValue, float cash){
+	public Balance(float accountValue, float cash, BuyingPower bp){
 		this.accountValue = accountValue;
 		this.cash = cash;
+		this.buyingPower = bp;
 	}
 	
 	public Balance(Map<String, Object> map){

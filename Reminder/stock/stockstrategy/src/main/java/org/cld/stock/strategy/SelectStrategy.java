@@ -255,7 +255,7 @@ public abstract class SelectStrategy {
 		}
 	}
 	
-	public static Map<String, List<SelectStrategy>> genMap(PropertiesConfiguration props, String simpleStrategyName, String baseMarketId, DBConnConf dbconf){
+	public static Map<String, List<SelectStrategy>> genMap(PropertiesConfiguration props, String strategyName, String baseMarketId, DBConnConf dbconf){
 		Map<String, List<SelectStrategy>> bsMap =new HashMap<String, List<SelectStrategy>>();
 		Map<String, Object[]> paramMap = new HashMap<String,Object[]>();
 		Iterator<String> paramKeyIt = props.getKeys(KEY_PARAM);
@@ -268,10 +268,10 @@ public abstract class SelectStrategy {
 			List<Map<String,Object>> paramsMapList = CombPermUtil.eachOne(paramMap);
 			if (paramsMapList.size()>0){
 				for (Map<String,Object> pm:paramsMapList){
-					initBs(selectClass, pm, baseMarketId, props, simpleStrategyName, bsMap, dbconf);
+					initBs(selectClass, pm, baseMarketId, props, strategyName, bsMap, dbconf);
 				}
 			}else{//no param at all
-				initBs(selectClass, null, baseMarketId, props, simpleStrategyName, bsMap, dbconf);
+				initBs(selectClass, null, baseMarketId, props, strategyName, bsMap, dbconf);
 			}
 		}catch(Exception e){
 			logger.error("", e);

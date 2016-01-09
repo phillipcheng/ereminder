@@ -16,9 +16,11 @@ import org.junit.Test;
 public class TestAutoTrader {
 	private static Logger logger =  LogManager.getLogger(TestAutoTrader.class);
 	
+	//for FIT, given buy price 27.3, there will be buy,sell,buy,sell, followed by buy, buy, buy, buy (not filled)
 	@Test
 	public void testAutoTraderEngineNoStopSellOrder() throws Exception {
 		AutoTrader at = new AutoTrader();
+		at.setCurMst(MarketStatusType.Regular);
 		StockConfig sc = StockUtil.getStockConfig(at.getBaseMarketId());
 		TradeDataMgr tdm = new TradeDataMgr(at, sc);
 		SellStrategy ss = at.getSs("FIT", "strategy.range.properties");
@@ -35,6 +37,7 @@ public class TestAutoTrader {
 	@Test
 	public void testAutoTraderEngineHasStopSellOrder() throws Exception {
 		AutoTrader at = new AutoTrader();
+		at.setCurMst(MarketStatusType.Regular);
 		StockConfig sc = StockUtil.getStockConfig(at.getBaseMarketId());
 		TradeDataMgr tdm = new TradeDataMgr(at, sc);
 		SellStrategy ss = at.getSs("FIT", "strategy.range.properties");

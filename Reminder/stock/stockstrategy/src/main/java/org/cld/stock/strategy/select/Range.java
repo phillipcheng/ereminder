@@ -23,6 +23,7 @@ import org.cld.util.jdbc.DBConnConf;
 public class Range extends SelectStrategy {
 	public static Logger logger = LogManager.getLogger(Range.class);
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	public static final String NAME="strategy.range.properties";
 	
 	public static final String SHIFT_RATE="shift.rate";
 	public static final float default_shiftRate=0.02f;
@@ -35,6 +36,7 @@ public class Range extends SelectStrategy {
 	private float currentPrice;
 	private Date lastUpdateDt;
 	private String symbol;
+	private int buyLevel=0; //>=0, 0 is init level, the higher the cheaper
 
 	public String toString(){
 		if (lastUpdateDt!=null){
@@ -98,6 +100,11 @@ public class Range extends SelectStrategy {
 	public void tradeCompleted(OrderFilled or, boolean success){
 		if (success){
 			currentPrice = or.getAvgPrice() * (1-shiftRate);
+			if (or.getSide()==ActionType.buy){
+				buyLevel++;
+			}else{
+				buyLevel--;
+			}
 		}else{
 			if (or.getSide()==ActionType.buy){//failed to buy recover the price
 				currentPrice = or.getAvgPrice() / (1-shiftRate);
@@ -116,7 +123,7 @@ public class Range extends SelectStrategy {
 		if (cqi.getCq().getLow()<currentPrice){
 			currentPrice = currentPrice*(1-shiftRate);//to prevent tons of opp generated
 			logger.info(String.format("range price for %s is changed to %.3f", cqi.getCq().getSymbol(), currentPrice));
-			return new SelectCandidateResult(cqi.getCq().getSymbol(), cqi.getCq().getStartTime(), 0f, cqi.getCq().getLow());
+			return new SelectCandidateResult(cqi.getCq().getSymbol(), cqi.getCq().getStartTime(), buyLevel, cqi.getCq().getLow());
 		}else{
 			return null;
 		}

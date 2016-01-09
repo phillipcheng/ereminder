@@ -101,7 +101,7 @@ public class SellStrategy {
 	}
 
 	//used by real
-	public static StockOrder makeBuyOrder(SelectCandidateResult scr, SellStrategy ss, int cashAmount){
+	public static StockOrder makeBuyOrder(SelectCandidateResult scr, SellStrategy ss, float cashAmount){
 		StockOrder buyOrder = new StockOrder();
 		String stockid = scr.getSymbol();
 		float buyLimit = scr.getBuyPrice();

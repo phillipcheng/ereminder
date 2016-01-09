@@ -17,6 +17,7 @@ import org.cld.stock.strategy.StockOrder;
 import org.cld.stock.strategy.StockOrder.ActionType;
 import org.cld.stock.strategy.StockOrder.StatusType;
 import org.cld.trade.response.Balance;
+import org.cld.trade.response.BuyingPower;
 import org.cld.trade.response.Holding;
 import org.cld.trade.response.OrderResponse;
 import org.cld.trade.response.OrderStatus;
@@ -49,7 +50,8 @@ public class TradeSimulatorConnector implements TradeApi, Runnable {
 	@Override
 	public Balance getBalance() {
 		//i have lots of money
-		return new Balance(50000f, 50000f);
+		BuyingPower bp = new BuyingPower(50000f);
+		return new Balance(50000f, 50000f, bp);
 	}
 	
 	@Override
