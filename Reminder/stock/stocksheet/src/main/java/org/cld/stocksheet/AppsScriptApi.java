@@ -27,9 +27,15 @@ import org.cld.trade.response.Quote;
 import com.google.api.services.script.model.*;
 import com.google.api.services.script.Script;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -265,9 +271,28 @@ public class AppsScriptApi {
         return null;
     }
     
+    public static void dumpSymbols(String fileName){
+    	List<String> symbols = getSymbols();
+    	BufferedWriter bos = null;
+    	try{
+    		bos = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName)));
+    		for (String symbol: symbols){
+    			bos.write(symbol + "\n");
+    		}
+    	}catch(Exception e){
+    		logger.error("", e);
+    	}finally{
+    		if (bos!=null)
+			try {
+				bos.close();
+			} catch (IOException e) {
+				logger.error("", e);
+			}
+    	}
+    }
+    
     public static final String updateDataFunctionName="updateRangeData";
     public static final String RECORD_SPLIT="|";
-    
     public static void updateMarketData(){
     	AutoTrader at = new AutoTrader();
     	MarketStatusType mst = AutoTrader.getMarketStatus(at);

@@ -71,7 +71,7 @@ public class BuyOppTrdMsg extends TradeMsg {
 					}
 				}else{
 					ts.getBs().tradeCompleted(of, false);
-					logger.info(String.format("balance %s less then needed %d", balance, moneyAmount));
+					logger.info(String.format("balance %s less then needed %.2f", balance, moneyAmount));
 				}
 			}else{
 				logger.error(String.format("SYSTEM error! buy order not found in somap:%s", somap));

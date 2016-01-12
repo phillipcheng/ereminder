@@ -225,6 +225,24 @@ public class SqlUtil {
 		}
 	}
 	
+	public static void batchExecUpdateSQLWithParams(Connection db, String sql, List<Object[]> paramsList){
+		PreparedStatement statement=null;
+		try{
+			statement = db.prepareStatement(sql);
+			for (Object[] params:paramsList){
+				bindParameters(statement, params);
+				statement.addBatch();
+			}
+			db.setAutoCommit(false);
+			statement.executeBatch();
+			db.commit();
+		}catch(Exception e){
+			logger.error("",e);
+		}finally{
+			closeResources(null, statement);
+		}
+	}
+	
 	/**
 	 * @param range: 
 	 *     -1: ""

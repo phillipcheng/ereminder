@@ -2,6 +2,7 @@ package org.cld.stock.strategy.persist;
 
 import java.sql.Connection;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
@@ -62,11 +63,48 @@ public class StrategyPersistMgr {
 		SqlUtil.execUpdateSQL(con, sql);
 	}
 	
+	private static void addRangeEntrys(Connection con, List<RangeEntry> rel){
+		RangeMapper rmapper = RangeMapper.getInstance();
+		String sql = String.format("insert into %s (symbol, dt, buyPrice) values(?, ?, ?)", rmapper.getTableName());
+		List<Object[]> paramsList = new ArrayList<Object[]>();
+		for (RangeEntry re: rel){
+			Object[] params = new Object[]{re.getSymbol(), sdf.format(re.getDt()), re.getBuyPrice()};
+			paramsList.add(params);
+		}
+		SqlUtil.batchExecUpdateSQLWithParams(con, sql, paramsList);
+	}
+	
 	private static List<RangeEntry> getRangeBySymbol(Connection con, String symbol){
 		RangeMapper rmapper = RangeMapper.getInstance();
 		String sql = String.format("select symbol, dt, buyPrice from %s where symbol='%s' order by dt desc", rmapper.getTableName(), symbol);
 		List<RangeEntry> lo = (List<RangeEntry>) SqlUtil.getObjectsByParam(sql, new Object[]{}, con, -1, -1, "", rmapper);
 		return lo;
+	}
+	
+	public static void cleanRangeEntry(DBConnConf dbconf){
+		Connection con = null;
+		try{
+			con = SqlUtil.getConnection(dbconf);
+			RangeMapper rmapper = RangeMapper.getInstance();
+			String sql = String.format("delete from %s", rmapper.getTableName());
+			SqlUtil.execUpdateSQL(con, sql);
+		}catch(Exception e){
+			logger.error("", e);
+		}finally{
+			SqlUtil.closeResources(con, null);
+		}
+	}
+	
+	public static void installRangeEntry(DBConnConf dbconf, List<RangeEntry> rel){
+		Connection con = null;
+		try{
+			con = SqlUtil.getConnection(dbconf);
+			addRangeEntrys(con, rel);
+		}catch(Exception e){
+			logger.error("", e);
+		}finally{
+			SqlUtil.closeResources(con, null);
+		}
 	}
 	
 	public static void mergeRangeEntry(DBConnConf dbconf, List<RangeEntry> rel){
