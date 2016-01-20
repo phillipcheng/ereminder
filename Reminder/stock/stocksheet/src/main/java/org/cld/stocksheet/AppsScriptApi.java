@@ -293,10 +293,13 @@ public class AppsScriptApi {
     
     public static final String updateDataFunctionName="updateRangeData";
     public static final String RECORD_SPLIT="|";
-    public static void updateMarketData(){
+    public static void updateMarketData(boolean useLast){
     	AutoTrader at = new AutoTrader();
-    	MarketStatusType mst = AutoTrader.getMarketStatus(at);
-    	boolean extendedHour=AutoTrader.isExtendedHour(mst);
+    	boolean extendedHour=false;
+    	if (!useLast){
+	    	MarketStatusType mst = AutoTrader.getMarketStatus(at);
+	    	extendedHour=AutoTrader.isExtendedHour(mst);
+    	}
     	TradeKingConnector tkc = new TradeKingConnector();
     	List<String> sl = getSymbols();
     	String[] symbols = new String[sl.size()];

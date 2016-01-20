@@ -44,8 +44,8 @@ public class Bollinger extends Indicator{
 	public static final String lowerBand = "lb";
 	
 	public static final String PARAM_WIDTH="width";
-	
 	private float width;
+	
 	private List<Float> values = new ArrayList<Float>();
 	
 	public Bollinger(){
@@ -54,6 +54,11 @@ public class Bollinger extends Indicator{
 	public Bollinger(int periods, float width){
 		super.setPeriods(periods);
 		this.width = width;
+	}
+	
+	@Override
+	public void cleanup(){
+		values.clear();
 	}
 	
 	@Override

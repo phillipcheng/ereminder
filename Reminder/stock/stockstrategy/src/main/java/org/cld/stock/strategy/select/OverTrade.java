@@ -81,6 +81,11 @@ public class OverTrade extends SelectStrategy {
 		}
 	}
 	
+	@Override
+	public void cleanup(){
+		cqLookup.clear();
+	}
+	
 	@JsonIgnore
 	@Override
 	public Map<String, DataMapper> getDataMappers() {

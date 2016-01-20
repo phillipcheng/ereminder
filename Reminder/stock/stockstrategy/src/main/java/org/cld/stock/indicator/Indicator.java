@@ -30,6 +30,8 @@ public abstract class Indicator {
 	//return the string representation of this indicator including params
 	public abstract String toKey();
 	//
+	public abstract void cleanup();
+	//
 	private Map<String, RenderType> rmap = new HashMap<String, RenderType>();
 	
 	public int getPeriods(){

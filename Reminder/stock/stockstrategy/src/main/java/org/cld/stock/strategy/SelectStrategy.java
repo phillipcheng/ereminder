@@ -21,6 +21,7 @@ import org.cld.stock.indicator.Indicator;
 import org.cld.util.CombPermUtil;
 import org.cld.util.DataMapper;
 import org.cld.util.JsonUtil;
+import org.cld.util.MapUtil;
 import org.cld.util.StringUtil;
 import org.cld.util.jdbc.DBConnConf;
 
@@ -61,10 +62,29 @@ public abstract class SelectStrategy {
 	public SelectStrategy(){
 	}
 	
+	@Override
+	public int hashCode(){
+		return (int) (name.hashCode());
+	}
+	
+	@Override
+	public boolean equals(Object o){
+		if (o!=null){
+			SelectStrategy bs = (SelectStrategy) o;
+			MapUtil<String, Object> mu = new MapUtil<String, Object>();
+			return name.equals(bs.getName()) && 
+					mu.mapEquals(params, bs.getParams());
+		}else{
+			return false;
+		}
+	}
+	
+	
 	//to be overriden by subclass
 	public void tradeCompleted(OrderFilled of, boolean success){}
 	public abstract SelectCandidateResult selectByStream(CqIndicators cqi);
 	public void xdivDay(DivSplit ds, DBConnConf dbConf){};//when xdiv day comes
+	public abstract void cleanup();//invoked for day-trading algorithm, when market opens
 	
 	@JsonIgnore
 	public Map<String, DataMapper> getDataMappers() {
@@ -74,20 +94,6 @@ public abstract class SelectStrategy {
 	//back testing
 	public void initHistoryData(Map<String, List<? extends Object>> resultMap){
 		cqilist = (List<CqIndicators>) resultMap.get(SelectStrategy.KEY_CQ);
-	}
-	//back testing, name of data set to data set map
-	public List<SelectCandidateResult> selectByHistory(Map<String, List<? extends Object>> tableResults) {
-		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
-		if (!quoteMapper().oneFetch()){
-			cqilist = (List<CqIndicators>) tableResults.get(SelectStrategy.KEY_CQ);
-		}
-		for (CqIndicators cqi:cqilist){
-			SelectCandidateResult scr = selectByStream(cqi);
-			if (scr!=null){
-				scrl.add(scr);
-			}
-		}
-		return scrl;
 	}
 	
 	@JsonIgnore
@@ -255,23 +261,24 @@ public abstract class SelectStrategy {
 		}
 	}
 	
-	public static Map<String, List<SelectStrategy>> genMap(PropertiesConfiguration props, String strategyName, String baseMarketId, DBConnConf dbconf){
+	public static Map<String, List<SelectStrategy>> genMap(PropertiesConfiguration strategyProperties, String strategyName, 
+			String baseMarketId, DBConnConf dbconf){
 		Map<String, List<SelectStrategy>> bsMap =new HashMap<String, List<SelectStrategy>>();
 		Map<String, Object[]> paramMap = new HashMap<String,Object[]>();
-		Iterator<String> paramKeyIt = props.getKeys(KEY_PARAM);
+		Iterator<String> paramKeyIt = strategyProperties.getKeys(KEY_PARAM);
 		while (paramKeyIt.hasNext()){
 			String pk = paramKeyIt.next();
-			paramMap.put(pk, StringUtil.parseSteps(props.getString(pk)));
+			paramMap.put(pk, StringUtil.parseSteps(strategyProperties.getString(pk)));
 		}
 		try{
-			Class selectClass = Class.forName(props.getString(KEY_SELECTS_TYPE));
+			Class selectClass = Class.forName(strategyProperties.getString(KEY_SELECTS_TYPE));
 			List<Map<String,Object>> paramsMapList = CombPermUtil.eachOne(paramMap);
 			if (paramsMapList.size()>0){
 				for (Map<String,Object> pm:paramsMapList){
-					initBs(selectClass, pm, baseMarketId, props, strategyName, bsMap, dbconf);
+					initBs(selectClass, pm, baseMarketId, strategyProperties, strategyName, bsMap, dbconf);
 				}
 			}else{//no param at all
-				initBs(selectClass, null, baseMarketId, props, strategyName, bsMap, dbconf);
+				initBs(selectClass, null, baseMarketId, strategyProperties, strategyName, bsMap, dbconf);
 			}
 		}catch(Exception e){
 			logger.error("", e);

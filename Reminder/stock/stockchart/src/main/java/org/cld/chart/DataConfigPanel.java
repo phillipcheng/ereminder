@@ -19,6 +19,7 @@ import org.cld.stock.strategy.IntervalUnit;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.awt.event.ActionEvent;
 
 public class DataConfigPanel extends JPanel {
@@ -37,9 +38,12 @@ public class DataConfigPanel extends JPanel {
 	private JLabel lblEnd;
 	private JTextField tfEndDt = null;
 	private JTextField txtBaseMarketId;
-
+	private JFileChooser strategyFileChooser = new JFileChooser();
+	private JButton btnChooseStrategy = new JButton("Choose");
+	
 	private StockDataConfig dc;  //  @jve:decl-index=0:
 	private String strategyFile;
+	private MainFrame mf;
 	
 	/**
 	 * This is the default constructor
@@ -59,8 +63,16 @@ public class DataConfigPanel extends JPanel {
 				dc.setStartDt(sdf.parse(tfStartDt.getText()));
 				dc.setEndDt(sdf.parse(tfEndDt.getText()));
 			}else{
-				dc.setStartDt(msdf.parse(tfStartDt.getText()));
-				dc.setEndDt(msdf.parse(tfEndDt.getText()));
+				String strStartDt = tfStartDt.getText();
+				String strEndDt = tfEndDt.getText();
+				if (!strStartDt.contains(":")){
+					strStartDt = strStartDt + " 09:30";
+					strEndDt = strEndDt + " 16:00";
+					tfStartDt.setText(strStartDt);
+					tfEndDt.setText(strEndDt);
+				}
+				dc.setStartDt(msdf.parse(strStartDt));
+				dc.setEndDt(msdf.parse(strEndDt));
 			}
 		}catch(Exception e){
 			logger.error("", e);
@@ -113,28 +125,28 @@ public class DataConfigPanel extends JPanel {
 		txtBaseMarketId.setColumns(10);
 		txtBaseMarketId.setBounds(91, 50, 86, 20);
 		add(txtBaseMarketId);
-		
-		JLabel lblStrategy = new JLabel("Strategy:");
-		lblStrategy.setBounds(10, 25, 60, 14);
-		add(lblStrategy);
-		
-		final JButton btnChooseStrategy = new JButton("Choose");
-		final JFileChooser fc = new JFileChooser();
+
 		btnChooseStrategy.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (e.getSource() == btnChooseStrategy) {
-			        int returnVal = fc.showOpenDialog(DataConfigPanel.this);
+					int returnVal = strategyFileChooser.showOpenDialog(DataConfigPanel.this);
 			        if (returnVal == JFileChooser.APPROVE_OPTION) {
-			            File file = fc.getSelectedFile();
-			            //This is where a real application would open the file.
-			            logger.info("Opening: " + file.getName());
-			        } else {
+			        	File file = strategyFileChooser.getSelectedFile();
+			        	try {
+			        		strategyFile = file.getCanonicalPath();
+							logger.info("Opening: " + strategyFile);
+							btnChooseStrategy.setText(file.getName());
+							mf.setStrategy(strategyFile);
+						}catch (IOException e1) {
+							logger.error("", e1);
+						}
+			        }else{
 			        	logger.info("Open command cancelled by user.");
 			        }
-			   }
+			    }
 			}
 		});
-		btnChooseStrategy.setBounds(88, 21, 89, 23);
+		btnChooseStrategy.setBounds(10, 21, 204, 23);
 		add(btnChooseStrategy);
 	}
 
@@ -188,5 +200,29 @@ public class DataConfigPanel extends JPanel {
 
 	public void setStrategyFile(String strategyFile) {
 		this.strategyFile = strategyFile;
+	}
+
+	public JFileChooser getStrategyFileChooser() {
+		return strategyFileChooser;
+	}
+
+	public void setStrategyFileChooser(JFileChooser strategyFileChooser) {
+		this.strategyFileChooser = strategyFileChooser;
+	}
+
+	public JButton getBtnChooseStrategy() {
+		return btnChooseStrategy;
+	}
+
+	public void setBtnChooseStrategy(JButton btnChooseStrategy) {
+		this.btnChooseStrategy = btnChooseStrategy;
+	}
+
+	public MainFrame getMf() {
+		return mf;
+	}
+
+	public void setMf(MainFrame mf) {
+		this.mf = mf;
 	}
 }  //  @jve:decl-index=0:visual-constraint="4,5"

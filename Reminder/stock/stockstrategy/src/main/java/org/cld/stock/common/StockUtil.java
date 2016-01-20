@@ -152,6 +152,41 @@ public class StockUtil {
 		}
 	}
 	
+	//check whether cross regular market start
+	public static boolean crossMarketStart(CandleQuote cqPre, CandleQuote cq){
+		if (cqPre==null){
+			return false;
+		}
+		Calendar cal1 = Calendar.getInstance();
+		cal1.setTime(cqPre.getStartTime());
+		int day1 = cal1.get(Calendar.DAY_OF_YEAR);
+		int min1 = cal1.get(Calendar.MINUTE) + cal1.get(Calendar.HOUR_OF_DAY)*60;
+		
+		Calendar cal2 = Calendar.getInstance();
+		cal2.setTime(cq.getStartTime());
+		int day2 = cal2.get(Calendar.DAY_OF_YEAR);
+		int min2 = cal2.get(Calendar.MINUTE) + cal2.get(Calendar.HOUR_OF_DAY)*60;
+		
+		if (!cqPre.getStartTime().after(cq.getStartTime())){
+			if (day1==day2){
+				if (min2>=normalOpenMinute && min1<normalOpenMinute){
+					return true;
+				}else{
+					return false;
+				}
+			}else{
+				if (min2>=normalOpenMinute){
+					return true;
+				}else{
+					return false;
+				}
+			}
+		}else{
+			logger.error(String.format("pre %s can't after cur %s", cqPre.getStartTime(), cq.getStartTime()));
+			return false;
+		}
+	}
+	
 	public static Date getPeriodStart(Date dt, IntervalUnit iu, StockConfig sc){
 		Calendar cal = Calendar.getInstance(sc.getTimeZone());
 		if (iu == IntervalUnit.minute){

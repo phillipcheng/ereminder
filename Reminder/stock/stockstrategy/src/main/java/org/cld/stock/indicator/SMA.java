@@ -24,6 +24,11 @@ public class SMA extends Indicator{
 	}
 	
 	@Override
+	public void cleanup(){
+		values.clear();
+	}
+	
+	@Override
 	public void init(Map<String, String> params) {
 		super.getRmap().put(toKey(), RenderType.line);
 	}

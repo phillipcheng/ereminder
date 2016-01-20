@@ -18,11 +18,19 @@ public class MACD extends Indicator{
 	private int upperiods;
 	private int downperiods;
 	private int signalperiods;
+	
 	private EMA upEMA;
 	private EMA downEMA;
 	private EMA signalEMA;
 	
 	public MACD(){
+	}
+	
+	@Override
+	public void cleanup(){
+		upEMA.cleanup();
+		downEMA.cleanup();
+		signalEMA.cleanup();
 	}
 	
 	@Override

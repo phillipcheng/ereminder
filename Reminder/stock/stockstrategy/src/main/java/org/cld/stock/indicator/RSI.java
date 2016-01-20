@@ -18,6 +18,15 @@ public class RSI extends Indicator{
 	}
 	
 	@Override
+	public void cleanup(){
+		gainEMA.cleanup();
+		lossEMA.cleanup();
+		prevClose = Indicator.V_NA;
+		prevAG = Indicator.V_NA;
+		prevAL = Indicator.V_NA;
+	}
+	
+	@Override
 	public void init(Map<String, String> params) {
 		gainEMA = new EMA(super.getPeriods(), 1f/(super.getPeriods()));
 		lossEMA = new EMA(super.getPeriods(), 1f/(super.getPeriods()));

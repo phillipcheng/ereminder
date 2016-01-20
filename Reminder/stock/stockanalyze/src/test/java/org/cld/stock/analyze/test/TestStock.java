@@ -10,6 +10,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.analyze.AnalyzeBase;
 import org.cld.stock.analyze.AnalyzeConf;
+import org.cld.stock.analyze.AnalyzeResult;
+import org.cld.stock.analyze.RunAnalyze;
 import org.cld.stock.analyze.SelectStrategyByStockTask;
 import org.cld.stock.analyze.TradeSimulator;
 import org.cld.stock.common.CandleQuote;
@@ -17,11 +19,12 @@ import org.cld.stock.common.StockConfig;
 import org.cld.stock.common.StockUtil;
 import org.cld.stock.common.TradeHour;
 import org.cld.stock.mapper.ext.NasdaqFileFQMinuteMapper;
-import org.cld.stock.strategy.BuySellResult;
+import org.cld.stock.strategy.BuySellRecord;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.stock.strategy.SellStrategy;
 import org.cld.stock.strategy.StrategyConst;
+import org.cld.stock.strategy.StrategyResult;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.util.JsonUtil;
 import org.junit.Test;
@@ -50,22 +53,22 @@ public class TestStock {
 	
 	@Test
 	public void testBuySell() throws Exception {
-		String pFile = "analyze.local.properties";
+		String pFile = "analyze.localhadoop.properties";
 		AnalyzeConf aconf = (AnalyzeConf) TaskUtil.getTaskConf(pFile);
-		Date startDate = msdf.parse("2015-05-01 10:00");
-		Date endDate = msdf.parse("2015-12-01 20:20");
+		String startDate = "2015-05-01 10:00";
+		String endDate = "2015-12-01 20:20";
 		String sn = "simpleone";
-		AnalyzeBase.validateAllStrategyByStock(pFile, aconf, "nasdaq", startDate, endDate, sn, null, TradeHour.Normal);
+		AnalyzeBase.validateStrategiesHadoop(pFile, aconf, "nasdaq", startDate, endDate, sn, null, TradeHour.Normal, AnalyzeBase.BY_STRATEGY);
 	}
 	
 	@Test
 	public void testBuySellOverTrade() throws Exception {
-		String pFile = "analyze.local.properties";
+		String pFile = "analyze.localhadoop.properties";
 		AnalyzeConf aconf = (AnalyzeConf) TaskUtil.getTaskConf(pFile);
-		Date startDate = msdf.parse("2015-05-01 10:00");
-		Date endDate = msdf.parse("2015-12-01 20:20");
+		String startDate = "2015-05-01 10:00";
+		String endDate = "2015-12-01 20:20";
 		String sn = "overtradeone";
-		AnalyzeBase.validateAllStrategyByStock(pFile, aconf, "nasdaq", startDate, endDate, sn, null, TradeHour.Normal);
+		AnalyzeBase.validateStrategiesHadoop(pFile, aconf, "nasdaq", startDate, endDate, sn, null, TradeHour.Normal, AnalyzeBase.BY_SYMBOL);
 	}
 	
 	@Test
@@ -86,13 +89,13 @@ public class TestStock {
 	
 	@Test
 	public void testBuySimple() throws Exception{
-		String pFile = "analyze.properties";
+		String pFile = "analyze.local.properties";
 		AnalyzeConf aconf = (AnalyzeConf) TaskUtil.getTaskConf(pFile);
-		Date startDate = msdf.parse("2014-08-14 09:40");
-		Date endDate = msdf.parse("2014-08-14 16:00");
-		String sn = "strategy.simple.properties";
+		Date startDate = msdf.parse("2015-01-06 14:00");
+		Date endDate = msdf.parse("2015-01-06 16:30");
+		String sn = "strategy.simpleone.properties";
 		List<SelectStrategy> ssl = SelectStrategy.genList(new PropertiesConfiguration(sn), sn, "nasdaq", null);
-		List<Object[]> kvl = SelectStrategyByStockTask.getBuyOppList(aconf, ssl, "GPRO", startDate, endDate, TradeHour.Normal, null);
+		List<Object[]> kvl = SelectStrategyByStockTask.getBuyOppList(aconf, ssl, "TWTR", startDate, endDate, TradeHour.Normal, null);
 		for (Object[] kv:kvl){
 			SelectCandidateResult scr = (SelectCandidateResult) kv[0];
 			SelectStrategy bs = (SelectStrategy) kv[1];
@@ -102,7 +105,7 @@ public class TestStock {
 	
 	@Test
 	public void testBuyWShape() throws Exception{
-		String pFile = "analyze.properties";
+		String pFile = "analyze.local.properties";
 		AnalyzeConf aconf = (AnalyzeConf) TaskUtil.getTaskConf(pFile);
 		Date startDate = sdf.parse("2011-04-06");
 		Date endDate = sdf.parse("2011-04-07");
@@ -118,7 +121,7 @@ public class TestStock {
 	
 	@Test
 	public void testSell() throws Exception{
-		String pFile = "analyze.properties";
+		String pFile = "analyze.local.properties";
 		AnalyzeConf aconf = (AnalyzeConf) TaskUtil.getTaskConf(pFile);
 		StockConfig sc = StockUtil.getStockConfig(StockUtil.NASDAQ_STOCK_BASE);
 		String[] stockids=new String[]{"CETC"};
@@ -126,8 +129,14 @@ public class TestStock {
 		for (String stockid:stockids){
 			SelectCandidateResult scr = new SelectCandidateResult(stockid, 
 					sc.getNormalTradeStartTime(sdf.parse("2011-04-26")), 0, 9.95f*1.005f);
-			BuySellResult bsr = TradeSimulator.trade(scr, ss, sc, aconf, TradeHour.Normal);
+			BuySellRecord bsr = TradeSimulator.trade(scr, ss, sc, aconf, TradeHour.Normal);
 			logger.info(bsr);
 		}
+	}
+	
+	@Test
+	public void testTryStrategy(){
+		AnalyzeBase.validateStrategies("analyze.local.properties", StockUtil.NASDAQ_STOCK_BASE, 
+				"2014-01-01", "2015-10-01", "sn:simpleone,resultBy:symbol");
 	}
 }

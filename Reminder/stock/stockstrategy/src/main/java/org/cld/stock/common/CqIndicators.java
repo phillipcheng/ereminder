@@ -1,8 +1,6 @@
 package org.cld.stock.common;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,17 +27,7 @@ public class CqIndicators {
 			v = ind.calculate(cqi, bs);
 			cqi.putIndicator(ind.toKey(), v);
 		}
-		logger.debug(String.format("cqi:%s", cqi));
 		return cqi;
-	}
-	
-	//calculate and add indicators to newCqlist and output a cqindicator list of the same size using prevList if not null
-	public static List<CqIndicators> addIndicators(List<CandleQuote> newCqlist, SelectStrategy bs){
-		List<CqIndicators> cqil = new ArrayList<CqIndicators>();
-		for (CandleQuote cq:newCqlist){
-			cqil.add(addIndicators(cq, bs));
-		}
-		return cqil;
 	}
 	
 	public CandleQuote getCq() {

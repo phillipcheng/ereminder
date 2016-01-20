@@ -8,6 +8,9 @@ import javax.swing.SwingUtilities;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -17,6 +20,7 @@ import javax.swing.JButton;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 
 import org.cld.util.PropertiesUtil;
@@ -41,29 +45,42 @@ public class MainFrame extends JFrame {
 	private static final String KEY_STRATEGY="strategy.properties";
 	
 	private JSplitPane lrSplitPane = null;
-	private String chartPropertiesFile = "chart.properties";
+	private String chartPropertiesFile = "C://mydoc//myprojects//ereminder//Reminder//stock//stockchart//src//main//resources//chart.properties";
 	private AnalyzeConf aconf;
 	private SelectStrategy bs = null;
 	private String baseMarketId="nasdaq";
+	private String strategyFile;//full path file name of the strategy file
+	private PropertiesConfiguration pc;
 	
 	private int indPanelNum=2;
 	List<DataChart> dclist = new ArrayList<DataChart>();
 	
 	public MainFrame() {
 		super();
-		initialize();
+		//init config
 		try {
-			PropertiesConfiguration pc = new PropertiesConfiguration(chartPropertiesFile);
+			pc = new PropertiesConfiguration(chartPropertiesFile);
 			String pFile = pc.getString(KEY_CCONF);
 			String strategyFile = pc.getString(KEY_STRATEGY);
 			aconf = (AnalyzeConf) TaskUtil.getTaskConf(pFile);
-			PropertiesConfiguration strategyPC = PropertiesUtil.getPC(strategyFile);
-			List<SelectStrategy> bsl = SelectStrategy.genList(strategyPC, strategyFile, baseMarketId, aconf.getDbconf());
-			if (bsl.size()>0){
-				bs = bsl.get(0);
-			}
+			setStrategy(strategyFile);
 		}catch(Exception e){
 			logger.error("", e);
+		}
+		//init UI
+		initialize();
+	}
+	
+	public void setStrategy(String strategyFile){
+		this.strategyFile = strategyFile;
+		resetBs();
+	}
+	
+	public void resetBs(){
+		PropertiesConfiguration strategyPC = PropertiesUtil.getPC(strategyFile);
+		List<SelectStrategy> bsl = SelectStrategy.genList(strategyPC, strategyFile, baseMarketId, aconf.getDbconf());
+		if (bsl.size()>0){
+			bs = bsl.get(0);
 		}
 	}
 
@@ -72,6 +89,15 @@ public class MainFrame extends JFrame {
 		this.setContentPane(getJSplitPane());
 		this.setTitle("tt@cy");
 		this.setExtendedState(getExtendedState()|JFrame.MAXIMIZED_BOTH);
+	}
+	
+	public void close(){
+		pc.setProperty(KEY_STRATEGY, strategyFile);
+		try {
+			pc.save(new File(chartPropertiesFile));
+		} catch (ConfigurationException e) {
+			logger.error("", e);
+		}
 	}
 	
 	/**
@@ -86,6 +112,9 @@ public class MainFrame extends JFrame {
 			leftPanel.setLayout(null);
 			leftPanel.setPreferredSize(new Dimension(230, 100));
 			final DataConfigPanel dataConfigPanel = new DataConfigPanel();
+			dataConfigPanel.setMf(this);
+			dataConfigPanel.getStrategyFileChooser().setCurrentDirectory((new File(strategyFile)).getParentFile());
+			dataConfigPanel.getBtnChooseStrategy().setText((new File(strategyFile)).getName());
 			dataConfigPanel.setLocation(10, 11);
 			leftPanel.add(dataConfigPanel);
 			
@@ -100,11 +129,13 @@ public class MainFrame extends JFrame {
 					}else if (sdcfg.getUnit()==IntervalUnit.minute){
 						th = TradeHour.Normal;
 					}
-					cqilist = StockAnalyzePersistMgr.getData(aconf, sdcfg, bs, th);
 					List<SelectStrategy> bsl = new ArrayList<SelectStrategy>();
+					resetBs();
 					bsl.add(bs);
 					List<Object[]> kvl = SelectStrategyByStockTask.getBuyOppList(aconf, bsl, sdcfg.getStockId(), 
 							sdcfg.getStartDt(), sdcfg.getEndDt(), th, null);
+					resetBs();
+					cqilist = StockAnalyzePersistMgr.getData(aconf, sdcfg, bs, th);
 					List<Date> dl = new ArrayList<Date>();
 					for (Object[] kv:kvl){
 						SelectCandidateResult scr = (SelectCandidateResult) kv[0];
@@ -153,9 +184,15 @@ public class MainFrame extends JFrame {
 	public static void main(String arg[]){
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				MainFrame thisClass = new MainFrame();
-				thisClass.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-				thisClass.setVisible(true);
+				MainFrame frame = new MainFrame();
+				frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+				frame.setVisible(true);
+				frame.addWindowListener(new WindowAdapter() {
+				    @Override
+				    public void windowClosing(WindowEvent windowEvent) {
+				        frame.close();
+				    }
+				});
 			}
 		});
 	}

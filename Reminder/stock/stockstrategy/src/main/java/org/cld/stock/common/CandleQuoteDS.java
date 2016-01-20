@@ -12,6 +12,10 @@ public class CandleQuoteDS {
 		return cqds.size();
 	}
 	
+	public void cleanup(){
+		cqds.clear();
+	}
+	
 	//get max/min before date dt
 	public CandleQuote getCq(Date dt, boolean takeMax){
 		SortedMap<Date, CandleQuote> m = cqds.headMap(dt);

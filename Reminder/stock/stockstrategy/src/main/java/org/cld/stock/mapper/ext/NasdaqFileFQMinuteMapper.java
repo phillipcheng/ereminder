@@ -1,22 +1,22 @@
 package org.cld.stock.mapper.ext;
 
-import java.text.SimpleDateFormat;
+import java.io.File;
 import java.util.Date;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.common.CandleQuote;
 import org.cld.util.FileDataMapper;
 import org.cld.util.FsType;
+import org.cld.util.SafeSimpleDateFormat;
 
 public class NasdaqFileFQMinuteMapper extends FileDataMapper{
 	Logger logger = LogManager.getLogger(NasdaqFileFQMinuteMapper.class);
 	
 	private NasdaqFileFQMinuteMapper(){
-		
 	}
 	private static NasdaqFileFQMinuteMapper singleton = new NasdaqFileFQMinuteMapper();
-	private static final SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm");
+	private static final SafeSimpleDateFormat sdf = new SafeSimpleDateFormat("MM/dd/yyyy HH:mm");
+
 	public static NasdaqFileFQMinuteMapper getInstance(){
 		return singleton;
 	}
@@ -45,9 +45,9 @@ public class NasdaqFileFQMinuteMapper extends FileDataMapper{
 	public String getFileName(String stockId, FsType fsType) {
 		String fn = stockId.replace("^", ".");
 		if (fsType == FsType.hdfs){
-			return String.format("/reminder/nasdaq/min/%s.txt", fn);
+			return String.format("%s/min/%s.txt", this.getRootFolder(), fn);
 		}else if (fsType == FsType.local){
-			return String.format("C:\\Kibot\\1min\\%s.txt", fn);
+			return String.format("%s%smin%s%s.txt", this.getRootFolder(), File.separator, File.separator, fn);
 		}else{
 			logger.error(String.format("unsupported fsType:%s", fsType));
 			return null;

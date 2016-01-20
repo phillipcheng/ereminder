@@ -3,9 +3,7 @@ package org.cld.stock.strategy;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.cld.stock.strategy.StockOrder.OrderType;
-
-public class BuySellResult {
+public class BuySellRecord {
 	private Date submitD;
 	private String stockid;
 	private Date buyTime;
@@ -17,7 +15,7 @@ public class BuySellResult {
 	
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 	
-	public BuySellResult(Date submitD, String stockid, Date buyTime, float buyPrice, Date sellTime, float sellPrice, String sellOrderType, float percent){
+	public BuySellRecord(Date submitD, String stockid, Date buyTime, float buyPrice, Date sellTime, float sellPrice, String sellOrderType, float percent){
 		this.submitD = submitD;
 		this.stockid = stockid;
 		this.buyTime = buyTime;

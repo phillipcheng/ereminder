@@ -14,10 +14,10 @@ public class EMA extends Indicator{
 
 	protected static Logger logger =  LogManager.getLogger(EMA.class);
 	
+	float multiplier;
+	
 	float prevEMA=Indicator.V_NA;
 	List<Float> values = new ArrayList<Float>();//of size periods
-	
-	float multiplier;
 	
 	public EMA(){
 	}
@@ -25,6 +25,12 @@ public class EMA extends Indicator{
 	public EMA(int periods, float multiplier){
 		super.setPeriods(periods);
 		this.multiplier = multiplier;
+	}
+	
+	@Override
+	public void cleanup(){
+		prevEMA=Indicator.V_NA;
+		values.clear();
 	}
 	
 	@Override

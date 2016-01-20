@@ -13,7 +13,7 @@ import org.cld.stock.common.StockConfig;
 import org.cld.stock.common.StockUtil;
 import org.cld.stock.common.TradeHour;
 import org.cld.stock.strategy.BuySellInfo;
-import org.cld.stock.strategy.BuySellResult;
+import org.cld.stock.strategy.BuySellRecord;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SellStrategy;
 import org.cld.stock.strategy.StockOrder;
@@ -80,7 +80,7 @@ public class SellStrategyByStockReducer extends Reducer<StockIdDatePair, Text, T
 					TradeSimulator.submitStockOrder(bsi, sc, hr, TradeHour.Normal);
 					
 					List<StockOrder> solist = bsi.getSos();
-					BuySellResult bsr = TradeSimulator.calculateBuySellResult(bsi.getSubmitD(), solist);
+					BuySellRecord bsr = TradeSimulator.calculateBuySellResult(bsi.getSubmitD(), solist);
 					if (bsr.getBuyPrice()!=0f && bsr.getSellPrice()==0f){
 						//failed to sell
 						logger.error(String.format("failed to sell: sos:%s", solist));

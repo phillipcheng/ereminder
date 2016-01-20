@@ -36,7 +36,6 @@ public class StrategyResultReducer extends Reducer<Text, Text, Text, Text>{
 	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 		//input key: bs.name, bs.params, ss.params, stockId, :: sample: closedropavg,5.0:0.0,1,2,9.00,1.00,AAPL
 		//input value: startDate, stockid, buyTime, buyPrice, sellTime, sellOrderType, sellPrice, percent
-		//the 2nd last is used to sort, set the sort field as the mean of the group
 		//output: key same as input, value: transaction number, average percent for the whole period
 		try{
 			String filename = key.toString().replaceAll(":", "-").replaceAll("\\.", "_").replaceAll(",", "_");

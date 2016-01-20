@@ -77,6 +77,7 @@ public class StockAnalyzePersistMgr {
 	public static CqCachedReader getReader(AnalyzeConf aconf, FileDataMapper fdMapper, String stockId){
 		BufferedReader br = null;
 		try{
+			fdMapper.setRootFolder(aconf.getBtDataFolder());
 			if (aconf.getBtFs()==FsType.hdfs){
 				Configuration conf = HadoopTaskLauncher.getHadoopConf(aconf);
 				FileSystem fs = FileSystem.get(conf);
@@ -186,6 +187,7 @@ public class StockAnalyzePersistMgr {
 		return lo;
 	}
 	
+	//used by chart
 	public static List<CqIndicators> getData(AnalyzeConf aconf, StockDataConfig sdcfg, SelectStrategy bs, TradeHour th){
 		FileDataMapper fdMapper = null;
 		StockConfig sc = StockUtil.getStockConfig(sdcfg.getBaseMarketId());
@@ -198,7 +200,20 @@ public class StockAnalyzePersistMgr {
 		}
 		List<CandleQuote> cql = (List<CandleQuote>) StockAnalyzePersistMgr.getBTDByStockDate(aconf, fdMapper, sdcfg.getStockId(), 
 				sdcfg.getStartDt(), sdcfg.getEndDt(), th);
-		return CqIndicators.addIndicators(cql, bs);
+		List<CqIndicators> cqilist = new ArrayList<CqIndicators>();
+		CandleQuote preCq = null;
+		for (CandleQuote cq: cql){
+			if (bs.getLookupUnit()!=IntervalUnit.unspecified && bs.getLookupUnit()!=IntervalUnit.day){
+				if (StockUtil.crossMarketStart(preCq, cq)){
+					logger.debug(String.format("cleanup needed. preCq:%s, cq:%s", preCq, cq));
+					bs.cleanup();
+				}
+			}
+			CqIndicators cqi = CqIndicators.addIndicators(cq, bs);
+			cqilist.add(cqi);
+			preCq = cq;
+		}
+		return cqilist;
 	}
 
 }

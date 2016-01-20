@@ -1,7 +1,6 @@
 package org.cld.stock.indicator;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -25,6 +24,10 @@ public class Expression extends Indicator{
 	public void init(Map<String, String> params) {
 		exp = params.get(p_expression);
 		super.getRmap().put(toKey(), RenderType.line);
+	}
+	
+	@Override
+	public void cleanup(){
 	}
 	
 	@Override

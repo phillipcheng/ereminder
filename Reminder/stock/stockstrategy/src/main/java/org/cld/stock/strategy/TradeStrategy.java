@@ -33,4 +33,23 @@ public class TradeStrategy {
 	public void setSs(SellStrategy ss) {
 		this.ss = ss;
 	}
+	
+	@Override
+	public int hashCode(){
+		return (int) (bs.hashCode() + ss.hashCode());
+	}
+	
+	@Override
+	public boolean equals(Object o){
+		if (o instanceof TradeStrategy){
+			TradeStrategy ts = (TradeStrategy) o;
+			if (bs.equals(ts.getBs()) && ss.equals(ts.getSs())){
+				return true;
+			}else{
+				return false;
+			}
+		}else{
+			return false;
+		}
+	}
 }

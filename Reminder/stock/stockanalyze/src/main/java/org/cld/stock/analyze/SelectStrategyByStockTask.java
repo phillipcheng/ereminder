@@ -15,7 +15,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.common.CandleQuote;
 import org.cld.stock.common.CqIndicators;
+import org.cld.stock.common.StockUtil;
 import org.cld.stock.common.TradeHour;
+import org.cld.stock.strategy.IntervalUnit;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
 import org.cld.taskmgr.TaskMgr;
@@ -60,12 +62,28 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 		return this.getId();
 	}
 	
-	private static List<Object[]> getKV(SelectStrategy bs, Map<String, List<? extends Object>> resultMap, String stockId, 
-			MapContext<Object, Text, Text, Text> context) throws Exception{
+	private static List<Object[]> getKV(SelectStrategy bs, Map<String, List<? extends Object>> resultMap, String cqKey, List<CandleQuote> cqlist, 
+			String stockId, MapContext<Object, Text, Text, Text> context) throws Exception{
+		if (bs.allOneFetch()){
+			bs.initHistoryData(resultMap);
+		}
+		
 		List<Object[]> kvl = new ArrayList<Object[]>();
-		List<SelectCandidateResult> scrl = bs.selectByHistory(resultMap);
-		if (scrl!=null){
-			for (SelectCandidateResult scr:scrl){
+		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
+		
+		CandleQuote preCq = null;
+		for (CandleQuote cq:cqlist){
+			if (bs.getLookupUnit()!=IntervalUnit.unspecified && bs.getLookupUnit()!=IntervalUnit.day){
+				if (StockUtil.crossMarketStart(preCq, cq)){
+					//logger.debug(String.format("cleanup needed. preCq:%s, cq:%s", preCq, cq));
+					bs.cleanup();
+				}
+			}
+			CqIndicators cqi = CqIndicators.addIndicators(cq, bs);
+			SelectCandidateResult scr = bs.selectByStream(cqi);
+			preCq = cqi.getCq();
+			if (scr!=null){
+				scrl.add(scr);
 				if (context!=null){
 					String key = String.format("%s,%s,%s,%s", bs.getName(), msdf.format(scr.getDt()), 
 							bs.getOrderDirection(), bs.paramsToString());
@@ -109,10 +127,7 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 			List<SelectStrategy> sbsFetchBsl = new ArrayList<SelectStrategy>();//step by step
 			for (SelectStrategy bs:bsl){
 				if (bs.allOneFetch()){
-					cqilist = CqIndicators.addIndicators(cqlist, bs);
-					resultMap.put(cqKey, cqilist);
-					bs.initHistoryData(resultMap);
-					List<Object[]> skvl = getKV(bs, null, stockId, context);
+					List<Object[]> skvl = getKV(bs, null, cqKey, cqlist, stockId, context);
 					kvl.addAll(skvl);
 				}else{
 					sbsFetchBsl.add(bs);
@@ -139,9 +154,7 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 						if (cqlist.size()>0){
 							lastDt = ((CandleQuote)cqlist.get(cqlist.size()-1)).getStartTime();
 							for (SelectStrategy bs: sbsFetchBsl){
-								cqilist = CqIndicators.addIndicators(cqlist, bs);
-								sbsResults.put(cqKey, cqilist);
-								List<Object[]> skvl = getKV(bs, sbsResults, stockId, context);
+								List<Object[]> skvl = getKV(bs, sbsResults, cqKey, cqlist, stockId, context);
 								kvl.addAll(skvl);
 							}
 						}else{

@@ -4,7 +4,6 @@ import java.util.Map;
 
 import org.cld.stock.common.CandleQuote;
 import org.cld.stock.common.CqIndicators;
-import org.cld.stock.indicator.Bollinger;
 import org.cld.stock.indicator.Indicator;
 import org.cld.stock.indicator.MACD;
 import org.cld.stock.indicator.RSI;
@@ -23,7 +22,7 @@ public class MacdGoldCross extends SelectStrategy {
 	private String macdKey;
 	private String rsiKey;
 	
-	private float prevMacd;
+	private float prevMacd = 0;
 	
 	public MacdGoldCross(){
 	}
@@ -35,6 +34,13 @@ public class MacdGoldCross extends SelectStrategy {
 		macdKey = macd.toKey();
 		rsi = (RSI)this.indMap.get(Ind_RSI);
 		rsiKey = rsi.toKey();
+	}
+	
+	@Override
+	public void cleanup(){
+		macd.cleanup();
+		rsi.cleanup();
+		prevMacd=0;
 	}
 
 	@Override

@@ -23,4 +23,9 @@ public class RandomD extends SelectStrategy {
 		}
 		return scr;
 	}
+
+	@Override
+	public void cleanup() {
+		
+	}
 }

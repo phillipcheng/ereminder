@@ -12,7 +12,6 @@ public class StockDataConfig {
 	private String baseMarketId;
 	private IntervalUnit unit;
 	
-	
 	public Date getStartDt() {
 		return startDt;
 	}
@@ -43,7 +42,4 @@ public class StockDataConfig {
 	public void setBaseMarketId(String baseMarketId) {
 		this.baseMarketId = baseMarketId;
 	}
-	
-	
-
 }

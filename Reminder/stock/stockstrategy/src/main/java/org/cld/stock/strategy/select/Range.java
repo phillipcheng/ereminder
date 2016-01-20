@@ -38,6 +38,10 @@ public class Range extends SelectStrategy {
 	private String symbol;
 	private int buyLevel=0; //>=0, 0 is init level, the higher the cheaper
 
+	@Override
+	public void cleanup() {	
+	}
+	
 	public String toString(){
 		if (lastUpdateDt!=null){
 			return String.format("%s:buy org price:%.3f, current price:%.3f, shiftRate:%.3f at %s", symbol, orgBuyPrice, 

@@ -1,6 +1,5 @@
 package org.cld.stock.analyze;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -16,7 +15,7 @@ import org.cld.stock.common.StockConfig;
 import org.cld.stock.common.StockUtil;
 import org.cld.stock.common.TradeHour;
 import org.cld.stock.strategy.BuySellInfo;
-import org.cld.stock.strategy.BuySellResult;
+import org.cld.stock.strategy.BuySellRecord;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SellStrategy;
 import org.cld.stock.strategy.StockOrder;
@@ -26,7 +25,6 @@ import org.cld.stock.strategy.StockOrder.*;
 //this simulator is validated against minute data
 public class TradeSimulator {
 	private static Logger logger =  LogManager.getLogger(TradeSimulator.class);
-	private static final SimpleDateFormat msdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 	//order list are treated as OCO
 	private static Iterator<CandleQuote> tryExecuteOrder(List<StockOrder> sol, Iterator<CandleQuote> qlist, 
 			Map<String, StockOrder> executedOrders, StockConfig sc){
@@ -228,7 +226,7 @@ public class TradeSimulator {
 		}
 	}
 	
-	public static BuySellResult calculateBuySellResult(Date submitD, List<StockOrder> solist){
+	public static BuySellRecord calculateBuySellResult(Date submitD, List<StockOrder> solist){
 		List<StockOrder> buySOs = new ArrayList<StockOrder>();
 		List<StockOrder> sellSOs = new ArrayList<StockOrder>();
 		for (StockOrder so:solist){
@@ -270,19 +268,19 @@ public class TradeSimulator {
 				}else{
 					logger.error(String.format("tif and ordertype all null? for so:%s", exeSo));
 				}
-				return new BuySellResult(submitD, stockid, buyTime, buyPrice, 
+				return new BuySellRecord(submitD, stockid, buyTime, buyPrice, 
 						exeSo.getExecuteTime(), sellPrice, selltype, percent);
 			}else{//system error, because of data not granular enough or the stock not active enough, must avoid this
-				return new BuySellResult(submitD, stockid, buyTime, buyPrice, 
+				return new BuySellRecord(submitD, stockid, buyTime, buyPrice, 
 						submitD, 0f, OrderType.stop.toString(), 0f);
 			}
 		}else{//failed to buy
-			return new BuySellResult(submitD, stockid, submitD, 0f, submitD, 0f, OrderType.stop.toString(), 0f);
+			return new BuySellRecord(submitD, stockid, submitD, 0f, submitD, 0f, OrderType.stop.toString(), 0f);
 		}
 	}
 	
 	//used by test
-	public static BuySellResult trade(SelectCandidateResult scr, SellStrategy ss, StockConfig sc, AnalyzeConf aconf, TradeHour th){
+	public static BuySellRecord trade(SelectCandidateResult scr, SellStrategy ss, StockConfig sc, AnalyzeConf aconf, TradeHour th){
 		CqCachedReader hr =  null;
 		try {
 			String stockid = scr.getSymbol();

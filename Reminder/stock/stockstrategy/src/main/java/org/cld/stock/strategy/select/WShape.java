@@ -25,6 +25,11 @@ public class WShape extends SelectStrategy {
 		periods = (int) Float.parseFloat((String) this.getParams().get(LOOKUP_PERIOD));
 		ampThresh = Float.parseFloat((String) this.getParams().get(AMPLITUDE));
 	}
+	
+	@Override
+	public void cleanup(){
+		cqds.cleanup();
+	}
 
 	@Override
 	public SelectCandidateResult selectByStream(CqIndicators cqi) {

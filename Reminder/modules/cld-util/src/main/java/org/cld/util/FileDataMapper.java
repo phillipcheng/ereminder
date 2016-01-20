@@ -3,8 +3,11 @@ package org.cld.util;
 import org.apache.commons.lang.ObjectUtils;
 
 public abstract class FileDataMapper implements DataMapper{
+	private String rootFolder;
+	
 	public abstract String getFileName(String stockId, FsType fsType);
 	public abstract Object getObject(String line);//csv line
+	
 	
 	@Override
 	public boolean equals(Object obj){
@@ -23,5 +26,12 @@ public abstract class FileDataMapper implements DataMapper{
 	@Override
 	public int hashCode(){
 		return getFileName("", FsType.hdfs).hashCode();
+	}
+	
+	public String getRootFolder() {
+		return rootFolder;
+	}
+	public void setRootFolder(String rootFolder) {
+		this.rootFolder = rootFolder;
 	}
 }
