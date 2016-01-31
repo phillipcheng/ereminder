@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.util.JsonUtil;
 import org.cld.util.StringUtil;
+import org.w3c.dom.Node;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -49,7 +50,7 @@ public class CrawledItem {
 	//@JsonIgnore
 	private transient Map<String, Object> params = new TreeMap<String, Object>();//I need the order of keys
 	
-	private String[][] csvValue;//list of key,value pairs for hdfs to save
+	private String[][] csvValue;//list of key,value pairs to save to file
 	
 	//called by product, category's default constructor for hibernate
 	public CrawledItem(){
@@ -202,6 +203,15 @@ public class CrawledItem {
 			Object o = getParamMap().get(key);
 			if (!(o instanceof Serializable)){
 				removeKeys.add(key);
+			}
+			if (o instanceof List){
+				List ol = (List)o;
+				if (ol.size()>0){
+					Object firstItem = ol.get(0);
+					if (!(firstItem instanceof Serializable) || firstItem instanceof Node){
+						removeKeys.add(key);
+					}
+				}
 			}
 		}
 		for (String key: removeKeys){

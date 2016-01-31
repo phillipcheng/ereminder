@@ -1,8 +1,6 @@
 package org.cld.trade.test;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.trade.AutoTrader;
@@ -49,7 +47,7 @@ public class TestTradeDataMgr {
         SslContextFactory sslContextFactory = new SslContextFactory();
         HttpClient client = new HttpClient(sslContextFactory);
         client.start();
-        Request request = client.newRequest("https://stream.tradeking.com/v1/market/quotes.xml?symbols=AAPL");
+        Request request = client.newRequest("https://stream.tradeking.com/v1/market/quotes.xml?symbols=COMP");
         request.method(HttpMethod.GET);
 
         MyHandler myhandler = new MyHandler();

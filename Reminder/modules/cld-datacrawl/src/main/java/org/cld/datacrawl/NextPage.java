@@ -14,6 +14,7 @@ public class NextPage {
 	private HtmlPage motherPage; //if next item is on the frame, this is the enclosing page
 	private String frameId; //can be index or name
 	private int status = STATUS_NORMAL;
+	boolean returnParent=false;
 	
 	public NextPage(int status){
 		this.status=status;
@@ -26,15 +27,25 @@ public class NextPage {
 	}
 	
 	public NextPage(String nextUrl, HtmlPage motherPage, String frameId){
+		this(nextUrl, motherPage, frameId, false);
+	}
+	
+	public NextPage(String nextUrl, HtmlPage motherPage, String frameId, boolean returnParent){
 		this.nextUrl = nextUrl;
 		this.motherPage = motherPage;
 		this.frameId = frameId;
+		this.returnParent = returnParent;
 	}
 	
 	public NextPage(HtmlElement nextItem, HtmlPage motherPage, String frameId){
+		this(nextItem, motherPage, frameId, false);
+	}
+	
+	public NextPage(HtmlElement nextItem, HtmlPage motherPage, String frameId, boolean returnParent){
 		this.nextItem = nextItem;
 		this.motherPage = motherPage;
 		this.frameId = frameId;
+		this.returnParent = returnParent;
 	}
 	
 	public String toString(){
@@ -77,6 +88,14 @@ public class NextPage {
 	}
 	public void setFrameId(String frameId) {
 		this.frameId = frameId;
+	}
+
+	public boolean isReturnParent() {
+		return returnParent;
+	}
+
+	public void setReturnParent(boolean returnParent) {
+		this.returnParent = returnParent;
 	} 
 
 }

@@ -1,11 +1,31 @@
 package org.cld.sites.test;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.cld.crbook.util.BookHandler;
 import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.datacrawl.test.TestBase;
+import org.cld.imagedata.ImageDataUtil;
+import org.cld.util.DownloadUtil;
+import org.cld.util.PatternIO;
+import org.cld.util.PatternResult;
+import org.cld.util.StringUtil;
+import org.cld.util.entity.CrawledItem;
+import org.cld.util.entity.Product;
 import org.junit.Before;
 import org.junit.Test;
+import org.xml.imagedata.Data;
+
+import cy.common.entity.Book;
+
 import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
 
 public class TestBooks extends TestBase {
@@ -26,14 +46,14 @@ public class TestBooks extends TestBase {
 	public static final String BAOLINY_CONF="baoliny.xml";
 	
 	private String[] allConf = new String[]{
-			CBO_CONF,  
-			A8Z8_CONF,
-			MOM001_CONF,
-			DMZJ_CONF,
-			CL_CONF,
+			//CBO_CONF,  
+			//A8Z8_CONF, //register user only (paid)
+			//MOM001_CONF, //died
+			//DMZJ_CONF,
+			//CL_CONF,
 			XRS52_CONF,
-			FKB_CONF,
-			BAOLINY_CONF,
+			//FKB_CONF,
+			//BAOLINY_CONF,
 	};
 	
 	
@@ -100,19 +120,20 @@ public class TestBooks extends TestBase {
 	//Test browse details task (leaf category)
 	@Test
 	public void testBDT() throws Exception{
-		runBDT(CBO_CONF, "http://www.childrensbooksonline.org/library-early.htm", false);
-		runBDT(A8Z8_CONF, "http://lhh.a8z8.com/type-433-86-1.html", false);
-		runBDT(MOM001_CONF, "http://lianhuanhua.mom001.com/sh/", false);
-		runBDT(DMZJ_CONF, "http://manhua.dmzj.com/blood/", false);
+		//runBDT(CBO_CONF, "http://www.childrensbooksonline.org/library-early.htm", false);
+		//runBDT(A8Z8_CONF, "http://lhh.a8z8.com/type-433-86-1.html", false);
+		//runBDT(MOM001_CONF, "http://lianhuanhua.mom001.com/sh/", false);
+		//runBDT(DMZJ_CONF, "http://manhua.dmzj.com/blood/", false);
+		runBDT(XRS52_CONF, "http://www.52xrs.com/list/lsgs.htm", false);
 	}
 	
 	//Test turning pages for product list browsing
 	@Test
 	public void testBDT_NextPage() throws Exception{
-		runBDT(CBO_CONF, "http://www.childrensbooksonline.org/library-pre-reader.htm", true);
-		runBDT(A8Z8_CONF, "http://lhh.a8z8.com/type-433-86-1.html", true);
-		runBDT(MOM001_CONF, "http://lianhuanhua.mom001.com/mz/", true);
-		runBDT(XRS52_CONF, "http://www.52xrs.com/list/wxmz.htm", true);
+		//runBDT(CBO_CONF, "http://www.childrensbooksonline.org/library-pre-reader.htm", true);
+		//runBDT(A8Z8_CONF, "http://lhh.a8z8.com/type-433-86-1.html", true);
+		//runBDT(MOM001_CONF, "http://lianhuanhua.mom001.com/mz/", true);
+		runBDT(XRS52_CONF, "http://www.52xrs.com/list/lsgs.htm", true);
 	}
 	
 	//Test One Book
@@ -123,7 +144,7 @@ public class TestBooks extends TestBase {
 		//browsePrd(DMZJ_CONF, "http://manhua.dmzj.com/dftrmh/23330.shtml");
 		//browsePrd(A8Z8_CONF, "http://lhh.a8z8.com/thread-458039-1-1.html");
 		//browsePrd(CL_CONF, "http://www.childrenslibrary.org/icdl/BookPreview?bookid=flomuki_00510003&route=all&lang=English&msg=&ilang=English");
-		//browsePrd(XRS52_CONF, "http://www.52xrs.com/comic/2413/");
+		browsePrd(XRS52_CONF, "http://www.52xrs.com/comic/2413/");
 		//browsePrd(XRS123_CONF, "http://www.5xiaxiaoshuo.com/jingdianmingzhu/20121126/2082_1.html");
 		//browsePrd(BAOLINY_CONF, "http://www.baoliny.com/18757/index.html");
 		//browsePrd(SQSXS_CONF, "http://www.sqsxs.com/25/25040/index.html");
@@ -131,4 +152,78 @@ public class TestBooks extends TestBase {
 		//browsePrd(VYMING_CONF, "http://bbs.vyming.com/novel-view-30510.html");
 		//browsePrd(HAODU5_CONF, "http://haodu5.com/5200/17/17513/");
 	}
+	
+	public void xrsDownload(String bookSeries, int startBookIdx, int bookNumber) throws Exception{
+		xrsDownload(bookSeries, startBookIdx, bookNumber, false);
+	}
+	public void xrsDownload(String bookSeries, int startBookIdx, int bookNumber, boolean onlyCover) throws Exception{
+		ExecutorService exeService = Executors.newFixedThreadPool(20);
+		String rootDir = "http://www.52xrs.com/comic/";
+		String localRoot = "C:\\mydoc\\picbook";
+		for (int i=0; i<bookNumber; i++){
+			int bookIdx = startBookIdx + i;
+			String bookUrl = String.format("%s%d/", rootDir, bookIdx);
+			List<CrawledItem> cil = browsePrd(XRS52_CONF, bookUrl);
+			if (cil!=null && cil.size()>0){
+				List<String> imageUrls = new ArrayList<String>();
+				Product prd = (Product) cil.get(0);
+				List<String> additionalPageList = (List<String>) prd.getParam(BookHandler.BOOK_PAGE_URLS);
+				if (additionalPageList!=null){
+					imageUrls.addAll(additionalPageList);
+				}
+				if (!onlyCover){
+					PatternIO bookpageurlspattern = (PatternIO) prd.getParam(BookHandler.BOOK_PAGE_URLS_pattern);
+					int totalPage = prd.getTotalPage();
+					if(bookpageurlspattern!=null){
+						PatternResult pattern = bookpageurlspattern.getPR();
+						if (pattern!=null){
+							for (int page=1; page<totalPage; page++){
+								String url = PatternResult.guessUrl(pattern, page-1);
+								logger.info(String.format("bookIdx %d, url for page %d is %s", bookIdx, page, url));
+								imageUrls.add(url);
+							}
+						}
+					}else{
+						logger.error(String.format("pattern not found for %s", bookUrl));
+					}
+				}
+				String localBookDir = String.format("%s%s%s%s%s", localRoot, File.separator, bookSeries, File.separator, StringUtil.getStringFromNum(i, 2));
+				DownloadUtil du = new DownloadUtil(localBookDir, imageUrls);
+				exeService.submit(du);
+			}
+		}
+		
+		exeService.shutdown();
+		exeService.awaitTermination(4, TimeUnit.HOURS);
+	}
+	
+	@Test
+	public void testShuiHuZhuan() throws Exception {
+		String bookSeries = "水浒传";
+		int startBookIdx = 401;
+		int bookNumber = 30;
+		xrsDownload(bookSeries, startBookIdx, bookNumber, true);
+	}
+	
+	@Test
+	public void testDongZhouLieGuo() throws Exception {
+		String bookSeries = "东周列国故事";
+		int startBookIdx = 237;
+		int bookNumber = 50;
+		xrsDownload(bookSeries, startBookIdx, bookNumber, true);
+		
+		bookSeries = "隋唐演义";
+		startBookIdx = 833;
+		bookNumber = 60;
+		xrsDownload(bookSeries, startBookIdx, bookNumber, true);
+	}
+
+	@Test
+	public void testSongShi() throws Exception {
+		String bookSeries = "宋史";
+		int startBookIdx = 2274;
+		int bookNumber = 20;
+		xrsDownload(bookSeries, startBookIdx, bookNumber);
+	}
+
 }

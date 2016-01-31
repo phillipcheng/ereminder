@@ -24,7 +24,7 @@ public abstract class Indicator {
 	private int periods=1;
 	
 	//init
-	public abstract void init(Map<String, String> params);
+	public abstract void init(Map<String, String> params);//called after the parameters are set, like periods, chartId, etc
 	//calculate
 	public abstract Object calculate(CqIndicators cqi, SelectStrategy bs);
 	//return the string representation of this indicator including params

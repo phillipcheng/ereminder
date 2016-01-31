@@ -18,6 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.CrawlUtil;
+import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.cld.pagea.general.ProductListAnalyzeUtil;
@@ -30,15 +31,19 @@ import org.cld.util.entity.CrawledItem;
 import org.cld.util.entity.CrawledItemId;
 import org.cld.util.entity.Product;
 import org.xml.mytaskdef.ParsedBrowsePrd;
+import org.xml.taskdef.AttributeType;
 import org.xml.taskdef.BrowseDetailType;
 import org.xml.taskdef.BrowseTaskType;
 import org.xml.taskdef.CsvTransformType;
 import org.xml.taskdef.ParamType;
+import org.xml.taskdef.ParamValueType;
 import org.xml.taskdef.TaskInvokeType;
 import org.xml.taskdef.TasksType;
 import org.xml.taskdef.VarType;
 
 import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.DomNode;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 @Entity
 @DiscriminatorValue("org.cld.datacrawl.task.BrowseProductTaskConf")
@@ -138,10 +143,21 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		}
 	}
 	
+	//startUrlList can be a pageList or url list
 	private static void addFullUrl(ParsedBrowsePrd pbpTemplate, Map<String, Object> singleValueParams, 
-			List<String> startUrlList, List<String> cachePageList){
-		String fullUrl = (String) TaskUtil.eval(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl(), singleValueParams);
-		startUrlList.add(fullUrl);
+			List<Object> startUrlList, List<String> cachePageList){
+		String startUrlValue = pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl().getValue();
+		if (!startUrlValue.contains("/")){//not a url
+			Object page = singleValueParams.get(startUrlValue);
+			if  (page instanceof HtmlPage){
+				startUrlList.add(page);
+			}else{
+				logger.error(String.format("starturl:%s is not page param. %s", startUrlValue, page));
+			}
+		}else{
+			String fullUrl = (String) TaskUtil.eval(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getStartUrl(), singleValueParams);
+			startUrlList.add(fullUrl);
+		}
 		if (pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getCachePage()!=null){
 			String fullCachePage = (String) TaskUtil.eval(pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getCachePage(), singleValueParams);
 			cachePageList.add(fullCachePage);
@@ -182,7 +198,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		task.putAllParams(params);
 		BrowseProductTaskConf.evalParams(task, bdt);
 		//startUrl may contains parameters needs to be converted to startUrlWithValue (maybe multiple) by filling the ParamValueMap
-		List<String> startUrlList = new ArrayList<String>();
+		List<Object> startUrlList = new ArrayList<Object>();//it can be a page of a string
 		List<String> cachePageList = new ArrayList<String>(); //if configured to save cache pages
 		List<ParamType> plist = pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getParam();
 		if (plist!=null && plist.size()>0){//expand starturl using parameters, esp list type params
@@ -230,7 +246,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		//cache page if needed
 		if (cachePageList.size()>0){
 			for (int i=0; i<cachePageList.size(); i++){
-				String startUrl = startUrlList.get(i);
+				String startUrl = (String) startUrlList.get(i);//cache only start url
 				String cachePage = cachePageList.get(i);
 				CrawlUtil.downloadPage(cconf, startUrl, cachePage);
 			}
@@ -239,11 +255,23 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		List<CrawledItem> retcilist = new ArrayList<CrawledItem>();
 		if (pbpTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getUserAttribute().size()!=0){
 			//start browsing
-			for (String startUrl:startUrlList){
+			for (Object startUrl:startUrlList){
 				CrawledItem ci = null;
 				boolean needCrawl = true;
 				Product lastProduct = null;
-				String prdId = ProductListAnalyzeUtil.getInternalId(startUrl, task, pbpTemplate);
+				String prdId;
+				if (startUrl instanceof String){
+					prdId= ProductListAnalyzeUtil.getInternalId((String)startUrl, task, pbpTemplate);
+				}else{
+					AttributeType idAvt = pbpTemplate.getPdtAttrMap().get("id");
+					if (idAvt!=null){
+						prdId = (String) CrawlTaskEval.eval((DomNode)startUrl, idAvt.getValue(), cconf, params);
+					}else{
+						logger.error(String.format("for UI page typed start url, must has id attribute define. %s", startUrl));
+						break;
+					}
+				}
+				logger.info(String.format("prd id:%s", prdId));
 				if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm())){
 					//check any update
 					if (prdId!=null && !"".equals(prdId)){			
@@ -276,7 +304,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 						}
 						ci = cconf.getPa().addProduct(wc, startUrl, thisProduct, null, task, pbpTemplate, cconf, retcsv, addToDB, 
 								csvtrans, hdfsByIdOutputMap, context, mos);
-						logger.debug(String.format("after add product, ci:%s", ci));
+						//logger.debug(String.format("after add product, ci:%s", ci));
 					}catch(Exception e){
 						logger.error("", e);
 					}finally{
@@ -293,6 +321,12 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 					ParsedBrowsePrd pbptTemplate = task.getBrowseDetailTask(callTaskName);
 					if (pbptTemplate==null){
 						logger.error(String.format("invoke task name: %s not found in site %s", callTaskName, task.getTasks().getStoreId()));
+					}
+					//pass ci's attribute specified in the tit's param to the next task's param
+					for (ParamValueType pvt:tit.getParam()){
+						if (ci.getParam(pvt.getParamName())!=null){
+							params.put(pvt.getParamName(), ci.getParam(pvt.getParamName()));
+						}
 					}
 					//check tit's param only pass the value to the param which has no init value
 					List<ParamType> ptl = pbptTemplate.getBrowsePrdTaskType().getBaseBrowseTask().getParam();

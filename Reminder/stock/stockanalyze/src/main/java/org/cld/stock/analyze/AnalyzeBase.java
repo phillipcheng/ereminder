@@ -134,6 +134,11 @@ public class AnalyzeBase implements Runnable{
 	public static final int DEFAULT_POOL_SIZE=10;
 	public static AnalyzeResult validateStrategiesLocal(String analyzePropertyFile, String baseMarketId, String startDt, String endDt, 
 			String strategyName, TradeHour th, String resultBy, int poolSize){
+		return validateStrategiesLocal(analyzePropertyFile, baseMarketId, startDt, endDt, strategyName, th, resultBy, poolSize, null);
+	}
+	
+	public static AnalyzeResult validateStrategiesLocal(String analyzePropertyFile, String baseMarketId, String startDt, String endDt, 
+			String strategyName, TradeHour th, String resultBy, int poolSize, String inSymbol){
 		try{
 			AnalyzeConf aconf = (AnalyzeConf) TaskUtil.getTaskConf(analyzePropertyFile);
 			AnalyzeResult ar = new AnalyzeResult();
@@ -141,8 +146,13 @@ public class AnalyzeBase implements Runnable{
 			String strategyPropFileName = STRATEGY_PREFIX + strategyName + STRATEGY_SUFFIX;
 			PropertiesConfiguration strategyProperties = new PropertiesConfiguration(strategyPropFileName);
 			Map<String, List<SelectStrategy>> scsl = SelectStrategy.genMap(strategyProperties, strategyName, baseMarketId, aconf.getDbconf());
-			for (String symbol:scsl.keySet()){
-				AnalyzeBase ab = new AnalyzeBase(ar, baseMarketId, symbol, analyzePropertyFile, strategyPropFileName, startDt, endDt, th);
+			if (inSymbol==null){
+				for (String symbol:scsl.keySet()){
+					AnalyzeBase ab = new AnalyzeBase(ar, baseMarketId, symbol, analyzePropertyFile, strategyPropFileName, startDt, endDt, th);
+					es.submit(ab);
+				}
+			}else{
+				AnalyzeBase ab = new AnalyzeBase(ar, baseMarketId, inSymbol, analyzePropertyFile, strategyPropFileName, startDt, endDt, th);
 				es.submit(ab);
 			}
 			es.shutdown();

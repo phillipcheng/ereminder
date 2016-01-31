@@ -1,5 +1,9 @@
 package org.cld.sites.test;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.junit.Before;
@@ -7,10 +11,10 @@ import org.junit.Test;
 import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
 import org.cld.datacrawl.test.TestBase;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
+import org.cld.util.CsvUtil;
+import org.cld.util.entity.CrawledItem;
 
-public class TestJobs extends TestBase{
-	
-	public static final String LINKEDIN_COMPANY="linkedin-company.xml";
+public class TestMisc extends TestBase{
 	
 	private String propFile = "client1-v2.properties";
 	
@@ -19,6 +23,8 @@ public class TestJobs extends TestBase{
 		super.setProp(propFile);
 	}
 	
+	//linkedin
+	public static final String LINKEDIN_COMPANY="linkedin-company.xml";
 	public static final String[] startUrls = new String[]{
 		"https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=D,E&page_num=1",
 		"https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=F,G,H,I&page_num=1",
@@ -54,7 +60,6 @@ public class TestJobs extends TestBase{
 		String outputFile = "/output/jobs";
 		FileSystem fs = FileSystem.get(HadoopTaskLauncher.getHadoopConf(cconf));
 		fs.delete(new Path(outputFile), true);
-		//HBaseToCSVMapperLauncher.genCSVFromHbase(this.getPropFile(), outputFile);
 	}
 	
 	@Test
@@ -63,4 +68,21 @@ public class TestJobs extends TestBase{
 		logger.info(String.format("%d unlocked accounts for %s", i, LINKEDIN_COMPANY));
 	}
 	
+	//club.xml
+	public static final String CLUB="club.xml";
+	@Test
+	public void testClub() throws Exception{
+		List<CrawledItem> cil = browsePrd(CLUB, null, new Date(), false);
+		List<String> csvs = new ArrayList<String>();
+		for (CrawledItem ci:cil){
+			for (String[] csv: ci.getCsvValue()){
+				if (csv!=null && csv.length==2){
+					csvs.add(csv[1]);
+				}
+			}
+		}
+		CsvUtil.outputCsv(csvs, "club.csv");
+	}
+	
+	//
 }

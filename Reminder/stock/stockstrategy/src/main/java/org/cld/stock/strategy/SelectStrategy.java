@@ -2,10 +2,12 @@ package org.cld.stock.strategy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -348,6 +350,13 @@ public abstract class SelectStrategy {
 		return scrl;
 	}
 	
+	public int getChartNum(){
+		Set<String> chartNumSet = new HashSet<String>();
+		for (Indicator ind:indMap.values()){
+			chartNumSet.add(ind.getChartId());
+		}
+		return chartNumSet.size();
+	}
 	//
 	public String getName() {
 		return name;

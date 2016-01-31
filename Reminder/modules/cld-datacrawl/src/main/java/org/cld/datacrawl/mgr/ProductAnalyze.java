@@ -226,13 +226,18 @@ public class ProductAnalyze{
 	 * @return the csv[] to return
 	 * @throws InterruptedException
 	 */
-	public CrawledItem addProduct(WebClient wc, String url, Product product, Product lastProduct, Task task, 
+	public CrawledItem addProduct(WebClient wc, Object url, Product product, Product lastProduct, Task task, 
 			ParsedBrowsePrd taskDef, CrawlConf cconf, boolean retCsv, boolean addToDB, 
 			CsvTransformType csvtrans, Map<String, BufferedWriter> hdfsByIdOutputMap, 
 			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) 
 			throws InterruptedException{
 		logger.info(String.format("add product with start url:%s", url));
 		BrowseDetailType bdt = taskDef.getBrowsePrdTaskType();
+		XPathType[] xpaths = ProductAnalyzeUtil.getPageVerifyXPaths(task, taskDef);
+		BinaryBoolOp[] bbops = ProductAnalyzeUtil.getPageVerifyBoolOp(task, taskDef);
+		VerifyPageByBoolOp vpbbo = xpaths!=null? new VerifyPageByBoolOp(bbops, cconf):null;
+		VerifyPageByXPath vpbxp = bbops!=null? new VerifyPageByXPath(xpaths):null;
+		VPXP = new VerifyPageByBoolOpXPath(vpbbo, vpbxp);
 		DataStoreManager dsManager = null;
 		if (bdt.getBaseBrowseTask().getDsm()!=null){
 			dsManager = cconf.getDsm(bdt.getBaseBrowseTask().getDsm());
@@ -240,18 +245,18 @@ public class ProductAnalyze{
 			dsManager = cconf.getDefaultDsm();
 		}
 		product.setRootTaskId(task.getRootTaskId());
-		product.setFullUrl(url);
-
-		XPathType[] xpaths = ProductAnalyzeUtil.getPageVerifyXPaths(task, taskDef);
-		BinaryBoolOp[] bbops = ProductAnalyzeUtil.getPageVerifyBoolOp(task, taskDef);
-		VerifyPageByBoolOp vpbbo = xpaths!=null? new VerifyPageByBoolOp(bbops, cconf):null;
-		VerifyPageByXPath vpbxp = bbops!=null? new VerifyPageByXPath(xpaths):null;
-		VPXP = new VerifyPageByBoolOpXPath(vpbbo, vpbxp);
+		HtmlPageResult detailsResult = new HtmlPageResult();
+		HtmlPage details = null;
+		if (url instanceof String){
+			product.setFullUrl((String)url);
+			detailsResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage((String)url), VPXP, null, task.getParsedTaskDef(), cconf);	
+			details  = detailsResult.getPage();
+		}else{
+			details = (HtmlPage) url;
+			detailsResult.setErrorCode(HtmlPageResult.SUCCSS);
+		}		
 		
-		HtmlPageResult detailsResult = HtmlUnitUtil.clickNextPageWithRetryValidate(wc, new NextPage(url), VPXP, null, task.getParsedTaskDef(), cconf);	
-		HtmlPage details  = detailsResult.getPage();
-		
-		if (detailsResult.getErrorCode() == HtmlPageResult.SUCCSS){			
+		if (detailsResult.getErrorCode() == HtmlPageResult.SUCCSS){
 			//product name
 			if (product.getName()==null){
 				String title = ProductAnalyzeUtil.getTitle(details, task, taskDef, cconf);
@@ -260,9 +265,9 @@ public class ProductAnalyze{
 			
 			//call back
 			CsvTransformType csvTransform = bdt.getBaseBrowseTask().getCsvtransform();
-			ProductAnalyzeUtil.callbackReadDetails(wc, details, product, task, taskDef, cconf, csvTransform);
+			ProductAnalyzeUtil.callbackReadDetails(wc, details, product, task, taskDef, cconf);
 			product.getId().setCreateTime(new Date());
-			logger.debug("product got:" + product);
+			//logger.debug("product got:" + product);
 			boolean goNext=false;
 			if (bdt.getBaseBrowseTask().getNextTask()!=null){
 				BinaryBoolOp bbo = bdt.getBaseBrowseTask().getNextTask().getCondition();
@@ -279,8 +284,9 @@ public class ProductAnalyze{
 					try {
 						postCrawlProcess(task, bdt.getBaseBrowseTask(), product);
 						//write the output
-						if (csvtrans!=null)
+						if (csvtrans!=null){
 							writeCsvOut(csvtrans, hdfsByIdOutputMap, context, mos, product, cconf, task);
+						}
 						logger.info(String.format("in add product, dsm is %s, add to DB is %b", bdt.getBaseBrowseTask().getDsm(), addToDB));
 						if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm()) && addToDB){
 							dsManager.addUpdateCrawledItem(product, lastProduct);

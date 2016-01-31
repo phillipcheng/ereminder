@@ -5,6 +5,7 @@ import java.util.Map;
 import org.cld.stock.common.CqIndicators;
 import org.cld.stock.strategy.SelectStrategy;
 
+//relative strength index
 public class RSI extends Indicator{
 	
 	private EMA gainEMA;

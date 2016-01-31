@@ -233,13 +233,12 @@ public class TradeKingConnector implements TradeApi{
 			StringWriter sw = new StringWriter();
 			jaxbMarshaller.marshal(fixml, sw);
 			String payload = sw.toString();
-			logger.info(String.format("body:%s", payload));
 			request.addPayload(payload);
 			request.addHeader("content-type", "application/xml");
 			request.addHeader("content-length", ""+payload.length());
 			service.signRequest(accessToken, request);
 			Response response = request.send();
-			logger.info(response.getBody());
+			logger.debug(response.getBody());
 			Map<String, Object> map =  JsonUtil.fromJsonStringToMap(response.getBody());
 			if (map!=null){
 				map = (Map<String, Object>) map.get(RESPONSE);
@@ -278,7 +277,6 @@ public class TradeKingConnector implements TradeApi{
 			StringWriter sw = new StringWriter();
 			jaxbMarshaller.marshal(fixml, sw);
 			String payload = sw.toString();
-			logger.info(String.format("body:%s", payload));
 			request.addPayload(payload);
 			request.addHeader("content-type", "application/xml");
 			request.addHeader("content-length", ""+payload.length());
@@ -333,7 +331,6 @@ public class TradeKingConnector implements TradeApi{
 			StringWriter sw = new StringWriter();
 			jaxbMarshaller.marshal(fixml, sw);
 			String payload = sw.toString();
-			logger.info(String.format("cancel order body:%s", payload));
 			request.addPayload(payload);
 			request.addHeader("content-type", "application/xml");
 			request.addHeader("content-length", ""+payload.length());
@@ -549,7 +546,7 @@ public class TradeKingConnector implements TradeApi{
 	public OrderResponse trySubmit(StockOrder sobuy, boolean preview){
 		if (sobuy!=null){
 			if (preview){
-				logger.info(String.format("preview order: %s",sobuy));
+				logger.debug(String.format("preview order: %s",sobuy));
 				return previewOrder(sobuy);
 			}else{
 				logger.info(String.format("make order: %s",sobuy));

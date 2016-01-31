@@ -10,8 +10,8 @@ import org.cld.stock.strategy.SelectStrategy;
 import org.cld.util.StatisticsUtil;
 
 /*
-Bollinger Bands (20,2)					
-Date	Price	Middle Band 20-day SMA	20-day Standard Deviation	Upper Band 20-day SMA + STDEVx2	Lower Band 20-day SMA  - STDEVx2	BandWidth				
+Bollinger Bands (20,2)		MB   sigma   upper  lower  width		
+			Date	Price			
 1		1-May-09	86.16					
 2		4-May-09	89.09					
 3		5-May-09	88.78					
@@ -69,11 +69,11 @@ public class Bollinger extends Indicator{
 		this.getRmap().put(lowerBand, RenderType.line);
 	}
 	
-	public static Map<String, Float> calcBollinger(List<Float> vs){
+	public static Map<String, Float> calcBollinger(List<Float> vs, float width){
 		float mb = SMA.calSMA(vs);
 		float stddev = StatisticsUtil.getStddev(vs);
-		float upper = mb + stddev*2;
-		float lower = mb - stddev*2;
+		float upper = mb + stddev*width;
+		float lower = mb - stddev*width;
 		Map<String, Float> map = new HashMap<String, Float>();
 		map.put(middleBand, mb);
 		map.put(upperBand, upper);
@@ -88,11 +88,11 @@ public class Bollinger extends Indicator{
 			return null;
 		}else if (values.size()==super.getPeriods()-1){
 			values.add(cqi.getCq().getClose());
-			return calcBollinger(values);
+			return calcBollinger(values, width);
 		}else{
 			values.remove(0);
 			values.add(cqi.getCq().getClose());
-			return calcBollinger(values);
+			return calcBollinger(values, width);
 		}
 	}
 

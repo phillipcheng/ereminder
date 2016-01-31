@@ -49,15 +49,20 @@ public class TimeSeriesChart extends ChartPanel implements DataChart{
 		}
 	
 		XYPlot plot = (XYPlot) this.getChart().getPlot();
-		ChartUtil.setTimeLine(unit, plot);
+		ChartUtil.setTimeLine(unit, plot, cqilist.get(0).getCq().getStartTime());
 		plot.setDataset(lineDataset);
 		ChartUtil.setMarkers(plot, dl);
-		int index = 1;
-		plot.setDataset(index, barDataset);
-		plot.mapDatasetToRangeAxis(index, 0);
 		
+		//bar data will be mapped to 2nd axis
+		int datasetIndex = 1;
+		int axisIndex=1;
+		final NumberAxis axis2 = new NumberAxis("Secondary");
+        axis2.setAutoRangeIncludesZero(false);
+        plot.setRangeAxis(axisIndex, axis2);
+        plot.setDataset(datasetIndex, barDataset);
+		plot.mapDatasetToRangeAxis(datasetIndex, axisIndex);
 		XYItemRenderer renderer2 = new XYBarRenderer();
-		plot.setRenderer(1, renderer2);
+		plot.setRenderer(datasetIndex, renderer2);
 		plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
 	}
 	

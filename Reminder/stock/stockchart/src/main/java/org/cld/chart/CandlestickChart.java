@@ -53,10 +53,12 @@ public class CandlestickChart extends ChartPanel implements DataChart{
 		
 		DefaultHighLowDataset hlDataset = new DefaultHighLowDataset("prices", dates, highs, lows, opens, closes, volumes);
 		XYPlot plot = (XYPlot) this.getChart().getPlot();
-		ChartUtil.setTimeLine(unit, plot);
+		ChartUtil.setTimeLine(unit, plot, dates[0]);
 		plot.setDataset(hlDataset);
 		ChartUtil.setMarkers(plot, dl);
 		
+
+		//for lines overlay with candlestick
 		TimeSeriesCollection lineDataset = new TimeSeriesCollection();
 		for (String indName: bs.getIndMap().keySet()){
 			Indicator ind = bs.getIndMap().get(indName);
@@ -71,10 +73,10 @@ public class CandlestickChart extends ChartPanel implements DataChart{
 		int index = 1;
 		plot.setDataset(index, lineDataset);
 		plot.mapDatasetToRangeAxis(index, 0);
-		
 		XYItemRenderer renderer2 = new XYLineAndShapeRenderer();
-		plot.setRenderer(1, renderer2);
+		plot.setRenderer(index, renderer2);
 		plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
+		
 	}
 	
 	public static CandlestickChart createCandlestickChart(){

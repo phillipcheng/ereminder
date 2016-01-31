@@ -18,6 +18,7 @@ import org.cld.util.entity.Logs;
 import org.cld.util.entity.Price;
 import org.cld.util.entity.Product;
 import org.cld.util.entity.SiteConf;
+import org.w3c.dom.Node;
 import org.xml.taskdef.BrowseTaskType;
 import org.xml.taskdef.ParamType;
 
@@ -40,6 +41,7 @@ public class HdfsDataStoreManagerImpl implements DataStoreManager{
 		return null;
 	}
 
+	//for all list typed attributes of ci
 	public static String[][] getCSV(CrawledItem ci, BrowseTaskType btt) {
 		String id = ci.getId().getId();
 		
@@ -57,6 +59,13 @@ public class HdfsDataStoreManagerImpl implements DataStoreManager{
 		for (String key:ci.getParamMap().keySet()){
 			Object value = ci.getParam(key);
 			if (value instanceof List){
+				List vl = (List)value;
+				if (vl.size()>0){
+					Object v = vl.get(0);
+					if (v instanceof Node){
+						continue;
+					}
+				}
 				if (btt.isDsmHeader()){
 					if (i>0){
 						sb.append(",");

@@ -73,7 +73,7 @@ public class CrawlTaskEval {
 		HtmlPageResult hpResult=null;
 
 		HtmlElement input = (HtmlElement)xpathResult;
-		NextPage np = new NextPage(input, (HtmlPage) page, vt.getFrameId());
+		NextPage np = new NextPage(input, (HtmlPage) page, vt.getFrameId(), vt.isReturnParent());
 		VerifyPageByBoolOp vp=null;
 		if (pvtList!=null){
 			vp = new VerifyPageByBoolOp(pvtList.toArray(new BinaryBoolOp[pvtList.size()]), cconf);
@@ -571,9 +571,8 @@ public class CrawlTaskEval {
 						if (firstObj instanceof HtmlPage){
 							//add the returned page list to pageMap
 							pages.put(nvt.getName(), vallist);
-						}else{
-							paramMap.put(nvt.getName(), vallist);
 						}
+						paramMap.put(nvt.getName(), vallist);
 					}else{
 						paramMap.put(nvt.getName(), vallist);
 					}

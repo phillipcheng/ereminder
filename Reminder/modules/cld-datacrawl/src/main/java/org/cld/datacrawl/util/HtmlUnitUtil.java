@@ -114,7 +114,14 @@ public class HtmlUnitUtil {
 			getFrameWindow(np.getMotherPage(), np.getFrameId()).setEnclosedPage(page);
 			return np.getMotherPage();
 		}else{
-			return page;
+			if (np.isReturnParent()){
+				if (np.getMotherPage()!=null)
+					return np.getMotherPage();
+				else
+					return page;
+			}else{
+				return page;
+			}
 		}
 	}
 	
@@ -427,41 +434,6 @@ public class HtmlUnitUtil {
 		return LoginStatus.LoginNotNeeded;
 	}
 	
-	//total is maxloop * waitTime
-	private static boolean waitVerify(HtmlPage page, VerifyPage vp, Object param, CrawlConf cconf) throws InterruptedException{
-		int innerloop=0;
-		Date tick1 = null;
-		Date tick2 = null;
-		if (logger.isDebugEnabled()){
-			tick1 = new Date();
-		}
-		while(innerloop<cconf.getMaxLoop()){
-			if (page != null){
-				if (vp !=null){
-					//if has verification, default is failed
-					if (vp.verifySuccess(page, param)){
-						if (logger.isDebugEnabled()){
-							tick2 = new Date();
-							long elapse = tick2.getTime() - tick1.getTime();
-							logger.debug("time elapse:" + elapse + " for loading:" + page.getUrl().toExternalForm());
-						}
-						return true;
-					}else{
-						synchronized(page){
-							page.wait(cconf.getWaitTime());//wait for the necessary js done
-							logger.warn(String.format("wait for the expected value come out, wait %d times, max %d times", innerloop, cconf.getMaxLoop()));
-						}
-						innerloop++;
-					}
-				}else{
-					return true;
-				}
-			}else{
-				return false;
-			}
-		}
-		return false;
-	}
 	/**
 	 * 
 	 * @param wc

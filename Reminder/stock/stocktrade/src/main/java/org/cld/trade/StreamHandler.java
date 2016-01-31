@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.common.TradeTick;
@@ -18,6 +19,7 @@ public class StreamHandler implements Response.ContentListener, Response.Complet
 	private static Logger logger =  LogManager.getLogger(StreamHandler.class);
 	private static final SafeSimpleDateFormat sdf = new SafeSimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 	private static final SimpleDateFormat csvsdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	private static final int MAX_BUFFER_SIZE=1024*1024*1;
 	
 	public static final String TRADE="trade";
 	public static final String CVOL="cvol";
@@ -30,7 +32,7 @@ public class StreamHandler implements Response.ContentListener, Response.Complet
 	private TradeDataMgr tdm;
 	private boolean finished=false;
 	private int status=200;
-	private String buffer = null;
+	private String buffer = "";
 	
 	public StreamHandler(TradeDataMgr tdm){
 		this.tdm = tdm;
@@ -57,19 +59,31 @@ public class StreamHandler implements Response.ContentListener, Response.Complet
 		finished = true;
 	}
 
+	private static final String OPEN_P="{";
+	private static final String CLOSE_P="}";
+	
+	private boolean completeJson(String strContent){
+		if (strContent.startsWith(OPEN_P) && strContent.endsWith(CLOSE_P) && 
+				StringUtils.countMatches(strContent, OPEN_P) == StringUtils.countMatches(strContent, CLOSE_P)){
+			return true;
+		}else{
+			return false;
+		}
+	}
+	
 	@Override
 	public void onContent(Response response, ByteBuffer content) {
 		String strContent = new String(content.array());
 		logger.debug(strContent);
-		if (strContent.startsWith("{") && strContent.endsWith("}")){
-			processData(strContent, tdm);
-		}else if (strContent.startsWith("{")){
-			buffer = strContent;
-		}else if (strContent.endsWith("}")){
-			buffer += strContent;
+		buffer+=strContent;
+		if (completeJson(buffer)){
 			processData(buffer, tdm);
-			buffer = null;
-			logger.debug("processed 1 unterminated content.");
+			buffer = "";
+		}
+		//exception handling
+		if (buffer.length()>MAX_BUFFER_SIZE){
+			buffer="";
+			logger.error(String.format("buffer exceeds %s.", buffer));
 		}
 	}
 
@@ -120,7 +134,5 @@ public class StreamHandler implements Response.ContentListener, Response.Complet
 	public int getStatus() {
 		return status;
 	}
-
-
 
 }

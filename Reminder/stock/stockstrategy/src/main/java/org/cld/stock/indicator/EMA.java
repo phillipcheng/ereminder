@@ -1,6 +1,7 @@
 package org.cld.stock.indicator;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +14,10 @@ import org.cld.stock.strategy.SelectStrategy;
 public class EMA extends Indicator{
 
 	protected static Logger logger =  LogManager.getLogger(EMA.class);
+	
+	//keys in the map
+	public static final String VALUE="value";//current value of the ema
+	public static final String RATIO="ratio";//ratio defined as (ema.curValue - ema.preValue)/(ema.curValue+ema.preValue)
 	
 	float multiplier;
 	
@@ -35,7 +40,9 @@ public class EMA extends Indicator{
 	
 	@Override
 	public void init(Map<String, String> params) {
-		super.getRmap().put(toKey(), RenderType.line);
+		multiplier = 2f/(this.getPeriods()+1);//default multiplier
+		super.getRmap().put(VALUE, RenderType.line);
+		super.getRmap().put(RATIO, RenderType.bar);
 	}
 	
 	public static float calEMA(float prev, List<Float> values, float value, int periods, float multiplier){
@@ -63,8 +70,16 @@ public class EMA extends Indicator{
 	
 	@Override
 	public Object calculate(CqIndicators cqi, SelectStrategy bs){
-		prevEMA = calEMA(prevEMA, values, cqi.getCq().getClose(), super.getPeriods(), multiplier);
-		return prevEMA;
+		float curEMA = calEMA(prevEMA, values, cqi.getCq().getClose(), super.getPeriods(), multiplier);
+		float ratio = Indicator.V_NA;
+		if (prevEMA!=Indicator.V_NA){
+			ratio = (curEMA-prevEMA)/(curEMA+prevEMA);
+		}
+		Map<String, Float> map = new HashMap<String, Float>();
+		map.put(VALUE, curEMA);
+		map.put(RATIO, ratio);
+		prevEMA = curEMA;
+		return map;
 	}
 	
 	public float update(float v){
@@ -74,7 +89,7 @@ public class EMA extends Indicator{
 	
 	@Override
 	public String toKey() {
-		return String.format("SMA:%d", super.getPeriods());
+		return String.format("EMA:%d,%.2f", super.getPeriods(), multiplier);
 	}
 
 	public float getMultiplier() {

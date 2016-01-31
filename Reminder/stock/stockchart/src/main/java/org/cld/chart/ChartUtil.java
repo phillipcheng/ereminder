@@ -7,6 +7,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.stock.common.CqIndicators;
@@ -33,21 +35,24 @@ public class ChartUtil {
 	        plot.addDomainMarker(originalEnd);
 		}
 	}
-	public static void setTimeLine(IntervalUnit unit, XYPlot plot){
+	public static void setTimeLine(IntervalUnit unit, XYPlot plot, Date refDate){
 		DateAxis da = (DateAxis) plot.getDomainAxis();
 		if (unit == IntervalUnit.day){
 			da.setTimeline(SegmentedTimeline.newMondayThroughFridayTimeline());
 		}else if (unit == IntervalUnit.minute){
-			da.setTimeline(newOneMinuteTimeline());
+			da.setTimeline(newOneMinuteTimeline(refDate));
 		}
 	}
 	
-	public static SegmentedTimeline newOneMinuteTimeline() {
-        SegmentedTimeline timeline = new SegmentedTimeline(
-        		SegmentedTimeline.MINUTE_SEGMENT_SIZE, 390, 1050);
-        try{
-	        //timeline.setStartTime(SegmentedTimeline.firstMondayAfter1900() + 570 * timeline.getSegmentSize());
-        	timeline.setStartTime(msdf.parse("2000-01-03 08:30").getTime());//day time saving
+	public static SegmentedTimeline newOneMinuteTimeline(Date refDate) {
+		SegmentedTimeline timeline = new SegmentedTimeline(SegmentedTimeline.MINUTE_SEGMENT_SIZE, 390, 1050);
+		try{
+			if (TimeZone.getDefault().inDaylightTime(refDate)){
+				timeline.setStartTime(msdf.parse("2000-01-03 08:30").getTime());//works for day saving
+			}else{
+	        	timeline.setStartTime(msdf.parse("2000-01-03 09:30").getTime());//works for no-day saving
+			}
+			//timeline.setAdjustForDaylightSaving(false);
         }catch(Exception e){
         	logger.error("", e);
         }
@@ -67,6 +72,15 @@ public class ChartUtil {
 						float fv = (Float)o;
 						if (fv == Indicator.V_NA){
 							hasNull = true;
+						}
+					}else if (o instanceof Map){
+						for (Object v:((Map) o).values()){
+							if (v instanceof Float){
+								float fv = (Float)v;
+								if (fv == Indicator.V_NA){
+									hasNull = true;
+								}
+							}
 						}
 					}
 				}

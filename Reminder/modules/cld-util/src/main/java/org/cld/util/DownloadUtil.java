@@ -11,12 +11,13 @@ import java.net.Proxy;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class DownloadUtil {
+public class DownloadUtil implements Runnable {
 	
 	private static Logger logger =  LogManager.getLogger(DownloadUtil.class);
 	
@@ -36,6 +37,10 @@ public class DownloadUtil {
 			logger.warn("", e);
 		}
 		return is;
+	}
+	
+	public static void downloadFile(String url, String directory, String fileName){
+		downloadFile(url, false, null, 0, directory, fileName);
 	}
 	
 	public static void downloadFile(String url, boolean useProxy, String proxyIp, int port, 
@@ -93,6 +98,21 @@ public class DownloadUtil {
 			}catch(Exception e){
 				logger.error("", e);
 			}
+		}
+	}
+
+	public DownloadUtil(String rootDir, List<String> urls){
+		this.rootDir = rootDir;
+		this.urls = urls;
+	}
+	private List<String> urls;
+	private String rootDir;
+	@Override
+	public void run() {
+		for (String url:urls){
+			String fileName = (new File(url)).getName();
+			logger.info(String.format("download %s to %s from url:%s", fileName, rootDir, url));
+			DownloadUtil.downloadFile(url, rootDir, fileName);
 		}
 	}
 }

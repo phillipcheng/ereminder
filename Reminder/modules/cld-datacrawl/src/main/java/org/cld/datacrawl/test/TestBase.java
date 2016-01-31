@@ -57,6 +57,9 @@ public class TestBase {
 		CrawlTestUtil.runBDT(getConfId(confFileName), confFileName, startUrl, turnPagesOnly, cconf, testTaskId);
 	}
 	
+	public List<CrawledItem> browsePrd(String confName, String prdUrl) throws InterruptedException{
+		return CrawlTestUtil.browsePrd(getConfId(confName), confName, prdUrl, cconf, testTaskId, new Date(), false);
+	}
 	public List<CrawledItem> browsePrd(String confName, String prdUrl, Date runDateTime, boolean addToDB) throws InterruptedException{
 		return CrawlTestUtil.browsePrd(getConfId(confName), confName, prdUrl, cconf, testTaskId, runDateTime, addToDB);
 	}

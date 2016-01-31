@@ -72,6 +72,7 @@ public class AutoTrader implements Runnable, AutoTraderMXBean {
 	private static final String IS_PREVIEW="is.preview";
 	private static final String MSG_CHECK_INTERVAL="msg.check.interval";
 	private static final String BUY_LVL_FACTOR="buy.level.factor"; //for each level increased, how much more invested
+	private static final String INDEX_SYMBOLS="index.symbols";
 	
 	PropertiesConfiguration atProperties;
 	//
@@ -107,6 +108,7 @@ public class AutoTrader implements Runnable, AutoTraderMXBean {
 	private StockConfig sc;
 	private TradeDataMgr tradeDataMgr;
 	private MarketStatusType curMst;
+	private String indexSymbolsFile;
 	
 	@Override
 	public void setupStrategys(){
@@ -167,6 +169,9 @@ public class AutoTrader implements Runnable, AutoTraderMXBean {
 			//setup cconf
 			crawlconfProperties = atProperties.getString(CRAWL_CONF);
 			setCconf((CrawlConf) TaskUtil.getTaskConf(crawlconfProperties));
+			//setup index symbols
+			indexSymbolsFile = atProperties.getString(INDEX_SYMBOLS);
+			symbols.addAll(StockUtil.getSymbols(indexSymbolsFile));
 			//setup strategy
 			setupStrategys();
 			//setup data manager

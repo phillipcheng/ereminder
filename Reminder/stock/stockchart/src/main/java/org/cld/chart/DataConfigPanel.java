@@ -53,7 +53,22 @@ public class DataConfigPanel extends JPanel {
 		initialize();
 	}
 	
-	public StockDataConfig getData() {
+	public void setDataConfig(StockDataConfig dc){
+		txtStockId.setText(dc.getStockId());
+		txtBaseMarketId.setText(dc.getBaseMarketId());
+		cbUnit.setSelectedItem(dc.getUnit());
+		if (dc.getStartDt()!=null){
+			if (dc.getUnit()==IntervalUnit.day){
+				tfStartDt.setText(sdf.format(dc.getStartDt()));
+				tfEndDt.setText(sdf.format(dc.getEndDt()));
+			}else{
+				tfStartDt.setText(msdf.format(dc.getStartDt()));
+				tfEndDt.setText(msdf.format(dc.getEndDt()));
+			}
+		}
+	}
+	
+	public StockDataConfig getDataConfig() {
 		dc = new StockDataConfig();
 		dc.setStockId(txtStockId.getText());
 		dc.setBaseMarketId(txtBaseMarketId.getText());
@@ -121,7 +136,6 @@ public class DataConfigPanel extends JPanel {
 		add(lblBaseMarketId);
 		
 		txtBaseMarketId = new JTextField();
-		txtBaseMarketId.setText("nasdaq");//init
 		txtBaseMarketId.setColumns(10);
 		txtBaseMarketId.setBounds(91, 50, 86, 20);
 		add(txtBaseMarketId);
@@ -159,7 +173,6 @@ public class DataConfigPanel extends JPanel {
 		if (tfStartDt == null) {
 			tfStartDt = new JTextField();
 			tfStartDt.setBounds(new Rectangle(91, 125, 123, 22));
-			tfStartDt.setText("2011-04-06");
 			tfStartDt.setName("tfType");
 		}
 		return tfStartDt;
@@ -174,7 +187,6 @@ public class DataConfigPanel extends JPanel {
 		if (tfEndDt == null) {
 			tfEndDt = new JTextField();
 			tfEndDt.setBounds(new Rectangle(91, 149, 123, 22));
-			tfEndDt.setText("2011-04-07");
 			tfEndDt.setName("tfType");
 		}
 		return tfEndDt;

@@ -112,7 +112,7 @@ public class TestTradeConnector {
 	
 	@Test
 	public void testGetQuotesRegular(){
-		tm.getQuotes(new String[]{"GLUU", "FIT"}, null, false);
+		tm.getQuotes(new String[]{"COMP","DJI","VIX","SPX","RUT"}, null, false);
 	}
 
 	@Test

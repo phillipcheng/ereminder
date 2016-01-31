@@ -15,12 +15,8 @@ import com.gargoylesoftware.htmlunit.html.DomNamespaceNode;
 import com.gargoylesoftware.htmlunit.html.DomNode;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
-import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlSpan;
-
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.NextPage;
 import org.cld.datacrawl.ProductConf;
 import org.cld.datacrawl.mgr.BinaryBoolOpEval;
@@ -31,7 +27,6 @@ import org.cld.datacrawl.util.HtmlUnitUtil;
 import org.cld.datacrawl.util.VerifyPageByXPath;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.cld.taskmgr.entity.Task;
-import org.cld.util.StringUtil;
 import org.cld.util.entity.CrawledItem;
 import org.cld.util.entity.Product;
 import org.xml.mytaskdef.ConfKey;
@@ -43,7 +38,6 @@ import org.xml.taskdef.AttributeType;
 import org.xml.taskdef.BinaryBoolOp;
 import org.xml.taskdef.BrowseDetailType;
 import org.xml.taskdef.ClickStreamType;
-import org.xml.taskdef.CsvTransformType;
 import org.xml.taskdef.ValueType;
 
 public class ProductAnalyzeUtil {
@@ -219,7 +213,7 @@ public class ProductAnalyzeUtil {
 	}
 	
 	public static void callbackReadDetails(WebClient wc, HtmlPage inpage, Product product, Task task, 
-			ParsedBrowsePrd taskDef, CrawlConf cconf, CsvTransformType csvTransform) throws InterruptedException {	
+			ParsedBrowsePrd taskDef, CrawlConf cconf) throws InterruptedException {	
 		//set the user attributes in case there is default values
 		BrowseDetailType bdt = taskDef.getBrowsePrdTaskType();
 		CrawlTaskEval.setInitAttributes(bdt.getBaseBrowseTask().getUserAttribute(), product.getParamMap(), task.getParamMap());	

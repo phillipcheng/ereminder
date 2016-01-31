@@ -91,10 +91,10 @@ public class Quote {
 					}
 				}
 			}
-			if (map.containsKey(VL)){
+			if (map.containsKey(VL) && !NA.equals(map.get(VL))){
 				volume = Long.parseLong((String) map.get(VL));
 			}
-			if (map.containsKey(CVL)){
+			if (map.containsKey(CVL) && !NA.equals(map.get(CVL))){
 				setCumuVol(Long.parseLong((String)map.get(CVL)));
 			}
 			if (map.containsKey(EPS) && !NA.equals(map.get(EPS))){

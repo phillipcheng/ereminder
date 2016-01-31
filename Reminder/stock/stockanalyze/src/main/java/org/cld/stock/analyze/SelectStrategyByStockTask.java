@@ -69,7 +69,6 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 		}
 		
 		List<Object[]> kvl = new ArrayList<Object[]>();
-		List<SelectCandidateResult> scrl = new ArrayList<SelectCandidateResult>();
 		
 		CandleQuote preCq = null;
 		for (CandleQuote cq:cqlist){
@@ -83,7 +82,6 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 			SelectCandidateResult scr = bs.selectByStream(cqi);
 			preCq = cqi.getCq();
 			if (scr!=null){
-				scrl.add(scr);
 				if (context!=null){
 					String key = String.format("%s,%s,%s,%s", bs.getName(), msdf.format(scr.getDt()), 
 							bs.getOrderDirection(), bs.paramsToString());
