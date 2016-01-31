@@ -1,0 +1,5 @@
+COMP
+DJI
+VIX
+SPX
+RUT

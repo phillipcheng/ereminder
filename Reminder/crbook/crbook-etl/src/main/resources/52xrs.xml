@@ -4,6 +4,8 @@
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" storeId="52xrs" rootVolume="999999" productType="book">
 	<skipUrl>baidu.com</skipUrl>
 	<skipUrl>comicdata.17share.org</skipUrl>
@@ -49,10 +51,10 @@
 		</totalPageNum>
 	</CatTask>
 	<PrdTask processType="genbpt">
-		<baseBrowseTask taskName="prd" isStart="false" enableJS="true">
+		<baseBrowseTask taskName="prd" isStart="true" enableJS="true">
 			<startUrl value="http://www.52xrs.com/comic/2398/"/>
 			<userAttribute name="bookpageurls">
-				<value value="//img[@id=&apos;Img&apos;]" fromType="xpath" toType="externalList"/>
+				<value value="//img[@id='Img']" fromType="xpath" toType="externalList"/>
 			</userAttribute>
 			<idUrlMapping>
 				<Token name="prefix" value="http://www.52xrs.com/comic/" type="string"/>
@@ -64,7 +66,7 @@
 			<link>
 				<nextpage>
 					<successNextPage name="firstPage">
-						<value value="//div[@class=&apos;bookList&apos;]/ul/li/a" toType="page" enableJS="true"/>
+						<value value="//div[@class='bookList']/ul/li/a" toType="page" enableJS="true"/>
 					</successNextPage>
 				</nextpage>
 			</link>
