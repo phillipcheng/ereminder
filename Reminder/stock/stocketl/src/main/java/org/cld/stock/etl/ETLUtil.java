@@ -26,6 +26,7 @@ import org.cld.stock.common.StockUtil;
 import org.cld.stock.etl.base.ETLConfig;
 import org.cld.stock.persistence.StockPersistMgr;
 import org.cld.taskmgr.TaskMgr;
+import org.cld.taskmgr.TaskResult;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.TaskMapper;
@@ -349,9 +350,12 @@ public class ETLUtil {
 		}else{
 			try {
 				params.put(TaskMgr.TASK_RUN_PARAM_CCONF, cconf);
-				List<String> sl = getCsvList(t.runMyselfWithOutput(params, false));
-				String[] sa = new String[sl.size()];
-				return sl.toArray(sa);
+				TaskResult tr = t.runMyself(params, false, null, null);
+				if (tr!=null){
+					List<String> sl = getCsvList(tr.getCIs());
+					String[] sa = new String[sl.size()];
+					return sl.toArray(sa);
+				}
 			}catch(Exception e){
 				logger.error("", e);
 			}
@@ -416,8 +420,11 @@ public class ETLUtil {
 			for (Task at:tlist){
 				try{
 					taskParams.put(TaskMgr.TASK_RUN_PARAM_CCONF, cconf);
-					List<String> sl = getCsvList(at.runMyselfWithOutput(taskParams, false));
-					output.addAll(sl);
+					TaskResult tr = at.runMyself(taskParams, false, null, null);
+					if (tr!=null){
+						List<String> sl = getCsvList(tr.getCIs());
+						output.addAll(sl);
+					}
 				}catch(Exception e){
 					logger.error("", e);
 				}

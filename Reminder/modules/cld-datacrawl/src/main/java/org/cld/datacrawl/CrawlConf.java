@@ -328,7 +328,14 @@ public class CrawlConf extends TaskConf {
 	 */
 	public List<Task> setUpSite(String confFileName, SiteConf sc){
 		Map<String, Object> taskParams = new HashMap<String, Object>();
-		return taskMgr.setUpSite(confFileName, sc, pluginClassLoader, taskParams);
+		if (sc==null){
+			return taskMgr.setUpSite(confFileName, pluginClassLoader, taskParams);
+		}else if (confFileName==null){
+			return taskMgr.setUpSite(sc, pluginClassLoader, taskParams);
+		}else{
+			logger.error(String.format("one of sc or confFileName should be null."));
+			return null;
+		}
 	}
 	
 	public void addListener(CrawlConfListener lis){

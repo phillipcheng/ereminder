@@ -13,10 +13,14 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.MapContext;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.taskmgr.TaskMgr;
+import org.cld.taskmgr.TaskResult;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
@@ -118,7 +122,8 @@ public class MergeTask extends Task implements Serializable{
 	}
 	
 	@Override
-	public List<Task> runMyself(Map<String, Object> params, TaskStat ts) throws InterruptedException{
+	public TaskResult runMyself(Map<String, Object> params,  boolean addToDB, 
+			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
 		cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
 		doWork(cconf);
 		return null;

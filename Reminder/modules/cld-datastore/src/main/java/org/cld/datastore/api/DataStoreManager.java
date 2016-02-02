@@ -4,14 +4,11 @@ import java.util.List;
 
 import org.cld.util.entity.Category;
 import org.cld.util.entity.CrawledItem;
-import org.cld.util.entity.CrawledItemId;
 import org.cld.util.entity.LogPattern;
 import org.cld.util.entity.Logs;
 import org.cld.util.entity.Price;
 import org.cld.util.entity.Product;
 import org.cld.util.entity.SiteConf;
-import org.hibernate.SessionFactory;
-import org.xml.taskdef.BrowseTaskType;
 
 public interface DataStoreManager {
 	
@@ -52,50 +49,4 @@ public interface DataStoreManager {
 	public List<Category> getCategoryByPcatId(String storeId, String pcatId);	//pcatId = null, means get root category
 	public int delCategoryByStoreId(String storeId);
 	public long getCategoryCount(String storeId, String pcatId);
-
-
-	/**************
-	 * siteconf operation
-	 */
-	public List<SiteConf> getSiteConf(String uid);//default to withXml = false, status = -1 (any status)
-	/**
-	 * 
-	 * @param uid
-	 * @param withXml
-	 * @param status = -1 means all status
-	 * @return
-	 */
-	public List<SiteConf> getSiteConf(String uid, boolean withXml, int status);
-	public SiteConf getFullSitConf(String id);
-	public boolean saveXmlConf(String id, String uid, String xml);
-	public int deployConf(String[] ids, boolean deploy);//deploy: true to deploy, false to undeploy
-	
-	/***************
-	 * Logs operation
-	 */
-	public List<Logs> getLogsByTask(String taskId, int offset, int limit);
-	public long getLogsCountByTask(String taskId);
-	public int clearLogs(String taskid);
-	
-	/*
-	 * @param patternId: null, no patternId or a specific id
-	 * @param orderByField: dated, patternId
-	 * @param offset and limit
-	 */
-	public List<Logs> getLogsByResolvedPattern(String patternId, String orderByField, boolean asc, int offset, int limit);
-	public long getLogsCountByResolvedPattern(String patternId);
-	
-	//return the logs fitting the lp and not yet resolved as this lp
-	public List<Logs> getLogsNotResolvedByPattern(String regexp, String orderByField, boolean asc, int maxCount);
-	public long resolveLog(Long[] logIds, String patternId);
-	
-	public List<Logs> getLogsByString(String searchString, String orderByField, boolean asc, int offset, int limit);
-	public long getLogsCountByString(String searchString);
-	
-	/***************
-	 * Log Pattern operation
-	 */
-	public List<LogPattern> getAllLogPattern();
-	public void mergeLogPattern(LogPattern lp);
-	public LogPattern getLogPattern(String id);
 }

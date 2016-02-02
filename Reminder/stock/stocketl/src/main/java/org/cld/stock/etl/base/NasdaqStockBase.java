@@ -11,6 +11,7 @@ import org.cld.stock.common.StockUtil;
 import org.cld.stock.config.NasdaqStockConfig;
 import org.cld.stock.etl.StockBase;
 import org.cld.taskmgr.TaskMgr;
+import org.cld.taskmgr.TaskResult;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.entity.CrawledItem;
 
@@ -36,9 +37,9 @@ public class NasdaqStockBase extends StockBase{
 					Map<String, Object> crawlTaskParams = new HashMap<String, Object>();
 					crawlTaskParams.put(TaskMgr.TASK_RUN_PARAM_CCONF, cconf);
 					crawlTaskParams.put("stockid", stockid);
-					List<CrawledItem> cil = t.runMyselfWithOutput(crawlTaskParams, false);
-					if (cil.size()>0){
-						CrawledItem ci = cil.get(0);
+					TaskResult tr = t.runMyself(crawlTaskParams, false, null, null);
+					if (tr!=null && tr.getCIs()!=null && tr.getCIs().size()>0){
+						CrawledItem ci = tr.getCIs().get(0);
 						//return list of csv tuple: key, value
 						String[][] csv = ci.getCsvValue();
 						if (csv.length>=1){

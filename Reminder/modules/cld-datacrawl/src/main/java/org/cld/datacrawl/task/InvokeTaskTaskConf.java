@@ -10,9 +10,13 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.MapContext;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.taskmgr.TaskMgr;
+import org.cld.taskmgr.TaskResult;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.xml.taskdef.ParamValueType;
@@ -85,7 +89,8 @@ public class InvokeTaskTaskConf extends Task implements Serializable{
 	}
 	
 	@Override
-	public List<Task> runMyself(Map<String, Object> params, TaskStat ts) throws InterruptedException{
+	public TaskResult runMyself(Map<String, Object> params, boolean addToDB, 
+			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
 		CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
 		List<Task> tl = new ArrayList<Task>();
 		Task refTask = cconf.getTaskMgr().getTask(this.refTaskName);
@@ -98,7 +103,7 @@ public class InvokeTaskTaskConf extends Task implements Serializable{
 			taskInst.genId();
 			tl.add(taskInst);
 		}
-		return tl;
+		return new TaskResult(tl, null);
 	}
 	
 	public String getRefTaskName() {

@@ -8,7 +8,7 @@ import java.util.Map;
 import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.datacrawl.test.TestBase;
-import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
+import org.cld.datacrawl.test.BrowseType;
 import org.cld.sinawebo.Login;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,7 +38,7 @@ public class TestWeibo extends TestBase{
 	@Test
 	public void run_weibo_bct() throws Exception{
 		for (String startUrl:bct_startUrls){
-			catNavigate(SITE_CONF_FILE, startUrl, browse_type.recursive, 1);	
+			catNavigate(SITE_CONF_FILE, startUrl, BrowseType.recursive, 1);	
 		}
 	}
 	

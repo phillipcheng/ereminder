@@ -17,6 +17,8 @@ import javax.servlet.http.Part;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
 
 @WebServlet("/Upload")
 @MultipartConfig
@@ -25,40 +27,74 @@ public class UploadServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	Logger logger = LogManager.getLogger("cld.jsp");
 	
+	private static final String XML_TYPE = "text/xml";
+	private static final String ZIP_TYPE = "";
+	
+	private static final String CONTENT_DISPOSITION="content-disposition";
+	private static final String CONTENT_DISPOSITION_FILENAME = "filename";
+	
+	private String getFilename(Part part) {
+        for (String cd : part.getHeader(CONTENT_DISPOSITION).split(";")) {
+            if (cd.trim().startsWith(CONTENT_DISPOSITION_FILENAME)) {
+                return cd.substring(cd.indexOf('=') + 1).trim().replace("\"", "");
+            }
+        }
+        return null;
+    }
+	   
+	private String readInputStream(InputStream input){
+		int count;
+        int BUFFER = 2048;
+        byte data[] = new byte[BUFFER];
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		try {
+	        // write the files to the disk
+	        while ((count = input.read(data, 0, BUFFER)) != -1) {
+	           baos.write(data, 0, count);
+	        }
+	        baos.flush();
+	        return baos.toString("UTF-8");
+		}catch(Exception e){
+			logger.error("", e);
+		}finally{
+			try {
+				baos.close();
+			}catch(Exception e1){
+				logger.error("", e1);
+			}
+		}
+		return null;
+	}
+	
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		SessionFactory factory = new Configuration().configure().buildSessionFactory();
+		WebConfPersistMgr wcpm = new WebConfPersistMgr(factory);
 		String uid="cr";
 	    Part filePart = request.getPart("file"); // Retrieves <input type="file" name="file">
-	    InputStream filecontent = filePart.getInputStream();
-	    ZipInputStream zis = new ZipInputStream(new BufferedInputStream(filecontent));
-	    ZipEntry entry;
-        while((entry = zis.getNextEntry()) != null) {
-           logger.info("Extracting: " +entry);
-           int count;
-           int BUFFER = 2048;
-           byte data[] = new byte[BUFFER];
-           // write the files to the disk
-           ByteArrayOutputStream baos = new ByteArrayOutputStream();
-           while ((count = zis.read(data, 0, BUFFER)) != -1) {
-              baos.write(data, 0, count);
-           }
-           baos.flush();
-           String xmlconf = baos.toString("UTF-8");
-           String filename = entry.getName();
-           String confid = filename.substring(0, filename.lastIndexOf("."));
-           ConfServlet.getCConf().getDefaultDsm().saveXmlConf(confid, uid, xmlconf);
-           baos.close();
-        }
-        zis.close();
-	}
-
-	private static String getFilename(Part part) {
-	    for (String cd : part.getHeader("content-disposition").split(";")) {
-	        if (cd.trim().startsWith("filename")) {
-	            String filename = cd.substring(cd.indexOf('=') + 1).trim().replace("\"", "");
-	            return filename.substring(filename.lastIndexOf('/') + 1).substring(filename.lastIndexOf('\\') + 1); // MSIE fix.
+	    logger.info(String.format("name:%s, content-type:%s, size:%d, headers:%s", 
+	    		filePart.getName(), filePart.getContentType(), filePart.getSize(), filePart.getHeaderNames()));
+	    String contentType = filePart.getContentType();
+	    if (XML_TYPE.equals(contentType)){
+	    	String filename = getFilename(filePart);
+	    	InputStream xis = new BufferedInputStream(filePart.getInputStream());
+	    	String confid = filename.substring(0, filename.lastIndexOf("."));
+	    	String xmlconf = readInputStream(xis);
+	        wcpm.saveXmlConf(confid, uid, xmlconf);
+	        logger.info(String.format("file saved to: confid:%s, uid:%s, xmlconf:%s", confid, uid, xmlconf));
+	        xis.close();
+	    }else{
+		    InputStream filecontent = filePart.getInputStream();
+		    ZipInputStream zis = new ZipInputStream(new BufferedInputStream(filecontent));
+		    ZipEntry entry;
+	        while((entry = zis.getNextEntry()) != null) {
+	           logger.info("Extracting: " +entry);
+	           String filename = entry.getName();
+	           String confid = filename.substring(0, filename.lastIndexOf("."));
+	           String xmlconf = readInputStream(zis);
+	           wcpm.saveXmlConf(confid, uid, xmlconf);
+		       logger.info(String.format("file saved to: confid:%s, uid:%s, xmlconf:%s", confid, uid, xmlconf));
 	        }
+	        zis.close();
 	    }
-	    return null;
 	}
-
 }

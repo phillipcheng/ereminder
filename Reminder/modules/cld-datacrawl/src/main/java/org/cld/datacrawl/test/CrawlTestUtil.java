@@ -6,6 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.MapContext;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
@@ -18,40 +21,23 @@ import org.cld.datacrawl.task.InvokeTaskTaskConf;
 import org.cld.datacrawl.util.SomePageErrorException;
 import org.cld.pagea.general.CategoryAnalyzeUtil;
 import org.cld.taskmgr.TaskMgr;
+import org.cld.taskmgr.TaskResult;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.cld.util.entity.Category;
 import org.cld.util.entity.CrawledItem;
 import org.cld.util.entity.CrawledItemId;
+import org.cld.util.entity.SiteConf;
 
 import com.fasterxml.jackson.annotation.JsonValue;
+
 
 
 public class CrawlTestUtil{
 	
 	private static Logger logger =  LogManager.getLogger(CrawlTestUtil.class);
-	
-	public enum browse_type{
-		one_level(0),
-		one_path(1),
-		recursive(2),
-		bct(3),
-		bdt(4),
-		bdt_turnpage_only(5),
-		bpt(6);
-		
-		private int id;
-		private browse_type(final int id){
-			this.id = id;
-		}
-		
-		@JsonValue
-		public int getId(){
-			return id;
-		}
-	}
-	
+
 	private static void setupSRT(SiteRuntime srt, CrawlConf cconf, String rootTaskId){
 		if (srt.getBct()!=null)
 			srt.getBct().setRootTaskId(rootTaskId);
@@ -64,36 +50,36 @@ public class CrawlTestUtil{
 		srt.pa = cconf.getPa();
 	}
 	
-	public static SiteRuntime getSRT(String siteconfid, CrawlConf cconf, String taskName, String rootTaskId){
+	public static SiteRuntime getSRT(CrawlConf cconf, String taskName, String rootTaskId){
 		SiteRuntime srt = new SiteRuntime();
 		srt.setBct((BrowseCategoryTaskConf) cconf.getTaskMgr().getTask(taskName));
 		srt.setBdt((BrowseDetailTaskConf) cconf.getTaskMgr().getTask(taskName));
-		
 		setupSRT(srt, cconf, rootTaskId);
-		
 		return srt;
 	}
 	
-	public static SiteRuntime getSRT(String siteconfid, CrawlConf cconf, String rootTaskId){
+	public static SiteRuntime getSRT(SiteConf siteconf, String confFileName, CrawlConf cconf, String rootTaskId){
+		String scid=null;
+		if (siteconf!=null){
+			scid = siteconf.getId();
+		}else{
+			scid = confFileName;
+		}
+		
 		SiteRuntime srt = new SiteRuntime();
-		srt.setBct((BrowseCategoryTaskConf) cconf.getTaskMgr().getTask(siteconfid + "_bct"));
-		srt.setBdt((BrowseDetailTaskConf) cconf.getTaskMgr().getTask(siteconfid + "_bdt"));
-		
+		srt.setBct((BrowseCategoryTaskConf) cconf.getTaskMgr().getTask(scid + "_bct"));
+		srt.setBdt((BrowseDetailTaskConf) cconf.getTaskMgr().getTask(scid + "_bdt"));
 		setupSRT(srt, cconf, rootTaskId);
 		
 		return srt;
 	}
 	
-	public static void runBDT(String siteconfid, String confFileName, String startUrl, 
+	public static void runBDT(SiteConf siteconf, String confFileName, String startUrl, 
 			boolean turnPagesOnly, CrawlConf cconf, String rootTaskId) 
 			throws InterruptedException, SomePageErrorException
 			{
-		if (confFileName!=null){
-			cconf.setUpSite(confFileName, null);
-		}else{
-			//setup is called explicitly already
-		}
-		SiteRuntime srt = getSRT(siteconfid, cconf, rootTaskId);
+		cconf.setUpSite(confFileName, siteconf);
+		SiteRuntime srt = getSRT(siteconf, confFileName, cconf, rootTaskId);
 		
 		if (startUrl==null){//using start url defined
 			startUrl = srt.getBdt().getLeafBrowseCatTask().getBaseBrowseTask().getStartUrl().getValue();
@@ -118,21 +104,21 @@ public class CrawlTestUtil{
 		logger.info("bds:" + srt.bdtBS);
 	}
 	
-	public static void catNavigate(String siteconfid, String confFileName, CrawlConf cconf, 
+	public static void catNavigate(SiteConf siteconf, String confXmlFileName, CrawlConf cconf, 
 			String rootTaskId, String propFile) 
 			throws InterruptedException{
-		catNavigate(siteconfid, confFileName, null, browse_type.one_path, cconf, rootTaskId, null, propFile, 0);
+		catNavigate(siteconf, confXmlFileName, null, BrowseType.onePath, cconf, rootTaskId, null, propFile, 0);
 	}
 	//defaults to startUrl and 1 path type
-	public static void catNavigate(String siteconfid, String confFileName, CrawlConf cconf, 
+	public static void catNavigate(SiteConf siteconf, String confXmlFileName, CrawlConf cconf, 
 			String rootTaskId, String propFile, int pageNum) 
 			throws InterruptedException{
-		catNavigate(siteconfid, confFileName, null, browse_type.one_path, cconf, rootTaskId, null, propFile, pageNum);
+		catNavigate(siteconf, confXmlFileName, null, BrowseType.onePath, cconf, rootTaskId, null, propFile, pageNum);
 	}
 	
-	public static void catNavigate(String siteconfid, String confFileName, String catUrl, browse_type type, 
+	public static void catNavigate(SiteConf siteconf, String confXmlFileName, String catUrl, BrowseType type, 
 			CrawlConf cconf, String rootTaskId, String propFile, int pageNum) throws InterruptedException {
-		catNavigate(siteconfid, confFileName, catUrl, type, cconf, rootTaskId, null, propFile, pageNum);
+		catNavigate(siteconf, confXmlFileName, catUrl, type, cconf, rootTaskId, null, propFile, pageNum);
 	}
 	
 	/**
@@ -147,14 +133,14 @@ public class CrawlTestUtil{
 	 * @param ccnode: if null, execute sequentially, if not null, in parallel
 	 * @throws Exception
 	 */
-	public static void catNavigate(String siteconfid, String confFileName, String catUrl, browse_type type, 
+	public static void catNavigate(SiteConf siteconf, String confXmlFileName, String catUrl, BrowseType type, 
 			CrawlConf cconf, String rootTaskId, Map<String, Object> inparams, String propFile, int pageNum) 
 			throws InterruptedException {
-		if (confFileName!=null){
-			cconf.setUpSite(confFileName, null);
+		if (confXmlFileName!=null){
+			cconf.setUpSite(confXmlFileName, siteconf);
 			logger.debug("setup sites completed.");
 		}
-		SiteRuntime srt = getSRT(siteconfid, cconf, rootTaskId);
+		SiteRuntime srt = getSRT(siteconf, confXmlFileName, cconf, rootTaskId);
 		logger.debug("set start url for cat navigate.");
 		srt.getBct().setPageNum(pageNum);
 		if (catUrl==null || "".equals(catUrl)){
@@ -164,15 +150,12 @@ public class CrawlTestUtil{
 			srt.getBct().setStartURL(catUrl);
 		}
 		List<Task> taskList = new ArrayList<Task>();
-		if (type == browse_type.recursive){
+		if (type == BrowseType.recursive){
 			taskList.add(srt.getBct());
 			executeTasks(taskList, cconf, propFile);
 		}else{
-			taskList = srt.ca.navigateCategory(srt.getBct(), srt.bctBS, cconf);
-			logger.info("stat:" + srt.bctBS);
-			
-			if (type != browse_type.one_level){//one path
-				List<Task> bdttl = new ArrayList<Task>();
+			taskList = srt.ca.navigateCategory(srt.getBct(), cconf);//one level
+			if (type == BrowseType.onePath){//one path
 				while(taskList.size()>0){
 					Task t = taskList.remove(0);
 					t.setRootTaskId(rootTaskId);
@@ -182,30 +165,32 @@ public class CrawlTestUtil{
 						params.putAll(inparams);
 					if (t instanceof BrowseCategoryTaskConf){
 						BrowseCategoryTaskConf bct = (BrowseCategoryTaskConf)t;
-						List<Task> newTaskList = bct.runMyself(params, srt.bctBS);
-						//if only 1 path, after browsing the 1st cat, change the list to sub tasks
+						TaskResult tr = bct.runMyself(params, true, null, null);
 						taskList.clear();
-						taskList.addAll(newTaskList);
+						if (tr!=null){
+							//if browse one path, after browsing the 1st cat, change the list to sub tasks
+							List<Task> newTaskList = tr.getTasks();
+							taskList.addAll(newTaskList);
+						}
 					}else if (t instanceof BrowseDetailTaskConf){
 						BrowseDetailTaskConf bdt = (BrowseDetailTaskConf)t;
 						params.put(BrowseDetailTaskConf.TASK_RUN_PARAM_MAX_PAGE, 1);
 						params.put(BrowseDetailTaskConf.TASK_RUN_PARAM_MAX_ITEM, 1);
-						List<Task> tl = bdt.runMyself(params, srt.bdtBS);
-						if (tl.size()>0){
-							taskList.addAll(tl);
+						TaskResult tr = bdt.runMyself(params, true, null, null);
+						if (tr!=null){
+							taskList.addAll(tr.getTasks());
 						}else{
 							//last task is bdt
 							break;
 						}
 					}else if (t instanceof BrowseProductTaskConf){
 						BrowseProductTaskConf bpt = (BrowseProductTaskConf)t;
-						bpt.runMyself(params, srt.bdtBS);
+						bpt.runMyself(params, true, null, null);
 						break;
 					}else{
 						logger.error("task type not supported:" + t);
 					}
 				}
-				executeTasks(bdttl, cconf, propFile);
 			}
 		}
 	}
@@ -221,22 +206,22 @@ public class CrawlTestUtil{
 		}
 	}
 	
-	public static List<CrawledItem> browsePrd(String siteconfid, String confFileName, String url, 
-			CrawlConf cconf, String rootTaskId, Date runDateTime, boolean addToDB) throws InterruptedException{
-		return browsePrd(siteconfid, confFileName, url, cconf, rootTaskId, null, runDateTime, addToDB);
+	public static List<CrawledItem> browsePrd(SiteConf siteconf, String confFileName, String url, 
+			CrawlConf cconf, String rootTaskId, Date runDateTime, 
+			boolean addToDB, MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
+		return browsePrd(siteconf, confFileName, url, cconf, rootTaskId, null, runDateTime, addToDB, context, mos);
 	}
 	
-	public static List<CrawledItem> browsePrd(String siteconfid, String confFileName, String url, 
-			CrawlConf cconf, String rootTaskId, Map<String, Object> inparams, Date runDateTime, boolean addToDB) throws InterruptedException{
-		return browsePrd(siteconfid, confFileName, url, null, cconf, rootTaskId, inparams, runDateTime, addToDB);
+	public static List<CrawledItem> browsePrd(SiteConf siteconf, String confFileName, String url, 
+			CrawlConf cconf, String rootTaskId, Map<String, Object> inparams, Date runDateTime, 
+			boolean addToDB, MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
+		return browsePrd(siteconf, confFileName, url, null, cconf, rootTaskId, inparams, runDateTime, addToDB, context, mos);
 	}
 	
-	public static List<CrawledItem> browsePrd(String siteconfid, String confFileName, String url, String prdTaskName,
-			CrawlConf cconf, String rootTaskId, Map<String, Object> inparams, Date runDateTime, boolean addToDB) throws InterruptedException{
-		List<Task> tl = new ArrayList<Task>();
-		if (confFileName!=null){
-			tl = cconf.setUpSite(confFileName, null);
-		}
+	public static List<CrawledItem> browsePrd(SiteConf siteconf, String confFileName, String url, String prdTaskName,
+			CrawlConf cconf, String rootTaskId, Map<String, Object> inparams, Date runDateTime, 
+			boolean addToDB, MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
+		List<Task> tl = cconf.setUpSite(confFileName, siteconf);
 		Map<String, Object> params= new HashMap<String, Object>();
 		params.put(TaskMgr.TASK_RUN_PARAM_CCONF, cconf);
 		if (inparams!=null)
@@ -251,32 +236,16 @@ public class CrawlTestUtil{
 					}
 				}
 				BrowseProductTaskConf bpt = (BrowseProductTaskConf)t;
-				if (url!=null){
+				if (url!=null && !"".equals(url)){
 					bpt.setStartURL(url);
 				}
 				bpt.setRootTaskId(rootTaskId);
-				cilist.addAll(bpt.runMyselfWithOutput(params, addToDB));
+				TaskResult tr = bpt.runMyself(params, addToDB, context, mos);
+				if (tr!=null){
+					cilist.addAll(tr.getCIs());
+				}
 			}
 		}
 		return cilist;
 	}
-	
-	//either myTaskName, which has been registered in the TaskMgr or confFileName
-	public static void invokeTask(String confFileName, CrawlConf cconf, Date runDateTime) throws Exception{
-		List<Task> tl = new ArrayList<Task>();
-		if (confFileName!=null){
-			tl = cconf.setUpSite(confFileName, null);
-		}
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put(TaskMgr.TASK_RUN_PARAM_CCONF, cconf);
-		for (Task t: tl){
-			InvokeTaskTaskConf itt = (InvokeTaskTaskConf)t;
-			List<Task> ntl = itt.runMyself(params, null);
-			for (Task nt:ntl){
-				TaskStat ts = null;
-				nt.runMyself(params, ts);
-			}
-		}
-	}
-	
 }

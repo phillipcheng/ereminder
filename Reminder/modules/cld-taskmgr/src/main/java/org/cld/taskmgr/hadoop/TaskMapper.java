@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.taskmgr.TaskConf;
 import org.cld.taskmgr.TaskMgr;
+import org.cld.taskmgr.TaskResult;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 
@@ -43,7 +44,7 @@ public class TaskMapper extends Mapper<Object, Text, Text, Text>{
 		Task t = TaskUtil.taskFromJson(taskJson);
 		if (t.getConfName()!=null){
 			Map<String, Object> taskParams = new HashMap<String, Object>();
-			tconf.getTaskMgr().setUpSite(t.getConfName(), null, this.getClass().getClassLoader(), taskParams);
+			tconf.getTaskMgr().setUpSite(t.getConfName(), this.getClass().getClassLoader(), taskParams);
 		}
 		logger.info("I get task:" + t);
 		Map<String, Object> crawlTaskParams = new HashMap<String, Object>();
@@ -52,14 +53,10 @@ public class TaskMapper extends Mapper<Object, Text, Text, Text>{
 		hadoopCrawlTaskParams.put(TaskUtil.TASKCONF_PROPERTIES, context.getConfiguration().get(TaskUtil.TASKCONF_PROPERTIES));
 		try{
 			t.initParsedTaskDef();
-			if (!t.hasOutput()){
-				List<Task> tl = t.runMyself(crawlTaskParams, null);
-				if (tl!=null && tl.size()>0){
-					HadoopTaskLauncher.executeTasks(tconf, tl, hadoopCrawlTaskParams, null, false, this.getClass(), null);
-				}
-				logger.info(String.format("I finished and send out %d tasks.", tl!=null?tl.size():0));
-			}else {
-				t.runMyselfAndOutput(crawlTaskParams, context, mos);
+			TaskResult tr = t.runMyself(crawlTaskParams, true, context, mos);
+			if (tr!=null && tr.getTasks()!=null){
+				HadoopTaskLauncher.executeTasks(tconf, tr.getTasks(), hadoopCrawlTaskParams, null, false, this.getClass(), null);
+				logger.info(String.format("I finished and send out %d tasks.", tr.getTasks().size()));
 			}
 		}catch(RuntimeException re){
 			logger.error("runtime excpetion caught, mark this job error.", re);

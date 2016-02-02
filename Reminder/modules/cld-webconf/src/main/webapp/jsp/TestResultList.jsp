@@ -34,15 +34,6 @@ function cancelTask(taskid){
  	if (taskids!=null && taskids.length>0){
  		taskidList.addAll(Arrays.asList(taskids));
  	}else{
- 		//no specific tasks specified, list all runing tasks
- 		Set<String> runningTaskIds = ConfServlet.getCrawlTestNode().getTaskNode().getTaskInstanceManager().getRunningTasks();
- 		if (runningTaskIds!=null){
-	 		for (String taskid: runningTaskIds){
-	 			if (!taskidList.contains(taskid)){
-	 				taskidList.add(taskid);
-	 			}
-	 		}
- 		}
  	}
 
 	logger.info("tasks to display:" + taskidList.size());

@@ -3,7 +3,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<script src="../js/xpath.js"></script>
+<!-- <script src="../js/xpath.js"></script> -->
 <script>
 function submitOpenNew(){
 	document.listForm.target="_blank";
@@ -20,21 +20,25 @@ function submitNoNew(){
 <%@ page import="org.cld.webconf.InitListener" %>
 <%@ page import="org.cld.webconf.ConfServlet" %>
 <%@ page import="org.cld.webconf.ServletUtil" %>
+<%@ page import="org.cld.webconf.WebConfPersistMgr" %>
 <%@ page import="org.cld.util.HtmlUtil" %>
-<%@ page import="org.cld.datastore.entity.SiteConf" %>
+<%@ page import="org.cld.util.entity.SiteConf" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.Set" %>
 <%@ page import="org.apache.logging.log4j.LogManager"%>
 <%@ page import="org.apache.logging.log4j.Logger"%>
 <%@ page import="org.apache.logging.log4j.core.LoggerContext"%>
-<%@ page import="org.apache.logging.log4j.core.config.Configuration"%>
 <%@ page import="org.apache.logging.log4j.core.config.LoggerConfig"%>
 <%@ page import="org.apache.logging.log4j.Level"%>
+<%@ page import="org.hibernate.cfg.Configuration"%>
+<%@ page import="org.cld.datacrawl.test.BrowseType"%>
+
 
 <% Logger logger = LogManager.getLogger("cld.jsp");%>
 <% String userId="cr"; %>
-<% List<SiteConf> lsc = ConfServlet.getCConf().getDsm().getSiteConf(userId);%>
+<% WebConfPersistMgr wfpm = new WebConfPersistMgr(new Configuration().configure().buildSessionFactory());%>
+<% List<SiteConf> lsc = wfpm.getSiteConf(userId);%>
 <% logger.info("lsc size:" + lsc.size());%>
 	Existing:
 	<form name="listForm" action="/cldwebconf/CrawlConf" method="post" target='_blank'>
@@ -67,31 +71,29 @@ function submitNoNew(){
 	            <td><%= sc.getUserid() %></td>
 	            <td><%= sc.getStatusAsString() %></td>
 	            <td>
-	            	<a href=<%=ServletUtil.genViewCatUrl(sc.getId(), null)%>><%= ConfServlet.getCConf().getDsm().getCategoryCount(sc.getId(), null) %></a>
+	            	<a href=<%=ServletUtil.genViewCatUrl(sc.getId(), null)%>><%= ConfServlet.cconf.getDefaultDsm().getCategoryCount(sc.getId(), null) %></a>
 	            </td>
-	            <td><%= ConfServlet.getCConf().getDsm().getProductCount(sc.getId(), null) %></td>
+	            <td><%= ConfServlet.cconf.getDefaultDsm().getProductCount(sc.getId(), null) %></td>
 	            <td><%= sc.getUtimeAsString() %></td>
-	            <td><%
-	            	Set<String> tids = ConfServlet.getCrawlTestNode().getTaskNode().getTaskInstanceManager().getRunningTasks(sc.getId());
-	            %>
-	            	<a href=<%=ServletUtil.genViewTaskUrl(tids) %>><%=tids.toString() %></a>
-	            </td>
 	        </tr>
 <% } %>
 		</table>
 		URL:<input type="text" name="startUrl" size="100"><br>
-		<input type="checkbox" name="testType" value="1">One Path
-		<input type="checkbox" name="testType" value="2">Category Recursive
-		<input type="checkbox" name="testType" value="3">Leaf Category
-		<input type="checkbox" name="testType" value="4">Leaf Category Turn Page Only
-		<input type="checkbox" name="testType" value="5">One Product
-		<br>
+		<select name='testType'>
+			<% 
+				List<String> ttNames = new ArrayList<String>();
+				for (BrowseType bt: BrowseType.class.getEnumConstants()){
+					ttNames.add(bt.name());
+				}
+				BrowseType sbt = BrowseType.product;
+			%>
+			<%= HtmlUtil.genOptionList(ttNames, sbt.getId()+"")%>
+		</select>
 		Level:
 		<select name="logLevel">
 			<% 
 				LoggerContext context = (LoggerContext) LogManager.getContext(false);
-				Configuration logconfig = context.getConfiguration();
-				LoggerConfig loggerConfig = logconfig.getLoggerConfig("org.cld");
+				LoggerConfig loggerConfig = context.getConfiguration().getLoggerConfig("org.cld");
 				Level l = loggerConfig.getLevel();
 				List<String> strLevels = new ArrayList<String>();
 				for (Level lvl: Level.values()){

@@ -20,6 +20,8 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 
 @XmlRootElement(name = SiteConf.JSON_KEY_SITECONF)
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -74,6 +76,8 @@ public class SiteConf {
 		this.strUtime = strUtime;
 	}
 
+	public SiteConf(){
+	}
 	public String toString(){
 		StringBuffer sb = new StringBuffer();
 		sb.append("id:");
@@ -89,6 +93,7 @@ public class SiteConf {
 		return sb.toString();		
 	}
 	
+	@JsonIgnore
 	public String getStatusAsString(){
 		if (status==STATUS_TESTING){
 			return "testing";
@@ -97,6 +102,7 @@ public class SiteConf {
 		}
 	}
 	
+	@JsonIgnore
 	public String getUtimeAsString(){
 		return sdf.format(utime);
 	}

@@ -8,6 +8,9 @@ import java.util.Map;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.MapContext;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
@@ -15,6 +18,7 @@ import org.cld.datacrawl.util.SomePageErrorException;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.pagea.general.CategoryAnalyzeUtil;
 import org.cld.taskmgr.TaskMgr;
+import org.cld.taskmgr.TaskResult;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
 import org.cld.util.entity.Category;
@@ -77,7 +81,8 @@ public class BrowseDetailTaskConf extends CrawlTaskConf implements Serializable{
 	}
 	
 	@Override
-	public List<Task> runMyself(Map<String, Object> params, TaskStat ts) throws InterruptedException{
+	public TaskResult runMyself(Map<String, Object> params, boolean addToDB, 
+			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
 		try {
 			//adding the runtime params
 			this.putAllParams(params);
@@ -115,12 +120,13 @@ public class BrowseDetailTaskConf extends CrawlTaskConf implements Serializable{
 				if (params.containsKey(TASK_RUN_PARAM_MAX_ITEM)){
 					maxItems = ((Integer)params.get(TASK_RUN_PARAM_MAX_ITEM)).intValue();
 				}
-				return cconf.getLa().readTopLink(category, getFromPage(), getToPage(), this, maxPages, maxItems);
+				List<Task> tl = cconf.getLa().readTopLink(category, getFromPage(), getToPage(), this, maxPages, maxItems);
+				return new TaskResult(tl, null);
 			}
 		}catch(SomePageErrorException e){
-			throw new RuntimeException(e);
+			logger.error("", e);
 		}
-		return new ArrayList<Task>();
+		return null;
 	}
 	
 	public String getCatId() {

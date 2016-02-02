@@ -26,7 +26,7 @@ import org.xml.imagedata.Data;
 
 import cy.common.entity.Book;
 
-import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
+import org.cld.datacrawl.test.BrowseType;
 
 public class TestBooks extends TestBase {
 	private static Logger logger =  LogManager.getLogger(TestBooks.class);
@@ -65,38 +65,22 @@ public class TestBooks extends TestBase {
 	//Test browse category
 	@Test
 	public void rootNav() throws Exception{
-		
-		catNavigate(CBO_CONF, null, browse_type.one_path);
-		
-		catNavigate(A8Z8_CONF, null, browse_type.one_path);
-		
-		catNavigate(MOM001_CONF, null, browse_type.one_path);
-		
-		catNavigate(DMZJ_CONF, null, browse_type.one_path);
-		
-		catNavigate(CL_CONF, null, browse_type.one_path);
-		
-		catNavigate(XRS52_CONF, null, browse_type.one_path);
-		
-		catNavigate(FKB_CONF, null, browse_type.one_path);
-		
-		catNavigate(BAOLINY_CONF, null, browse_type.one_path);
-		
+		catNavigate(XRS52_CONF, null, BrowseType.onePath);
 	}
 	
 	@Test
 	public void runMom001Main() throws Exception{
-		catNavigate(MOM001_CONF, "http://www.mom001.com/", browse_type.recursive);
+		catNavigate(MOM001_CONF, "http://www.mom001.com/", BrowseType.recursive);
 	}
 	
 	@Test
 	public void runMom001Group() throws Exception{
-		catNavigate(MOM001_CONF, "http://lianhuanhua.mom001.com/groups/index.html", browse_type.recursive);
+		catNavigate(MOM001_CONF, "http://lianhuanhua.mom001.com/groups/index.html", BrowseType.recursive);
 	}
 	
 	@Test
 	public void runA8Z8Main() throws Exception{
-		catNavigate(A8Z8_CONF, null, browse_type.recursive);
+		catNavigate(A8Z8_CONF, null, BrowseType.recursive);
 	}
 	
 	//sequential
@@ -114,7 +98,7 @@ public class TestBooks extends TestBase {
 	//Test browse category 1 level
 	@Test
 	public void catNav_DMZJ1() throws Exception{
-		catNavigate(DMZJ_CONF, "http://manhua.dmzj.com/rishi/", browse_type.one_level);
+		catNavigate(DMZJ_CONF, "http://manhua.dmzj.com/rishi/", BrowseType.oneLevel);
 	}
 	
 	//Test browse details task (leaf category)
@@ -154,13 +138,13 @@ public class TestBooks extends TestBase {
 	}
 	
 	public void xrsDownload(String bookSeries, int startBookIdx, int bookNumber) throws Exception{
-		xrsDownload(bookSeries, startBookIdx, bookNumber, false);
+		xrsDownload(bookSeries, startBookIdx, 0, bookNumber, false);
 	}
-	public void xrsDownload(String bookSeries, int startBookIdx, int bookNumber, boolean onlyCover) throws Exception{
+	public void xrsDownload(String bookSeries, int startBookIdx, int startBookNumber, int endBookNumber, boolean onlyCover) throws Exception{
 		ExecutorService exeService = Executors.newFixedThreadPool(20);
 		String rootDir = "http://www.52xrs.com/comic/";
 		String localRoot = "C:\\mydoc\\picbook";
-		for (int i=0; i<bookNumber; i++){
+		for (int i=startBookNumber; i<endBookNumber; i++){
 			int bookIdx = startBookIdx + i;
 			String bookUrl = String.format("%s%d/", rootDir, bookIdx);
 			List<CrawledItem> cil = browsePrd(XRS52_CONF, bookUrl);
@@ -202,20 +186,22 @@ public class TestBooks extends TestBase {
 		String bookSeries = "水浒传";
 		int startBookIdx = 401;
 		int bookNumber = 30;
-		xrsDownload(bookSeries, startBookIdx, bookNumber, true);
+		xrsDownload(bookSeries, startBookIdx, bookNumber);
 	}
 	
 	@Test
 	public void testDongZhouLieGuo() throws Exception {
 		String bookSeries = "东周列国故事";
 		int startBookIdx = 237;
-		int bookNumber = 50;
-		xrsDownload(bookSeries, startBookIdx, bookNumber, true);
-		
-		bookSeries = "隋唐演义";
-		startBookIdx = 833;
-		bookNumber = 60;
-		xrsDownload(bookSeries, startBookIdx, bookNumber, true);
+		xrsDownload(bookSeries, startBookIdx, 30, 50, false);
+	}
+	
+	@Test
+	public void testSTYY() throws Exception {
+		String bookSeries = "隋唐演义";
+		int startBookIdx = 833;
+		int bookNumber = 60;
+		xrsDownload(bookSeries, startBookIdx, 0, bookNumber, true);
 	}
 
 	@Test

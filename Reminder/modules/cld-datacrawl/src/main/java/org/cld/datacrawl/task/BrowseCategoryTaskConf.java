@@ -9,11 +9,15 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
 import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.MapContext;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.taskmgr.TaskMgr;
+import org.cld.taskmgr.TaskResult;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
@@ -87,7 +91,8 @@ public class BrowseCategoryTaskConf extends CrawlTaskConf implements Serializabl
 	}
 	
 	@Override
-	public List<Task> runMyself(Map<String, Object> params, TaskStat ts) throws InterruptedException{
+	public TaskResult runMyself(Map<String, Object> params, boolean addToDB, 
+			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
 		//adding the runtime params
 		this.putAllParams(params);
 		CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
@@ -96,11 +101,12 @@ public class BrowseCategoryTaskConf extends CrawlTaskConf implements Serializabl
 		if (taskTemplate!=null){
 			//1. after marshal/un-marshal, re-setup
 			this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
-			return cconf.getCa().navigateCategory(this, ts, cconf);
+			List<Task> tl = cconf.getCa().navigateCategory(this, cconf);
+			return new TaskResult(tl, null);
 		}else{
 			logger.error("task is null for:" + getName());
 		}
-		return new ArrayList<Task>();
+		return null;
 	}
 	
 	//setter and getter

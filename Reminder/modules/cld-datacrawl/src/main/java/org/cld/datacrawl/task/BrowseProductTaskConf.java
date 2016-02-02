@@ -2,6 +2,7 @@ package org.cld.datacrawl.task;
 
 import java.io.BufferedWriter;
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -22,14 +23,16 @@ import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.cld.pagea.general.ProductListAnalyzeUtil;
+import org.cld.taskmgr.TaskConf;
 import org.cld.taskmgr.TaskMgr;
+import org.cld.taskmgr.TaskResult;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
-import org.cld.taskmgr.entity.TaskStat;
 import org.cld.util.ScriptEngineUtil;
 import org.cld.util.entity.CrawledItem;
 import org.cld.util.entity.CrawledItemId;
 import org.cld.util.entity.Product;
+import org.w3c.dom.Node;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 import org.xml.taskdef.AttributeType;
 import org.xml.taskdef.BrowseDetailType;
@@ -354,37 +357,7 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 	}
 	
 	@Override
-	public List<Task> runMyself(Map<String, Object> params, TaskStat ts) throws InterruptedException{
-		//adding the runtime params
-		this.putAllParams(params);
-		CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
-		BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
-		this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
-		browseProduct(this, cconf, this.getStoreId(), this.catId, this.getName(), this.getParamMap(), false, this.getStartDate(), true, null, null, null, null);
-		return new ArrayList<Task>();
-	}
-	
-	@Override
-	public List<CrawledItem> runMyselfWithOutput(Map<String, Object> params, boolean addToDB) throws InterruptedException{
-		//adding the runtime params
-		this.putAllParams(params);
-		CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
-		BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
-		if (taskTemplate!=null){
-			this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
-			return browseProduct(this, cconf, getStoreId(), this.catId, getName(), getParamMap(), true, getStartDate(), addToDB, null, null, null, null);
-		}else{
-			logger.error(String.format("task %s not found in config.", getName()));
-			return null;
-		}
-	}
-
-	@Override
-	public boolean hasOutput(){
-		return true;
-	}
-	@Override
-	public void runMyselfAndOutput(Map<String, Object> params, 
+	public TaskResult runMyself(Map<String, Object> params, boolean addToDB, 
 			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
 		BrowseTaskType btt = null;
 		if (getParsedTaskDef()!=null){
@@ -396,10 +369,11 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		BrowseProductTaskConf taskTemplate = (BrowseProductTaskConf) cconf.getTaskMgr().getTask(getName());
 		if (taskTemplate!=null){
 			Map<String, BufferedWriter> hdfsByIdOutputMap = new HashMap<String, BufferedWriter>();
+			this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
 			try{
-				this.setParsedTaskDef(taskTemplate.getParsedTaskDef());
-				browseProduct(this, cconf, getStoreId(), this.catId, getName(), getParamMap(), true, getStartDate(), true, 
-						btt, hdfsByIdOutputMap, context, mos);
+				List<CrawledItem> cil = browseProduct(this, cconf, this.getStoreId(), this.catId, this.getName(), this.getParamMap(), false, 
+						this.getStartDate(), addToDB, btt, hdfsByIdOutputMap, context, mos);
+				return new TaskResult(null, cil);
 			}catch(Throwable t){
 				logger.error("", t);
 			}finally{
@@ -414,10 +388,31 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 		}else{
 			logger.error(String.format("task %s not found in config.", getName()));
 		}
+		return null;
+	}
+	
+	private static final SimpleDateFormat ssdf = new SimpleDateFormat("yyyyMMddHHmmss");
+	private String paramToString(Map<String, Object> paramMap){
+		StringBuffer sb = new StringBuffer();
+		for (Object v: paramMap.values()){
+			if (!(v instanceof List) &&
+					!(v instanceof Node)
+					){
+				String str=null;
+				if (v instanceof Date){
+					str = ssdf.format((Date)v);
+				}else{
+					str = v.toString();
+				}
+				sb.append(str).append("_");
+			}
+		}
+		String finalStr = sb.toString().replaceAll(".", "_");
+		return finalStr;
 	}
 	
 	@Override
-	public String getOutputDir(Map<String, Object> paramMap){
+	public String getOutputDir(Map<String, Object> paramMap, TaskConf tconf){
 		if (paramMap==null){
 			paramMap = this.getParamMap();
 		}
@@ -430,33 +425,40 @@ public class BrowseProductTaskConf extends CrawlTaskConf implements Serializable
 			if (csvtrans!=null){//using the default
 				//raw/[marketId]_[endDate]/storeid/[year]_[quarter]
 				StringBuffer od = new StringBuffer("raw/");
-				String marketId = (String) paramMap.get(AbstractCrawlItemToCSV.FN_MARKETID);
-				String endDate = (String) paramMap.get(AbstractCrawlItemToCSV.FN_ENDDATE);
-				//remove the ending endDate_delta
-				String deltaSuffix = "_" + endDate + "_delta";
-				if (marketId.endsWith(deltaSuffix)){
-					marketId = marketId.substring(0, marketId.indexOf(deltaSuffix));
-				}
-				od.append(marketId);
-				od.append("_");
-				od.append(endDate);
-				od.append("/");
-				String storeId = (String) paramMap.get(AbstractCrawlItemToCSV.FN_STOREID);
-				if (storeId==null){
-					od.append(this.getStoreId());
-				}else{
-					od.append(storeId);
-				}
-				od.append("/");
-				logger.info(String.format("output dir is %s.", od.toString()));
-				if (paramMap.containsKey(AbstractCrawlItemToCSV.FN_YEAR)){
-					int year = (int) paramMap.get(AbstractCrawlItemToCSV.FN_YEAR);
-					od.append(year);
-				}
-				if (paramMap.containsKey(AbstractCrawlItemToCSV.FN_QUARTER)){
-					int quarter = (int) paramMap.get(AbstractCrawlItemToCSV.FN_QUARTER);
+				if (paramMap.containsKey(AbstractCrawlItemToCSV.FN_MARKETID)){//for stock
+					String marketId = (String) paramMap.get(AbstractCrawlItemToCSV.FN_MARKETID);
+					String endDate = (String) paramMap.get(AbstractCrawlItemToCSV.FN_ENDDATE);
+					//remove the ending endDate_delta
+					String deltaSuffix = "_" + endDate + "_delta";
+					if (marketId.endsWith(deltaSuffix)){
+						marketId = marketId.substring(0, marketId.indexOf(deltaSuffix));
+					}
+					od.append(marketId);
 					od.append("_");
-					od.append(quarter);
+					od.append(endDate);
+					od.append("/");
+					String storeId = (String) paramMap.get(AbstractCrawlItemToCSV.FN_STOREID);
+					if (storeId==null){
+						od.append(this.getStoreId());
+					}else{
+						od.append(storeId);
+					}
+					od.append("/");
+					logger.info(String.format("output dir is %s.", od.toString()));
+					if (paramMap.containsKey(AbstractCrawlItemToCSV.FN_YEAR)){
+						int year = (int) paramMap.get(AbstractCrawlItemToCSV.FN_YEAR);
+						od.append(year);
+					}
+					if (paramMap.containsKey(AbstractCrawlItemToCSV.FN_QUARTER)){
+						int quarter = (int) paramMap.get(AbstractCrawlItemToCSV.FN_QUARTER);
+						od.append("_");
+						od.append(quarter);
+					}
+				}else{//generally, using storeId, followed by the parameters
+					od.append(storeId);
+					od.append("/");
+					String paramStr = paramToString(paramMap);
+					od.append(paramStr);
 				}
 				return od.toString();
 			}else{

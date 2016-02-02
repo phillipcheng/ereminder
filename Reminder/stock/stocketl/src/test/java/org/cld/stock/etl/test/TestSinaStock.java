@@ -216,20 +216,4 @@ public class TestSinaStock {
 	public void run_fr_assetdevalue(){
 		ssb.runCmd(SinaETLConfig.SINA_STOCK_FR_ASSETDEVALUE_YEAR, SinaETLConfig.MarketId_HS_Test, "2015-08-29", "2015-09-22");
 	}
-	
-	//test crawl
-	@Test
-	public void test_crawl_1() throws InterruptedException{
-		List<Task> tl = ssb.getCconf().setUpSite("sina-stock-stock-holder.xml", null);
-		String startDate = "2014-01-01";
-		String endDate = "2015-12-31";
-		String stockId = "002216";
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put(TaskMgr.TASK_RUN_PARAM_CCONF, ssb.getCconf());
-		params.put("stockid", stockId);
-		params.put("startDate", startDate);
-		params.put("endDate", endDate);
-		List<CrawledItem> cil = tl.get(0).runMyselfWithOutput(params, false);
-		logger.info(cil.get(0));
-	}
 }

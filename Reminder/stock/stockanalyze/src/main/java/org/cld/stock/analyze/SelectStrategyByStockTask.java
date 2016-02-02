@@ -20,7 +20,9 @@ import org.cld.stock.common.TradeHour;
 import org.cld.stock.strategy.IntervalUnit;
 import org.cld.stock.strategy.SelectCandidateResult;
 import org.cld.stock.strategy.SelectStrategy;
+import org.cld.taskmgr.TaskConf;
 import org.cld.taskmgr.TaskMgr;
+import org.cld.taskmgr.TaskResult;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.TaskMapper;
@@ -175,10 +177,11 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 	 * output value: stockid, value, buyPrice
 	 */
 	@Override
-	public void runMyselfAndOutput(Map<String, Object> params, 
+	public TaskResult runMyself(Map<String, Object> params, boolean addDB,
 			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{
 		AnalyzeConf cconf = (AnalyzeConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
 		getBuyOppList(cconf, bsl, stockId, startDt, endDt, th, context);
+		return null;
 	}
 	
 	private static String submitTasks(String taskName, String propfile, List<Task> tl, AnalyzeConf aconf, int mbMem, int maxSelectNumber){
@@ -217,18 +220,13 @@ public class SelectStrategyByStockTask extends Task implements Serializable{
 		return new String[]{jobId};
 	}
 	
-	//
-	@Override
-	public boolean hasOutput(){
-		return true;
-	}
 	@Override
 	public boolean hasMultipleOutput(){
 		return true;
 	}
 
 	@Override
-	public String getOutputDir(Map<String, Object> paramMap){
+	public String getOutputDir(Map<String, Object> paramMap, TaskConf tconf){
 		return getOutputDir();
 	}
 	//

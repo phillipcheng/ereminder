@@ -14,8 +14,8 @@
 <%@ page import="org.cld.webconf.ConfServlet" %>
 <%@ page import="org.apache.logging.log4j.LogManager"%>
 <%@ page import="org.apache.logging.log4j.Logger"%>
-<%@ page import="org.cld.datastore.entity.Category" %>
-<%@ page import="org.cld.datastore.entity.Product" %>
+<%@ page import="org.cld.util.entity.Category" %>
+<%@ page import="org.cld.util.entity.Product" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="org.cld.webconf.ServletUtil" %>
 
@@ -31,7 +31,7 @@
 	String grandParentCatId=null;
 	if (siteconfid!=null){
 		if (pcatid==null){
-			List<Category> rootCatList = ConfServlet.getCConf().getDsm().getCategoryByPcatId(siteconfid, null);
+			List<Category> rootCatList = ConfServlet.cconf.getDefaultDsm().getCategoryByPcatId(siteconfid, null);
 			if (rootCatList.size()!=1){
 				logger.error(String.format("root cat list wrong: %s for siteid:%s", rootCatList, siteconfid));
 			}else{
@@ -41,13 +41,13 @@
 			}
 		}else{
 			//get grandParentCatId
-			Category pcat = (Category)ConfServlet.getCConf().getDsm().getCrawledItem(pcatid,siteconfid,Category.class);
+			Category pcat = (Category)ConfServlet.cconf.getDefaultDsm().getCrawledItem(pcatid,siteconfid,Category.class);
 			grandParentCatId = pcat.getParentCatId();
 		}
-		List<Category> secondLevelCats = ConfServlet.getCConf().getDsm().getCategoryByPcatId(siteconfid, pcatid);
+		List<Category> secondLevelCats = ConfServlet.cconf.getDefaultDsm().getCategoryByPcatId(siteconfid, pcatid);
 		catlist.addAll(secondLevelCats);
 		
-		prdlist = ConfServlet.getCConf().getDsm().getProductByPcatId(siteconfid, pcatid);
+		prdlist = ConfServlet.cconf.getDefaultDsm().getProductByPcatId(siteconfid, pcatid);
 		
 	}else{
 		logger.error("sitconfid is null.");

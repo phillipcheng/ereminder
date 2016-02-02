@@ -20,11 +20,12 @@
 Logger logger = LogManager.getLogger("cld.jsp");
 String jsonData = request.getParameter(CRBookWebUtil.PARAM_BOOK_JSON_DATA);	
 jsonData = URLDecoder.decode(jsonData, "UTF-8");
+logger.info(String.format("jsonData got:%s", jsonData));
 JSONObject jobj = new JSONObject(jsonData);
-jsonData = jobj.getString("book");
+jobj = jobj.getJSONObject("Book");
 String siteconfid = request.getParameter(CRBookWebUtil.PARAM_SITECONF_ID);
 Book book = new Book();
-book.fromTopJSONString(jsonData);
+book.fromTopJSONObject(jobj);
 %>
 <script>
 var currentFirstPage =0;

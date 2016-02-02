@@ -10,15 +10,21 @@ import java.util.Map;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.MapContext;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.test.CrawlTestUtil;
-import org.cld.datacrawl.test.CrawlTestUtil.browse_type;
+import org.cld.datacrawl.test.BrowseType;
+import org.cld.taskmgr.TaskConf;
 import org.cld.taskmgr.TaskMgr;
+import org.cld.taskmgr.TaskResult;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.entity.TaskStat;
+import org.cld.util.entity.SiteConf;
 
 @Entity
 @DiscriminatorValue("org.cld.datacrawl.task.TestTaskConf")
@@ -30,31 +36,36 @@ public class TestTaskConf extends CrawlTaskConf implements Serializable{
 	public static String datetimeformat="yyyy-MM-dd-hh-mm-ss-SSS";
 	public static SimpleDateFormat sdf = new SimpleDateFormat(datetimeformat);
 	
+	
 	//configurable values
 	private String startURL;
 	private String siteconfid;
-	private browse_type taskType;
+	private BrowseType taskType;
 	
 	private boolean init;
-	private String confXml;
+	private String confXmlFileName;
+	private SiteConf siteconf;//contain xml content
 
 	//methods
 	private TestTaskConf(){
 	}
 	
-	public TestTaskConf(boolean init, browse_type taskType, String siteconfid, String confXml, String startUrl){
+	//called from local with file access
+	public TestTaskConf(boolean init, BrowseType taskType, String siteconfid, String confXmlFileName, String startUrl){
 		this();
 		this.init = init;
 		this.taskType = taskType;
 		this.siteconfid = siteconfid;
-		this.confXml = confXml;
+		this.confXmlFileName = confXmlFileName;
 		this.startURL = startUrl;
 		super.setStoreId(siteconfid);
 		genId();
 	}
 	
-	public TestTaskConf(boolean init, browse_type taskType, String siteconfid, String confXml){
-		this(init, taskType, siteconfid, confXml, null);
+	//called from web server with siteconf passed no file access
+	public TestTaskConf(boolean init, BrowseType taskType, SiteConf siteconf, String startUrl){
+		this(init, taskType, siteconf.getId(), null, startUrl);
+		this.siteconf = siteconf;
 	}
 	
 	public String toString(){
@@ -76,77 +87,84 @@ public class TestTaskConf extends CrawlTaskConf implements Serializable{
 	}
 
 	@Override
-	public List<Task> runMyself(Map<String, Object> params, TaskStat ts) throws InterruptedException{	
+	public String getOutputDir(Map<String, Object> paramMap, TaskConf tconf){
+		CrawlConf cconf = (CrawlConf) tconf;
+		if (taskType == BrowseType.product){
+			List<Task> tl = cconf.setUpSite(confXmlFileName, siteconf);
+			for (Task t: tl){
+				if (t instanceof BrowseProductTaskConf){
+					return ((BrowseProductTaskConf)t).getOutputDir(paramMap, tconf);
+				}
+			}
+		}
+		return null;
+	}
+	
+	@Override
+	public TaskResult runMyself(Map<String, Object> params, boolean addToDB, 
+			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) throws InterruptedException{	
 		CrawlConf cconf = (CrawlConf) params.get(TaskMgr.TASK_RUN_PARAM_CCONF);
 		String startUrl = getStartURL();
 		ThreadContext.put("taskid", getId());
 		try{
 			if (!isInit()){
-				if (confXml==null){
-					cconf.setUpSite(null, cconf.getDefaultDsm().getFullSitConf(siteconfid));
-				}else{
-					cconf.setUpSite(confXml, null);
-				}
+				cconf.setUpSite(confXmlFileName, siteconf);
 			}
-			browse_type taskType = getTaskType();
-			if (taskType==browse_type.one_path){
-				CrawlTestUtil.catNavigate(siteconfid, null, cconf, getId(), null);
-			}else if (taskType == browse_type.bct){
-				CrawlTestUtil.catNavigate(siteconfid, null, startUrl, 
-						browse_type.recursive, cconf, getId(), null, null, 0);
-			}else if (taskType == browse_type.bpt){
-				CrawlTestUtil.browsePrd(siteconfid, confXml, startUrl, cconf, getId(), this.getParamMap(), this.getStartDate(), true);
-			}else if (taskType == browse_type.bdt_turnpage_only){
-				CrawlTestUtil.runBDT(siteconfid, null, startUrl, true, cconf, getId());
-			}else if (taskType == browse_type.bdt){
-				CrawlTestUtil.runBDT(siteconfid, null, startUrl, false, cconf, getId());
+			BrowseType taskType = getTaskType();
+			if (taskType==BrowseType.onePath){
+				CrawlTestUtil.catNavigate(siteconf, confXmlFileName, cconf, getId(), null);
+			}else if (taskType == BrowseType.category){
+				CrawlTestUtil.catNavigate(siteconf, confXmlFileName, startUrl, BrowseType.recursive, cconf, getId(), null, null, 0);
+			}else if (taskType == BrowseType.product){
+				CrawlTestUtil.browsePrd(siteconf, confXmlFileName, startUrl, cconf, getId(), this.getParamMap(), this.getStartDate(), false, context, mos);
+			}else if (taskType == BrowseType.detailsTurnPageOnly){
+				CrawlTestUtil.runBDT(siteconf, confXmlFileName, startUrl, true, cconf, getId());
+			}else if (taskType == BrowseType.details){
+				CrawlTestUtil.runBDT(siteconf, confXmlFileName, startUrl, false, cconf, getId());
 			}else{
 				logger.error(String.format("taskType: %d not supported.", taskType));
 			}
 		}catch(Exception e){
 			logger.error(String.format("got exception while exe bdt, t: %s",this), e);
 		}
-		return new ArrayList<Task>();
+		return null;
 	}
 	
+	//getter and setter
 	public String getStartURL() {
 		return startURL;
 	}
-
 	public void setStartURL(String startURL) {
 		this.startURL = startURL;
 	}
-
-
 	public boolean isInit() {
 		return init;
 	}
-
 	public void setInit(boolean init) {
 		this.init = init;
 	}
-	
 	public String getSiteconfid() {
 		return siteconfid;
 	}
-
 	public void setSiteconfid(String siteconfid) {
 		this.siteconfid = siteconfid;
 	}
-
-	public String getConfXml() {
-		return confXml;
-	}
-
-	public void setConfXml(String confXml) {
-		this.confXml = confXml;
-	}
-
-	public browse_type getTaskType() {
+	public BrowseType getTaskType() {
 		return taskType;
 	}
-
-	public void setTaskType(browse_type taskType) {
+	public void setTaskType(BrowseType taskType) {
 		this.taskType = taskType;
+	}
+	public String getConfXmlFileName() {
+		return confXmlFileName;
+	}
+	public void setConfXmlFileName(String confXmlFileName) {
+		this.confXmlFileName = confXmlFileName;
+	}
+	public SiteConf getSiteconf() {
+		return siteconf;
+	}
+	public void setSiteconf(SiteConf siteconf) {
+		this.siteconf = siteconf;
 	}
 }

@@ -171,6 +171,19 @@ public class TaskUtil {
 		return getValue(vt, valueExp);
 	}
 	
+	public static TaskConf getTaskConf(String propertyFile){
+		try{
+			PropertiesConfiguration pc = new PropertiesConfiguration(propertyFile);
+			String tconfClass = pc.getString(KEY_TASKCONF_TYPE);
+			Class clazz = Class.forName(tconfClass);
+			TaskConf tconf = (TaskConf) clazz.getDeclaredConstructor(String.class).newInstance(propertyFile);
+			return tconf;
+		}catch(Exception e){
+			logger.error("", e);
+		}
+		return null;
+	}
+
 	/**
 	 * 
 	 * @param tconfPropertyFile
@@ -202,16 +215,5 @@ public class TaskUtil {
 				sourceName, sync, mapperClass, reducerClass);
 	}
 	
-	public static TaskConf getTaskConf(String propertyFile){
-		try{
-			PropertiesConfiguration pc = new PropertiesConfiguration(propertyFile);
-			String tconfClass = pc.getString(KEY_TASKCONF_TYPE);
-			Class clazz = Class.forName(tconfClass);
-			TaskConf tconf = (TaskConf) clazz.getDeclaredConstructor(String.class).newInstance(propertyFile);
-			return tconf;
-		}catch(Exception e){
-			logger.error("", e);
-		}
-		return null;
-	}
+
 }

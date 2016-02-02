@@ -164,7 +164,8 @@ public class HadoopTaskLauncher {
 				updateHadoopParams(t, hadoopParams);
 				logger.info("after update hadoop params:" + hadoopParams);
 				boolean multipleOutput = hasMultipleOutput(t);
-				String outputDir = t.getOutputDir(null);
+				String outputDir = t.getOutputDir(null, tconf);
+				logger.info(String.format("output dir is %s", outputDir));
 				return hadoopExecuteTasks(tconf, hadoopParams, new String[]{taskFileName}, multipleOutput, outputDir, sync, mapperClass, reducerClass, true);
 			}catch (Exception e) {
 				logger.error("", e);

@@ -222,7 +222,7 @@ public class CategoryAnalyze {
 		}
 	}
 	
-	public List<Task> navigateCategory(Task task, TaskStat taskStat, CrawlConf cconf) throws InterruptedException{		
+	public List<Task> navigateCategory(Task task, CrawlConf cconf) throws InterruptedException{		
 		BrowseCategoryTaskConf bct = (BrowseCategoryTaskConf) task;
 		String startUrl = bct.getStartURL();
 		Category newCat = new Category(task.getParsedTaskDef().getTasks().getProductType());
@@ -252,18 +252,5 @@ public class CategoryAnalyze {
 		}else{
 			return new ArrayList<Task>();
 		}
-	}
-	
-	public List<Task> retryCat(CrawlConf cconf, TaskStat taskStat) throws InterruptedException{
-		List<Task> tasklist = new ArrayList<Task>();
-		BrsCatStat bs =(BrsCatStat)taskStat;
-		BrowseCategoryTaskConf[] bctArray = new BrowseCategoryTaskConf[bs.getBrokenCat().size()];
-		bs.getBrokenCat().toArray(bctArray);
-		for (int i=0; i<bctArray.length; i++){
-			BrowseCategoryTaskConf bct = bctArray[i];
-			logger.info("retry:" + bct);
-			tasklist.addAll(navigateCategory(bct, bs, cconf));
-		}
-		return tasklist;
 	}
 }

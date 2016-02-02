@@ -293,8 +293,29 @@ public class TaskMgr {
 		return retTL;
 	}
 	
-	//to convert the xml definition to tasksConf within cconf
-	public List<Task> setUpSite(String taskconfFileName, SiteConf sc, ClassLoader pluginClassLoader, Map<String, Object> params){
+	//setup with the content of the crawl conf file, used by web server, using sc.id as the key
+	public List<Task> setUpSite(SiteConf sc, ClassLoader pluginClassLoader, Map<String, Object> params){
+		String id = sc.getId();
+		if (confTaskMap.containsKey(id)){
+			return confTaskMap.get(id);
+		}try {
+			Source source = new StreamSource(new StringReader(sc.getConfxml()));
+			Date d = sc.getUtime();
+			JAXBContext jc = JAXBContext.newInstance("org.xml.taskdef");
+			Unmarshaller u = jc.createUnmarshaller();
+			JAXBElement<TasksType> root = u.unmarshal(source,TasksType.class);
+			TasksType tasks = root.getValue();
+			List<Task> tl = loadTask(tasks, pluginClassLoader, params, d, id);
+			confTaskMap.put(id, tl);
+			return tl;
+		}catch(Exception e){
+			logger.error("", e);
+			return new ArrayList<Task>();
+		}
+	}
+	
+	//setup with the crawl conf file, using the fileName as the key
+	public List<Task> setUpSite(String taskconfFileName, ClassLoader pluginClassLoader, Map<String, Object> params){
 		if (confTaskMap.containsKey(taskconfFileName)){
 			return confTaskMap.get(taskconfFileName);
 		}else{
@@ -302,33 +323,29 @@ public class TaskMgr {
 				Source source = null;
 				URL url = null;
 				Date d = null;
-				if (sc==null){
-					if (pluginClassLoader!=null){
-						source = new StreamSource(pluginClassLoader.getResourceAsStream(taskconfFileName));
-						url = pluginClassLoader.getResource(taskconfFileName);
-					}else{
-						source = new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(taskconfFileName));
-						url = Thread.currentThread().getContextClassLoader().getResource(taskconfFileName);
-					}
-					String fileName=null;
-					if (url!=null){
-						if (url.getProtocol().equals("file")) {
-					        fileName = url.getFile();
-					    }else if (url.getProtocol().equals("jar")){
-					    	fileName = url.getFile();
-					    	fileName = fileName.substring(0, fileName.indexOf("!"));
-					    }else {
-					        throw new IllegalArgumentException(String.format("can't get the timestamp from protocol: %s", url.getProtocol()));
-					    }
-					    File file = new File(fileName);
-					    d = new Date(file.lastModified());
-					}else{
-						logger.error(String.format("task conf file %s not found.", taskconfFileName));
-					}
+				if (pluginClassLoader!=null){
+					source = new StreamSource(pluginClassLoader.getResourceAsStream(taskconfFileName));
+					url = pluginClassLoader.getResource(taskconfFileName);
 				}else{
-					source = new StreamSource(new StringReader(sc.getConfxml()));
-					d = sc.getUtime();
+					source = new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream(taskconfFileName));
+					url = Thread.currentThread().getContextClassLoader().getResource(taskconfFileName);
 				}
+				String fileName=null;
+				if (url!=null){
+					if (url.getProtocol().equals("file")) {
+				        fileName = url.getFile();
+				    }else if (url.getProtocol().equals("jar")){
+				    	fileName = url.getFile();
+				    	fileName = fileName.substring(0, fileName.indexOf("!"));
+				    }else {
+				        throw new IllegalArgumentException(String.format("can't get the timestamp from protocol: %s", url.getProtocol()));
+				    }
+				    File file = new File(fileName);
+				    d = new Date(file.lastModified());
+				}else{
+					logger.error(String.format("task conf file %s not found.", taskconfFileName));
+				}
+				
 				JAXBContext jc = JAXBContext.newInstance("org.xml.taskdef");
 				Unmarshaller u = jc.createUnmarshaller();
 				

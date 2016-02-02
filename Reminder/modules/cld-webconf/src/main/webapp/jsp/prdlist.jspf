@@ -1,4 +1,4 @@
-<%@ page import="org.cld.datastore.entity.Product" %>
+<%@ page import="org.cld.util.entity.Product" %>
 <%@ page import="org.cld.webconf.ConfServlet" %>
 <%@ page import="java.net.URLEncoder" %>
 	
@@ -14,7 +14,8 @@
 	        <th>FullUrl</th>
 	        <th>Data</th>
 		</tr>
-<% for (Product prd : prdlist){
+<% if (prdlist!=null){
+	for (Product prd : prdlist){
 %>
 		<tr>
 		   <td><%= prd.getId().getStoreId() %></td>
@@ -31,6 +32,7 @@
 	       </td>
 	       <td><%= prd.getParamData() %></td>
 		</tr>
-<%}%>
+<%}
+}%>
 		</table>
 	</div>

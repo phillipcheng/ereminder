@@ -2,16 +2,8 @@ package org.cld.webconf;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -19,41 +11,19 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.transform.Source;
-import javax.xml.transform.stream.StreamSource;
-
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
-import org.cld.datacrawl.CrawlClientNode;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.CrawlUtil;
 import org.cld.datacrawl.task.TestTaskConf;
-import org.cld.datastore.entity.SiteConf;
+import org.cld.datacrawl.test.BrowseType;
+import org.cld.util.entity.SiteConf;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.Task;
-import org.cld.taskmgr.entity.TaskPersistMgr;
-import org.xml.mytaskdef.TasksTypeUtil;
-import org.xml.taskdef.BrowseCatType;
-import org.xml.taskdef.BrowseTaskType;
-import org.xml.taskdef.TasksType;
-import org.xml.taskdef.ValueType;
-
-import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.DomElement;
-import com.gargoylesoftware.htmlunit.html.DomNode;
-import com.gargoylesoftware.htmlunit.html.DomText;
-import com.gargoylesoftware.htmlunit.html.HtmlElement;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlScript;
 
 public class ConfServlet extends HttpServlet {
 	
@@ -110,56 +80,19 @@ public class ConfServlet extends HttpServlet {
 	public static final String CatResultPage="/cldwebconf/jsp/CatResultList.jsp";
 	public static final String PrdResultPage="/cldwebconf/jsp/PrdResultList.jsp";
 	
-	public static String EDIT_BODY_PATH=StringEscapeUtils.escapeXml("//*[@id=\"ppw_page_body\"]");
-	public static String RUN_BODY_PATH=StringEscapeUtils.escapeXml("//body");
-	
 	public static String appRoot;
 	public static String bookWebAppRoot;
 
-	private static CrawlClientNode crawlTestNode;
+	public static String propFile;
+	public static CrawlConf cconf;
 	
-	private static CrawlConf cconf;
-	private static Map<String, TasksType> ttCache = new ConcurrentHashMap<String, TasksType>();//siteconfid to taskstype
-	
-	public static CrawlClientNode getCrawlTestNode() {
-		return crawlTestNode;
-	}
-	public static CrawlConf getCConf() {
-		return cconf;
-	}
-
-	public static void setCrawlTestNode(CrawlClientNode crawlnode) {
-		ConfServlet.crawlTestNode = crawlnode;
-		ConfServlet.cconf = crawlnode.getCConf();
-	}
-	
-	public static TasksType getSiteConf(String siteconfid){
-		if (ttCache.containsKey(siteconfid)){
-			return ttCache.get(siteconfid);
-		}else{
-			SiteConf sc = cconf.getDefaultDsm().getFullSitConf(siteconfid);
-			if (sc!=null){
-			JAXBContext jc;
-				try {
-					jc = JAXBContext.newInstance("org.xml.taskdef");
-					Unmarshaller u = jc.createUnmarshaller();
-					Source source = new StreamSource(new StringReader(sc.getConfxml()));
-					JAXBElement<TasksType> root = u.unmarshal(source,TasksType.class);
-					ttCache.put(siteconfid, root.getValue());
-					return root.getValue();
-				} catch (JAXBException e) {
-					logger.error("", e);
-				}
-			}else{
-				logger.error("siteconfid:" + siteconfid + " not found in db.");
-			}
-		}
-		return null;
-	}
+	private WebConfPersistMgr wcpm;
 	
 	@Override
 	public void init() {
 		appRoot = getInitParameter(APPROOT_KEY);
+		SessionFactory factory = new Configuration().configure().buildSessionFactory();
+		wcpm = new WebConfPersistMgr(factory);
 		logger.info(String.format("init param: %s, %s", APPROOT_KEY, appRoot));
 	}
 	
@@ -177,23 +110,18 @@ public class ConfServlet extends HttpServlet {
 		String uid = request.getParameter(REQ_PARAM_USER_ID);
 		String reloadurl = request.getParameter(REQ_PARAM_RELOAD_URL);
 		String[] siteids = request.getParameterValues(REQ_PARAM_SITE_IDS);
-		String starturl = null;
-		TasksType tt = null;
 		
 		//process input
 		if (CMD_DEPLOY.equals(cmd)){
-			cconf.getDefaultDsm().deployConf(siteids, true);
+			wcpm.deployConf(siteids, true);
 			response.sendRedirect(SiteConfListPage);
 		}else if (CMD_UNDEPLOY.equals(cmd)){
-			cconf.getDefaultDsm().deployConf(siteids, false);
+			wcpm.deployConf(siteids, false);
 			response.sendRedirect(SiteConfListPage);
 		}else if (CMD_CANCEL.equals(cmd)){
 			if (siteids!=null){
 				for (String siteid:siteids){
-					Set<String> tids = ConfServlet.getCrawlTestNode().getTaskNode().getTaskInstanceManager().getRunningTasks(siteid);
-					for (String tid: tids){
-						ConfServlet.getCrawlTestNode().getTaskNode().getTaskInstanceManager().removeTaskFromExecutor(tid);
-					}
+					//TODO
 				}
 			}
 			response.sendRedirect(SiteConfListPage);
@@ -208,53 +136,13 @@ public class ConfServlet extends HttpServlet {
 			}
 			response.sendRedirect(SiteConfListPage);
 			return;
-		}else if (CMD_EDIT.equals(cmd)){
-			if (siteconfid!=null){
-				//get the url
-				String xmlconf=cconf.getDefaultDsm().getFullSitConf(siteconfid).getConfxml();
-				xmlconf = xmlconf.replace(RUN_BODY_PATH, EDIT_BODY_PATH);
-				if (xmlconf!=null){
-					JAXBContext jc;
-					try {
-						jc = JAXBContext.newInstance("org.xml.taskdef");
-						Unmarshaller u = jc.createUnmarshaller();
-						Source source = new StreamSource(new StringReader(xmlconf));
-						JAXBElement<TasksType> root = u.unmarshal(source,TasksType.class);
-						tt = root.getValue();
-						starturl = TasksTypeUtil.getOrgStartUrl(tt);
-					} catch (JAXBException e) {
-						logger.error("", e);
-					}
-				}else{
-					logger.error(String.format("xmlconf is null for siteconfid:%s", siteconfid));
-				}
-			}else{
-				starturl=request.getParameter(REQ_PARAM_START_URL);
-				if (starturl==null){
-					logger.error("starturl(new) and siteconfid(edit) can't both be null.");
-				}
-			}
-		}else if (CMD_NEW.equals(cmd)){
-			starturl = request.getParameter(REQ_PARAM_START_URL);
-			//create new siteconf
-			tt = new TasksType();
-			tt.setStoreId(siteconfid);
-			tt.setRootVolume("999999");
-			BrowseCatType bct = new BrowseCatType();
-			bct.setIsLeaf(false);
-			BrowseTaskType btt = new BrowseTaskType();
-			btt.setStartUrl(starturl);
-			btt.setEnableJS(false);			
-			bct.setBaseBrowseTask(btt);
-			tt.getCatTask().add(bct);
 		}else if (CMD_BACK.equals(cmd)){
 			response.sendRedirect(SiteConfListPage);
 			return;
 		}else if (CMD_TEST.equals(cmd)){
 			//set the level
 			LoggerContext context = (LoggerContext) LogManager.getContext(false);
-			Configuration config = context.getConfiguration();
-			LoggerConfig loggerConfig = config.getLoggerConfig("org.cld");
+			LoggerConfig loggerConfig = context.getConfiguration().getLoggerConfig("org.cld");
 			Level olvl = loggerConfig.getLevel();
 			String strLogLevel = request.getParameter(REQ_PARAM_TEST_LOGLEVEL);
 			Level l = Level.getLevel(strLogLevel);
@@ -270,32 +158,28 @@ public class ConfServlet extends HttpServlet {
 			List<Task> tl = new ArrayList<Task>();
 			if (siteids!=null){
 				for (String siteid: siteids){
-					String[] testTypes = request.getParameterValues(REQ_PARAM_TEST_TYPES);
-					for (int i=0; i<testTypes.length;i++){
-						boolean init=false;
-						if (i==0){
-							init=true;
-						}
-						int testType = Integer.parseInt(testTypes[i]);
-						testCount++;
-						//TODO
-						TestTaskConf tbt = new TestTaskConf(init, null, siteid, null, startUrl);
+					String strTestType = request.getParameter(REQ_PARAM_TEST_TYPES);
+					BrowseType bt = BrowseType.valueOf(strTestType);
+					testCount++;
+					SiteConf siteconf = wcpm.getFullSitConf(siteid);//get confXml from siteid
+					if (siteconf!=null){
+						TestTaskConf tbt = new TestTaskConf(false, bt, siteconf, startUrl);
 						selectedtaskids.add(tbt.getId());
 						tl.add(tbt);
 						if (testCount>0){
 							requestUrl+="&";
 						}
 						requestUrl += REQ_PARAM_TEST_TASKIDS + "=" + tbt.getId();
+					}else{
+						logger.error(String.format("siteconf %s not found.", siteconfid));
 					}
 				}
 			}
-			TaskUtil.executeTasks(crawlTestNode.getTaskNode(), tl);
+			TaskUtil.hadoopExecuteCrawlTasks(propFile, cconf, tl, null, false);
 			logger.info("requestUrl:" + requestUrl);
 			response.sendRedirect(requestUrl);
 		}else if (CMD_LIST.equals(cmd)){
 			response.sendRedirect(TestResultPage);
-		}else if (CMD_SAVE.equals(cmd)){
-			starturl = request.getParameter(REQ_PARAM_CURRENT_URL);
 		}else if (CMD_EXPORT.equals(cmd)){
 			response.setContentType("application/zip");
 			response.setHeader("Content-Disposition", "attachment; filename=\"siteconfs.zip\"");
@@ -305,7 +189,7 @@ public class ConfServlet extends HttpServlet {
 			try{
 				output = new ZipOutputStream(new BufferedOutputStream(response.getOutputStream(), DEFAULT_BUFFER_SIZE));
 				for (String sid: siteids){
-					String xmlconf=cconf.getDefaultDsm().getFullSitConf(sid).getConfxml();
+					String xmlconf=wcpm.getFullSitConf(sid).getConfxml();
 					output.putNextEntry(new ZipEntry(sid+".xml"));
 					output.write(xmlconf.getBytes());
 					output.closeEntry();
@@ -315,136 +199,6 @@ public class ConfServlet extends HttpServlet {
 			}finally{
 				output.close();
 			}
-		}else{//reload set command to save
-			if (reloadurl!=null && !"".equals(reloadurl)){
-				cmd=CMD_SAVE;
-				starturl = reloadurl;
-			}
-		}
-		
-		if (CMD_SAVE.equals(cmd)){
-			Map<String, String[]> map = request.getParameterMap();
-			for (String key: map.keySet()){
-				String[] values = map.get(key);
-				logger.info(String.format("key:%s, value:%s", key, Arrays.asList(values).toString()));
-			}
-			String xml = HtmlToXml.toXml(map);
-			xml = xml.replace(EDIT_BODY_PATH, RUN_BODY_PATH);
-			//clean the cache for this entry
-			ttCache.remove(siteconfid);
-			//save it to db
-			cconf.getDefaultDsm().saveXmlConf(siteconfid, uid, xml);
-			logger.info("xml generated:" + xml);
-			if (xml!=null){
-				JAXBContext jc;
-				try {
-					jc = JAXBContext.newInstance("org.xml.taskdef");
-					Unmarshaller u = jc.createUnmarshaller();
-					Source source = new StreamSource(new StringReader(xml));
-					JAXBElement<TasksType> root = u.unmarshal(source,TasksType.class);
-					tt = root.getValue();
-				} catch (JAXBException e) {
-					logger.error("", e);
-				}
-			}else{
-				logger.error(String.format("xmlconf is null for siteconfid:%s", siteconfid));
-			}
-		}
-		
-		
-		
-		if (CMD_EDIT.equals(cmd)||CMD_NEW.equals(cmd)||CMD_SAVE.equals(cmd)){
-			//
-			Map<String, String> idReplaceMap = new HashMap<String, String>();
-			idReplaceMap.put(SITECONF_KEY, request.getParameter(REQ_PARAM_SITECONF_ID));
-			idReplaceMap.put(USERID_KEY, request.getParameter(REQ_PARAM_USER_ID));
-			
-			Map<String, String> headerReplaceMap = new HashMap<String, String>();
-			headerReplaceMap.put(APPROOT_KEY, appRoot);
-			headerReplaceMap.put(CURRENT_URL_KEY, starturl);//this is the org start url needed to be used to lookup for browse task
-			
-			//this evaluated start url is used to load the page
-			BrowseTaskType btt = TasksTypeUtil.getBTTByStartUrl(tt, starturl);
-			if (btt!=null){
-				starturl = TasksTypeUtil.getEvaledStartUrl(btt, starturl);
-			}
-			
-			//generate output conf edit page based on tt
-			String tasksHtml = XmlToHtml.genHtmlComplexSimpleContent(tt, "Tasks");
-			String enableJSHidden = request.getParameter(REQ_PARAM_ENABLE_JS);
-			boolean enableJS = getEnableJS(tt, starturl, Boolean.parseBoolean(enableJSHidden));
-			String[] skipUrls = new String[tt.getSkipUrl().size()];
-			tt.getSkipUrl().toArray(skipUrls);
-			WebClient wc = CrawlUtil.getWebClient(getCConf(), skipUrls, enableJS);
-			HtmlPage page = null;
-			try{
-				page = wc.getPage(starturl);
-				response.setContentType("text/html");
-				response.setCharacterEncoding("utf-8");
-				PrintWriter out = response.getWriter();
-				out.println("<html>");
-				out.println("<head>");
-				out.println("<base href=\"" + starturl + "\">");
-				ServletUtil.writeFileContent(getServletContext().getRealPath("/html/includeHeader.html"), out, headerReplaceMap);
-				//
-				HtmlElement header = page.getHead();
-				if (enableJS){
-					out.print(header.asXml());
-				}else{
-					out.print(trimScripts(header));
-				}
-				out.println("</head>");
-				//
-				ServletUtil.writeFileContent(getServletContext().getRealPath("/html/bodyprexmlform.html"), out, headerReplaceMap);
-				out.print(tasksHtml);
-				ServletUtil.writeFileContent(getServletContext().getRealPath("/html/bodypostxmlform.html"), out, idReplaceMap);
-				
-				HtmlElement body = page.getBody();
-				if (enableJS){
-					out.print(body.asXml());
-				}else{
-					out.print(trimScripts(body));
-				}
-				
-				ServletUtil.writeFileContent(getServletContext().getRealPath("/html/bodypost.html"), out, null);
-			}catch(Exception e){
-				logger.error("", e);
-			}finally{
-				wc.closeAllWindows();
-			}
-		}
-	}
-	
-	private String trimScripts(HtmlElement he){
-		List l = he.getByXPath("node()");
-		StringBuffer sb = new StringBuffer();
-		for (Object o:l){
-			if (o instanceof DomElement){
-				if (o instanceof HtmlScript){
-					//filtered
-				}else{
-					sb.append(((DomElement)o).asXml());
-				}
-			}else if (o instanceof DomText){
-				sb.append(((DomText)o).asXml());
-			}else{
-				if (o instanceof DomNode){
-					logger.info("discard domnode:" + ((DomNode)o).asXml());
-				}else{
-					logger.info("unrecognized object:" + o);
-				}
-			}
-		}
-		return sb.toString();
-	}
-	
-	private boolean getEnableJS(TasksType tt, String starturl, boolean defaultValue) {
-		BrowseTaskType btt = TasksTypeUtil.getBTTByStartUrl(tt, starturl);
-		if (btt!=null){
-			return btt.isEnableJS();
-		}else{
-			logger.info("starturl:" + starturl + " not found on the taskdefinition, so use the submitted hidden value!");
-			return defaultValue;
 		}
 	}
 }

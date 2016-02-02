@@ -9,6 +9,7 @@
         <pattern>%d %p %C{1.} [%t] %m%n</pattern>
       </PatternLayout>
     </File>
+    <!--
     <JDBC name="DB" tableName="Logs">
     	<DataSource jndiName="java:/comp/env/jdbc/reminder" />
     	<Column name="taskid" pattern="%X{taskid}" />
@@ -18,6 +19,7 @@
 		<Column name="MESSAGE" pattern="%message" />
 		<Column name="THROWABLE" pattern="%ex{full}" />
     </JDBC>
+    -->
   </Appenders>
   
   <Loggers>
@@ -25,32 +27,32 @@
       <AppenderRef ref="Console"/>
     </Root>
     
-    <Logger name="org.cld" level="WARN" additivity="false">
-      <AppenderRef ref="DB"/>
+    <Logger name="org.cld" level="INFO" additivity="false">
+      <AppenderRef ref="Console"/>
     </Logger>
     
-    <Logger name="cld.jsp" level="INFO"> <!-- for cld-webconf -->
-      <AppenderRef ref="File"/>
+    <Logger name="cld.jsp" level="INFO" additivity="false">
+      <AppenderRef ref="Console"/>
     </Logger>
     
     <Logger name="cy.common" level="WARN" additivity="false">
-      <AppenderRef ref="DB"/>
+      <AppenderRef ref="Console"/>
     </Logger>
     <Logger name="cy.crbook" level="WARN" additivity="false">
-      <AppenderRef ref="DB"/>
+      <AppenderRef ref="Console"/>
     </Logger>
     
 
-    <Logger name="org.apache" level="WARN">
+    <Logger name="org.apache" level="WARN" additivity="false">
       <AppenderRef ref="File"/>
     </Logger>
-    <Logger name="org.hibernate" level="WARN">
+    <Logger name="org.hibernate" level="WARN" additivity="false">
       <AppenderRef ref="File"/>
     </Logger>
-    <Logger name="com.gargoylesoftware" level="WARN">
+    <Logger name="com.gargoylesoftware" level="WARN" additivity="false">
       <AppenderRef ref="File"/>
     </Logger>
-    <Logger name="net.sourceforge.htmlunit" level="WARN">
+    <Logger name="net.sourceforge.htmlunit" level="WARN" additivity="false">
       <AppenderRef ref="File"/>
     </Logger>
   </Loggers>

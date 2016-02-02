@@ -5,25 +5,22 @@
         <wb-resource deploy-path="/" source-path="/src/main/webapp" tag="defaultRootSource"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/java"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/resources"/>
-        <dependent-module archiveName="cld-shopping-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-shopping/cld-shopping">
-            <dependency-type>uses</dependency-type>
-        </dependent-module>
-        <dependent-module archiveName="cld-taskmgr-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-taskmgr/cld-taskmgr">
+        <dependent-module archiveName="cld-datacrawl-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-datacrawl/cld-datacrawl">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <dependent-module archiveName="cld-datastore-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-datastore/cld-datastore">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="cld-datacrawl-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-datacrawl/cld-datacrawl">
+        <dependent-module archiveName="cld-taskmgr-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-taskmgr/cld-taskmgr">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="cld-etl-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-etl/cld-etl">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <dependent-module archiveName="cld-util-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-util/cld-util">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="cld-action-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-action/cld-action">
-            <dependency-type>uses</dependency-type>
-        </dependent-module>
-        <dependent-module archiveName="cld-stock-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-stock/cld-stock">
+        <dependent-module archiveName="cld-hadooputil-1.0.0.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/cld-hadooputil/cld-hadooputil">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <property name="context-root" value="cldwebconf"/>
