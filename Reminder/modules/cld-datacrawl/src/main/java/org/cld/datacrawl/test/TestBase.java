@@ -1,6 +1,5 @@
 package org.cld.datacrawl.test;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -8,9 +7,8 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.task.TestTaskConf;
 import org.cld.datacrawl.util.HtmlUnitUtil;
-import org.cld.taskmgr.entity.Task;
+import org.cld.taskmgr.entity.RunType;
 import org.cld.util.entity.CrawledItem;
 
 
@@ -40,61 +38,11 @@ public class TestBase {
 	
 	private static String testTaskId="testTaskId";
 	
-	public void catNavigate(String confFileName) throws Exception{
-		CrawlTestUtil.catNavigate(null, confFileName, cconf, testTaskId, pFile);
+	public List<CrawledItem> browsePrd(String confName, String prdUrl, String prdTaskName, RunType bt) throws InterruptedException{
+		return CrawlTestUtil.browsePrd(null, confName, prdUrl, prdTaskName, cconf, testTaskId, null, false, bt);
 	}
-	
-	public void catNavigate(String confFileName, String starturl, BrowseType type) throws Exception{
-		CrawlTestUtil.catNavigate(null, confFileName, starturl, type, cconf, testTaskId, pFile, 0);
-	}
-	
-	public void catNavigate(String confFileName, String starturl, BrowseType type, int pageNum) throws Exception{
-		CrawlTestUtil.catNavigate(null, confFileName, starturl, type, cconf, testTaskId, pFile, pageNum);
-	}
-	
-	public void runBDT(String confFileName, String startUrl, boolean turnPagesOnly) throws Exception{
-		CrawlTestUtil.runBDT(null, confFileName, startUrl, turnPagesOnly, cconf, testTaskId);
-	}
-	
-	public List<CrawledItem> browsePrd(String confName, String prdUrl) throws InterruptedException{
-		return CrawlTestUtil.browsePrd(null, confName, prdUrl, cconf, testTaskId, new Date(), false, null, null);
-	}
-	public List<CrawledItem> browsePrd(String confName, String prdUrl, Date runDateTime, boolean addToDB) throws InterruptedException{
-		return CrawlTestUtil.browsePrd(null, confName, prdUrl, cconf, testTaskId, runDateTime, addToDB, null, null);
-	}
-	public List<CrawledItem> browsePrd(String confName, String prdUrl, Map<String, Object> params, Date runDateTime, boolean addToDB) throws InterruptedException{
-		return CrawlTestUtil.browsePrd(null, confName, prdUrl, cconf, testTaskId, params, runDateTime, addToDB, null, null);
-	}
-	public List<CrawledItem> browsePrd(String confName, String prdUrl, String prdTaskName, Map<String, Object> params, Date runDateTime, boolean addToDB) throws InterruptedException{
-		return CrawlTestUtil.browsePrd(null, confName, prdUrl, prdTaskName, cconf, testTaskId, params, runDateTime, addToDB, null, null);
-	}
-	//sequential
-	public void regressionAll(String[] allConf) throws Exception{
-		for (String conf: allConf){
-			catNavigate(conf);
-		}
-	}
-	
-	//parallel
-	public void regressionTaskAll(String[] allConf) throws Exception {
-		List<String> selectedtaskids = new ArrayList<String>();
-		List<Task> tl = new ArrayList<Task>();
-		for (String confXml: allConf){
-			TestTaskConf tbt = new TestTaskConf(false, BrowseType.onePath, getConfId(confXml), confXml, null);
-			selectedtaskids.add(tbt.getId());
-			tl.add(tbt);
-		}
-		CrawlTestUtil.executeTasks(tl, cconf, pFile);
-	}
-	
-	public int getUnlockedAccounts(String landingUrl, String confName){
-		SiteRuntime srt = CrawlTestUtil.getSRT(null, confName, cconf, null);
-		try {
-			return HtmlUnitUtil.checkLockedCrendentials(landingUrl, srt.getSiteDef(), cconf);
-		} catch (InterruptedException e) {
-			logger.error("", e);
-			return -1;
-		}
+	public List<CrawledItem> browsePrd(String confName, String prdUrl, String prdTaskName, Map<String, Object> params, RunType bt) throws InterruptedException{
+		return CrawlTestUtil.browsePrd(null, confName, prdUrl, prdTaskName, cconf, testTaskId, params, false, bt);
 	}
 	
 	public static final String CMD_CRAWL="crawl";
@@ -106,6 +54,7 @@ public class TestBase {
 	
 	public static final String START_URL_SEP = "::";
 	
+	//TODO
 	//starturls comma separated string
 	public static void main(String[] args) throws Exception {
 		if (args.length<3){
@@ -131,15 +80,7 @@ public class TestBase {
 			}
 			for (String starturl: surls){
 				try {
-					if (TASK_TYPE_BCT.equals(taskType)){
-						tb.catNavigate(siteconfName, starturl, BrowseType.recursive);
-					}else if (TASK_TYPE_BDT.equals(taskType)){
-						tb.runBDT(siteconfName, starturl, false);
-					}else if (TASK_TYPE_BPT.equals(taskType)){
-						tb.browsePrd(siteconfName, starturl, new Date(), true);
-					}else{
-						logger.error(String.format("task type:%s not supported.", taskType));
-					}
+					
 				} catch (Exception e) {
 					logger.error("", e);
 				}
@@ -148,9 +89,6 @@ public class TestBase {
 			if (args.length<4){
 				logger.error(String.format("usage: TestBase propFile site-conf-file-name %s starturl", cmd));
 			}
-			String startUrl = args[3];
-			int i = tb.getUnlockedAccounts(startUrl, siteconfName);
-			logger.info(String.format("%d unlocked accounts for %s on url %s", i, siteconfName, startUrl));
 		}
 	}
 }

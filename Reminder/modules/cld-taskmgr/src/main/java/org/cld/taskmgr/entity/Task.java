@@ -1,9 +1,7 @@
 package org.cld.taskmgr.entity;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -19,12 +17,9 @@ import org.cld.taskmgr.TaskConf;
 import org.cld.taskmgr.TaskMgr;
 import org.cld.taskmgr.TaskResult;
 import org.cld.util.JsonUtil;
-import org.cld.util.entity.CrawledItem;
 import org.h2.util.StringUtils;
-import org.xml.mytaskdef.BrowseCatInst;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 import org.xml.mytaskdef.ParsedTasksDef;
-import org.xml.taskdef.BrowseCatType;
 import org.xml.taskdef.BrowseTaskType;
 import org.xml.taskdef.TasksType;
 
@@ -57,7 +52,7 @@ public class Task implements Comparable<Task>, Serializable{
 	private Date startDate;
 	private String paramData;
 	private String confName; //the conf file contains this task
-
+	
 	//@JsonIgnore
 	private transient Map<String, Object> paramMap = new TreeMap<String, Object>();
 
@@ -276,20 +271,8 @@ public class Task implements Comparable<Task>, Serializable{
 		return parsedTaskDef;
 	}
 	@JsonIgnore
-	public BrowseCatType getRootBrowseCatTask(){
-		return parsedTaskDef.getRootBrowseCatTask();
-	}
-	@JsonIgnore
-	public BrowseCatType getLeafBrowseCatTask(){
-		return parsedTaskDef.getLeafBrowseCatTask();
-	}
-	@JsonIgnore
 	public String[] getSkipUrls(){
 		return parsedTaskDef.getSkipUrls();
-	}
-	@JsonIgnore
-	public BrowseCatInst getBCI(String url){
-		return parsedTaskDef.getBCI(url);
 	}
 	@JsonIgnore
 	public TasksType getTasks(){

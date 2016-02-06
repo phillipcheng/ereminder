@@ -1,19 +1,15 @@
 package org.cld.sites.test;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.cld.datacrawl.CrawlUtil;
-import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.datacrawl.test.TestBase;
-import org.cld.datacrawl.test.BrowseType;
 import org.cld.sinawebo.Login;
+import org.cld.taskmgr.entity.RunType;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
@@ -34,25 +30,6 @@ public class TestWeibo extends TestBase{
 	public static final String[] bct_startUrls = new String[]{
 		"http://www.weibo.com/hwrichardyu",
 	};
-	
-	@Test
-	public void run_weibo_bct() throws Exception{
-		for (String startUrl:bct_startUrls){
-			catNavigate(SITE_CONF_FILE, startUrl, BrowseType.recursive, 1);	
-		}
-	}
-	
-	@Test
-	public void checkUnlockedAccounts1(){
-		int i = getUnlockedAccounts("http://us.weibo.com/gb", SITE_CONF_FILE);
-		logger.info(String.format("%d unlocked accounts for %s", i, SITE_CONF_FILE));
-	}
-	
-	@Test
-	public void checkUnlockedAccounts2(){
-		int i = getUnlockedAccounts("http://www.weibo.com/login.php", SITE_CONF_FILE);
-		logger.info(String.format("%d unlocked accounts for %s", i, SITE_CONF_FILE));
-	}
 	
 	
 	@Test

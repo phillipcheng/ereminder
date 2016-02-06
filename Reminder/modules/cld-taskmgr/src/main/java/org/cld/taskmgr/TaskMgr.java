@@ -26,7 +26,6 @@ import org.cld.taskmgr.entity.TaskStat;
 import org.cld.util.entity.SiteConf;
 import org.xml.mytaskdef.ParsedTasksDef;
 import org.xml.taskdef.BrowseDetailType;
-import org.xml.taskdef.TaskInvokeType;
 import org.xml.taskdef.TasksType;
 
 public class TaskMgr {
@@ -235,41 +234,6 @@ public class TaskMgr {
 	
 	private List<Task> loadTask(TasksType tasks, ClassLoader pluginClassLoader, Map<String, Object> params, Date utime, String confName){
 		List<Task> tl = new ArrayList<Task>();
-		if (tasks.getInvokeTask().size()>0){
-			for (int i=0; i<tasks.getInvokeTask().size(); i++){
-				TaskInvokeType tit = tasks.getInvokeTask().get(i);
-				String taskType = "org.cld.datacrawl.task.InvokeTaskTaskConf";
-				params.put(taskParamTaskIndex, i);
-				Task invokeTask=getTaskInstance(taskType, tasks, pluginClassLoader, params, utime, tit.getMyTaskName());
-				if (invokeTask!=null){
-					invokeTask.setStart(true);
-					tasksConf.put(invokeTask.getName(), invokeTask);
-					tl.add(invokeTask);
-					logger.info("invoke Task loaded:" + invokeTask);
-				}
-			}
-		}
-		
-		if (tasks.getCatTask().size()>0){//create the default confid_bct->confid_bdt chain
-			String siteconfid = tasks.getStoreId();
-			String taskType = "org.cld.datacrawl.task.BrowseCategoryTaskConf";
-			Task bctTask = getTaskInstance(taskType, tasks, pluginClassLoader, params, utime, siteconfid + "_bct");
-			if (bctTask!=null){
-				bctTask.setStart(true);
-				bctTask.setNextTask(siteconfid + "_bdt");
-				tasksConf.put(bctTask.getName(), bctTask);
-				tl.add(bctTask);
-				logger.info("BCT Task loaded:" + bctTask);
-			}
-			taskType = "org.cld.datacrawl.task.BrowseDetailTaskConf";
-			Task bdtTask = getTaskInstance(taskType, tasks, pluginClassLoader, params, utime, siteconfid + "_bdt");
-			if (bdtTask!=null){
-				bdtTask.setStart(false);
-				tasksConf.put(bdtTask.getName(), bdtTask);
-				tl.add(bdtTask);
-				logger.info("BDT Task loaded:" + bdtTask);
-			}
-		}
 		
 		if (tasks.getPrdTask()!=null){
 			String taskType = "org.cld.datacrawl.task.BrowseProductTaskConf";

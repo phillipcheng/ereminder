@@ -25,9 +25,8 @@ function cancelTask(taskid){
 <%@ page import="org.apache.logging.log4j.LogManager"%>
 <%@ page import="org.apache.logging.log4j.Logger"%>
 
+<% Logger logger = LogManager.getLogger("cld.jsp");%>
 <%
-	Logger logger = LogManager.getLogger("cld.jsp");
-	String userId="cr"; 
 	List<String> taskidList = new ArrayList<String>();
  	//selected tasks
 	String[] taskids = request.getParameterValues(ConfServlet.REQ_PARAM_TEST_TASKIDS);

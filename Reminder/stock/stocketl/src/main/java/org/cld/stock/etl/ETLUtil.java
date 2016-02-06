@@ -19,7 +19,6 @@ import org.apache.logging.log4j.Logger;
 
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.task.BrowseProductTaskConf;
-import org.cld.datacrawl.task.CrawlTaskConf;
 import org.cld.etl.fci.AbstractCrawlItemToCSV;
 import org.cld.stock.common.StockConfig;
 import org.cld.stock.common.StockUtil;
@@ -75,9 +74,8 @@ public class ETLUtil {
 	public static boolean isStatic(ETLConfig sc, CrawlConf cconf, String cmdName){
 		String confName = sc.getCrawlByCmd(cmdName);
 		List<Task> tl = cconf.setUpSite(confName+".xml", null);
-		if (tl.size()==1 && (tl.get(0) instanceof CrawlTaskConf)){
-			CrawlTaskConf ct = (CrawlTaskConf)tl.get(0);
-			return isStatic(ct);
+		if (tl.size()==1){
+			return isStatic(tl.get(0));
 		}else{
 			logger.error(String.format("isStatic cmd %s does not contain 1 crawlTask.", cmdName));	
 		}

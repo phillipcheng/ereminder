@@ -21,6 +21,7 @@
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
+<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:element name="Tasks" type="TasksType"/>
 	<xs:simpleType name="VarType">
@@ -231,16 +232,6 @@ false:(default as not specified), return the page itself</xs:documentation>
 			</xs:element>
 			<xs:element name="userAttribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="pageVerify" type="BinaryBoolOp" minOccurs="0" maxOccurs="unbounded"/>
-			<xs:element name="idUrlMapping" type="RegExpType" minOccurs="0">
-				<xs:annotation>
-					<xs:documentation>
-						for bdt: 1. this is uni-directional, from url to
-						id, 2. if not having this, id will be assigned
-						in user attribute
-					</xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element name="idUrlMappingFirstPage" type="RegExpType" minOccurs="0"/>
 			<xs:element name="itemName" type="ValueType" minOccurs="0"/>
 			<xs:element name="csvtransform" type="CsvTransformType" minOccurs="0">
 				<xs:annotation>
@@ -313,33 +304,6 @@ dsm set to hbase means generate hbase entry for each product browsed.</xs:docume
 			</xs:annotation>
 		</xs:attribute>
 	</xs:complexType>
-	<xs:complexType name="BrowseCatType">
-		<xs:sequence>
-			<xs:element name="baseBrowseTask" type="BrowseTaskType"/>
-			<xs:element name="subItemList" type="SubListType"/>
-			<xs:element name="totalPageNum" type="ValueType" minOccurs="0">
-				<xs:annotation>
-					<xs:documentation>means how many pages of childitems we have, each page will be split in one task. 
-if not set, but itemPerPage and totalItemNum set, this can be calculated.
-if also not set, then 1 task browsing all items will be generated.
-</xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element name="itemPerPage" type="ValueType" minOccurs="0"/>
-			<xs:element name="totalItemNum" type="ValueType" minOccurs="0"/>
-			<xs:element name="maxPageNum" type="ValueType" minOccurs="0">
-				<xs:annotation>
-					<xs:documentation>max pages allowed for this category, most web-sites has a limitation, if totalPageNum calculated is larger than this, then some items will be missing</xs:documentation>
-				</xs:annotation>
-			</xs:element>
-		</xs:sequence>
-		<xs:attribute name="isLeaf" type="xs:boolean" use="required"/>
-		<xs:attribute name="pagesPerBDT" type="xs:int" use="optional" default="0">
-			<xs:annotation>
-				<xs:documentation>split into how many pages per bdt, less or equal to 0 means into one browse-all bdt</xs:documentation>
-			</xs:annotation>
-		</xs:attribute>
-	</xs:complexType>
 	<xs:complexType name="BrowseDetailType">
 		<xs:sequence>
 			<xs:element name="baseBrowseTask" type="BrowseTaskType"/>
@@ -364,47 +328,6 @@ if also not set, then 1 task browsing all items will be generated.
 			<xs:annotation>
 				<xs:documentation>inline: browse all products in the bdt within this task
 genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in parrallel</xs:documentation>
-			</xs:annotation>
-		</xs:attribute>
-	</xs:complexType>
-	<xs:complexType name="SubListType">
-		<xs:sequence>
-			<xs:element name="itemList" type="ValueType">
-				<xs:annotation>
-					<xs:documentation>xpath to list of item, usually of type html element , but can be page or further click stream (TBD), then itemFullUrl is the abs xpath on the last page</xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element name="userAttribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
-			<xs:element name="taskInvokes" type="TaskInvokeType" minOccurs="0" maxOccurs="unbounded">
-				<xs:annotation>
-					<xs:documentation>if not using item full url, then invoking prd Task by passing this param mapping</xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element name="lastPageCondition" type="BinaryBoolOp" minOccurs="0">
-				<xs:annotation>
-					<xs:documentation>if not specified, then last page is true when:
-1. lastPage xpath does not exist.</xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element name="lastScreenCondition" type="BinaryBoolOp" minOccurs="0"/>
-			<xs:element name="name" type="ValueType" minOccurs="0"/>
-			<xs:element name="itemFullUrl" type="ValueType" minOccurs="0"/>
-			<xs:element name="itemFullUrlClicks" type="ClickStreamType" minOccurs="0">
-				<xs:annotation>
-					<xs:documentation>clicks needed before apply itemFullUrl</xs:documentation>
-				</xs:annotation>
-			</xs:element>
-		</xs:sequence>
-		<xs:attribute name="nextPage" type="xs:string" use="optional">
-			<xs:annotation>
-				<xs:documentation>turn horizontally</xs:documentation>
-			</xs:annotation>
-		</xs:attribute>
-		<xs:attribute name="isLeaf" type="xs:boolean" use="optional" default="true"/>
-		<xs:attribute name="lastItem" type="xs:string" use="optional"/>
-		<xs:attribute name="nextScreen" type="xs:string" use="optional">
-			<xs:annotation>
-				<xs:documentation>turn vertically</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 	</xs:complexType>
@@ -481,9 +404,7 @@ genbpt: generate browse-product-tasks for this bdt, and each bpt is processed in
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:element>
-			<xs:element name="CatTask" type="BrowseCatType" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="PrdTask" type="BrowseDetailType" minOccurs="0" maxOccurs="unbounded"/>
-			<xs:element name="invokeTask" type="TaskInvokeType" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 		<xs:attribute name="storeId" type="xs:string" use="required"/>
 		<xs:attribute name="rootVolume" type="xs:string" use="required"/>

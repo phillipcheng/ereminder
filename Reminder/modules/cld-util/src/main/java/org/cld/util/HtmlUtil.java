@@ -16,7 +16,7 @@ public class HtmlUtil {
 	
 	public static String genOptionList(List<String> names, List<String> values, String selectedValue){
 		StringBuffer sb = new StringBuffer();
-		logger.info(String.format("options names: %s, values:%s, selectedValue:%s", names, values, selectedValue));
+		logger.debug(String.format("options names: %s, values:%s, selectedValue:%s", names, values, selectedValue));
 		for (int i=0; i<values.size(); i++){
 			String optValue = values.get(i);
 			String optName = names.get(i);

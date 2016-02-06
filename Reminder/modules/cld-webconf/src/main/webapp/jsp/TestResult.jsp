@@ -22,7 +22,6 @@
 %>
 Task: <%=taskId%>, Status:<%=status%>
 <div>
-	<%@include file="catlist.jspf" %>
 	<%@include file="prdlist.jspf" %>
 </div>
 

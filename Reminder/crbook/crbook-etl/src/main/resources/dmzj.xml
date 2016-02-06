@@ -1,74 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<!-- 编辑使用 XMLSpy v2006 U (http://www.altova.com) 由 any (any) -->
-<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" storeId="dmzj" rootVolume="999998" productType="book">
+<Tasks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\mydoc\myprojects\ereminder\Reminder\modules\shopping\src\main\resources\Task_2_0.xsd" storeId="dmzj" rootVolume="999998" productType="default">
 	<skipUrl>googlesyndication.com</skipUrl>
 	<skipUrl>baidu.com</skipUrl>
 	<skipUrl>gtimg.cn</skipUrl>
 	<skipUrl>baidustatic.com</skipUrl>
 	<skipUrl>cnzz.net</skipUrl>
 	<skipUrl>cnzz.com</skipUrl>
-	<CatTask isLeaf="false">
-		<baseBrowseTask taskName="cat-0" isStart="true" enableJS="true">
-			<sampleUrl>http://manhua.dmzj.com/tags/category_search/0-0-0-all-0-0-0-2.shtml</sampleUrl>
+	<PrdTask>
+		<baseBrowseTask taskName="lvl1" enableJS="true">
 			<startUrl value="http://manhua.dmzj.com/tags/category_search/0-0-0-all-0-0-0-1.shtml"/>
-			<userAttribute name="referer">
-				<value fromType="string" value="http://manhua.dmzj.com/"/>
+			<userAttribute name="lvl2urls">
+				<value toType="externalList" value="//div[@class='tcaricature_block tcaricature_block2']/ul/li[1]/a"/>
 			</userAttribute>
-			<idUrlMapping>
-				<Token name="prefix" value="http://manhua." type="string"/>
-				<Token name="id" value="dmzj" type="string"/>
-				<Token name="between" value=".com/tags/category_search/0-0-0-all-0-0-0-" type="string"/>
-				<Token name="pageNum" value="[0-9]+" type="regexp"/>
-				<Token name="suffix" value=".shtml" type="string"/>
-			</idUrlMapping>
+			<pageVerify operator="!=">
+				<lhs value="//div[@class='tcaricature_block tcaricature_block2']/ul/li[1]/a"/>
+				<rhs value="null"/>
+			</pageVerify>
+			<nextTask>
+				<invokeTask toCallTaskName="lvl2">
+					<param paramName="lvl2urls"/>
+				</invokeTask>
+			</nextTask>
 		</baseBrowseTask>
-		<subItemList isLeaf="true" lastItem="./li[last()]/div[last()]/a/@title">
-			<itemList value="//div[@class=&apos;tcaricature_block tcaricature_block2&apos;]/ul"/>
-			<name value="./li[1]/a/@title"/>
-			<itemFullUrl value="./li[1]/a" toType="url"/>
-		</subItemList>
-		<totalPageNum value="//div[@class=&apos;pages&apos;]/span[@class=&apos;font14black&apos;]">
-			<strPreprocess trimPre="&#20849;" trimPost="&#39029;"/>
-		</totalPageNum>
-	</CatTask>
-	<CatTask isLeaf="true">
-		<baseBrowseTask taskName="cat-1" enableJS="false">
-			<startUrl value="http://manhua.dmzj.com/blood/"/>
-			<userAttribute name="au">
-				<value value="//div[@class=&apos;anim-main_list&apos;]/table/tbody/tr[3]/td/a"/>
-			</userAttribute>
+		<totalPage value="//div[@class='pages']/span[@class='font14black']">
+			<strPreprocess trimPre="共" trimPost="页"/>
+		</totalPage>
+		<nextPage value="//div[@class='pages']/a[text()='下一页']" optional="true"/>
+	</PrdTask>
+	<PrdTask>
+		<baseBrowseTask taskName="lvl2" enableJS="true">
+			<param name="lvl2urls" type="list"/>
+			<startUrl value="lvl2urls" fromType="expression"/>
 			<userAttribute name="utime">
-				<value value="//div[@class=&apos;anim-main_list&apos;]/table/tbody/tr[last()]/td/span" toType="date" format="yyyy-MM-dd"/>
+				<value value="//div[@class='anim-main_list']/table/tbody/tr[last()]/td/span" toType="date" format="yyyy-MM-dd"/>
 			</userAttribute>
-			<idUrlMapping>
-				<Token name="prefix" value="http://manhua.dmzj.com/" type="string"/>
-				<Token name="id" value="[_\-a-zA-Z0-9]+" type="regexp"/>
-				<Token name="suffix" value="/" type="string"/>
-			</idUrlMapping>
-			<itemName value="dmzj"/>
+			<userAttribute name="au">
+				<value value="//div[@class='anim-main_list']/table/tbody/tr[3]/td/a"/>
+			</userAttribute>
+			<userAttribute name="prdurls">
+				<value toType="list" value="//div[@class='cartoon_online_border']/ul/li/a"/>
+			</userAttribute>
+			<nextTask>
+				<invokeTask toCallTaskName="prd">
+					<param paramName="prdurls"/>
+				</invokeTask>
+			</nextTask>
 		</baseBrowseTask>
-		<subItemList nextPage="LIST_PAGE_LAST_PAGE">
-			<itemList value="//div[@class=&apos;cartoon_online_border&apos;]/ul/li/a"/>
-		</subItemList>
-		<totalPageNum value="1"/>
-	</CatTask>
+	</PrdTask>
 	<PrdTask>
 		<baseBrowseTask taskName="prd" enableJS="true">
-			<startUrl value="http://manhua.dmzj.com/blood/17613.shtml"/>
+			<param name="prdurls" type="list"/>
+			<startUrl value="prdurls" fromType="expression"/>
 			<userAttribute name="bookpageurls">
-				<value value="//div[@id='center_box']/div/div[@class='inner_img']/img" toType="externalList" toEntryType="string"/>
+				<value value="//select[@id='page_select']/option/@value" toType="list" toEntryType="string"/>
 			</userAttribute>
-			<idUrlMapping>
-				<Token name="prefix" value="http://manhua.dmzj.com/" type="string"/>
-				<Token name="id" value="[_\-/a-zA-Z0-9]+" type="regexp"/>
-				<Token name="suffix" value=".shtml" type="string"/>
-			</idUrlMapping>
-			<itemName value="//div[@class=&apos;display_middle&apos;]"/>
+			<itemName value="//div[@class='display_middle']"/>
 		</baseBrowseTask>
-		<totalPage value="//div[@class=&apos;pages2&apos;]/span[last()]" basePage="startPage">
-			<strPreprocess trimPre="&#20849;" trimPost="&#39029;"/>
-		</totalPage>
-		<nextPage value="//div[@class=&apos;pages2&apos;]/a[text()=&apos;&#19979;&#19968;&#39029;&apos;]"/>
 	</PrdTask>
 </Tasks>

@@ -15,10 +15,7 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.cld.datacrawl.mgr.CategoryAnalyze;
-import org.cld.datacrawl.mgr.ListAnalyze;
 import org.cld.datacrawl.mgr.ProductAnalyze;
-import org.cld.datacrawl.mgr.ProductListAnalyze;
 import org.cld.datastore.DBConf;
 import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.impl.HbaseDataStoreManagerImpl;
@@ -73,10 +70,7 @@ public class CrawlConf extends TaskConf {
 	private String[] pluginDir;
 	private String[] pluginJar;
 	
-	private CategoryAnalyze ca = new CategoryAnalyze();
-	private ListAnalyze la = new ListAnalyze();
 	private ProductAnalyze pa = new ProductAnalyze();
-	private ProductListAnalyze pla = new ProductListAnalyze();
 	
 	private List<String> crawlDsManagerValue = new ArrayList<String>();
 
@@ -147,8 +141,6 @@ public class CrawlConf extends TaskConf {
 		}else{
 			pluginClassLoader = new URLClassLoader(pluginurls);
 		}
-		
-		la.setup(this, pla);
 		
 		//reload ProductConf
 		Iterator<String> its = this.prdConfMap.keySet().iterator();
@@ -448,36 +440,12 @@ public class CrawlConf extends TaskConf {
 		return taskMgr;
 	}
 
-	public CategoryAnalyze getCa() {
-		return ca;
-	}
-
-	public void setCa(CategoryAnalyze ca) {
-		this.ca = ca;
-	}
-
-	public ListAnalyze getLa() {
-		return la;
-	}
-
-	public void setLa(ListAnalyze la) {
-		this.la = la;
-	}
-
 	public ProductAnalyze getPa() {
 		return pa;
 	}
 
 	public void setPa(ProductAnalyze pa) {
 		this.pa = pa;
-	}
-
-	public ProductListAnalyze getPla() {
-		return pla;
-	}
-
-	public void setPla(ProductListAnalyze pla) {
-		this.pla = pla;
 	}
 
 	public int getMaxLoop() {

@@ -4,16 +4,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cld.datacrawl.CrawlConf;
 import org.cld.datacrawl.ProductHandler;
-import org.cld.datacrawl.mgr.CrawlTaskEval;
 import org.cld.taskmgr.entity.Task;
 import org.cld.util.entity.Category;
 import org.cld.util.entity.Product;
-import org.xml.mytaskdef.BrowseCatInst;
 import org.xml.mytaskdef.ParsedBrowsePrd;
-import org.xml.taskdef.BrowseCatType;
-import org.xml.taskdef.BrowseDetailType;
-
-import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 public class DefaultHandler implements ProductHandler{

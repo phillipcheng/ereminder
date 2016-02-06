@@ -96,5 +96,7 @@ public class UploadServlet extends HttpServlet {
 	        }
 	        zis.close();
 	    }
+	    String originUrl = (String) request.getParameter("origin");
+	    response.sendRedirect(originUrl);
 	}
 }

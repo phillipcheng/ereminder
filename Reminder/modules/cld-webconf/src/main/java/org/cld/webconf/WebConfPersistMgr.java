@@ -108,7 +108,27 @@ public class WebConfPersistMgr {
 			session.close();
 		}
 	}
-	
+	public int delete(String[] ids){
+		Session session = this.hsf.openSession();
+		Transaction tx = null;
+		int ret=0;
+		try{
+			tx = session.beginTransaction();
+			String hqlUpdate = "delete from SiteConf sc where sc.id in :ids";
+			ret = session.createQuery(hqlUpdate).
+				setParameterList("ids", ids).
+				executeUpdate();
+			tx.commit();
+		}catch(Exception e){
+			if (tx!=null){
+				tx.rollback();
+			}
+			logger.error("", e);
+		}finally{
+			session.close();
+		}
+		return ret;
+	}
 	public int deployConf(String[] ids, boolean deploy){
 		Session session = this.hsf.openSession();
 		Transaction tx = null;

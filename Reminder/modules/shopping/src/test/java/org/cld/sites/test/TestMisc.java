@@ -2,14 +2,16 @@ package org.cld.sites.test;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.junit.Before;
 import org.junit.Test;
-import org.cld.datacrawl.test.BrowseType;
 import org.cld.datacrawl.test.TestBase;
+import org.cld.taskmgr.entity.RunType;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.CsvUtil;
 import org.cld.util.entity.CrawledItem;
@@ -24,7 +26,7 @@ public class TestMisc extends TestBase{
 	}
 	
 	//linkedin
-	public static final String LINKEDIN_COMPANY="linkedin-company.xml";
+	public static final String LINKEDIN_COMPANY="linkedinCompanyV2.xml";
 	public static final String[] startUrls = new String[]{
 		"https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=D,E&page_num=1",
 		"https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=F,G,H,I&page_num=1",
@@ -32,57 +34,33 @@ public class TestMisc extends TestBase{
 		"https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=C&f_NFR=NFR1&page_num=1",
 		"https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=B&page_num=1",
 	};
+
 	
 	@Test
-	public void run_linkedin_bct() throws Exception{
-		for (String startUrl:startUrls){
-			catNavigate(LINKEDIN_COMPANY, startUrl, BrowseType.recursive);	
-		}
+	public void getLinkedinCompanyInfo() throws Exception {
+		browsePrd(LINKEDIN_COMPANY, startUrls[0], "companyList", RunType.all);
 	}
-	
-	@Test
-	public void run_linkedin_bct_one() throws Exception{
-		catNavigate(LINKEDIN_COMPANY, "https://www.linkedin.com/vsearch/c?f_I=4&f_CCR=us%3A84&f_CS=B&page_num=1", BrowseType.recursive);	
-	}
-	
-	@Test
-	public void run_linkedin_bdt() throws Exception{
-		runBDT(LINKEDIN_COMPANY, "https://www.linkedin.com/vsearch/c?f_CCR=us%3A84&f_I=4&f_CS=C&page_num=1", false);
-	}
-	
-	@Test
-	public void run_linkedin_bdt_turnpage_only() throws Exception{
-		runBDT(LINKEDIN_COMPANY, "https://www.linkedin.com/vsearch/c?f_CCR=us%3A84&f_I=4&f_CS=C&page_num=1", true);
-	}
-	
-	@Test
-	public void run_jobs_transform() throws Exception {
-		String outputFile = "/output/jobs";
-		FileSystem fs = FileSystem.get(HadoopTaskLauncher.getHadoopConf(cconf));
-		fs.delete(new Path(outputFile), true);
-	}
-	
-	@Test
-	public void checkUnlockedAccounts(){
-		int i = getUnlockedAccounts("https://www.linkedin.com/uas/login", LINKEDIN_COMPANY);
-		logger.info(String.format("%d unlocked accounts for %s", i, LINKEDIN_COMPANY));
-	}
+
 	
 	//club.xml
 	public static final String CLUB="club.xml";
 	@Test
 	public void testClub() throws Exception{
-		List<CrawledItem> cil = browsePrd(CLUB, null, new Date(), false);
-		List<String> csvs = new ArrayList<String>();
-		for (CrawledItem ci:cil){
-			for (String[] csv: ci.getCsvValue()){
-				if (csv!=null && csv.length==2){
-					csvs.add(csv[1]);
-				}
-			}
-		}
-		CsvUtil.outputCsv(csvs, "club.csv");
+		List<CrawledItem> cil = browsePrd(CLUB, null, null, RunType.onePrd);
+		CsvUtil.outputCsv(cil, "club.csv");
 	}
 	
-	//
+	//uscis
+	public static final String USCIS="uscis.xml";
+	@Test
+	public void checkStatus() throws Exception{
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		String[] caseIds = new String[]{"LIN1591460823","LIN1591460824","LIN1591460825","LIN1591460826"};
+		String caseIdKey="caseId";
+		for (String caseId:caseIds){
+			paramMap.put(caseIdKey, caseId);
+			List<CrawledItem> cil = browsePrd(USCIS, null, null, paramMap, RunType.onePrd);
+			logger.info(String.format("ci for caseId %s is %s", caseId, cil.get(0)));
+		}
+	}
 }

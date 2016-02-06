@@ -3,7 +3,9 @@ package org.cld.webconf;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -17,12 +19,15 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.cld.datacrawl.CrawlConf;
-import org.cld.datacrawl.task.TestTaskConf;
-import org.cld.datacrawl.test.BrowseType;
+import org.cld.datacrawl.task.BrowseProductTaskConf;
+import org.cld.datacrawl.task.LocalCrawlables;
+import org.cld.datacrawl.test.CrawlTestUtil;
 import org.cld.util.entity.SiteConf;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
+import org.cld.taskmgr.TaskExeMgr;
 import org.cld.taskmgr.TaskUtil;
+import org.cld.taskmgr.entity.RunType;
 import org.cld.taskmgr.entity.Task;
 
 public class ConfServlet extends HttpServlet {
@@ -69,6 +74,7 @@ public class ConfServlet extends HttpServlet {
 	public static final String REQ_PARAM_CURRENT_URL ="currenturl";
 	public static final String REQ_PARAM_TEST_TYPES="testType";
 	public static final String REQ_PARAM_TEST_STARTURL="startUrl";
+	public static final String REQ_PARAM_TEST_TaskName="taskName";
 	public static final String REQ_PARAM_TEST_TASKIDS="taskids";
 	public static final String REQ_PARAM_TEST_TASKID="taskid";
 	public static final String REQ_PARAM_TEST_LOGLEVEL="logLevel";
@@ -76,7 +82,7 @@ public class ConfServlet extends HttpServlet {
 	
 	//pages
 	public static final String SiteConfListPage="/cldwebconf/jsp/ListSiteConf.jsp";
-	public static final String TestResultPage="/cldwebconf/jsp/TestResultList.jsp";
+	public static final String TestResultListPage="/cldwebconf/jsp/TestResultList.jsp";
 	public static final String CatResultPage="/cldwebconf/jsp/CatResultList.jsp";
 	public static final String PrdResultPage="/cldwebconf/jsp/PrdResultList.jsp";
 	
@@ -87,6 +93,7 @@ public class ConfServlet extends HttpServlet {
 	public static CrawlConf cconf;
 	
 	private WebConfPersistMgr wcpm;
+	private TaskExeMgr tem;
 	
 	@Override
 	public void init() {
@@ -94,6 +101,7 @@ public class ConfServlet extends HttpServlet {
 		SessionFactory factory = new Configuration().configure().buildSessionFactory();
 		wcpm = new WebConfPersistMgr(factory);
 		logger.info(String.format("init param: %s, %s", APPROOT_KEY, appRoot));
+		tem = new TaskExeMgr(5);
 	}
 	
 	@Override
@@ -121,18 +129,14 @@ public class ConfServlet extends HttpServlet {
 		}else if (CMD_CANCEL.equals(cmd)){
 			if (siteids!=null){
 				for (String siteid:siteids){
-					//TODO
+					tem.cancel(siteid);
 				}
 			}
 			response.sendRedirect(SiteConfListPage);
 			return;
 		}else if (CMD_DELETE.equals(cmd)){
 			if (siteids!=null){
-				for (String storeId:siteids){
-					logger.info("delete prd/cat/price for storeId:" + storeId);
-					cconf.getDefaultDsm().delCategoryByStoreId(storeId);
-					cconf.getDefaultDsm().delProductAndPriceByStoreId(storeId);
-				}
+				wcpm.delete(siteids);
 			}
 			response.sendRedirect(SiteConfListPage);
 			return;
@@ -140,6 +144,7 @@ public class ConfServlet extends HttpServlet {
 			response.sendRedirect(SiteConfListPage);
 			return;
 		}else if (CMD_TEST.equals(cmd)){
+			boolean useHadoop = false;
 			//set the level
 			LoggerContext context = (LoggerContext) LogManager.getContext(false);
 			LoggerConfig loggerConfig = context.getConfiguration().getLoggerConfig("org.cld");
@@ -151,35 +156,46 @@ public class ConfServlet extends HttpServlet {
 				context.updateLoggers();
 			}
 			
-			String startUrl = request.getParameter(REQ_PARAM_TEST_STARTURL);
-			String requestUrl = TestResultPage + "?";
+			String requestUrl = TestResultListPage + "?";
 			int testCount=0;
-			List<String> selectedtaskids = new ArrayList<String>();
-			List<Task> tl = new ArrayList<Task>();
+			List<BrowseProductTaskConf> tl = new ArrayList<BrowseProductTaskConf>();
 			if (siteids!=null){
 				for (String siteid: siteids){
-					String strTestType = request.getParameter(REQ_PARAM_TEST_TYPES);
-					BrowseType bt = BrowseType.valueOf(strTestType);
 					testCount++;
+					String strTestType = request.getParameter(REQ_PARAM_TEST_TYPES+"_"+siteid);
+					RunType bt = RunType.valueOf(strTestType);
 					SiteConf siteconf = wcpm.getFullSitConf(siteid);//get confXml from siteid
+					String taskName = request.getParameter(REQ_PARAM_TEST_TaskName + "_" + siteid);
+					String startUrl = request.getParameter(REQ_PARAM_TEST_STARTURL + "_" + siteid);
+					Map<String, Object> paramMap = new HashMap<String, Object>();
 					if (siteconf!=null){
-						TestTaskConf tbt = new TestTaskConf(false, bt, siteconf, startUrl);
-						selectedtaskids.add(tbt.getId());
-						tl.add(tbt);
+						BrowseProductTaskConf t = CrawlTestUtil.getPrdTask(siteconf, null, startUrl, taskName, cconf, paramMap, bt);
+						String taskId = t.getId();
+						if (!useHadoop){
+							tem.submit(taskId, siteid, new LocalCrawlables(t, taskId, false, cconf, tem));
+						}else{
+							tl.add(t);
+						}
 						if (testCount>0){
 							requestUrl+="&";
 						}
-						requestUrl += REQ_PARAM_TEST_TASKIDS + "=" + tbt.getId();
+						requestUrl += REQ_PARAM_TEST_TASKIDS + "=" + t.getId();
 					}else{
 						logger.error(String.format("siteconf %s not found.", siteconfid));
 					}
 				}
 			}
-			TaskUtil.hadoopExecuteCrawlTasks(propFile, cconf, tl, null, false);
+			if (useHadoop){
+				List<Task> taskList = new ArrayList<Task>();
+				taskList.addAll(tl);
+				TaskUtil.hadoopExecuteCrawlTasks(propFile, cconf, taskList, null, false);
+			}
+			
 			logger.info("requestUrl:" + requestUrl);
 			response.sendRedirect(requestUrl);
+			return;
 		}else if (CMD_LIST.equals(cmd)){
-			response.sendRedirect(TestResultPage);
+			response.sendRedirect(TestResultListPage);
 		}else if (CMD_EXPORT.equals(cmd)){
 			response.setContentType("application/zip");
 			response.setHeader("Content-Disposition", "attachment; filename=\"siteconfs.zip\"");

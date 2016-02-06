@@ -30,7 +30,6 @@ import org.cld.taskmgr.entity.Task;
 import org.cld.util.entity.CrawledItem;
 import org.cld.util.entity.Product;
 import org.xml.mytaskdef.ConfKey;
-import org.xml.mytaskdef.IdUrlMapping;
 import org.xml.mytaskdef.ParsedBrowsePrd;
 import org.xml.mytaskdef.TasksTypeUtil;
 import org.xml.mytaskdef.XPathType;
@@ -290,7 +289,9 @@ public class ProductAnalyzeUtil {
 						break;
 					curPage=getNextPage(wc, curPage, task, taskDef, cconf, product);
 					curPageNum ++;
-					if (bdt.getLastPageCondition()!=null){
+					if (curPage==null){
+						finalPage = true;
+					}else if (bdt.getLastPageCondition()!=null){
 						finalPage = BinaryBoolOpEval.eval(bdt.getLastPageCondition(), product.getParamMap(), curPage, cconf);
 					}
 				}else{
@@ -323,12 +324,6 @@ public class ProductAnalyzeUtil {
 
 		//clean up the next page in product
 		product.addParam(ConfKey.PRD_NEXTPAGE, null);
-		
-		//fill id back
-		if (product.getId().getId()==null && product.getParam(IdUrlMapping.ID_KEY)!=null){
-			product.getId().setId((String) product.getParam(IdUrlMapping.ID_KEY));
-			logger.debug(String.format("fill id:%s back.", product.getId().getId()));
-		}
 
 		ProductConf pconf = cconf.getPrdConfMap().get(product.getItemType());
 		if (pconf!=null){

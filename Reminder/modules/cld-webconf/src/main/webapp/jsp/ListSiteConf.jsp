@@ -5,12 +5,12 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <!-- <script src="../js/xpath.js"></script> -->
 <script>
-function submitOpenNew(){
-	document.listForm.target="_blank";
-	document.listForm.submit();
-}
 function submitNoNew(){
 	document.listForm.target="";
+	document.listForm.submit();
+}
+function submitNew(){
+	document.listForm.target="_blank";
 	document.listForm.submit();
 }
 </script>
@@ -32,7 +32,7 @@ function submitNoNew(){
 <%@ page import="org.apache.logging.log4j.core.config.LoggerConfig"%>
 <%@ page import="org.apache.logging.log4j.Level"%>
 <%@ page import="org.hibernate.cfg.Configuration"%>
-<%@ page import="org.cld.datacrawl.test.BrowseType"%>
+<%@ page import="org.cld.taskmgr.entity.RunType"%>
 
 
 <% Logger logger = LogManager.getLogger("cld.jsp");%>
@@ -48,14 +48,12 @@ function submitNoNew(){
 	    			<input type="checkbox" onclick="toggleSelectAll(this,'selectedSiteConf')"/>
 	    		Select
 	    		</th>
-	    		<th>Type</th>
 	        	<th>SiteConfId</th>
+	    		<th>BrowseType</th>
+	    		<th>startUrl</th>
+	    		<th>taskName</th>
 	            <th>UserId</th>
-	            <th>Status</th>
-	            <th>Category</th>
-	            <th>Product</th>
 	            <th>UpdateTime</th>
-	            <th>Tasks</th>
 			</tr>
 <% for (SiteConf sc: lsc){%>
 			<tr>
@@ -63,32 +61,31 @@ function submitNoNew(){
 					<input type="checkbox" name="selectedSiteConf" value="<%=sc.getId() %>" />
 				</td>
 				<td>
-				</td>
-				</td>
-				<td>
 					<a href="/cldwebconf/CrawlConf?command=edit&siteconfid=<%=sc.getId()%>&userid=<%=userId%>"><%= sc.getId()%></a>
 				</td>
+				<td>
+					<select name='testType_<%=sc.getId()%>'>
+						<% 
+							List<String> ttNames = new ArrayList<String>();
+							for (RunType bt: RunType.class.getEnumConstants()){
+								ttNames.add(bt.name());
+							}
+							RunType sbt = RunType.all;
+						%>
+						<%= HtmlUtil.genOptionList(ttNames, sbt.getId()+"")%>
+					</select>
+				</td>
+				<td>
+					<input name='startUrl_<%=sc.getId()%>' type="text" size="50">
+				</td>
+				<td>
+					<input name='taskName_<%=sc.getId()%>' type="text" size="15">
+				</td>
 	            <td><%= sc.getUserid() %></td>
-	            <td><%= sc.getStatusAsString() %></td>
-	            <td>
-	            	<a href=<%=ServletUtil.genViewCatUrl(sc.getId(), null)%>><%= ConfServlet.cconf.getDefaultDsm().getCategoryCount(sc.getId(), null) %></a>
-	            </td>
-	            <td><%= ConfServlet.cconf.getDefaultDsm().getProductCount(sc.getId(), null) %></td>
 	            <td><%= sc.getUtimeAsString() %></td>
 	        </tr>
 <% } %>
 		</table>
-		URL:<input type="text" name="startUrl" size="100"><br>
-		<select name='testType'>
-			<% 
-				List<String> ttNames = new ArrayList<String>();
-				for (BrowseType bt: BrowseType.class.getEnumConstants()){
-					ttNames.add(bt.name());
-				}
-				BrowseType sbt = BrowseType.product;
-			%>
-			<%= HtmlUtil.genOptionList(ttNames, sbt.getId()+"")%>
-		</select>
 		Level:
 		<select name="logLevel">
 			<% 
@@ -102,25 +99,18 @@ function submitNoNew(){
 			%>
 			<%= HtmlUtil.genOptionList(strLevels, l.name())%>
 		</select>
-		<input type="submit" name="command" value="test" onclick="submitOpenNew();">
+		<input type="submit" name="command" value="test" onclick="submitNew();">
 		<input type="submit" name="command" value="deploy" onclick="submitNoNew();">
 		<input type="submit" name="command" value="undeploy" onclick="submitNoNew();">
-		<input type="submit" name="command" value="listRunningTasks" onclick="submitOpenNew();">
-		<input type="submit" name="command" value="deleteCatPrd" onclick="submitNoNew();">
+		<input type="submit" name="command" value="listRunningTasks" onclick="submitNew();">
+		<input type="submit" name="command" value="delete" onclick="submitNoNew();">
 		<input type="submit" name="command" value="cancel" onclick="submitNoNew();">
 		<input type="submit" name="command" value="export" onclick="submitNoNew();">
 	</form>
 	<form action="/cldwebconf/Upload" method="post" enctype="multipart/form-data">
-	    <input type="file" name="file" />
+	    <input type="file" name="file"/>
 	    <input type="submit" />
-	</form>
-	<br>
-	New:
-	<form action="/cldwebconf/CrawlConf" method="post">
-		Site Id: <input type="text" name="siteconfid"><br>
-  		Start Url: <input type="text" name="starturl" size="100"><br>
-  		User Id: <input type="text" name="userid" value="cr"><br>
-  		<input type="submit" name="command" value="new">
+	    <input type="hidden" name="origin" value="<%=request.getRequestURL()%>"/>
 	</form>
 </body>
 </html>

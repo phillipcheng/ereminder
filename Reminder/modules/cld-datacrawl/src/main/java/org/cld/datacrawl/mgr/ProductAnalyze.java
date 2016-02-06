@@ -227,7 +227,7 @@ public class ProductAnalyze{
 	 * @throws InterruptedException
 	 */
 	public CrawledItem addProduct(WebClient wc, Object url, Product product, Product lastProduct, Task task, 
-			ParsedBrowsePrd taskDef, CrawlConf cconf, boolean retCsv, boolean addToDB, 
+			ParsedBrowsePrd taskDef, CrawlConf cconf, boolean addToDB, 
 			CsvTransformType csvtrans, Map<String, BufferedWriter> hdfsByIdOutputMap, 
 			MapContext<Object, Text, Text, Text> context, MultipleOutputs<Text, Text> mos) 
 			throws InterruptedException{
@@ -278,31 +278,28 @@ public class ProductAnalyze{
 				}
 			}
 			product.setGoNext(goNext);
-			if (!goNext){//only transform for final task
-				if (csvTransform!=null && csvTransform.getTransformClass()!=null){
-					//do the transform and write out the csv and write to hbase if dsm set to hbase
-					try {
-						postCrawlProcess(task, bdt.getBaseBrowseTask(), product);
-						//write the output
-						if (csvtrans!=null){
-							writeCsvOut(csvtrans, hdfsByIdOutputMap, context, mos, product, cconf, task);
-						}
-						logger.info(String.format("in add product, dsm is %s, add to DB is %b", bdt.getBaseBrowseTask().getDsm(), addToDB));
-						if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm()) && addToDB){
-							dsManager.addUpdateCrawledItem(product, lastProduct);
-						}
-						if (retCsv) return product;
-					} catch (Exception e) {
-						logger.error("", e);
+			if (csvTransform!=null && csvTransform.getTransformClass()!=null){
+				//do the transform and write out the csv and write to hbase if dsm set to hbase
+				try {
+					postCrawlProcess(task, bdt.getBaseBrowseTask(), product);
+					//write the output
+					if (csvtrans!=null && context!=null){
+						writeCsvOut(csvtrans, hdfsByIdOutputMap, context, mos, product, cconf, task);
 					}
-				}else{
-					if (CrawlConf.crawlDsManager_Value_Hdfs.equals(bdt.getBaseBrowseTask().getDsm())){
-						product.setCsvValue(HdfsDataStoreManagerImpl.getCSV(product, bdt.getBaseBrowseTask()));
+					logger.info(String.format("in add product, dsm is %s, add to DB is %b", bdt.getBaseBrowseTask().getDsm(), addToDB));
+					if (CrawlConf.crawlDsManager_Value_Hbase.equals(bdt.getBaseBrowseTask().getDsm()) && addToDB){
+						dsManager.addUpdateCrawledItem(product, lastProduct);
 					}
+				} catch (Exception e) {
+					logger.error("", e);
 				}
-				if (dsManager!=null && addToDB){
-					dsManager.addUpdateCrawledItem(product, lastProduct);	
+			}else{
+				if (CrawlConf.crawlDsManager_Value_Hdfs.equals(bdt.getBaseBrowseTask().getDsm())){
+					product.setCsvValue(HdfsDataStoreManagerImpl.getCSV(product, bdt.getBaseBrowseTask()));
 				}
+			}
+			if (dsManager!=null && addToDB){
+				dsManager.addUpdateCrawledItem(product, lastProduct);	
 			}
 		}else{
 			product.setCompleted(false);

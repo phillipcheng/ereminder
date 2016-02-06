@@ -28,6 +28,7 @@ import org.cld.datastore.api.DataStoreManager;
 import org.cld.datastore.impl.HdfsDataStoreManagerImpl;
 import org.cld.taskmgr.TaskUtil;
 import org.cld.taskmgr.entity.CmdStatus;
+import org.cld.taskmgr.entity.RunType;
 import org.cld.taskmgr.entity.Task;
 import org.cld.taskmgr.hadoop.HadoopTaskLauncher;
 import org.cld.util.DateTimeUtil;
@@ -141,13 +142,13 @@ public abstract class StockBase extends TestBase{
 		}else{
 			Map<String, Object> params = new HashMap<String, Object>();
 			params.put("marketId", marketId);
-			ci = browsePrd(sc.getStockIdsCmd() + ".xml", null, params, endDate, false).get(0);
+			ci = browsePrd(sc.getStockIdsCmd() + ".xml", null, null, params, RunType.onePrd).get(0);
 			logger.debug("ci we got:" + ci);
 			if (sc.getPairedMarket()!=null && sc.getPairedMarket().containsKey(marketId)){
 				String pairMarketId = sc.getPairedMarket().get(marketId);
 				//we need to add the st market as well
 				params.put("marketId", pairMarketId);
-				CrawledItem ciAdd = browsePrd(sc.getStockIdsCmd() + ".xml", null, params, endDate, false).get(0);
+				CrawledItem ciAdd = browsePrd(sc.getStockIdsCmd() + ".xml", null, null, params, RunType.onePrd).get(0);
 				List<String> ids = (List<String>) ciAdd.getParam(KEY_IDS);
 				List<String> idsOrg = (List<String>) ci.getParam(KEY_IDS);
 				idsOrg.addAll(ids);

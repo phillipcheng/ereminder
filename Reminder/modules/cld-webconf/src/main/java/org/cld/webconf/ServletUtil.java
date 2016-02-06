@@ -47,22 +47,13 @@ public class ServletUtil {
 	}
 	
 	public static String genViewTaskUrl(Set<String> taskids){
-		String requestUrl = ConfServlet.TestResultPage + "?";
+		String requestUrl = ConfServlet.TestResultListPage + "?";
 		int testCount=0;
 		for(String taskid:taskids){
 			if (testCount>0){
 				requestUrl+="&";
 			}
 			requestUrl += ConfServlet.REQ_PARAM_TEST_TASKIDS + "=" + taskid;
-		}
-		return requestUrl;
-	}
-	
-	public static String genViewCatUrl(String storeId, String pcatId){
-		String requestUrl = ConfServlet.CatResultPage + "?";
-		requestUrl += ConfServlet.REQ_PARAM_SITECONF_ID + "=" + storeId;
-		if (pcatId!=null){
-			requestUrl += "&" + ConfServlet.REQ_PARAM_PCAT_ID + "=" + pcatId;
 		}
 		return requestUrl;
 	}
