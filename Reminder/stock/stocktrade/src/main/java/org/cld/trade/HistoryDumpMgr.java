@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
-import java.time.Duration;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +17,7 @@ import org.cld.stock.common.TimedItem;
 import org.cld.stock.common.TradeTick;
 import org.cld.stock.strategy.IntervalUnit;
 import org.cld.trade.mgmt.HistoryDumpMXBean;
+import org.joda.time.Duration;
 
 public class HistoryDumpMgr implements Runnable, HistoryDumpMXBean {
 	private static Logger logger =  LogManager.getLogger(HistoryDumpMgr.class);
@@ -66,7 +66,7 @@ public class HistoryDumpMgr implements Runnable, HistoryDumpMXBean {
 		boolean overdue = false;
 		if (lastti!=null && ti!=null){
 			long elapse = lastti.getDatetime().getTime() - ti.getDatetime().getTime();
-			if (elapse>interval.getSeconds()*1000){
+			if (elapse>interval.getMillis()){
 				overdue = true;
 			}
 		}

@@ -4,7 +4,8 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import algo.util.TreeNode;
+import algo.tree.TreeNode;
+import algo.tree.TreeNodeUtil;
 
 public class TestTreeNode {
 
@@ -16,8 +17,8 @@ public class TestTreeNode {
 		
 		
 		input="1,2,#";
-		r = TreeNode.buildTreeFromLevel(input);
-		output = r.levelToString();
+		r = TreeNodeUtil.buildTreeFromLevel(input);
+		output = TreeNodeUtil.levelToString(r);
 		System.out.println(input);
 		System.out.println(output);
 		
@@ -29,8 +30,8 @@ public class TestTreeNode {
 		String output;
 		
 		String input="-2,1,#,8,#";
-		r = TreeNode.buildTreeFromLevel(input);
-		output = r.levelToString();
+		r = TreeNodeUtil.buildTreeFromLevel(input);
+		output = TreeNodeUtil.levelToString(r);
 		System.out.println(input);
 		System.out.println(output);
 		
@@ -42,8 +43,8 @@ public class TestTreeNode {
 		String output;
 		
 		String input="-2,1,-1,8,5,7,4,9,#,3,#,0,6,5,2,#,#,#,#,3,#,7,#";
-		r = TreeNode.buildTreeFromLevel(input);
-		output = r.levelToString();
+		r = TreeNodeUtil.buildTreeFromLevel(input);
+		output = TreeNodeUtil.levelToString(r);
 		System.out.println(input);
 		System.out.println(output);
 		
@@ -55,8 +56,8 @@ public class TestTreeNode {
 		TreeNode r;
 		String output;
 		
-		r = TreeNode.buildTreeFromLevel(input);
-		output = r.levelToString();
+		r = TreeNodeUtil.buildTreeFromLevel(input);
+		output = TreeNodeUtil.levelToString(r);
 		System.out.println(input);
 		System.out.println(output);
 		

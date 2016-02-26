@@ -22,20 +22,10 @@ public class UnionFind {
 	}
 	
 	public int root(int idx){
-		int inIdx=idx;
 		while (id[idx]!=idx){
 			idx=id[idx];
 		}
-		int rootIdx=idx;
-		//for even better performance
-//		idx=inIdx;
-//		while (id[idx]!=rootIdx){
-//			int preIdx = idx;
-//			idx=id[idx];
-//			id[preIdx]=rootIdx;
-//		}
-		
-		return rootIdx;
+		return idx;
 	}
 	
 	public void union(int i, int j){

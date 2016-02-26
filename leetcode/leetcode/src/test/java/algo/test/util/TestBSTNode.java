@@ -4,7 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import algo.util.BSTNode;
+import algo.tree.BSTNode;
 
 public class TestBSTNode {
 	private static Logger logger =  LogManager.getLogger(TestBSTNode.class);
