@@ -12,8 +12,8 @@ public class CountRangeSum {
 		BSTNode left;
 		BSTNode right;
 		long val;
-		int nbigger;//#>
-		int nsmaller;//#<
+		int nright;//#>
+		int nleft;//#<
 		int nequal;//#=
 		
 		public BSTNode(long val){
@@ -22,7 +22,7 @@ public class CountRangeSum {
 		}
 		
 		public String toString(){
-			return String.format("v:%d, ne:%d, nb:%d, ns:%d", val, nequal, nbigger, nsmaller);
+			return String.format("v:%d, ne:%d, nb:%d, ns:%d", val, nequal, nright, nleft);
 		}
 	}
 	
@@ -49,27 +49,23 @@ public class CountRangeSum {
 			if (root.right!=null){
 				add(root.right, val);
 			}else{
-				BSTNode right = new BSTNode(val);
-				root.right = right;
-				right.nsmaller = root.nequal + root.nsmaller;
+				root.right = new BSTNode(val);
 			}
-			root.nbigger++;
+			root.nright++;
 		}else{//val<root.val
 			if (root.left!=null){
 				add(root.left, val);
 			}else{
-				BSTNode left = new BSTNode(val);
-				root.left = left;
-				left.nbigger = root.nequal + root.nbigger;
+				root.left = new BSTNode(val);
 			}
-			root.nsmaller++;
+			root.nleft++;
 		}
 	}
 	
 	//count the number of nodes whose value is > val
 	public int countBigger(BSTNode root, long val){
 		if (root.val==val){
-			return root.nbigger;
+			return root.nright;
 		}else if (root.val<val){
 			if (root.right!=null){
 				return countBigger(root.right, val);
@@ -78,9 +74,9 @@ public class CountRangeSum {
 			}
 		}else{//root.val>val
 			if (root.left!=null){
-				return countBigger(root.left, val) + root.nbigger + root.nequal;
+				return countBigger(root.left, val) + root.nright + root.nequal;
 			}else{
-				return root.nbigger + root.nequal;
+				return root.nright + root.nequal;
 			}
 		}
 	}
@@ -88,12 +84,12 @@ public class CountRangeSum {
 	//return the number of nodes whose value is < val
 	public int countSmaller(BSTNode root, long val){
 		if (root.val==val){
-			return root.nsmaller;
+			return root.nleft;
 		}else if (root.val<val){
 			if (root.right!=null){
-				return countSmaller(root.right, val) + root.nsmaller + root.nequal;
+				return countSmaller(root.right, val) + root.nleft + root.nequal;
 			}else{
-				return root.nsmaller + root.nequal;
+				return root.nleft + root.nequal;
 			}
 		}else{//root.val>val
 			if (root.left!=null){
@@ -105,7 +101,7 @@ public class CountRangeSum {
 	}
 	
 	public int countInclusiveBetween(BSTNode root, long low, long high){
-		int total = root.nequal + root.nbigger + root.nsmaller;
+		int total = root.nequal + root.nright + root.nleft;
 		int big = countBigger(root, high);//>
 		int small = countSmaller(root, low);//<
 		return total - big - small;//[,]
@@ -122,9 +118,9 @@ public class CountRangeSum {
 		BSTNode root = new BSTNode(sum[0]);
 		for (int i=1; i<sum.length; i++){
 			crs+=countInclusiveBetween(root, sum[i]-upper, sum[i]-lower);
-			logger.info(String.format("crs:%d, %d", i, crs));
+			//logger.info(treeToString(root, 0));
+			//logger.info(String.format("crs:%d, %d", i, crs));
 			add(root, sum[i]);
-			logger.info(treeToString(root, 0));
 		}
 		return crs;
     }

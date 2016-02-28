@@ -2,12 +2,34 @@ package leet.algo.test;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
+import leet.algo.PalindromePartition;
 import leet.algo.PalindromePartitionII;
 
 public class TestPalindromePartitionII {
-
+	private static Logger logger =  LogManager.getLogger(PalindromePartition.class);
+	
+	@Test
+	public void testA(){
+		PalindromePartition p = new PalindromePartition();
+		p.fillA("aab");
+		String s = Arrays.deepToString(p.A);
+		logger.info(s);
+	}
+	
+	@Test
+	public void testB(){
+		PalindromePartition p = new PalindromePartition();
+		List<List<String>> l = p.partition("aab");
+		logger.info(l);
+	}
+	
 	@Test
 	public void test1() {
 		PalindromePartitionII pp = new PalindromePartitionII();
