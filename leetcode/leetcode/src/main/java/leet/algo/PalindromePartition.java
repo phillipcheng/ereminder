@@ -14,7 +14,7 @@ public class PalindromePartition {
 	
 	public boolean[][]A;//A(i,j) = s(i,j) is palindrome or not, i<=j
 	public Map<String, List<List<String>>> pmap = new HashMap<String, List<List<String>>>();
-	public int[][]B;//B(i,j) minCut number for s(i,j)
+	
 	
 	public void fillA(String s){
 		int n = s.length();
@@ -40,6 +40,7 @@ public class PalindromePartition {
 		}
 	}
 
+	//start idx: 0 to length-1
 	public List<List<String>> getP(String s, int start){
 		List<List<String>> ret = null;
 		if (pmap.containsKey(s.substring(start))){
@@ -51,21 +52,30 @@ public class PalindromePartition {
 				ls.add(s.charAt(start)+"");
 				ret.add(ls);
 			}else{
-				for (int i=start; i<s.length(); i++){
+				for (int i=start; i<s.length()-1; i++){
 					if (A[start][i]){
 						List<List<String>> p = getP(s, i+1);
-						if (p!=null){
+						if (p.size()>0){
 							for (List<String> l:p){
-								l.add(0, s.substring(start, i+1));
+								List<String> ls = new ArrayList<String>();
+								ls.addAll(l);
+								ls.add(0, s.substring(start, i+1));
+								ret.add(ls);
 							}
 						}
-						ret.addAll(p);
 					}
+				}
+				//treat the last one
+				if (A[start][s.length()-1]){
+					List<String> ls = new ArrayList<String>();
+					ls.add(s.substring(start));
+					ret.add(ls);
 				}
 			}
 			pmap.put(s.substring(start), ret);
+			//logger.info(String.format("palindrome to put: s:%s with start:%d is %s", s, start, ret));
 		}
-		logger.info(String.format("palindrome for s:%s with start:%d is %s", s, start, ret));
+		//logger.info(String.format("palindrome for s:%s with start:%d is %s", s, start, ret));
 		return ret;
 	}
 	
