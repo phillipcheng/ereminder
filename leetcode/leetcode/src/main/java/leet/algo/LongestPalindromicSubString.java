@@ -1,5 +1,6 @@
 package leet.algo;
 
+//Given a string S, find the longest palindromic substring in S. 
 public class LongestPalindromicSubString {
 	int maxLen = 0;
 	int startIdx = 0;
@@ -19,13 +20,6 @@ public class LongestPalindromicSubString {
 		}
 	}
 	
-	public int min(int a, int b){
-		if (a<b) 
-			return a;
-		else
-			return b;
-	}
-	
 	public String longestPalindrome(String s) {
 		if (s.length()==1){
 			return s;
@@ -36,7 +30,7 @@ public class LongestPalindromicSubString {
 			//grow the palindromic using seed chars[i]
 			int rightLen = i;
 			int leftLen = chars.length-i-1;
-			int min = min(rightLen, leftLen);
+			int min = Math.min(rightLen, leftLen);
 			int j=1;
 			int palinLen=0;
 			int palinStartIdx=0;
@@ -54,7 +48,7 @@ public class LongestPalindromicSubString {
 			if (chars[i]==chars[i+1]){
 				rightLen = i;
 				leftLen = chars.length -i -2;
-				min = min (rightLen, leftLen);
+				min = Math.min (rightLen, leftLen);
 				for (j=1; j<=min; j++){
 					if (chars[i-j]!=chars[i+1+j]){
 						break;
