@@ -1,6 +1,16 @@
 package algo.util;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class StringUtil {
+	private static Logger logger =  LogManager.getLogger(StringUtil.class);
+	
 	public static int diffCharNum(String a, String b){
 		int count =0;
 		for (int i=0; i<a.length(); i++){
@@ -38,5 +48,19 @@ public class StringUtil {
 		}
 		
 		return afterA.equals(afterB) && beforeA.equals(beforeB);
+	}
+	
+	public static String[] readStrings(String fileName){
+		try {
+			BufferedReader br = new BufferedReader(new InputStreamReader(StringUtil.class.getClassLoader()
+                    .getResourceAsStream(fileName)));
+			String input = br.readLine();
+			String[] ret = input.replace("\"", "").split(",");
+			br.close();
+			return ret;
+		}catch(Exception e){
+			logger.error("",e);
+			return null;
+		}
 	}
 }

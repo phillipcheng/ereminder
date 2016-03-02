@@ -3,8 +3,8 @@ package algo.graph;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
@@ -12,7 +12,7 @@ public class UndirectedGraph<T>{
 	T src;
 	//adjacent edges 
 	public Map<T, HashSet<T>> edges = new HashMap<T, HashSet<T>>();
-	public Map<T, Integer> distTo = new HashMap<T, Integer>();
+	public Map<T, Integer> distTo = new HashMap<T, Integer>(); //distance to each node from source
 	
 	public UndirectedGraph(){
 	}
@@ -58,37 +58,27 @@ public class UndirectedGraph<T>{
 	}
 	
 	
-	public ArrayList<ArrayList<T>> getPath(T dest){
+	public List<List<T>> getPath(T dest){
+		List<List<T>> aal = new ArrayList();
 		if (dest.equals(src)){
-			ArrayList<ArrayList<T>> aal = new ArrayList<ArrayList<T>>();
-			ArrayList<T> al = new ArrayList<T>();
+			List<T> al = new ArrayList<T>();
 			al.add(src);
 			aal.add(al);
-			return aal;
-		}
-		
-		if (distTo.containsKey(dest)){
+		}else if (distTo.containsKey(dest)){
 			int sp = distTo.get(dest);
 			HashSet<T> neighbors = edges.get(dest);
-			ArrayList<ArrayList<T>> aal = new ArrayList<ArrayList<T>>();
-			Iterator<T> its = neighbors.iterator();
-			while (its.hasNext()){
-				T neighbor = its.next();
+			for (T neighbor: neighbors){
 				if (distTo.get(neighbor)==(sp-1)){
-					ArrayList<ArrayList<T>> bbl = getPath(neighbor);
+					List<List<T>> bbl = getPath(neighbor);
 					for (int j=0; j<bbl.size(); j++){
-						ArrayList<T> al = bbl.get(j);
+						List<T> al = bbl.get(j);
 						al.add(dest);
 						aal.add(al);
 					}
 				}
 			}
-			return aal;
-		}else{
-			ArrayList<ArrayList<T>> aal = new ArrayList<ArrayList<T>>();
-			return aal;
 		}
-		
+		return aal;
 	}
 	
 	Queue<T> queue = new LinkedList<T>();
@@ -98,10 +88,8 @@ public class UndirectedGraph<T>{
 		if (edges.containsKey(start)){
 			HashSet<T> neighbors = edges.get(start);
 			if (neighbors != null){
-				Iterator<T> its = neighbors.iterator();
-				while(its.hasNext()){
-					T neighbor = its.next();
-					if (!distTo.containsKey(neighbor)){
+				for(T neighbor:neighbors){
+					if (!distTo.containsKey(neighbor)){//not visited
 						queue.add(neighbor);
 						distTo.put(neighbor, d+1);
 					}
