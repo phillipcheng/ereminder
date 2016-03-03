@@ -63,4 +63,17 @@ public class StringUtil {
 			return null;
 		}
 	}
+	
+	public static String readString(String fileName){
+		try {
+			BufferedReader br = new BufferedReader(new InputStreamReader(StringUtil.class.getClassLoader()
+                    .getResourceAsStream(fileName)));
+			String input = br.readLine();
+			br.close();
+			return input;
+		}catch(Exception e){
+			logger.error("",e);
+			return null;
+		}
+	}
 }
