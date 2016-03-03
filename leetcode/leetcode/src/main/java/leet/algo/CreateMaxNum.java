@@ -6,5 +6,6 @@ package leet.algo;
 //Return an array of the k digits. You should try to optimize your time and space complexity.
 public class CreateMaxNum {
 	public int[] maxNumber(int[] nums1, int[] nums2, int k) {
+		return null;
 	}
 }
