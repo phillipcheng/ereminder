@@ -76,4 +76,23 @@ public class StringUtil {
 			return null;
 		}
 	}
+	
+	public static int[] readInts(String fileName){
+		try {
+			BufferedReader br = new BufferedReader(new InputStreamReader(StringUtil.class.getClassLoader()
+                    .getResourceAsStream(fileName)));
+			String input = br.readLine();
+			String[] os = input.split(",");
+			int[] ints = new int[os.length];
+			for (int i=0; i<os.length; i++){
+				int vi = Integer.parseInt(os[i]);
+				ints[i]=vi;
+			}
+			br.close();
+			return ints;
+		}catch(Exception e){
+			logger.error("",e);
+			return null;
+		}
+	}
 }
