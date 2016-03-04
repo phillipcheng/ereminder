@@ -2,13 +2,16 @@ package leet.algo.test;
 
 import static org.junit.Assert.*;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import algo.util.BoardUtil;
 import leet.algo.SurroundedRegions;
 
 public class TestSurroundedRegions {
-
+	private static Logger logger =  LogManager.getLogger(TestSurroundedRegions.class);
+	
 	@Test
 	public void test1() {
 		SurroundedRegions sr = new SurroundedRegions();
@@ -19,8 +22,7 @@ public class TestSurroundedRegions {
 		board[3]=new char[]{'X','O','X','X'};
 		
 		sr.solve(board);
-		
-		BoardUtil.printBoard(board);
+		logger.info(BoardUtil.getBoardString(board));
 		
 	}
 	
@@ -35,8 +37,7 @@ public class TestSurroundedRegions {
 		board[4]=new char[]{'X','X','X','X'};
 		
 		sr.solve(board);
-		
-		BoardUtil.printBoard(board);
+		logger.info(BoardUtil.getBoardString(board));
 		
 	}
 	

@@ -2,6 +2,8 @@ package leet.algo.test;
 
 import static org.junit.Assert.*;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import algo.util.ListNode;
@@ -9,7 +11,7 @@ import algo.util.ListNodeUtil;
 import leet.algo.AddTwoNumber;
 
 public class TestAddTwoNumber {
-
+	private static Logger logger =  LogManager.getLogger(TestAddTwoNumber.class);
 	@Test
 	public void test1() {
 		ListNode l1 = ListNodeUtil.getLN("2,4,3");
