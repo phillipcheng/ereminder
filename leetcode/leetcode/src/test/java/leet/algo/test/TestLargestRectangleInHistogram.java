@@ -30,5 +30,19 @@ public class TestLargestRectangleInHistogram {
 		int max = hist.largestRectangleArea(input);
 		assertTrue(max==100000000);
 	}
+	
+	@Test
+	public void test4(){
+		LargestRectangleInHistogram hist = new LargestRectangleInHistogram();
+		int max = hist.largestRectangleArea(new int[]{0,1,2,3});
+		assertTrue(max==4);
+	}
+	
+	@Test
+	public void test5(){
+		LargestRectangleInHistogram hist = new LargestRectangleInHistogram();
+		int max = hist.largestRectangleArea(new int[]{2,1,2});
+		assertTrue(max==3);
+	}
 
 }
