@@ -20,7 +20,7 @@ public class TestBinaryTreeMaxPathSum {
 			sb.append(i);
 			sb.append(",");
 		}
-		TreeNode t1 = TreeNodeUtil.buildTreeFromLevel(sb.toString());
+		TreeNode t1 = TreeNodeUtil.fromLevelString(sb.toString());
 	
 		long start= System.nanoTime();
 		int s = btmps.maxPathSum(t1);
@@ -32,7 +32,7 @@ public class TestBinaryTreeMaxPathSum {
 	@Test
 	public void test4() {
 		BinaryTreeMaxPathSum btmps = new BinaryTreeMaxPathSum();
-		TreeNode t1 = TreeNodeUtil.buildTreeFromLevel("1,-2,3");
+		TreeNode t1 = TreeNodeUtil.fromLevelString("1,-2,3");
 	
 		long start= System.nanoTime();
 		int s = btmps.maxPathSum(t1);

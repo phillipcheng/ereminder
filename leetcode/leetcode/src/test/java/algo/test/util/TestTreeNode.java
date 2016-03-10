@@ -17,8 +17,8 @@ public class TestTreeNode {
 		
 		
 		input="1,2,#";
-		r = TreeNodeUtil.buildTreeFromLevel(input);
-		output = TreeNodeUtil.levelToString(r);
+		r = TreeNodeUtil.fromLevelString(input);
+		output = TreeNodeUtil.toLevelString(r);
 		System.out.println(input);
 		System.out.println(output);
 		
@@ -30,8 +30,8 @@ public class TestTreeNode {
 		String output;
 		
 		String input="-2,1,#,8,#";
-		r = TreeNodeUtil.buildTreeFromLevel(input);
-		output = TreeNodeUtil.levelToString(r);
+		r = TreeNodeUtil.fromLevelString(input);
+		output = TreeNodeUtil.toLevelString(r);
 		System.out.println(input);
 		System.out.println(output);
 		
@@ -43,8 +43,8 @@ public class TestTreeNode {
 		String output;
 		
 		String input="-2,1,-1,8,5,7,4,9,#,3,#,0,6,5,2,#,#,#,#,3,#,7,#";
-		r = TreeNodeUtil.buildTreeFromLevel(input);
-		output = TreeNodeUtil.levelToString(r);
+		r = TreeNodeUtil.fromLevelString(input);
+		output = TreeNodeUtil.toLevelString(r);
 		System.out.println(input);
 		System.out.println(output);
 		
@@ -56,8 +56,8 @@ public class TestTreeNode {
 		TreeNode r;
 		String output;
 		
-		r = TreeNodeUtil.buildTreeFromLevel(input);
-		output = TreeNodeUtil.levelToString(r);
+		r = TreeNodeUtil.fromLevelString(input);
+		output = TreeNodeUtil.toLevelString(r);
 		System.out.println(input);
 		System.out.println(output);
 		
