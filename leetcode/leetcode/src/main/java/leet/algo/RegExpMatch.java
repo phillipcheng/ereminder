@@ -22,7 +22,17 @@ public class RegExpMatch {
 		}
 		return sb.toString();
 	}
-	
+	public boolean isMatch(char s, char p){
+		if (p=='*'){
+			return false;
+		}else if (p=='.'){
+			return true;
+		}else if (s==p){
+			return true;
+		}else{
+			return false;
+		}
+	}
 	public boolean isMatch(String s, String p) {
 		p = mergeP(p);
 		int n=p.length();
@@ -33,27 +43,33 @@ public class RegExpMatch {
 				char cp = p.charAt(i);
 				char c = s.charAt(j);
 				if (i==0 && j==0){
-					if (cp=='*'){
-						A[i][j]=false;
-					}else if (cp=='.'){
-						A[i][j]=true;
-					}else if (cp==c){
-						A[i][j]=true;
-					}else{
-						A[i][j]=false;
-					}
+					A[i][j] = isMatch(c, cp);
 				}else if (i==0){
 					A[i][j]=false;
 				}else if (j==0){
+					if (p.charAt(i-1)=='*'){
+						if (i==1){
+							A[i][j]=false;
+						}else if (i==2){
+							A[i][j]=isMatch(c, cp);
+						}else{
+							
+						}
+					}
 					if (A[i-1][j] && cp=='*'){
 						A[i][j]=true;
 					}
 				}else{
-					if (A[i][j-1] && cp=='*' && c == s.charAt(j-1)){
-						A[i][j]=true;
+					if (A[i][j-1] && cp=='*'){
+						if (p.charAt(i-1)=='.'){
+							A[i][j]=true;
+						}else if (s.charAt(j-1)==c){
+							A[i][j]=true;
+						}
 					}else if (A[i-1][j] && cp=='*'){
 						A[i][j]=true;
-					}else if (A[i-1][j-1] && (cp=='.' || cp==c || (cp=='*' && c==s.charAt(j-1)))){
+					}else if (A[i-1][j-1] && 
+							(cp=='.' || cp==c || (cp=='*' && (p.charAt(i-1)=='.'||c==p.charAt(j-1))))){
 						A[i][j]=true;
 					}else{
 						A[i][j]=false;
