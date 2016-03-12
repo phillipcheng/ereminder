@@ -10,7 +10,7 @@ import java.util.Stack;
 
 public class RemoveInvalidParentheses {
 	
-	private boolean isValid(String s){
+	public boolean isValid(String s){
 		if (s.length()==0) return true;
 		Stack<Character> stack = new Stack<Character>();
 		for (int i=0; i<s.length(); i++){
@@ -35,43 +35,29 @@ public class RemoveInvalidParentheses {
 	public List<String> removeInvalidParentheses(String s) {
 		Set<String> ret = new HashSet<String>();
         Queue<String> q = new LinkedList<String>();
+        Set<String> visited = new HashSet<String>();
         q.add(s);
-        int maxCorrectSize = 0;
+    	boolean found = false;
         while (!q.isEmpty()){
         	String str = q.poll();
         	if (isValid(str)){
-        		if (maxCorrectSize==0){
-        			maxCorrectSize = str.length();
-        			ret.add(str);
-        		}else if (str.length()<maxCorrectSize){//less optimal found, break out
-        			break;
-        		}else{//more optimal solution found
-        			ret.add(str);
-        		}
-        	}else{
-        		if (maxCorrectSize>0){
-        			//we have found the max value, no try new children
-	        	}else{
-	        		if (str.startsWith(")")){//string start with ) must be removed
-	        			str = str.substring(1, str.length());
-	        		}
-	        		if (str.length()==1){
-	        			String nstr = "";
-	        			if (!q.contains(nstr)){
-	        				q.add(nstr);
-	        			}
-	        		}else{
-		        		//adding children
-		        		for (int i=1; i<str.length(); i++){
-		        			//remove char at i from str
-		        			String nstr = str.substring(0, i) + str.substring(i+1, str.length());
-		        			if (!q.contains(nstr)){
-		        				q.add(nstr);
-		        			}
-		        		}
-	        		}
-	        	}
+        		ret.add(str);
+        		found = true;
         	}
+        	if (found) continue;
+        	
+    		for (int i=0; i<str.length(); i++){
+    			//remove char at i from str
+    			char ch = str.charAt(i);
+    			if (ch==')' || ch=='('){//remove others do not help
+    				String nstr = str.substring(0, i) + str.substring(i+1, str.length());
+    				if (!visited.contains(nstr)){ 
+    					q.add(nstr); 
+    					visited.add(nstr);
+    				}
+    			}
+    		}
+        			
         }
         List<String> rl = new ArrayList<String>();
         rl.addAll(ret);

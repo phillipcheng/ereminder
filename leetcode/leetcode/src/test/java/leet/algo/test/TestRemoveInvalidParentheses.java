@@ -55,6 +55,53 @@ public class TestRemoveInvalidParentheses {
 		logger.info(ret);
 	}
 	
+	@Test
+	public void test6(){
+		RemoveInvalidParentheses rip = new RemoveInvalidParentheses();
+		List<String> ret = rip.removeInvalidParentheses("))(");
+		logger.info(ret);
+		assertTrue(ret.size()==1);
+		assertTrue(ret.contains(""));
+	}
+	
+	@Test
+	public void test7(){
+		RemoveInvalidParentheses rip = new RemoveInvalidParentheses();
+		List<String> ret = rip.removeInvalidParentheses("))");
+		logger.info(ret);
+		assertTrue(ret.size()==1);
+		assertTrue(ret.contains(""));
+	}
+	
+	@Test
+	public void test8(){
+		RemoveInvalidParentheses rip = new RemoveInvalidParentheses();
+		boolean is = rip.isValid("f");
+		logger.info(is);
+		
+		List<String> ret = rip.removeInvalidParentheses(")(f");
+		logger.info(ret);
+		assertTrue(ret.size()==1);
+		assertTrue(ret.contains("f"));
+	}
+	
+	@Test
+	public void test9(){
+		RemoveInvalidParentheses rip = new RemoveInvalidParentheses();
+		List<String> ret = rip.removeInvalidParentheses("))()()p");
+		logger.info(ret);
+		assertTrue(ret.size()==1);
+		assertTrue(ret.contains("()()p"));
+	}
+	
+	@Test
+	public void test10(){
+		RemoveInvalidParentheses rip = new RemoveInvalidParentheses();
+		List<String> ret = rip.removeInvalidParentheses(")())f()(");
+		logger.info(ret);
+		assertTrue(ret.size()==1);
+		assertTrue(ret.contains("()f()"));
+	}
 	
 
 }
