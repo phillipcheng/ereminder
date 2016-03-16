@@ -1,0 +1,44 @@
+class ArrayIndexComparator implements Comparator<Integer>{
+		private int[] array;
+		public ArrayIndexComparator(int[] array){
+			this.array = array;
+		}
+		@Override
+		public int compare(Integer o1, Integer o2) {
+			return array[o1]-array[o2];
+		}
+		public Integer[] createIndexArray(){
+	        Integer[] indexes = new Integer[array.length];
+	        for (int i = 0; i < array.length; i++){
+	            indexes[i] = i; // Autoboxing
+	        }
+	        return indexes;
+	    }
+		
+	}
+	
+public boolean containsNearbyAlmostDuplicate(int[] nums, int k, int t) {
+		BSTTree tree = new BSTTree();
+		ArrayIndexComparator ac = new ArrayIndexComparator(nums);
+		Integer[] inums = ac.createIndexArray();
+		Arrays.sort(inums, ac);//inums in the order of nums[i], but inums[i] is the index not the value
+		int minIdx=0;
+		for (int i=1; i<inums.length; i++){
+			int idx = inums[i];
+			if (nums[inums[i]]-nums[inums[minIdx]]<=t){
+				tree.add(idx);
+				//check
+				if (range(tree)<=k){
+					return true;
+				}
+			}else{
+				//v-v0>t, increase minIdx (remove item from the tree) until v-v0<=t
+				while (nums[inums[i]]-nums[inums[minIdx]]>t){
+					tree.delete(inums[minIdx]);
+					minIdx++;
+				}
+			}
+			
+		}
+		return false;
+    }

@@ -1,14 +1,15 @@
 package algo.tree;
 
-public class BSTNode{
+//BSTNode with left, right and self size count
+public class BSTCountNode{
 	private int value;
 	private int count;
 	private int leftSize;//number of item on the left, does not equal to number of items smaller than value
 	private int rightSize;//number of item on the right, does not equal to number of item bigger than value
-	BSTNode left;
-	BSTNode right;
+	BSTCountNode left;
+	BSTCountNode right;
 	
-	public BSTNode(int a){
+	public BSTCountNode(int a){
 		value =a;
 		count =1;
 		leftSize=0;
@@ -22,14 +23,14 @@ public class BSTNode{
 			count++;
 		}else if (value>a){
 			if (left==null){
-				left = new BSTNode(a);
+				left = new BSTCountNode(a);
 			}else{
 				left.add(a);
 			}
 			leftSize++;
 		}else{
 			if (right==null){
-				right = new BSTNode(a);
+				right = new BSTCountNode(a);
 			}else{
 				right.add(a);
 			}
@@ -37,7 +38,7 @@ public class BSTNode{
 		}
 	}
 	
-	public BSTNode getNode(int v){
+	public BSTCountNode getNode(int v){
 		if (value==v){
 			return this;
 		}else if (value>v){

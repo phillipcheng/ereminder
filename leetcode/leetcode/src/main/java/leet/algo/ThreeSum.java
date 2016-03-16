@@ -50,7 +50,7 @@ public class ThreeSum {
 		return aal;
 	}
 	
-	public ArrayList<ArrayList<Integer>> threeSumONSquareLgN(int[] num){
+	public ArrayList<ArrayList<Integer>> threeSumONSquareLgN(int[] num){//O(n^2 * lgN)
 		Arrays.sort(num);
 		
 		ArrayList<ArrayList<Integer>> aal = new ArrayList<ArrayList<Integer>>();
