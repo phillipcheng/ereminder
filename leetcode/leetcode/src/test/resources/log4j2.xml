@@ -19,5 +19,14 @@
     <Logger name="stanford" level="DEBUG" additivity="false">
       <AppenderRef ref="Console"/>
     </Logger>
+    <Logger name="careercup" level="DEBUG" additivity="false">
+      <AppenderRef ref="Console"/>
+    </Logger>
+    <Logger name="princeton" level="DEBUG" additivity="false">
+      <AppenderRef ref="Console"/>
+    </Logger>
+    <Logger name="geeksforgeeks" level="DEBUG" additivity="false">
+      <AppenderRef ref="Console"/>
+    </Logger>
   </Loggers>
 </Configuration>

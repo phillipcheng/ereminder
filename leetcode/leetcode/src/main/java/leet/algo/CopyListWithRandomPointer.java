@@ -5,7 +5,15 @@ import java.util.Map;
 
 public class CopyListWithRandomPointer {
 	
-	public RandomListNode copyRandomList(RandomListNode head) {
+	/*
+	 * Using hashtable is wrong check following example
+	//b->d2->d1
+	//|------^
+
+	//b->d2->d1
+	//|--^
+	 * */
+	public RandomListNode copyRandomListUsingHashTable(RandomListNode head) {
 		if (head==null) return null;
         Map<Integer, RandomListNode> map =  new HashMap<Integer, RandomListNode>();
         RandomListNode retHead = new RandomListNode(head.label);
@@ -32,5 +40,41 @@ public class CopyListWithRandomPointer {
         }
         return retHead;
     }
-
+	
+	public RandomListNode copyRandomList(RandomListNode head) {
+		if (head==null) return head;
+		RandomListNode cur = head;
+		//insert a new copy of each node directly after the node
+		while (cur!=null){
+			RandomListNode newCur = new RandomListNode(cur.label);
+			newCur.next = cur.next;
+			cur.next = newCur;
+			cur = newCur.next;
+		}
+		//set the random for each new node
+		cur = head;
+		while (cur!=null){
+			RandomListNode newCur = cur.next;
+			if (cur.random!=null){
+			    newCur.random = cur.random.next;
+			}
+			cur = newCur.next;
+		}
+		//restore the random for each old node, and the next fro each new node
+		cur = head;
+		RandomListNode ret = cur.next;
+		while (cur!=null){//cur.next!=null
+			RandomListNode newCur = cur.next;
+			cur.next=cur.next.next;
+			if (cur.next!=null){
+				newCur.next = cur.next.next;
+			}else{
+				newCur.next = null;
+			}
+			cur = cur.next;
+		}
+		return ret;
+	}
+	
+	
 }
