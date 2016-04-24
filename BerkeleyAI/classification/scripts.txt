@@ -1,0 +1,76 @@
+crossV=0
+    crossH=0
+    pixNU=0
+    pixND=0
+    pixE=0
+    for y in range(DIGIT_DATUM_HEIGHT):#row
+        if datum.getPixel(14, y) > 0:
+            crossV +=1
+    for x in range(DIGIT_DATUM_WIDTH):#row
+        if datum.getPixel(x, 14) > 0:
+            crossH +=1
+    for x in range(DIGIT_DATUM_WIDTH):
+        for y in range(0, DIGIT_DATUM_HEIGHT/2):
+            if datum.getPixel(x, y) > 0:
+                pixNU +=1
+            if datum.getPixel(x,y)==1:
+                pixE +=1
+        for y in range(DIGIT_DATUM_HEIGHT/2, DIGIT_DATUM_HEIGHT):
+            if datum.getPixel(x, y) > 0:
+                pixND +=1
+            if datum.getPixel(x,y)==1:
+                pixE +=1
+    pixUPerc = pixNU * 20 / 392
+    pixDPerc = pixND * 20 / 392
+    pixEN = pixE / 10
+    '''
+    nend=0
+    for x in range(DIGIT_DATUM_WIDTH):
+        for y in range(DIGIT_DATUM_HEIGHT):
+            if datum.getPixel(x, y) > 0:
+                n = getNN(datum, x, y)
+                if (n<=3):
+                    nend +=1
+    '''
+    print("v:%s, %s, %d, %d, %d" % (crossV, crossH, pixUPerc, pixDPerc, pixEN))
+    
+    for i in range(28):
+        if (i!=crossV):
+            features['crossV' + '_' + str(i)] =0
+        else:
+            features['crossV' + '_' + str(i)] =1
+    for i in range(28):
+        if (i!=crossH):
+            features['crossH' + '_' + str(i)] =0
+        else:
+            features['crossH' + '_' + str(i)] =1
+    for i in range(10):
+        if (i!=pixUPerc):
+            features['pixU' + '_' + str(i)] =0
+        else:
+            features['pixU' + '_' + str(i)] =1
+    for i in range(10):
+        if (i!=pixDPerc):
+            features['pixD' + '_' + str(i)] =0
+        else:
+            features['pixD' + '_' + str(i)] =1
+    for i in range(10):
+        if (i!=pixEN):
+            features['pixEN' + '_' + str(i)] =0
+        else:
+            features['pixEN' + '_' + str(i)] =1
+    '''
+    for i in range(4):
+        if (i!=nend):
+            features['nend' + '_' + str(i)] =0
+        else:
+            features['nend' + '_' + str(i)] =1
+    '''
+    
+	def getNN(datum, x, y):
+    n = 0
+    for dx in (-1,0,1):
+        for dy in (-1, 0, 1):
+            if x+dx>=0 and x+dx<DIGIT_DATUM_WIDTH and y+dy>=0 and y+dy<DIGIT_DATUM_HEIGHT and datum.getPixel(x+dx, y+dy) > 0:
+                n +=1
+    return n

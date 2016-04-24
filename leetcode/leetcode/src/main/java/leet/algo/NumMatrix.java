@@ -1,6 +1,5 @@
 package leet.algo;
 
-import leet.algo.test.TestAddTwoNumber;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,33 +8,45 @@ import algo.util.BoardUtil;
 
 public class NumMatrix {
 	private static Logger logger =  LogManager.getLogger(NumMatrix.class);
-	int[][] sum;
+	
+	int[][] sum; //sum[i][j] is the sum of [0,0] to [i,j]
 	int n;
 	int m;
 	
 	public NumMatrix(int[][] matrix) {
         n = matrix.length;
-        m = matrix[0].length;
-        sum = new int[n+1][m+1];
-        for (int r=n; r>=0; r--){
-        	for (int c=0; c<=m; c++){
-        		if (c==0 || r==n) 
-        			sum[r][c]=0;
-        		else{
-        			sum[r][c]=matrix[r][c-1]+sum[r][c-1]+sum[r+1][c]-sum[r+1][c-1];
-        			logger.info(BoardUtil.getBoardString(sum));
-        		}
-        	}
+        if (n>0){
+	        m = matrix[0].length;
+	        sum = new int[n][m];
+	        for (int i=0; i<n; i++){
+	        	for (int j=0; j<m; j++){
+	        		if (i==0 && j==0){
+	        			sum [i][j]=matrix[0][0];
+	        		}else if (i==0){
+	        			sum[i][j] = sum[i][j-1] + matrix[i][j];
+	        		}else if (j==0){
+	        			sum[i][j] = sum[i-1][j] + matrix[i][j];
+	        		}else{
+	        			sum[i][j] = sum[i-1][j] + sum[i][j-1] + matrix[i][j] - sum[i-1][j-1];
+	        		}
+	        	}
+	        }
         }
+        //logger.info(BoardUtil.getBoardString(sum));
     }
 
     public int sumRegion(int row1, int col1, int row2, int col2) {//row1 ≤ row2 and col1 ≤ col2.
-    	int x1 = m-col1;
-    	int y1 = row1;
-    	int x2 = m-col2;
-    	int y2 = row2;
-    	logger.info(String.format("%d,%d->%d  %d,%d->%d", x1,y1,sum[x1][y1], x2,y2, sum[x2][y2]));
-        return sum[x2][y2]+sum[x1+1][y1-1]-sum[x1+1][y2]-sum[x2][y1-1];
+    	if (n==0) return 0;
+    	if (row1==0 && col1==0){
+    		return sum[row2][col2];
+    	}else if (row1==0){
+    		return sum[row2][col2] - sum[row2][col1-1];
+    	}else if (col1==0){
+    		return sum[row2][col2] - sum[row1-1][col2];
+    	}else{
+    		return sum[row2][col2] - sum[row2][col1-1] - sum[row1-1][col2] + sum[row1-1][col1-1];
+    	}
+    	
     }
 
 }

@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Stack;
 
 public class BasicCalculator {
+	//The expression string may contain open ( and closing parentheses ), 
+	//the plus + or minus sign -, non-negative integers and empty spaces .
 	
 	class Literal{
 		int type; //0 for operator, 1 for parenthesis, 2 for integer
