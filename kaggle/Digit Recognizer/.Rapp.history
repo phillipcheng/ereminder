@@ -1,0 +1,50 @@
+getwd(0)
+getwd()
+R.version.string
+install.packages("swirl")
+library(swirl)
+swirl()
+quit()
+5+7
+x<-5+7
+x
+y<--3
+y<-3
+quit
+quit()
+# Creates a simple random forest benchmark#
+#
+library(randomForest)
+library(readr)
+install.package(readr)
+install.packages(readr)
+install.packages("readr")
+exit
+exit()
+quit
+quit()
+install.packages("readr")
+# Creates a simple random forest benchmark#
+#
+library(randomForest)#
+library(readr)#
+#
+set.seed(0)
+pwd
+getwd
+getwd()
+cd git
+setwd /User/chengyi
+setwd /Users/chengyi
+setwd "/Users/chengyi/git"
+setwd("/Users/chengyi/git")
+setwd("/Users/chengyi/git/ereminder")
+setwd("/Users/chengyi/git/ereminder/kaggle")
+setwd("/Users/chengyi/git/ereminder/kaggle/Digit Recognizer")
+ls
+train <- read_csv('train.csv')
+nrow(train)
+rows<-(1:32000)
+lables<-as.factor(train[rows,1])
+train<-train[rows,-1]
+testrows<-(32001:42000)
