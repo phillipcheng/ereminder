@@ -16,7 +16,7 @@ end
 
 % SET HYPERPARAMETERS HERE.
 batchsize = 100;  % Mini-batch size.
-learning_rate = 0.1;  % Learning rate; default = 0.1.
+learning_rate = 0.001;  % Learning rate; default = 0.1.
 momentum = 0.9;  % Momentum; default = 0.9.
 numhid1 = 50;  % Dimensionality of embedding space; default = 50.
 numhid2 = 200;  % Number of units in hidden layer; default = 200.
@@ -105,7 +105,8 @@ for epoch = 1:epochs
     % (b) embed_to_hid_weights_gradient = embedding_layer_state * back_propagated_deriv_1';
     % (c) embed_to_hid_weights_gradient = back_propagated_deriv_1;
     % (d) embed_to_hid_weights_gradient = embedding_layer_state;
-
+    embed_to_hid_weights_gradient = embedding_layer_state * back_propagated_deriv_1';
+    
     % FILL IN CODE. Replace the line below by one of the options.
     hid_bias_gradient = zeros(numhid2, 1);
     % Options
@@ -113,7 +114,8 @@ for epoch = 1:epochs
     % (b) hid_bias_gradient = sum(back_propagated_deriv_1, 1);
     % (c) hid_bias_gradient = back_propagated_deriv_1;
     % (d) hid_bias_gradient = back_propagated_deriv_1';
-
+    hid_bias_gradient = sum(back_propagated_deriv_1, 2);
+    
     % FILL IN CODE. Replace the line below by one of the options.
     back_propagated_deriv_2 = zeros(numhid2, batchsize);
     % Options
@@ -121,7 +123,8 @@ for epoch = 1:epochs
     % (b) back_propagated_deriv_2 = back_propagated_deriv_1 * embed_to_hid_weights;
     % (c) back_propagated_deriv_2 = back_propagated_deriv_1' * embed_to_hid_weights;
     % (d) back_propagated_deriv_2 = back_propagated_deriv_1 * embed_to_hid_weights';
-
+    back_propagated_deriv_2 = embed_to_hid_weights * back_propagated_deriv_1;
+    
     word_embedding_weights_gradient(:) = 0;
     %% EMBEDDING LAYER.
     for w = 1:numwords
