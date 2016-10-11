@@ -9,7 +9,6 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.cld.util.CompareUtil;
 import org.cld.util.PatternResult;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -408,7 +407,7 @@ public class Book implements Reading{
 		if (!(o instanceof Book))
 			return false;
 		Book b = (Book)o;
-		return !CompareUtil.ObjectDiffers(this.getId(), b.getId());
+		return Objects.equals(this.getId(), b.getId());
 	}
 
 	public String getFullPath() {

@@ -32,4 +32,10 @@ public class NestedIterator implements Iterator<Integer> {
     public boolean hasNext() {
         return ilit.hasNext();
     }
+
+	@Override
+	public void remove() {
+		// TODO Auto-generated method stub
+		
+	}
 }

@@ -1,6 +1,5 @@
 package cy.common.entity;
 
-import org.cld.util.CompareUtil;
 import org.json.*;
 
 import java.util.*;
@@ -282,7 +281,7 @@ public class Page implements IJSON{
 		Page p = (Page)o;
 		String bg1 = getBackgroundUri();
 		String bg2 = p.getBackgroundUri();
-		return !CompareUtil.ObjectDiffers(bg1, bg2);
+		return Objects.equals(bg1, bg2);
 	}
 
 }

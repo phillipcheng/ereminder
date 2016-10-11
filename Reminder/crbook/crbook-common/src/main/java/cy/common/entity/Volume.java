@@ -7,8 +7,6 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-
-import org.cld.util.CompareUtil;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -281,7 +279,7 @@ public class Volume implements Reading {
 			return false;
 		}
 		Volume v = (Volume)o;
-		return !CompareUtil.ObjectDiffers(this.getId(), v.getId());
+		return Objects.equals(this.getId(), v.getId());
 	}
 	@Override
 	public String getName(){
