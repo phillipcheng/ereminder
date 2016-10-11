@@ -1,5 +1,5 @@
 % This function trains a neural network language model.
-function [model] = train(epochs)
+function [model] = train(epochs, learning_rate=0.1, momentum=0.9, numhid1=50, numhid2=200)
 % Inputs:
 %   epochs: Number of epochs to run.
 % Output:
@@ -16,13 +16,13 @@ end
 
 % SET HYPERPARAMETERS HERE.
 batchsize = 100;  % Mini-batch size.
-learning_rate = 0.001;  % Learning rate; default = 0.1.
-momentum = 0.9;  % Momentum; default = 0.9.
-numhid1 = 50;  % Dimensionality of embedding space; default = 50.
-numhid2 = 200;  % Number of units in hidden layer; default = 200.
+#learning_rate = 0.001;  % Learning rate; default = 0.1.
+#momentum = 0.9;  % Momentum; default = 0.9.
+#numhid1 = 50;  % Dimensionality of embedding space; default = 50.
+#numhid2 = 200;  % Number of units in hidden layer; default = 200.
 init_wt = 0.01;  % Standard deviation of the normal distribution
                  % which is sampled to get the initial weights; default = 0.01
-
+fprintf('\rLearning_rate %.3f, numhid1:%d, numhid2:%d, momentum:%.2f \n', learning_rate, numhid1, numhid2, momentum);
 % VARIABLES FOR TRACKING TRAINING PROGRESS.
 show_training_CE_after = 100;
 show_validation_CE_after = 1000;
@@ -80,6 +80,8 @@ for epoch = 1:epochs
     count =  count + 1;
     this_chunk_CE = this_chunk_CE + (CE - this_chunk_CE) / count;
     trainset_CE = trainset_CE + (CE - trainset_CE) / m;
+    
+    #{
     fprintf(1, '\rBatch %d Train CE %.3f', m, this_chunk_CE);
     if mod(m, show_training_CE_after) == 0
       fprintf(1, '\n');
@@ -89,7 +91,8 @@ for epoch = 1:epochs
     if OctaveMode
       fflush(1);
     end
-
+    #}
+    
     % BACK PROPAGATE.
     %% OUTPUT LAYER.
     hid_to_output_weights_gradient =  hidden_layer_state * error_deriv';

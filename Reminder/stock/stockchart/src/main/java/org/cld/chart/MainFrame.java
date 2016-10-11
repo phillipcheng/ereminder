@@ -304,7 +304,7 @@ public class MainFrame extends JFrame {
 	public static void main(String arg[]){
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				MainFrame frame = new MainFrame();
+				final MainFrame frame = new MainFrame();
 				frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 				frame.setVisible(true);
 				frame.addWindowListener(new WindowAdapter() {

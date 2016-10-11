@@ -2,7 +2,13 @@ package algo.util;
 
 import java.util.StringTokenizer;
 
+import leet.algo.test.TestAdditiveNumber;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class ListNodeUtil {
+	private static Logger logger =  LogManager.getLogger(ListNodeUtil.class);
 	//2,4,3
 	public static ListNode getLN(String s){
 		StringTokenizer st = new StringTokenizer(s, "[ ],", false);
@@ -27,10 +33,12 @@ public class ListNodeUtil {
 	
 	public static String toString(ListNode ln){
 		StringBuffer sb = new StringBuffer();
+		int i=0;
 		while (ln!=null){
 			sb.append(ln.val);
 			sb.append(",");
 			ln = ln.next;
+			i++;
 		}
 		return sb.toString();
 	}
