@@ -1,6 +1,7 @@
 package org.cld.util;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,7 +46,7 @@ public class PatternUtil {
 			}
 		}else if (!inPattern.verified){
 			String guessImageUrl = PatternResult.guessUrl(inPattern.pr, pageList.size()-inPattern.count0);
-			if (!CompareUtil.ObjectDiffers(guessImageUrl, currentImageUrl)){
+			if (!Objects.equals(guessImageUrl, currentImageUrl)){
 				inPattern.verified=true;
 				logger.debug("verified successfully." + inPattern.pr);
 				//update pr and pagelist and break

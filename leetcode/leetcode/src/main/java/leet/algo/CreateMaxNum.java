@@ -30,9 +30,11 @@ public class CreateMaxNum {
 		return idx;
 	}
 	
+	//TODO
 	private int[] maxNumber(int[] nums, int s, int k){
 		if (k==0) return new int[]{};
 		int idx = max(nums, s);
+		return null;
 		
 	}
 	private int[] maxNumber(int[] nums1, int as, int[] nums2, int bs, int k){
