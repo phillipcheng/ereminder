@@ -26,5 +26,4 @@ public class SlidingWindowMaximum {
 		}
         return ret;
     }
-
 }

@@ -5,7 +5,10 @@ import leet.algo.test.TestAdditiveNumber;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-
+/**
+ * 
+ * recursion on x1, x2, x3-start-index
+ */
 public class AdditiveNumber {
 	private static Logger logger =  LogManager.getLogger(AdditiveNumber.class);
 	private boolean testAdditive(String num, int i, int j){

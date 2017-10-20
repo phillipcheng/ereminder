@@ -34,5 +34,13 @@ public class TestReverseWordsInAString {
 	}
 	
 	
+	@Test
+	public void test4(){
+		ReverseWordsInAString rw = new ReverseWordsInAString();
+		String ret = rw.reverseWords(" 1");
+		logger.info(String.format("|%s|", ret));
+	}
+	
+	
 
 }
