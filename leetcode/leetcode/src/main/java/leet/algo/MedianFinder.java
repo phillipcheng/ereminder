@@ -3,8 +3,6 @@ package leet.algo;
 import java.util.Comparator;
 import java.util.PriorityQueue;
 
-import leet.algo.test.TestInsertIntervals;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

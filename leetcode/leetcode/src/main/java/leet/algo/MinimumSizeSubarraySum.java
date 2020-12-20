@@ -1,12 +1,11 @@
 package leet.algo;
 
-import leet.algo.test.TestAdditiveNumber;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class MinimumSizeSubarraySum {
-	private static Logger logger =  LogManager.getLogger(TestAdditiveNumber.class);
+	private static Logger logger =  LogManager.getLogger(MinimumSizeSubarraySum.class);
 	//O(n^2)
 	public int minSubArrayLenO2(int s, int[] nums) {
 		if (nums.length==0) return 0;

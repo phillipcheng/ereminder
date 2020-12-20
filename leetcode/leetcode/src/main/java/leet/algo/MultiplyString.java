@@ -1,15 +1,12 @@
 package leet.algo;
 
-import java.util.Arrays;
-
-import leet.algo.test.TestAddTwoNumber;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class MultiplyString {
 
-	private static Logger logger =  LogManager.getLogger(TestAddTwoNumber.class);
+	private static Logger logger =  LogManager.getLogger(MultiplyString.class);
 	
 	private void addNum(int[] ret, int idx, int v){
 		int s = ret[idx]+v;

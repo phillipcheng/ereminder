@@ -3,13 +3,12 @@ package leet.algo;
 import java.util.ArrayList;
 import java.util.List;
 
-import leet.algo.test.TestPow;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class Pow {
-	private static Logger logger =  LogManager.getLogger(TestPow.class);
+	private static Logger logger =  LogManager.getLogger(Pow.class);
 	
 	public double myPow(double x, int n) {
 		List<Long> twos = new ArrayList<Long>();

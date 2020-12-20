@@ -5,11 +5,10 @@ import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import princeton.algo1.interview.test.TestCountInversion;
 
 public class CountingInversion {
 	
-	private static Logger logger =  LogManager.getLogger(TestCountInversion.class);
+	private static Logger logger =  LogManager.getLogger(CountingInversion.class);
 	
 	private int[] input;
 	private int[] helper;

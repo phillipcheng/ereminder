@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import leet.algo.test.TestAdditiveNumber;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,7 +12,7 @@ import org.apache.logging.log4j.Logger;
 import algo.util.BoardUtil;
 
 public class MinimumHeightTrees {
-	private static Logger logger =  LogManager.getLogger(TestAdditiveNumber.class);
+	private static Logger logger =  LogManager.getLogger(MinimumHeightTrees.class);
 	private int max(int[] input){
 		int max = Integer.MIN_VALUE;
 		for (int i=0; i<input.length; i++){

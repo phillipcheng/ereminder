@@ -12,9 +12,6 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import leet.algo.test.TestWordSearch;
-
-
 public class WordLadder {
 	private static Logger logger =  LogManager.getLogger(WordLadder.class);
 	

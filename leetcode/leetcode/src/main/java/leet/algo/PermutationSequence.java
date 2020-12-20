@@ -1,12 +1,11 @@
 package leet.algo;
 
-import leet.algo.test.TestAddTwoNumber;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class PermutationSequence {
-	private static Logger logger =  LogManager.getLogger(TestAddTwoNumber.class);
+	private static Logger logger =  LogManager.getLogger(PermutationSequence.class);
 	//Given n will be between 1 and 9 inclusive.
 	public static int factorial(int n) {
         int fact = 1; // this  will be the result

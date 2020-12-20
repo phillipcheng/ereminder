@@ -1,6 +1,5 @@
 package leet.algo;
 
-import leet.algo.test.TestAddTwoNumber;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -8,7 +7,7 @@ import org.apache.logging.log4j.Logger;
 import algo.util.ListNode;
 
 public class ReorderList {
-	private static Logger logger =  LogManager.getLogger(TestAddTwoNumber.class);
+	private static Logger logger =  LogManager.getLogger(ReorderList.class);
 	public void reorderList(ListNode head) {
 		if (head==null) return;
 		ListNode mid = head; // n/2

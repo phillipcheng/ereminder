@@ -4,10 +4,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import algo.util.ListNode;
-import leet.algo.test.TestAdditiveNumber;
 
 public class PartitionList {
-	private static Logger logger =  LogManager.getLogger(TestAdditiveNumber.class);
+	private static Logger logger =  LogManager.getLogger(PartitionList.class);
 	public ListNode partition(ListNode head, int x) {
 		//find the 1st one >=x
 		//for all the node after y but bigger than x will be moved right before y

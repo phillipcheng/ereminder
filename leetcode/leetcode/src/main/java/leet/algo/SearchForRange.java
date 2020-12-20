@@ -1,14 +1,11 @@
 package leet.algo;
 
-import java.util.Arrays;
-
-import leet.algo.test.TestAdditiveNumber;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class SearchForRange {
-	private static Logger logger =  LogManager.getLogger(TestAdditiveNumber.class);
+	private static Logger logger =  LogManager.getLogger(SearchForRange.class);
 	//return i, nums[i-1]<target, nums[i]==target [from, to]
 	public int searchLess(int[] nums, int target, int from, int to, boolean less){
 		//logger.info(String.format("from:%d, to:%d", from, to));

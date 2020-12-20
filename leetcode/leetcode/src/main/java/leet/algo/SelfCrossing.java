@@ -1,6 +1,5 @@
 package leet.algo;
 
-import leet.algo.test.TestAddTwoNumber;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -2,7 +2,6 @@ package leet.algo;
 
 import java.util.Arrays;
 
-import leet.algo.test.TestInsertIntervals;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

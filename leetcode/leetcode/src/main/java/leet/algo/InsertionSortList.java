@@ -4,10 +4,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import algo.util.ListNode;
-import leet.algo.test.TestAdditiveNumber;
 
 public class InsertionSortList {
-	private static Logger logger =  LogManager.getLogger(TestAdditiveNumber.class);
+	private static Logger logger =  LogManager.getLogger(InsertionSortList.class);
 	public ListNode insertionSortList(ListNode head) {
 		if (head==null) return null;
 		ListNode ret = new ListNode(0);

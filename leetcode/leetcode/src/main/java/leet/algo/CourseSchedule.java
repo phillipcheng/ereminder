@@ -2,13 +2,12 @@ package leet.algo;
 
 import java.util.*;
 
-import leet.algo.test.TestCourseSchedule;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class CourseSchedule {
-	private static Logger logger =  LogManager.getLogger(TestCourseSchedule.class);
+	private static Logger logger =  LogManager.getLogger(CourseSchedule.class);
 	
 	class DirectedGraph{//do parallel edges
 		int n; //number of nodes

@@ -6,13 +6,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import leet.algo.test.TestAdditiveNumber;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class CombinationSumII {
-	private static Logger logger =  LogManager.getLogger(TestAdditiveNumber.class);
+	private static Logger logger =  LogManager.getLogger(CombinationSumII.class);
 	
 	//return the sum list for elements from startIdx
 	public Set<List<Integer>> combSum(int[] list, int startIdx, int target){

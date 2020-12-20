@@ -1,14 +1,12 @@
 package leet.algo;
 
-import leet.algo.test.TestAdditiveNumber;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import algo.tree.TreeNode;
 
 public class ConstructBinaryTreeFromPreorderAndInorderTraversal {
-	private static Logger logger =  LogManager.getLogger(TestAdditiveNumber.class);
+	private static Logger logger =  LogManager.getLogger(ConstructBinaryTreeFromPreorderAndInorderTraversal.class);
 	private TreeNode buildTree(int[] preorder, int startp, int endp, int[] inorder, int starti, int endi){//[start, end)
 		//logger.info(String.format("startp:%d, endp:%d, starti:%d, endi:%d", startp, endp, starti, endi));
 		if (startp==endp){
