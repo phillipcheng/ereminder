@@ -1,5 +1,8 @@
 package leet.algo;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -8,7 +11,7 @@ import java.util.List;
 //add/patch elements to the array such that any number in range [1, n] inclusive can be formed by the sum of some elements in the array. 
 //Return the minimum number of patches required.
 public class PatchingArray {
-	
+	private static Logger logger =  LogManager.getLogger(PatchingArray.class);
 	public int minPatches(int[] nums, int n) {
 		List<Long> addedList = new ArrayList<Long>();
 		int idx=0;

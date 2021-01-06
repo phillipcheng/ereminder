@@ -1,10 +1,6 @@
 package algo.util;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.StringTokenizer;
+import java.util.*;
 
 public class IOUtil {
 	
@@ -83,6 +79,17 @@ public class IOUtil {
 		vsl.toArray(ret);
 		return ret;
 	}
+
+	public static List<List<String>> getStringListList(String input){
+		List<List<String>> output = new ArrayList<>();
+		input = input.replaceAll("\"", "");
+		String[][] o = getStringArrayArray(input);
+		for (int i=0; i<o.length; i++){
+			String[] arr = o[i];
+			output.add(Arrays.asList(arr));
+		}
+		return output;
+	}
 	
 	//input: [[3,4,5],[3,2,6],[2,2,1]]
 	public static int[][] getIntArrayArray(String input){
@@ -107,5 +114,13 @@ public class IOUtil {
 		int[][] ret = new int[vsl.size()][];
 		vsl.toArray(ret);
 		return ret;
+	}
+
+	public static boolean equals(double[] a1, double[] a2){
+		if (a1.length!=a2.length) return false;
+		for (int i=0; i<a1.length; i++){
+			if (Math.abs(a1[i]-a2[i])>0.0001) return false;
+		}
+		return true;
 	}
 }
