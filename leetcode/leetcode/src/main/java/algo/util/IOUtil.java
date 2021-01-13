@@ -116,6 +116,20 @@ public class IOUtil {
 		return ret;
 	}
 
+	public static List<List<Integer>> getIntListList(String input){
+		List<List<Integer>> output = new ArrayList<>();
+		int[][] o = getIntArrayArray(input);
+		for (int i=0; i<o.length; i++){
+			int[] arr = o[i];
+			List<Integer> li = new ArrayList<>();
+			for (int n:arr){
+				li.add(n);
+			}
+			output.add(li);
+		}
+		return output;
+	}
+
 	public static boolean equals(double[] a1, double[] a2){
 		if (a1.length!=a2.length) return false;
 		for (int i=0; i<a1.length; i++){

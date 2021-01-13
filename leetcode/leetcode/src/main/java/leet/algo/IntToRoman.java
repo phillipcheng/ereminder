@@ -5,9 +5,7 @@ import algo.tree.TreeNodeUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static junit.framework.TestCase.assertTrue;
 
@@ -98,7 +96,79 @@ public class IntToRoman {
         return sb.toString();
     }
 
-    public static void main(String[] args){
+    /**
+     * I can be placed before V (5) and X (10) to make 4 and 9. 
+     * X can be placed before L (50) and C (100) to make 40 and 90. 
+     * C can be placed before D (500) and M (1000) to make 400 and 900.
+     * @param s
+     * @return
+     */
+    public int romanToInt(String s) {
+        Map<String, Integer> map = new HashMap<>();
+        map.put("IV", 4);
+        map.put("IX", 9);
+        map.put("XL", 40);
+        map.put("XC", 90);
+        map.put("CD", 400);
+        map.put("CM", 900);
+        map.put("M", 1000);
+        map.put("D", 500);
+        map.put("C", 100);
+        map.put("L", 50);
+        map.put("X", 10);
+        map.put("V", 5);
+        map.put("I", 1);
+        int total = 0;
+        for (int i=0; i<s.length(); i++){
+            String str1, str2;
+            int digit;
+            char c1= s.charAt(i);
+            str1 = ""+c1;
+            if (i<s.length()-1){
+                char c2 = s.charAt(i+1);
+                str2 = str1 + c2;
+                if (map.containsKey(str2)){
+                    digit = map.get(str2);
+                    i++;
+                }else{
+                    digit = map.get(str1);
+                }
+            }else{
+                digit = map.get(str1);
+            }
+            total+=digit;
+        }
+        return total;
+    }
+
+    public static void testRomanToInt(){
+        IntToRoman intToRoman = new IntToRoman();
+        String s;
+        int ret;
+
+        s="III";
+        ret = intToRoman.romanToInt(s);
+        assertTrue(ret==3);
+
+        s="IV";
+        ret = intToRoman.romanToInt(s);
+        assertTrue(ret==4);
+
+        s="IX";
+        ret = intToRoman.romanToInt(s);
+        assertTrue(ret==9);
+
+        s="LVIII";
+        ret = intToRoman.romanToInt(s);
+        assertTrue(ret==58);
+
+        s="MCMXCIV";
+        ret = intToRoman.romanToInt(s);
+        assertTrue(ret==1994);
+
+    }
+
+    public static void testIntToRoman(){
         IntToRoman btz = new IntToRoman();
         String s;
         s = btz.intToRoman(3);
@@ -128,8 +198,10 @@ public class IntToRoman {
         s = btz.intToRoman(40);
         logger.info(s);
         assertTrue("XL".equals(s));
-
     }
 
+    public static void main(String[] args){
+        testRomanToInt();
+    }
 
 }

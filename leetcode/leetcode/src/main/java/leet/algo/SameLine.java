@@ -6,24 +6,22 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
- //Given n points on a 2D plane, find the maximum number of points that lie on the same straight line.  
-class Point {
-    int x;
-    int y;
-    
-    Point() { x = 0; y = 0; }
-    
-    public Point(int a, int b) { 
-   	 x = a; y = b;
-    }; 
-    
-    public String toString(){
-   	 return x + "," + y;
-    }
-}
-
+ //Given n points on a 2D plane, find the maximum number of points that lie on the same straight line.
 public class SameLine {
-	
+
+	class Point {
+		int x;
+		int y;
+
+		public Point(int a, int b) {
+			x = a; y = b;
+		};
+
+		public String toString(){
+			return x + "," + y;
+		}
+	}
+
 	//
 	HashMap<Integer, ArrayList<Point>> lineGroups = new HashMap<Integer, ArrayList<Point>>();
 	//
@@ -38,7 +36,7 @@ public class SameLine {
 	}
 	
 	//(-16,11),(-7,84),(1,76),(3,77)	
-	public static Point[] getPoints(String s){
+	public Point[] getPoints(String s){
 		ArrayList<Point> pl =new ArrayList<Point>();
 		StringTokenizer st = new StringTokenizer(s, "(), ", false);
 		int a=0, b;

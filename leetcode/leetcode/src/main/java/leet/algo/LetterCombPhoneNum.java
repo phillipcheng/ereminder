@@ -5,72 +5,72 @@ import java.util.HashMap;
 
 //Given a digit string, return all possible letter combinations that the number could represent.
 
-class CharPos{
-	char c;
-	int pos; //current idx from 0
-	int max; //max number
-	
-	CharPos(char c, int pos, int max){
-		this.c = c;
-		this.pos = pos;
-		this.max = max;
-	}
-	
-	//return false for carry
-	boolean inc(){
-		if (pos<max-1){
-			pos++;
-			return true;
-		}else{
-			pos=0;
-			return false;
-		}
-	}
-	
-	public String toString(){
-		return "digit:" + c + ", curPos:" + pos + ", max:" + max;
-	}
-}
+public class LetterCombPhoneNum {
 
-class CharListPos{
-	ArrayList<CharPos> curPos = new ArrayList<CharPos>();
-	
-	void add(CharPos cp){
-		curPos.add(cp);
-	}
-	
-	//return false means reached the biggest
-	boolean inc(){
-		for (int i=curPos.size()-1; i>=0; i--){
-			CharPos cp = curPos.get(i);
-			if (cp.inc()){
+	class CharPos{
+		char c;
+		int pos; //current idx from 0
+		int max; //max number
+
+		CharPos(char c, int pos, int max){
+			this.c = c;
+			this.pos = pos;
+			this.max = max;
+		}
+
+		//return false for carry
+		boolean inc(){
+			if (pos<max-1){
+				pos++;
 				return true;
+			}else{
+				pos=0;
+				return false;
 			}
 		}
-		return false;
-	}
-	
-	public String toString(){
-		StringBuffer sb = new StringBuffer();
-		for (int i=0; i<curPos.size(); i++){
-			CharPos cp = curPos.get(i);
-			sb.append(cp.toString() + "\n");
-		}
-		return sb.toString();
-	}
-	
-	String getCurString(HashMap<Character, char[]> mappingTable){
-		StringBuffer sb = new StringBuffer();
-		for (int i=0; i<curPos.size(); i++){
-			CharPos cp = curPos.get(i);
-			sb.append(mappingTable.get(cp.c)[cp.pos]);
-		}
-		return sb.toString();
-	}
-}
 
-public class LetterCombPhoneNum {
-	
+		public String toString(){
+			return "digit:" + c + ", curPos:" + pos + ", max:" + max;
+		}
+	}
+
+	class CharListPos{
+		ArrayList<CharPos> curPos = new ArrayList<CharPos>();
+
+		void add(CharPos cp){
+			curPos.add(cp);
+		}
+
+		//return false means reached the biggest
+		boolean inc(){
+			for (int i=curPos.size()-1; i>=0; i--){
+				CharPos cp = curPos.get(i);
+				if (cp.inc()){
+					return true;
+				}
+			}
+			return false;
+		}
+
+		public String toString(){
+			StringBuffer sb = new StringBuffer();
+			for (int i=0; i<curPos.size(); i++){
+				CharPos cp = curPos.get(i);
+				sb.append(cp.toString() + "\n");
+			}
+			return sb.toString();
+		}
+
+		String getCurString(HashMap<Character, char[]> mappingTable){
+			StringBuffer sb = new StringBuffer();
+			for (int i=0; i<curPos.size(); i++){
+				CharPos cp = curPos.get(i);
+				sb.append(mappingTable.get(cp.c)[cp.pos]);
+			}
+			return sb.toString();
+		}
+	}
+
 	public static HashMap<Character, char[]> table = new HashMap<Character, char[]>();
 	
 	static{

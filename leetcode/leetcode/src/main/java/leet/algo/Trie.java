@@ -4,35 +4,36 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class TrieNode {
-	private boolean isWord;
-    private String value;
-    private Map<Character, TrieNode> children = new HashMap<Character, TrieNode>();
-    
-    public TrieNode(String v, boolean isWord) {
-        this.value = v;
-        this.isWord = isWord;
-    }
-    
-    public TrieNode getChild(char ch){
-    	return children.get(ch);
-    }
-    public TrieNode addChild(char ch, boolean isWord){
-    	String v = value + ch;
-    	TrieNode tn = new TrieNode(v, isWord);
-    	children.put(ch, tn);
-    	return tn;
-    }
-    public boolean isWord(){
-    	return isWord;
-    }
-    public void setWord(boolean isword){
-    	this.isWord = isword;
-    }
-}
-
 public class Trie {
-    private TrieNode root;
+	class TrieNode {
+		private boolean isWord;
+		private String value;
+		private Map<Character, TrieNode> children = new HashMap<Character, TrieNode>();
+
+		public TrieNode(String v, boolean isWord) {
+			this.value = v;
+			this.isWord = isWord;
+		}
+
+		public TrieNode getChild(char ch){
+			return children.get(ch);
+		}
+		public TrieNode addChild(char ch, boolean isWord){
+			String v = value + ch;
+			TrieNode tn = new TrieNode(v, isWord);
+			children.put(ch, tn);
+			return tn;
+		}
+		public boolean isWord(){
+			return isWord;
+		}
+		public void setWord(boolean isword){
+			this.isWord = isword;
+		}
+	}
+
+
+	private TrieNode root;
 
     public Trie() {
         root = new TrieNode("", false);

@@ -6,51 +6,53 @@ import java.util.TreeMap;
 
 import algo.util.ListNode;
 
-class TreeMapListNode{
-	//1st node's value to the array of node list
-	TreeMap<Integer, ArrayList<ListNode>> tm = new TreeMap<Integer, ArrayList<ListNode>>();
-	
-	void put(int v, ListNode ln){
-		ArrayList<ListNode> aln = tm.get(v);
-		if (aln!=null){
-			aln.add(ln);
-		}else{
-			aln= new ArrayList<ListNode>();
-			aln.add(ln);
-			tm.put(v, aln);
-		}
-	}
-	
-	//can't be empty, checked before call
-    ListNode removeHead(){
-    	Iterator<Integer> it = tm.keySet().iterator();
-    	int v = it.next();
-    	ArrayList<ListNode> all = tm.get(v);
-    	if (all.size()==0){
-    		tm.remove(v);
-    		return null;
-    	}else{
-    		ListNode ln = all.remove(all.size()-1);
-    		if (all.size()==0){
-    			tm.remove(v);
-    		}
-    		return ln;
-    	}
-    }
-    
-    boolean isEmpty(){
-    	return tm.isEmpty();
-    }
-	
-    public String toString(){
-    	return tm.toString();
-    }
-		
-}
-
 //Merge k sorted linked lists and return it as one sorted list. 
 //Analyze and describe its complexity.
 public class MergeKSortedList {
+
+	class TreeMapListNode{
+		//1st node's value to the array of node list
+		TreeMap<Integer, ArrayList<ListNode>> tm = new TreeMap<Integer, ArrayList<ListNode>>();
+
+		void put(int v, ListNode ln){
+			ArrayList<ListNode> aln = tm.get(v);
+			if (aln!=null){
+				aln.add(ln);
+			}else{
+				aln= new ArrayList<ListNode>();
+				aln.add(ln);
+				tm.put(v, aln);
+			}
+		}
+
+		//can't be empty, checked before call
+		ListNode removeHead(){
+			Iterator<Integer> it = tm.keySet().iterator();
+			int v = it.next();
+			ArrayList<ListNode> all = tm.get(v);
+			if (all.size()==0){
+				tm.remove(v);
+				return null;
+			}else{
+				ListNode ln = all.remove(all.size()-1);
+				if (all.size()==0){
+					tm.remove(v);
+				}
+				return ln;
+			}
+		}
+
+		boolean isEmpty(){
+			return tm.isEmpty();
+		}
+
+		public String toString(){
+			return tm.toString();
+		}
+
+	}
+
+
 	public static boolean isDebug=false;
 	public static void log(Object obj){
 		if (isDebug){

@@ -2,24 +2,26 @@ package leet.algo;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-class DLNode {
-	int key;
-	int val;
-	DLNode prev;
-	DLNode next;
-	
-	DLNode(int k, int v){
-		key = k;
-		val =v;
-	}
-	
-	public String toString(){
-		return key + ":" + val;
-	}
-	
-}
 
 public class LRUCache {
+
+	class DLNode {
+		int key;
+		int val;
+		DLNode prev;
+		DLNode next;
+
+		DLNode(int k, int v){
+			key = k;
+			val =v;
+		}
+
+		public String toString(){
+			return key + ":" + val;
+		}
+
+	}
+
 
 	public ConcurrentHashMap<Integer, DLNode> hm;
 	DLNode head, tail;//head is the newest, tail is the oldest

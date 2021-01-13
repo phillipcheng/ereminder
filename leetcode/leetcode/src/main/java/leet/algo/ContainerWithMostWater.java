@@ -10,17 +10,19 @@ import java.util.TreeMap;
 
  Note: You may not slant the container.
  */
-class MinMax{
-	int min;
-	int max;
-	
-	MinMax(int min, int max){
-		this.min = min;
-		this.max = max;
-	}
-}
+
 
 public class ContainerWithMostWater {
+	class MinMax{
+		int min;
+		int max;
+
+		MinMax(int min, int max){
+			this.min = min;
+			this.max = max;
+		}
+	}
+
 	public static final boolean isDebug = false;
 	void log(Object s){
 		if (isDebug){
