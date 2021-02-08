@@ -59,22 +59,24 @@ public class IOUtil {
 	
 	//input: [[AXA,EZE],[EZE,AUA],[ADL,JFK]]
 	public static String[][] getStringArrayArray(String input){
-		String trim = input.replaceAll("\\[", "").replaceAll("\\]","");
-		StringTokenizer st = new StringTokenizer(trim, ",");
-		int i=0;
-		List<String[]> vsl = new ArrayList<String[]>();
-		String[] vs = new String[2];
-		while(st.hasMoreTokens()){
-			if (i==2){
-				vsl.add(vs);
-				vs = new String[2];
-				i=0;
-			}
-			String v = st.nextToken();
-			vs[i]=v;
-			i++;
+		if (input.equals("[]")){
+			return new String[0][0];
 		}
-		vsl.add(vs);
+		String trim = input.replaceAll("\\[\\[", "").replaceAll("\\]\\]","");
+		String st[] = trim.split("\\],\\[");
+		List<String[]> vsl = new ArrayList<>();
+		for (String ints:st){
+			StringTokenizer st1 = new StringTokenizer(ints, ",");
+			List<String> l1 = new ArrayList<>();
+			while (st1.hasMoreTokens()){
+				l1.add(st1.nextToken());
+			}
+			String[] la1 = new String[l1.size()];
+			for (int i=0; i<la1.length; i++){
+				la1[i]=l1.get(i);
+			}
+			vsl.add(la1);
+		}
 		String[][] ret = new String[vsl.size()][];
 		vsl.toArray(ret);
 		return ret;
@@ -98,10 +100,10 @@ public class IOUtil {
 		}
 		String trim = input.replaceAll("\\[\\[", "").replaceAll("\\]\\]","");
 		String st[] = trim.split("\\],\\[");
-		List<int[]> vsl = new ArrayList<int[]>();
+		List<int[]> vsl = new ArrayList<>();
 		for (String ints:st){
 			StringTokenizer st1 = new StringTokenizer(ints, ",");
-			List<Integer> l1 = new ArrayList<Integer>();
+			List<Integer> l1 = new ArrayList<>();
 			while (st1.hasMoreTokens()){
 				l1.add(Integer.parseInt(st1.nextToken()));
 			}

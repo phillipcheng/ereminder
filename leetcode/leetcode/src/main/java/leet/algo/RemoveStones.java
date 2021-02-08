@@ -17,6 +17,10 @@ public class RemoveStones {
         Map<Integer, List<Integer>> colToRow = new HashMap<>();
         Set<List<Integer>> unvisited = new HashSet<>();
 
+        public int getNodeNum(){
+            return unvisited.size();
+        }
+
         public List<Integer> getUnvisited(){
             if (unvisited.isEmpty())
                 return null;
@@ -62,35 +66,45 @@ public class RemoveStones {
         }
 
         public Graph(int[][] stones){
-            int nrow = stones.length;
-            int ncol = stones[0].length;
             //setup graph
-            for (int row=0; row<nrow; row++){
-                for (int col=0; col<ncol; col++){
-                    if (stones[row][col] == 1){
-                        addRow(row, col);
-                        addCol(col, row);
-                        unvisited.add(Arrays.asList(new Integer[]{row, col}));
-                    }
-                }
+            for (int[] node: stones){
+                addRow(node[0], node[1]);
+                addCol(node[1], node[0]);
+                unvisited.add(Arrays.asList(new Integer[]{node[0], node[1]}));
             }
         }
 
-        public void dfsMarkVisit(List<Integer> start){
-
+        public Set<List<Integer>> dfsMarkVisit(List<Integer> start){
+            Stack<List<Integer>> stack = new Stack<>();
+            Set<List<Integer>> visited = new HashSet<>();
+            stack.push(start);
+            while (!stack.isEmpty()){
+                List<Integer> node = stack.pop();
+                visited.add(node);
+                unvisited.remove(node);
+                List<List<Integer>> adjacent = getAdjacentNodes(node.get(0), node.get(1));
+                for (List<Integer> an: adjacent){
+                    if (!visited.contains(an)){
+                        stack.push(an);
+                    }
+                }
+            }
+            return visited;
         }
     }
 
     public int removeStones(int[][] stones) {
         Graph graph = new Graph(stones);
+        int orgNodeNum = graph.getNodeNum();
         List<Integer> node = graph.getUnvisited();
         int numSCC = 0;
         while (node!=null){
-            graph.dfsMarkVisit(node);
+            Set<List<Integer>> treeNodes = graph.dfsMarkVisit(node);
+            //logger.info("tree:" + treeNodes);
             numSCC++;
             node = graph.getUnvisited();
         }
-        return numSCC;
+        return orgNodeNum-numSCC;
     }
     
     public static void main(String[] args){
@@ -102,5 +116,15 @@ public class RemoveStones {
         ret = removeStones.removeStones(stones);
         logger.info(ret);
         assertTrue(ret == 5);
+
+        stones = IOUtil.getIntArrayArray("[[0,0],[0,2],[1,1],[2,0],[2,2]]");
+        ret = removeStones.removeStones(stones);
+        logger.info(ret);
+        assertTrue(ret == 3);
+
+        stones = IOUtil.getIntArrayArray("[[0,0]]");
+        ret = removeStones.removeStones(stones);
+        logger.info(ret);
+        assertTrue(ret == 0);
     }
 }
